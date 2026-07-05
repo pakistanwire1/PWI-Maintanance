@@ -1,0 +1,205 @@
+<div id="sectionsPage" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Section Master</div>
+      <div class="card-actions">
+        <div class="search-box">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg>
+          <input type="text" class="search-input" id="sectionSearchInput" placeholder="Search sections..." oninput="searchSectionsTable(this.value)">
+        </div>
+        <button class="btn btn-primary" onclick="openSectionForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add Section</button>
+      </div>
+    </div>
+    <div id="sectionsTableContainer"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="sectionFormModal">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title" id="sectionFormTitle">Add Section</div>
+      <button class="modal-close" onclick="hideModal('sectionFormModal')">&times;</button>
+    </div>
+    <form id="sectionForm" onsubmit="return saveSection(event)">
+      <div class="modal-body">
+        <input type="hidden" name="SectionID" id="editSectionId">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Section Name *</label>
+            <input type="text" name="Section" class="form-control" id="sectionName" placeholder="Enter section name" required>
+          </div>
+          <div class="form-group">
+            <label>Section Code *</label>
+            <input type="text" name="SectionCode" class="form-control" id="sectionCode" placeholder="e.g. ADM" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea name="Description" class="form-control" id="sectionDescription" rows="2" placeholder="Enter description"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Status</label>
+            <select name="Status" class="form-control" id="sectionStatus">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sunday Off</label>
+            <select name="SundayOff" class="form-control" id="sectionSundayOff">
+              <option value="Sunday">Sunday</option>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Hours Per Day</label>
+            <input type="number" name="HoursPerDay" class="form-control" id="sectionHoursPerDay" placeholder="8" min="1" max="24" step="0.5">
+          </div>
+          <div class="form-group">
+            <label>Department Count</label>
+            <input type="number" name="DepartmentCount" class="form-control" id="sectionDeptCount" placeholder="0" min="0" readonly>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="hideModal('sectionFormModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var sectionsData = [];
+var sectionsPage = 1;
+
+function loadSectionsData() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      sectionsData = data || [];
+      showLoading(false);
+      renderSectionsTable();
+    })
+    .withFailureHandler(function(err) {
+      showLoading(false);
+      showNotification('Error loading sections: ' + err.message, 'danger');
+    })
+    .getSectionList();
+}
+
+function renderSectionsTable() {
+  renderTable(sectionsData, [
+    { key: 'SectionID', label: 'ID' },
+    { key: 'Section', label: 'Section Name' },
+    { key: 'Description', label: 'Description' },
+    { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Active': 'success', 'Inactive': 'danger' } },
+    { key: 'SundayOff', label: 'Sun Off', badge: true, badgeMap: { 'No': 'success', 'Sunday': 'warning', 'Monday': 'warning', 'Tuesday': 'warning', 'Wednesday': 'warning', 'Thursday': 'warning', 'Friday': 'warning', 'Saturday': 'warning' } },
+    { key: 'HoursPerDay', label: 'Hrs/Day' },
+    { key: 'SectionCode', label: 'Code' },
+    { key: 'DepartmentCount', label: 'Depts' }
+  ], [
+    { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editSection('{id}')", idField: 'SectionID' },
+    { label: 'Delete', icon: 'trash', color: 'danger', onclick: "deleteSection('{id}')", idField: 'SectionID' }
+  ], sectionsPage, PAGE_SIZE, 'sectionsTableContainer');
+  registerPageState('sectionsTableContainer', function(p) { sectionsPage = p; renderSectionsTable(); });
+}
+
+function sectionsTablePage(p) { sectionsPage = p; renderSectionsTable(); }
+
+function openSectionForm() {
+  document.getElementById('editSectionId').value = '';
+  resetForm('sectionForm');
+  document.getElementById('sectionSundayOff').value = 'Sunday';
+  document.getElementById('sectionHoursPerDay').value = '8';
+  document.getElementById('sectionDeptCount').value = '0';
+  document.getElementById('sectionStatus').value = 'Active';
+  showModal('sectionFormModal');
+  document.getElementById('sectionFormTitle').textContent = 'Add Section';
+}
+
+function editSection(id) {
+  var item = sectionsData.find(function(s) { return s.SectionID === id; });
+  if (!item) return;
+  setFormData('sectionForm', item);
+  document.getElementById('editSectionId').value = id;
+  document.getElementById('sectionFormTitle').textContent = 'Edit Section - ' + id;
+  showModal('sectionFormModal');
+}
+
+function saveSection(event) {
+  event.preventDefault();
+  var id = document.getElementById('editSectionId').value;
+  var data = getFormData('sectionForm');
+  data.Section = data.Section || document.getElementById('sectionName').value.trim();
+  if (!data.Section) { showToast('Section name is required', 'warning'); return; }
+  if (!data.SectionCode) { showToast('Section code is required', 'warning'); return; }
+  if (!data.HoursPerDay || parseFloat(data.HoursPerDay) <= 0) { showToast('Hours Per Day must be a positive number', 'warning'); return; }
+  showLoading(true);
+  var fn = id ? 'modifySection' : 'createSection';
+  var args = id ? [id, data] : [data];
+  google.script.run
+    .withSuccessHandler(function() {
+      showLoading(false);
+      hideModal('sectionFormModal');
+      showToast('Section ' + (id ? 'updated' : 'created') + ' successfully', 'success');
+      loadSectionsData();
+    })
+    .withFailureHandler(function(err) {
+      showLoading(false);
+      showToast('Error: ' + err.message, 'danger');
+    })
+    [fn].apply(null, args);
+}
+
+function deleteSection(id) {
+  showConfirm('Delete Section', 'Are you sure you want to delete this section?', function() {
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function() {
+        showLoading(false);
+        showToast('Section deleted successfully', 'success');
+        loadSectionsData();
+      })
+      .withFailureHandler(function(err) {
+        showLoading(false);
+        showToast('Error: ' + err.message, 'danger');
+      })
+      .removeSection(id);
+  });
+}
+
+function searchSectionsTable(query) {
+  if (!query) { renderSectionsTable(); return; }
+  var q = query.toLowerCase();
+  var filtered = sectionsData.filter(function(s) {
+    return (s.Section || '').toLowerCase().indexOf(q) >= 0 ||
+           (s.SectionCode || '').toLowerCase().indexOf(q) >= 0 ||
+           (s.SectionID || '').toLowerCase().indexOf(q) >= 0 ||
+           (s.Description || '').toLowerCase().indexOf(q) >= 0;
+  });
+  sectionsPage = 1;
+  renderTable(filtered, [
+    { key: 'SectionID', label: 'ID' },
+    { key: 'Section', label: 'Section Name' },
+    { key: 'Description', label: 'Description' },
+    { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Active': 'success', 'Inactive': 'danger' } },
+    { key: 'SundayOff', label: 'Sun Off', badge: true, badgeMap: { 'No': 'success', 'Sunday': 'warning', 'Monday': 'warning', 'Tuesday': 'warning', 'Wednesday': 'warning', 'Thursday': 'warning', 'Friday': 'warning', 'Saturday': 'warning' } },
+    { key: 'HoursPerDay', label: 'Hrs/Day' },
+    { key: 'SectionCode', label: 'Code' },
+    { key: 'DepartmentCount', label: 'Depts' }
+  ], [
+    { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editSection('{id}')", idField: 'SectionID' },
+    { label: 'Delete', icon: 'trash', color: 'danger', onclick: "deleteSection('{id}')", idField: 'SectionID' }
+  ], 1, PAGE_SIZE, 'sectionsTableContainer');
+}
+</script>

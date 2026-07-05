@@ -1,0 +1,212 @@
+<div id="startjobcardPage" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--warning);box-shadow:0 0 8px rgba(245,158,11,0.4);vertical-align:middle;margin-right:8px"></span>
+        Start Job Card — Open Jobs
+      </div>
+      <div class="card-actions">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="form-control" id="startJcSearch" placeholder="Search open jobs..." onkeyup="searchStartJc()">
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="form-group">
+        <select class="form-control" id="startJcDeptFilter" onchange="filterStartJc()">
+          <option value="">All Departments</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <select class="form-control" id="startJcPriorityFilter" onchange="filterStartJc()">
+          <option value="">All Priority</option>
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="startJcTableContainer"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="startJcModal" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--warning);box-shadow:0 0 8px rgba(245,158,11,0.4);vertical-align:middle;margin-right:8px"></span>
+        Start Job — <span id="startJcRef"></span>
+      </div>
+      <button class="modal-close" onclick="hideModal('startJcModal')">&times;</button>
+    </div>
+    <form id="startJcForm" onsubmit="return saveStartJc(event)">
+      <div class="modal-body">
+        <input type="hidden" name="JobCardNo" id="startJcJobNo">
+        <input type="hidden" name="Status" value="Running">
+
+        <div class="time-summary-compact" style="margin-bottom:16px">
+          <div class="ts-row"><span class="ts-label">Waiting Time</span><span class="ts-value" id="startJcWaitingDisplay">0h 0m</span></div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Opened: <span id="startJcOpenedDisplay"></span></div>
+        </div>
+
+        <div class="form-group">
+          <label>Assigned Technician *</label>
+          <select name="AssignedTechnician" class="form-control" id="startJcTechnician" required>
+            <option value="">Select Technician</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Start Remarks</label>
+          <textarea name="Remarks" class="form-control" rows="3" placeholder="Initial assessment and observations..."></textarea>
+        </div>
+
+        <div style="margin-bottom:0">
+          <small style="color:var(--text-muted);font-size:11px">
+            Start Date & Time will be captured automatically.
+            Waiting Time will be calculated automatically.
+            Status will change from <strong>Waiting</strong> to <strong>Running</strong>.
+          </small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="hideModal('startJcModal')">Cancel</button>
+        <button type="submit" class="btn btn-warning" style="color:#fff">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          Start Job
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var startJcData = [];
+var startJcPage = 1;
+var startJcTimer = null;
+
+function loadStartJobCardsData() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      startJcData = (data || []).filter(function(jc) {
+        var s = (jc.Status || '').toLowerCase();
+        return s === 'open' || s === 'waiting';
+      });
+      showLoading(false);
+      populateStartJcSelects();
+      renderStartJc();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load job cards', 'error'); })
+    .getJobCards();
+}
+
+function populateStartJcSelects() {
+  google.script.run
+    .withSuccessHandler(function(t) { populateSelect('startJcTechnician', t, 'EmployeeID', 'TechnicianName', 'Select Technician'); })
+    .withFailureHandler(function() {})
+    .getTechnicians();
+  var deptFilter = document.getElementById('startJcDeptFilter');
+  deptFilter.innerHTML = '<option value="">All Departments</option>';
+  var depts = [];
+  startJcData.forEach(function(jc) {
+    if (jc.Department && depts.indexOf(jc.Department) === -1) depts.push(jc.Department);
+  });
+  depts.sort().forEach(function(d) { deptFilter.innerHTML += '<option value="' + d + '">' + d + '</option>'; });
+}
+
+function renderStartJc() {
+  var dept = document.getElementById('startJcDeptFilter').value;
+  var priority = document.getElementById('startJcPriorityFilter').value;
+  var list = startJcData;
+  var userDept = getUserDept();
+  var isAdminUser = isAdmin();
+  if (!isAdminUser && userDept) list = list.filter(function(jc) { return jc.Department === userDept; });
+  if (dept) list = list.filter(function(jc) { return jc.Department === dept; });
+  if (priority) list = list.filter(function(jc) { return jc.Priority === priority; });
+  var canStart = isAdminUser || hasPermission('startJobCard');
+
+  renderTable(list, [
+    { key: 'JobCardNo', label: 'Job Card No' },
+    { key: 'DateTime', label: 'Opened', datetime: true },
+    { key: 'Machine', label: 'Machine' },
+    { key: 'Department', label: 'Dept' },
+    { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Low': 'success', 'Medium': 'warning', 'High': 'danger', 'Critical': 'danger' } },
+    { key: 'DateTime', label: 'Waiting', format: function(val, row) {
+      var dt = row.DateTime || row.OpenTime || row.OpenDateTime;
+      return '<span class="live-timer" data-start="' + dt + '">' + formatDurationFromDates(dt) + '</span>';
+    }},
+    { key: 'ComplaintDescription', label: 'Description' }
+  ], [
+    { label: 'Start', icon: 'start', color: 'warning', onclick: "openStartJc('{id}')", idField: 'JobCardNo', condition: function() { return canStart; } }
+  ], startJcPage, PAGE_SIZE, 'startJcTableContainer');
+  registerPageState('startJcTableContainer', function(p) { startJcPage = p; renderStartJc(); });
+}
+
+function filterStartJc() { startJcPage = 1; renderStartJc(); }
+
+function openStartJc(id) {
+  if (!hasPermission('startJobCard') && !isAdmin()) {
+    showToast('You do not have permission to start job cards', 'warning');
+    return;
+  }
+  var item = startJcData.find(function(r) { return r.JobCardNo === id; });
+  if (!item) return;
+  resetForm('startJcForm');
+  document.getElementById('startJcJobNo').value = id;
+  document.getElementById('startJcRef').textContent = id;
+  document.getElementById('startJcOpenedDisplay').textContent = formatDateTime(item.DateTime || item.OpenTime || item.OpenDateTime);
+  updateStartJcWaiting();
+  if (startJcTimer) clearInterval(startJcTimer);
+  startJcTimer = setInterval(updateStartJcWaiting, 10000);
+  showModal('startJcModal');
+}
+
+function updateStartJcWaiting() {
+  var item = startJcData.find(function(r) { return r.JobCardNo === document.getElementById('startJcJobNo').value; });
+  if (!item) return;
+  var dt = item.DateTime || item.OpenTime || item.OpenDateTime;
+  if (!dt) return;
+  var diff = Date.now() - new Date(dt).getTime();
+  document.getElementById('startJcWaitingDisplay').textContent = formatDuration(diff);
+}
+
+function saveStartJc(e) {
+  e.preventDefault();
+  var data = getFormData('startJcForm');
+  var id = data.JobCardNo;
+  if (!data.AssignedTechnician) {
+    showToast('Please select an assigned technician', 'error');
+    return;
+  }
+  if (startJcTimer) { clearInterval(startJcTimer); startJcTimer = null; }
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(result) {
+      startJcData = result || [];
+      showLoading(false);
+      hideModal('startJcModal');
+      showToast('Job started — Status: Running');
+      renderStartJc();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to start job', 'error'); })
+    .updateJobCard(id, data);
+}
+
+function searchStartJc() {
+  var q = document.getElementById('startJcSearch').value.toLowerCase();
+  if (!q) { startJcPage = 1; renderStartJc(); return; }
+  var filtered = startJcData.filter(function(jc) {
+    return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(q) !== -1) ||
+           (jc.Machine && jc.Machine.toLowerCase().indexOf(q) !== -1) ||
+           (jc.ComplaintDescription && jc.ComplaintDescription.toLowerCase().indexOf(q) !== -1);
+  });
+  startJcData = filtered;
+  startJcPage = 1;
+  renderStartJc();
+}
+</script>

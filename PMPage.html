@@ -1,0 +1,181 @@
+<div id="pmPage" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Preventive Maintenance</div>
+      <div class="card-actions">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="form-control" id="pmSearch" placeholder="Search PM..." onkeyup="searchPMTable()">
+        </div>
+        <button class="btn btn-primary" onclick="openPMForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add PM</button>
+      </div>
+    </div>
+    <div id="pmTableContainer"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pmFormModal" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="pmFormTitle">Add PM Record</div>
+      <button class="modal-close" onclick="hideModal('pmFormModal')">&times;</button>
+    </div>
+    <form id="pmForm" onsubmit="return savePM(event)">
+      <div class="modal-body">
+        <input type="hidden" name="PMNumber" id="editPmId">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Machine *</label>
+            <select name="Machine" class="form-control" id="pmMachine" required></select>
+          </div>
+          <div class="form-group">
+            <label>Frequency (Days) *</label>
+            <input type="number" name="Frequency" class="form-control" required min="1">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Next Due Date</label>
+            <input type="date" name="NextDueDate" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Technician</label>
+            <select name="Technician" class="form-control" id="pmTechnician"></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Status</label>
+            <select name="Status" class="form-control">
+              <option value="Scheduled">Scheduled</option>
+              <option value="Overdue">Overdue</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Last Done</label>
+            <input type="date" name="LastDone" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Remarks</label>
+          <textarea name="Remarks" class="form-control"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="hideModal('pmFormModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var pmData = [];
+var pmPage = 1;
+
+function loadPMData() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      console.log('=== PIPELINE: getPMRecords() returned', data ? data.length : 'null/undefined', 'records');
+      if (data && data.length > 0) {
+        console.log('=== PIPELINE: First record =', JSON.stringify(data[0]));
+      } else if (data && data.length === 0) {
+        console.warn('=== PIPELINE: Backend returned EMPTY ARRAY for PM');
+      } else {
+        console.error('=== PIPELINE: Backend returned null/undefined for PM');
+      }
+      pmData = data || [];
+      showLoading(false);
+      renderPMTable();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load PM records', 'error'); })
+    .getPMRecords();
+}
+
+function renderPMTable() {
+  renderTable(pmData, [
+    { key: 'PMNumber', label: 'PM No' },
+    { key: 'Machine', label: 'Machine' },
+    { key: 'Frequency', label: 'Frequency (Days)' },
+    { key: 'NextDueDate', label: 'Next Due', date: true },
+    { key: 'Technician', label: 'Technician' },
+    { key: 'LastDone', label: 'Last Done', date: true },
+    { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Scheduled': 'primary', 'Overdue': 'danger', 'Completed': 'success' } }
+  ], [
+    { label: 'Complete', icon: 'complete', color: 'success', onclick: "completePM('{id}')", idField: 'PMNumber', condition: function(r) { return r.Status !== 'Completed'; } },
+    { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editPM('{id}')", idField: 'PMNumber' },
+    { label: 'Del', icon: 'trash', color: 'danger', onclick: "deletePM('{id}')", idField: 'PMNumber' }
+  ], pmPage, PAGE_SIZE, 'pmTableContainer');
+  registerPageState('pmTableContainer', function(p) { pmPage = p; renderPMTable(); });
+}
+
+function openPMForm() {
+  document.getElementById('editPmId').value = '';
+  resetForm('pmForm');
+  var dueDate = new Date(); dueDate.setDate(dueDate.getDate() + 30);
+  document.getElementById('pmForm').querySelector('input[name="NextDueDate"]').value = dueDate.toISOString().split('T')[0];
+  google.script.run.withSuccessHandler(function(m) { populateSelect('pmMachine', m, 'MachineID', 'MachineName', 'Select Machine'); }).withFailureHandler(function() {}).getMachines();
+  google.script.run.withSuccessHandler(function(t) { populateSelect('pmTechnician', t, 'EmployeeID', 'TechnicianName', 'Select'); }).withFailureHandler(function() {}).getTechnicians();
+  openModalForm('pmForm', 'New PM Record');
+}
+
+function editPM(id) {
+  var item = pmData.find(function(r) { return r.PMNumber === id; });
+  if (!item) return;
+  google.script.run.withSuccessHandler(function(m) { populateSelect('pmMachine', m, 'MachineID', 'MachineName', 'Select Machine'); }).withFailureHandler(function() {}).getMachines();
+  google.script.run.withSuccessHandler(function(t) { populateSelect('pmTechnician', t, 'EmployeeID', 'TechnicianName', 'Select'); }).withFailureHandler(function() {}).getTechnicians();
+  setFormData('pmForm', item);
+  document.getElementById('editPmId').value = id;
+  openModalForm('pmForm', 'Edit PM - ' + id);
+}
+
+function savePM(e) {
+  e.preventDefault();
+  var data = getFormData('pmForm');
+  var id = document.getElementById('editPmId').value;
+  showLoading(true);
+  if (id) {
+    google.script.run
+      .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmFormModal'); showToast('PM updated successfully'); renderPMTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to update PM', 'error'); })
+      .updatePMRecord(id, data);
+  } else {
+    google.script.run
+      .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmFormModal'); showToast('PM record added successfully'); renderPMTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to add PM', 'error'); })
+      .addPMRecord(data);
+  }
+}
+
+function deletePM(id) {
+  showConfirm('Delete PM Record', 'Are you sure?', function() {
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) { pmData = result; showLoading(false); showToast('PM record deleted'); renderPMTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to delete PM', 'error'); })
+      .deletePMRecord(id);
+  });
+}
+
+function completePM(id) {
+  showConfirm('Complete PM', 'Mark this PM as completed?', function() {
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) { pmData = result; showLoading(false); showToast('PM completed successfully'); renderPMTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to complete PM', 'error'); })
+      .completePM(id);
+  });
+}
+
+function searchPMTable() {
+  var query = document.getElementById('pmSearch').value;
+  if (!query) { renderPMTable(); return; }
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(result) { pmData = result; showLoading(false); pmPage = 1; renderPMTable(); })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Search failed', 'error'); })
+    .searchPMRecords(query);
+}
+</script>

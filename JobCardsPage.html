@@ -1,0 +1,445 @@
+<div id="jobcardsPage" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Job Cards</div>
+      <div class="card-actions">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="form-control" id="jcSearch" placeholder="Search job cards..." onkeyup="searchJobCardsTable()">
+        </div>
+      </div>
+    </div>
+
+    <div class="workflow-tabs">
+      <button class="workflow-tab active" data-tab="open" onclick="switchJcTab('open')">
+        <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+        <span class="tab-label">Open</span>
+        <span class="tab-badge" id="openCount">0</span>
+      </button>
+      <button class="workflow-tab" data-tab="running" onclick="switchJcTab('running')">
+        <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg></span>
+        <span class="tab-label">Running</span>
+        <span class="tab-badge" id="runningCount">0</span>
+      </button>
+      <button class="workflow-tab" data-tab="closed" onclick="switchJcTab('closed')">
+        <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></span>
+        <span class="tab-label">Closed</span>
+        <span class="tab-badge" id="closedCount">0</span>
+      </button>
+      <button class="workflow-tab" data-tab="pendingapproval" onclick="switchJcTab('pendingapproval')">
+        <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+        <span class="tab-label">Pending</span>
+        <span class="tab-badge" id="pendingApprovalCount">0</span>
+      </button>
+      <button class="workflow-tab" data-tab="approved" onclick="switchJcTab('approved')">
+        <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></span>
+        <span class="tab-label">Approved</span>
+        <span class="tab-badge" id="approvedCount">0</span>
+      </button>
+      <button class="workflow-tab" data-tab="all" onclick="switchJcTab('all')">
+        <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
+        <span class="tab-label">All</span>
+        <span class="tab-badge" id="allCount">0</span>
+      </button>
+    </div>
+
+    <div class="filter-bar">
+      <div class="form-group">
+        <select class="form-control" id="jcPriorityFilter" onchange="filterJobCards()">
+          <option value="">All Priority</option>
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <select class="form-control" id="jcDeptFilter" onchange="filterJobCards()">
+          <option value="">All Departments</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="jcTableContainer"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="jcViewModal" style="display:none">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title">Job Card — <span id="jcViewRef"></span></div>
+      <button class="modal-close" onclick="hideModal('jcViewModal')">&times;</button>
+    </div>
+    <div class="modal-body" id="jcViewBody"></div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="hideModal('jcViewModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="jcImageModal" style="display:none">
+  <div class="modal" style="max-width:90vw;max-height:90vh;background:transparent;border:none;box-shadow:none;backdrop-filter:none">
+    <div style="text-align:right;margin-bottom:8px">
+      <button class="modal-close" onclick="hideModal('jcImageModal')" style="background:rgba(0,0,0,0.5);color:#fff;border-radius:50%;width:36px;height:36px;font-size:22px;display:inline-flex;align-items:center;justify-content:center">&times;</button>
+    </div>
+    <img id="jcFullImage" src="" alt="Full size image" style="max-width:100%;max-height:80vh;border-radius:12px;display:block;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.6)">
+  </div>
+</div>
+
+<div class="modal-overlay" id="approveJcModal" style="display:none">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title">
+        <span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.4);vertical-align:middle;margin-right:8px"></span>
+        Approve Job Card — <span id="approveJcRef"></span>
+      </div>
+      <button class="modal-close" onclick="hideModal('approveJcModal')">&times;</button>
+    </div>
+    <form id="approveJcForm" onsubmit="return saveApproveJc(event)">
+      <div class="modal-body">
+        <input type="hidden" name="JobCardNo" id="approveJcJobNo">
+
+        <div class="view-grid">
+          <div class="view-section">
+            <h4>Job Details</h4>
+            <div class="view-row"><span>Job Card No</span><strong id="apJcNo">—</strong></div>
+            <div class="view-row"><span>Department</span><strong id="apJcDept">—</strong></div>
+            <div class="view-row"><span>Machine</span><strong id="apJcMachine">—</strong></div>
+            <div class="view-row"><span>Complaint</span><strong id="apJcDesc">—</strong></div>
+            <div class="view-row"><span>Technician</span><strong id="apJcTech">—</strong></div>
+          </div>
+          <div class="view-section">
+            <h4>Time Summary</h4>
+            <div class="view-row"><span>Waiting Time</span><strong id="apJcWaiting">0 hrs</strong></div>
+            <div class="view-row"><span>Working Time</span><strong id="apJcWorking">0 hrs</strong></div>
+            <div class="view-row"><span>Breakdown Time</span><strong id="apJcBreakdown">0 hrs</strong></div>
+            <div class="view-row"><span>Completed</span><strong id="apJcCompleted">—</strong></div>
+          </div>
+        </div>
+
+        <div class="view-grid" style="margin-top:16px">
+          <div class="view-section">
+            <h4>Approval Details</h4>
+            <div class="view-row"><span>Approved By</span><strong id="apJcApprovedBy">— (Auto)</strong></div>
+            <div class="view-row"><span>Approval DateTime</span><strong id="apJcApprovedDt">— (Auto)</strong></div>
+            <div class="view-row"><span>Approval Status</span><strong><span class="badge badge-primary" id="apJcStatus">Pending</span></strong></div>
+          </div>
+          <div class="view-section">
+            <h4>Remarks</h4>
+            <div class="form-group" style="margin-bottom:0">
+              <textarea name="ApprovalRemarks" class="form-control" rows="4" placeholder="Enter approval or rejection remarks..." id="apJcRemarks"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px">
+          <small style="color:var(--text-muted);font-size:11px">
+            <strong>Approve:</strong> Status changes to <strong>Approved</strong>, job card becomes read-only.<br>
+            <strong>Reject:</strong> Status returns to <strong>In Progress</strong> for revision.
+          </small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="hideModal('approveJcModal')">Cancel</button>
+        <button type="button" class="btn btn-warning" id="rejectJcBtn" onclick="submitApproveJc('Rejected')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Reject
+        </button>
+        <button type="submit" class="btn btn-success" id="approveJcBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+          Approve
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var jcData = [];
+var jcActiveTab = 'open';
+var jcPage = 1;
+
+function loadJobCardsData() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      jcData = data || [];
+      showLoading(false);
+      populateJcSelects();
+      renderJcTabs();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load job cards', 'error'); })
+    .getJobCards();
+}
+
+function populateJcSelects() {
+  var deptFilter = document.getElementById('jcDeptFilter');
+  deptFilter.innerHTML = '<option value="">All Departments</option>';
+  var depts = [];
+  jcData.forEach(function(jc) {
+    if (jc.Department && depts.indexOf(jc.Department) === -1) depts.push(jc.Department);
+  });
+  depts.sort().forEach(function(d) { deptFilter.innerHTML += '<option value="' + d + '">' + d + '</option>'; });
+}
+
+function renderJcTabs() {
+  var open = 0, running = 0, closed = 0, pending = 0, approved = 0;
+  jcData.forEach(function(jc) {
+    var s = (jc.Status || '').toLowerCase();
+    var as = (jc.ApprovalStatus || '').toLowerCase();
+    if (s === 'open' || s === 'waiting') open++;
+    else if (s === 'running' || s === 'in progress') running++;
+    else if (s === 'closed' || s === 'completed') {
+      if (as === 'approved') approved++;
+      else pending++;
+      closed++;
+    }
+    else if (s === 'approved') { approved++; }
+  });
+  document.getElementById('openCount').textContent = open;
+  document.getElementById('runningCount').textContent = running;
+  document.getElementById('closedCount').textContent = closed;
+  document.getElementById('pendingApprovalCount').textContent = pending;
+  document.getElementById('approvedCount').textContent = approved;
+  document.getElementById('allCount').textContent = jcData.length;
+  renderJcTable();
+}
+
+function switchJcTab(tab) {
+  jcActiveTab = tab;
+  jcPage = 1;
+  document.querySelectorAll('.workflow-tab').forEach(function(t) {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  renderJcTable();
+}
+
+function renderJcTable() {
+  var list = [];
+  jcData.forEach(function(jc) {
+    var s = (jc.Status || '').toLowerCase();
+    var as = (jc.ApprovalStatus || '').toLowerCase();
+    if (jcActiveTab === 'open' && (s === 'open' || s === 'waiting')) list.push(jc);
+    else if (jcActiveTab === 'running' && (s === 'running' || s === 'in progress')) list.push(jc);
+    else if (jcActiveTab === 'closed' && (s === 'closed' || s === 'completed') && as !== 'approved') list.push(jc);
+    else if (jcActiveTab === 'pendingapproval' && (s === 'closed' || s === 'completed') && as !== 'approved') list.push(jc);
+    else if (jcActiveTab === 'approved' && (s === 'approved' || as === 'approved')) list.push(jc);
+    else if (jcActiveTab === 'all') list.push(jc);
+  });
+
+  var priorityFilter = document.getElementById('jcPriorityFilter').value;
+  var deptFilter = document.getElementById('jcDeptFilter').value;
+  if (priorityFilter) list = list.filter(function(jc) { return jc.Priority === priorityFilter; });
+  if (deptFilter) list = list.filter(function(jc) { return jc.Department === deptFilter; });
+
+  var canApprove = isAdmin() || hasPermission('approveJobCard');
+
+  var columns = [
+    { key: 'JobCardNo', label: 'Job Card No' },
+    { key: 'DateTime', label: 'Opened', datetime: true },
+    { key: 'Machine', label: 'Machine' },
+    { key: 'Department', label: 'Dept' },
+    { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Low': 'success', 'Medium': 'warning', 'High': 'danger', 'Critical': 'danger' } }
+  ];
+
+  if (jcActiveTab === 'open' || jcActiveTab === 'waiting') {
+    columns.push({ key: 'DateTime', label: 'Waiting', format: function(val, row) {
+      var dt = row.DateTime || row.OpenTime || row.OpenDateTime;
+      return '<span class="live-timer" data-start="' + dt + '">' + formatDurationFromDates(dt) + '</span>';
+    }});
+    columns.push({ key: 'ComplaintDescription', label: 'Description' });
+  } else if (jcActiveTab === 'running') {
+    columns.push({ key: 'AssignedTechnician', label: 'Technician' });
+    columns.push({ key: 'StartTime', label: 'Working', format: function(val, row) {
+      var st = row.StartTime || row.StartDateTime;
+      return '<span class="live-timer" data-start="' + st + '">' + formatDurationFromDates(st) + '</span>';
+    }});
+  } else if (jcActiveTab === 'closed' || jcActiveTab === 'pendingapproval') {
+    columns.push({ key: 'AssignedTechnician', label: 'Technician' });
+    columns.push({ key: 'WaitingTime', label: 'Waiting', format: function(val) { return parseFloat(val || 0).toFixed(2) + ' hrs'; } });
+    columns.push({ key: 'WorkingTime', label: 'Working', format: function(val) { return parseFloat(val || 0).toFixed(2) + ' hrs'; } });
+    columns.push({ key: 'BreakdownTime', label: 'Breakdown', format: function(val) { return parseFloat(val || 0).toFixed(2) + ' hrs'; } });
+  } else if (jcActiveTab === 'approved') {
+    columns.push({ key: 'AssignedTechnician', label: 'Technician' });
+    columns.push({ key: 'ApprovedBy', label: 'Approved By' });
+    columns.push({ key: 'ApprovedDateTime', label: 'Approved', datetime: true });
+    columns.push({ key: 'ApprovalStatus', label: 'Status', badge: true, badgeMap: { 'Approved': 'success', 'Rejected': 'danger' } });
+  } else {
+    columns.push({ key: 'AssignedTechnician', label: 'Technician' });
+    columns.push({ key: 'Status', label: 'Status', badge: true, badgeMap: { 'Open': 'warning', 'Waiting': 'warning', 'Running': 'primary', 'In Progress': 'primary', 'Closed': 'info', 'Completed': 'info', 'Approved': 'success' } });
+  }
+
+  columns.push({ key: 'FaultImage', label: 'Fault', format: function(val) {
+    return val ? '<img src="' + val + '" class="img-thumb" onclick="openFullImage(\'' + val + '\')" title="View Fault Image">' : '—';
+  }});
+
+  var actions = [
+    { label: 'View', icon: 'view', color: 'primary', onclick: "viewJcDetail('{id}')", idField: 'JobCardNo' }
+  ];
+
+  if (jcActiveTab === 'pendingapproval' && canApprove) {
+    actions.push({ label: 'Approve', icon: 'complete', color: 'success', onclick: "openApproveJc('{id}')", idField: 'JobCardNo' });
+  }
+
+  renderTable(list, columns, actions, jcPage, PAGE_SIZE, 'jcTableContainer');
+  registerPageState('jcTableContainer', function(p) { jcPage = p; renderJcTable(); });
+}
+
+function filterJobCards() { jcPage = 1; renderJcTable(); }
+
+function viewJcDetail(id) {
+  var item = jcData.find(function(r) { return r.JobCardNo === id; });
+  if (!item) return;
+  document.getElementById('jcViewRef').textContent = id;
+  var statusBadge = item.Status === 'Approved' ? 'success' :
+                    item.Status === 'Closed' || item.Status === 'Completed' ? 'success' :
+                    item.Status === 'Running' ? 'primary' : 'warning';
+  var waitingHrs = parseFloat(item.WaitingTime || 0).toFixed(2);
+  var workingHrs = parseFloat(item.WorkingTime || 0).toFixed(2);
+  var downtimeHrs = parseFloat(item.BreakdownTime || 0).toFixed(2);
+
+  var faultThumb = item.FaultImage ? '<img src="' + item.FaultImage + '" class="img-thumb" onclick="openFullImage(\'' + item.FaultImage + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '—';
+  var repairThumb = item.RepairImage ? '<img src="' + item.RepairImage + '" class="img-thumb" onclick="openFullImage(\'' + item.RepairImage + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '—';
+
+  var html =
+    '<div class="view-grid">' +
+      '<div class="view-section">' +
+        '<h4>Job Card Details</h4>' +
+        '<div class="view-row"><span>Job Card No</span><strong>' + escapeHtml(item.JobCardNo) + '</strong></div>' +
+        '<div class="view-row"><span>Opened</span><strong>' + formatDateTime(item.DateTime || item.OpenTime || item.OpenDateTime) + '</strong></div>' +
+        '<div class="view-row"><span>Machine</span><strong>' + escapeHtml(item.Machine || '-') + '</strong></div>' +
+        '<div class="view-row"><span>Asset</span><strong>' + escapeHtml(item.Asset || item.AssetID || '-') + '</strong></div>' +
+        '<div class="view-row"><span>Department</span><strong>' + escapeHtml(item.Department || '-') + '</strong></div>' +
+        '<div class="view-row"><span>Priority</span><strong><span class="badge badge-' + statusBadge + '">' + escapeHtml(item.Priority) + '</span></strong></div>' +
+        '<div class="view-row"><span>Complaint By</span><strong>' + escapeHtml(item.ComplaintBy || '-') + '</strong></div>' +
+        '<div class="view-row"><span>Description</span><strong>' + escapeHtml(item.ComplaintDescription || '-') + '</strong></div>' +
+        '<div class="view-row"><span>Fault Image</span><strong>' + faultThumb + '</strong></div>' +
+      '</div>';
+  if (item.StartTime || item.StartDateTime) {
+    html +=
+      '<div class="view-section">' +
+        '<h4>Work Execution</h4>' +
+        '<div class="view-row"><span>Started</span><strong>' + formatDateTime(item.StartTime || item.StartDateTime) + '</strong></div>' +
+        '<div class="view-row"><span>Assigned Technician</span><strong>' + escapeHtml(item.AssignedTechnician || '-') + '</strong></div>' +
+        '<div class="view-row"><span>Waiting Time</span><strong>' + waitingHrs + ' hrs</strong></div>' +
+      '</div>';
+  }
+  if (item.CloseTime || item.CloseDateTime) {
+    html +=
+      '<div class="view-section">' +
+        '<h4>Completion</h4>' +
+        '<div class="view-row"><span>Closed</span><strong>' + formatDateTime(item.CloseTime || item.CloseDateTime) + '</strong></div>' +
+        '<div class="view-row"><span>Working Time</span><strong>' + workingHrs + ' hrs</strong></div>' +
+        '<div class="view-row"><span>Total Breakdown</span><strong>' + downtimeHrs + ' hrs</strong></div>' +
+        '<div class="view-row"><span>Root Cause</span><strong>' + escapeHtml(item.RootCause || '-') + '</strong></div>' +
+        '<div class="view-row"><span>Corrective Action</span><strong>' + escapeHtml(item.CorrectiveAction || '-') + '</strong></div>' +
+        '<div class="view-row"><span>Spare Parts</span><strong>' + escapeHtml(item.SpareParts || '-') + '</strong></div>' +
+        '<div class="view-row"><span>Repair Image</span><strong>' + repairThumb + '</strong></div>' +
+      '</div>';
+  }
+  if (item.ApprovalStatus) {
+    var appBadge = item.ApprovalStatus === 'Approved' ? 'success' : 'danger';
+    html +=
+      '<div class="view-section">' +
+        '<h4>Approval</h4>' +
+        '<div class="view-row"><span>Approved By</span><strong>' + escapeHtml(item.ApprovedBy || '-') + '</strong></div>' +
+        '<div class="view-row"><span>Approved On</span><strong>' + formatDateTime(item.ApprovedDateTime) + '</strong></div>' +
+        '<div class="view-row"><span>Status</span><strong><span class="badge badge-' + appBadge + '">' + escapeHtml(item.ApprovalStatus) + '</span></strong></div>' +
+        '<div class="view-row"><span>Remarks</span><strong>' + escapeHtml(item.ApprovalRemarks || '-') + '</strong></div>' +
+      '</div>';
+  }
+  if (!item.StartDateTime && !item.StartTime) {
+    html += '<div class="view-section"><h4>Status</h4><div class="view-row"><span>This job card is <strong>OPEN</strong> and waiting to be started.</span></div></div>';
+  }
+  html +=
+    '</div>' +
+    '<div class="view-status-bar"><span class="badge badge-' + statusBadge + '" style="font-size:13px;padding:5px 14px">Status: ' + escapeHtml(item.Status) + '</span></div>';
+  document.getElementById('jcViewBody').innerHTML = html;
+  showModal('jcViewModal');
+}
+
+function openApproveJc(id) {
+  var item = jcData.find(function(r) { return r.JobCardNo === id; });
+  if (!item) return;
+  if (!isAdmin() && !hasPermission('approveJobCard')) {
+    showToast('You do not have permission to approve job cards', 'warning');
+    return;
+  }
+  resetForm('approveJcForm');
+  document.getElementById('approveJcJobNo').value = id;
+  document.getElementById('approveJcRef').textContent = id;
+  document.getElementById('apJcNo').textContent = id;
+  document.getElementById('apJcDept').textContent = item.Department || '-';
+  document.getElementById('apJcMachine').textContent = item.Machine || '-';
+  document.getElementById('apJcDesc').textContent = (item.ComplaintDescription || '').substring(0, 80) + ((item.ComplaintDescription || '').length > 80 ? '...' : '');
+  document.getElementById('apJcTech').textContent = item.AssignedTechnician || '-';
+  document.getElementById('apJcWaiting').textContent = parseFloat(item.WaitingTime || 0).toFixed(2) + ' hrs';
+  document.getElementById('apJcWorking').textContent = parseFloat(item.WorkingTime || 0).toFixed(2) + ' hrs';
+  document.getElementById('apJcBreakdown').textContent = parseFloat(item.BreakdownTime || 0).toFixed(2) + ' hrs';
+  document.getElementById('apJcCompleted').textContent = formatDateTime(item.CloseTime || item.CloseDateTime);
+  document.getElementById('apJcApprovedBy').textContent = (currentUser ? currentUser.name || currentUser.email : '—') + ' (Auto)';
+  var now = new Date();
+  document.getElementById('apJcApprovedDt').textContent = formatDateTime(now) + ' (Auto)';
+  document.getElementById('apJcStatus').textContent = 'Pending';
+  document.getElementById('apJcStatus').className = 'badge badge-warning';
+  document.getElementById('apJcRemarks').value = '';
+  showModal('approveJcModal');
+}
+
+function submitApproveJc(status) {
+  var id = document.getElementById('approveJcJobNo').value;
+  if (!id) return;
+  var remarks = document.getElementById('apJcRemarks').value.trim();
+  if (status === 'Rejected' && !remarks) {
+    showToast('Please provide remarks when rejecting a job card', 'warning');
+    return;
+  }
+  var data = {
+    ApprovalStatus: status,
+    ApprovalRemarks: remarks
+  };
+  var btn = status === 'Approved' ? document.getElementById('approveJcBtn') : document.getElementById('rejectJcBtn');
+  btn.disabled = true;
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(result) {
+      jcData = result || [];
+      showLoading(false);
+      btn.disabled = false;
+      hideModal('approveJcModal');
+      showToast('Job card ' + status.toLowerCase() + ' successfully');
+      renderJcTabs();
+    })
+    .withFailureHandler(function(err) {
+      showLoading(false);
+      btn.disabled = false;
+      showToast(err.message || 'Failed to ' + status.toLowerCase() + ' job card', 'error');
+    })
+    .approveJobCard(id, data);
+}
+
+function saveApproveJc(e) {
+  e.preventDefault();
+  submitApproveJc('Approved');
+}
+
+function openFullImage(url) {
+  if (!url) return;
+  document.getElementById('jcFullImage').src = url;
+  showModal('jcImageModal');
+}
+
+function searchJobCardsTable() {
+  var query = document.getElementById('jcSearch').value.toLowerCase();
+  if (!query) { renderJcTable(); return; }
+  var filtered = jcData.filter(function(jc) {
+    return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(query) !== -1) ||
+           (jc.Machine && jc.Machine.toLowerCase().indexOf(query) !== -1) ||
+           (jc.AssignedTechnician && jc.AssignedTechnician.toLowerCase().indexOf(query) !== -1) ||
+           (jc.ComplaintDescription && jc.ComplaintDescription.toLowerCase().indexOf(query) !== -1);
+  });
+  jcData = filtered;
+  jcPage = 1;
+  renderJcTabs();
+}
+</script>

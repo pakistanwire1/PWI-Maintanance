@@ -1,0 +1,97 @@
+<div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo-area">
+          <img class="login-logo-img" id="loginLogoImg" alt="Pakistan Wire Industries" style="display:none" onload="this.style.display='block';document.getElementById('loginLogoFallback').style.display='none'">
+          <div class="login-logo-fallback" id="loginLogoFallback">
+            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="52" height="52">
+              <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
+              <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
+              <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
+              <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+            </svg>
+          </div>
+        </div>
+        <h1 style="font-size:18px;margin-bottom:2px">Pakistan Wire Industries (Pvt.) Ltd.</h1>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Computerized Maintenance Management System</p>
+      </div>
+      <form id="loginForm" onsubmit="return handleLogin(event)">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" class="form-control" placeholder="Enter your email" required>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" class="form-control" placeholder="Enter your password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+          <span class="btn-text">Sign In</span>
+          <span class="spinner" style="display:none"></span>
+        </button>
+        <div id="loginError" class="alert alert-danger" style="display:none;margin-top:16px"></div>
+      </form>
+      <div class="login-footer">
+        <p>Demo Credentials:</p>
+        <small>admin@cmms.com / admin123</small>
+      </div>
+    </div>
+  </div>
+
+<style>
+.login-logo-area {
+  width: 80px; height: 80px;
+  margin: 0 auto 12px;
+  border-radius: 16px;
+  background: rgba(25,55,109,0.25);
+  border: 1px solid rgba(59,130,246,0.12);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.login-logo-img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  padding: 10px;
+}
+.login-logo-fallback {
+  color: #3b82f6;
+  filter: drop-shadow(0 0 10px rgba(59,130,246,0.15));
+}
+</style>
+
+<script>
+function handleLogin(e) {
+  e.preventDefault();
+  var email = document.getElementById('loginEmail').value.trim();
+  var password = document.getElementById('loginPassword').value;
+  var btn = document.getElementById('loginBtn');
+  var errorDiv = document.getElementById('loginError');
+  errorDiv.style.display = 'none';
+  btn.disabled = true;
+  btn.querySelector('.btn-text').textContent = 'Signing in...';
+  btn.querySelector('.spinner').style.display = 'inline-block';
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      btn.disabled = false;
+      btn.querySelector('.btn-text').textContent = 'Sign In';
+      btn.querySelector('.spinner').style.display = 'none';
+      if (result.success) {
+        currentUser = result.user;
+        localStorage.setItem('cmms_user', JSON.stringify(result.user));
+        showApp();
+      } else {
+        errorDiv.textContent = result.message;
+        errorDiv.style.display = 'block';
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false;
+      btn.querySelector('.btn-text').textContent = 'Sign In';
+      btn.querySelector('.spinner').style.display = 'none';
+      errorDiv.textContent = 'Connection error. Please try again.';
+      errorDiv.style.display = 'block';
+    })
+    .loginUser(email, password);
+  return false;
+}
+</script>

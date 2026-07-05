@@ -1,0 +1,384 @@
+<div id="openjobcardPage" class="page">
+  <div class="card" style="max-width:860px;margin:0 auto">
+    <div class="card-header">
+      <div class="card-title">
+        <span class="status-dot status-open" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 8px var(--primary-glow);vertical-align:middle;margin-right:8px"></span>
+        Open New Job Card
+      </div>
+    </div>
+
+    <form id="createJobCardForm" onsubmit="return saveJobCard(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Section *
+          </label>
+          <select name="Section" class="form-control" id="jcSection" required onchange="onJcSectionChange()">
+            <option value="">Select Section</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+            Department *
+          </label>
+          <select name="Department" class="form-control" id="jcDepartment" required onchange="onJcDeptChange()">
+            <option value="">Select Department</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><rect x="2" y="2" width="20" height="20" rx="2" ry="2"/><path d="M12 18V6"/><path d="M6 12h12"/></svg>
+            Machine *
+          </label>
+          <select name="Machine" class="form-control" id="jcMachine" required onchange="onJcMachineChange()">
+            <option value="">Select Machine</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Asset *
+          </label>
+          <select name="Asset" class="form-control" id="jcAsset" required onchange="onJcAssetChange()">
+            <option value="">Select Asset</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            Complaint Category *
+          </label>
+          <select name="ComplaintCategory" class="form-control" id="jcComplaintCategory" required>
+            <option value="">Select Category</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Priority *
+          </label>
+          <select name="Priority" class="form-control" required>
+            <option value="">Select Priority</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Critical">Critical</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Complaint Description *
+        </label>
+        <textarea name="ComplaintDescription" class="form-control" rows="4" placeholder="Describe the issue in detail..." required></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Open Date &amp; Time (Auto)
+          </label>
+          <input type="text" class="form-control" id="jcDateTime" readonly tabindex="-1">
+        </div>
+        <div class="form-group">
+          <label>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Complaint By
+          </label>
+          <input type="text" name="ComplaintBy" class="form-control" id="jcComplaintBy" readonly tabindex="-1">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Fault Image
+        </label>
+        <div class="fault-image-row">
+          <div class="image-upload-area" id="jcFaultImageArea">
+            <input type="file" accept="image/*" id="jcFaultImageInput" style="display:none" onchange="handleFaultImageSelect(event)">
+            <input type="file" accept="image/*" capture="environment" id="jcCameraInput" style="display:none" onchange="handleFaultImageSelect(event)">
+            <input type="hidden" name="FaultImage" id="jcFaultImageData">
+            <div class="upload-placeholder" onclick="document.getElementById('jcFaultImageInput').click()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span>Upload Image</span>
+              <small>JPG, PNG, WEBP (max 5MB)</small>
+            </div>
+            <div class="image-preview" id="jcFaultImagePreview" style="display:none">
+              <img id="jcFaultImagePreviewImg" alt="Fault Image Preview">
+              <button type="button" class="image-remove-btn" onclick="removeFaultImage()">&times;</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-camera" onclick="document.getElementById('jcCameraInput').click()" title="Capture from Camera">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Camera
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:0">
+        <small style="color:var(--text-muted);font-size:11px">
+          Job Card No will be auto-generated (e.g. JC-2026-000001).
+          Status will be set to <strong>OPEN</strong>.
+          Waiting Time will be <strong>00:00</strong>.
+        </small>
+      </div>
+
+      <div class="card-actions" style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);justify-content:flex-end">
+        <button type="button" class="btn btn-secondary" onclick="resetOpenForm()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+          Reset
+        </button>
+        <button type="submit" class="btn btn-primary" id="jcSubmitBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          Create Job Card
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var jcSections = [];
+var jcDepartments = [];
+var jcMachines = [];
+var jcAssets = [];
+
+function loadOpenJobCardsData() {
+  showLoading(true);
+  var loaded = { sections: false, departments: false, machines: false, assets: false };
+  function checkDone() {
+    if (loaded.sections && loaded.departments && loaded.machines && loaded.assets) {
+      showLoading(false);
+      populateOpenForm();
+    }
+  }
+  google.script.run
+    .withSuccessHandler(function(data) {
+      jcSections = data || [];
+      loaded.sections = true;
+      checkDone();
+    })
+    .withFailureHandler(function() { loaded.sections = true; checkDone(); showToast('Failed to load sections', 'error'); })
+    .getSectionList();
+  google.script.run
+    .withSuccessHandler(function(data) {
+      jcDepartments = data || [];
+      loaded.departments = true;
+      checkDone();
+    })
+    .withFailureHandler(function() { loaded.departments = true; checkDone(); showToast('Failed to load departments', 'error'); })
+    .getDepartmentList();
+  google.script.run
+    .withSuccessHandler(function(data) {
+      jcMachines = data || [];
+      loaded.machines = true;
+      checkDone();
+    })
+    .withFailureHandler(function() { loaded.machines = true; checkDone(); showToast('Failed to load machines', 'error'); })
+    .getMachines();
+  google.script.run
+    .withSuccessHandler(function(data) {
+      jcAssets = data || [];
+      loaded.assets = true;
+      checkDone();
+    })
+    .withFailureHandler(function() { loaded.assets = true; checkDone(); showToast('Failed to load assets', 'error'); })
+    .getAssets();
+}
+
+function populateOpenForm() {
+  var secSel = document.getElementById('jcSection');
+  secSel.innerHTML = '<option value="">Select Section</option>';
+  jcSections.forEach(function(s) {
+    var opt = document.createElement('option');
+    opt.value = s.Section || '';
+    opt.textContent = s.Section || '';
+    secSel.appendChild(opt);
+  });
+
+  document.getElementById('jcComplaintBy').value = currentUser ? currentUser.name : '';
+
+  var now = new Date();
+  var pad = function(n) { return String(n).padStart(2, '0'); };
+  document.getElementById('jcDateTime').value =
+    now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' +
+    pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+
+  var cats = ['Mechanical Failure', 'Electrical Failure', 'Hydraulic Failure', 'Pneumatic Failure', 'Software Issue', 'Safety Issue', 'Routine Maintenance', 'Other'];
+  populateSelectFromList('jcComplaintCategory', cats, 'Select Category');
+}
+
+function onJcSectionChange() {
+  var sectionName = document.getElementById('jcSection').value;
+  var deptSel = document.getElementById('jcDepartment');
+  var machineSel = document.getElementById('jcMachine');
+  var assetSel = document.getElementById('jcAsset');
+
+  deptSel.innerHTML = '<option value="">Select Department</option>';
+  machineSel.innerHTML = '<option value="">Select Machine</option>';
+  assetSel.innerHTML = '<option value="">Select Asset</option>';
+
+  if (!sectionName) return;
+
+  var filtered = jcDepartments.filter(function(d) {
+    return d.Section === sectionName || d.SectionID === sectionName;
+  });
+
+  filtered.forEach(function(d) {
+    var opt = document.createElement('option');
+    opt.value = d.Department || '';
+    opt.textContent = d.Department || '';
+    deptSel.appendChild(opt);
+  });
+}
+
+function onJcDeptChange() {
+  var deptName = document.getElementById('jcDepartment').value;
+  var machineSel = document.getElementById('jcMachine');
+  var assetSel = document.getElementById('jcAsset');
+
+  machineSel.innerHTML = '<option value="">Select Machine</option>';
+  assetSel.innerHTML = '<option value="">Select Asset</option>';
+
+  if (!deptName) return;
+
+  var filtered = jcMachines.filter(function(m) {
+    return m.Department === deptName;
+  });
+
+  filtered.forEach(function(m) {
+    var opt = document.createElement('option');
+    opt.value = m.MachineName || '';
+    opt.textContent = (m.MachineName || '') + (m.MachineCode ? ' (' + m.MachineCode + ')' : '');
+    machineSel.appendChild(opt);
+  });
+}
+
+function onJcMachineChange() {
+  var machineName = document.getElementById('jcMachine').value;
+  var assetSel = document.getElementById('jcAsset');
+  assetSel.innerHTML = '<option value="">Select Asset</option>';
+
+  if (!machineName) return;
+
+  var filtered = jcAssets.filter(function(a) {
+    return a.MachineName === machineName;
+  });
+
+  filtered.forEach(function(a) {
+    var opt = document.createElement('option');
+    opt.value = a.AssetID || '';
+    opt.textContent = (a.AssetID || '') + (a.AssetName ? ' - ' + a.AssetName : '');
+    assetSel.appendChild(opt);
+  });
+}
+
+function onJcAssetChange() {}
+
+function handleFaultImageSelect(evt) {
+  var file = evt.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Image must be less than 5MB', 'error');
+    evt.target.value = '';
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('jcFaultImageData').value = e.target.result;
+    var preview = document.getElementById('jcFaultImagePreview');
+    var placeholder = document.querySelector('#jcFaultImageArea .upload-placeholder');
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+    document.getElementById('jcFaultImagePreviewImg').src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeFaultImage() {
+  document.getElementById('jcFaultImageData').value = '';
+  document.getElementById('jcFaultImageInput').value = '';
+  document.getElementById('jcCameraInput').value = '';
+  document.getElementById('jcFaultImagePreview').style.display = 'none';
+  document.querySelector('#jcFaultImageArea .upload-placeholder').style.display = 'flex';
+}
+
+function resetOpenForm() {
+  document.getElementById('createJobCardForm').reset();
+  removeFaultImage();
+  document.getElementById('jcDepartment').innerHTML = '<option value="">Select Department</option>';
+  document.getElementById('jcMachine').innerHTML = '<option value="">Select Machine</option>';
+  document.getElementById('jcAsset').innerHTML = '<option value="">Select Asset</option>';
+  if (currentUser) {
+    document.getElementById('jcComplaintBy').value = currentUser.name;
+  }
+  var now = new Date();
+  var pad = function(n) { return String(n).padStart(2, '0'); };
+  document.getElementById('jcDateTime').value =
+    now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' +
+    pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+}
+
+function saveJobCard(e) {
+  e.preventDefault();
+  if (!hasPermission('openJobCard') && !isAdmin()) {
+    showToast('You do not have permission to open job cards', 'warning');
+    return;
+  }
+  var data = getFormData('createJobCardForm');
+  if (!data.Section) { showToast('Please select a Section', 'error'); return; }
+  if (!data.Department) { showToast('Please select a Department', 'error'); return; }
+  if (!data.Machine) { showToast('Please select a Machine', 'error'); return; }
+  if (!data.Asset) { showToast('Please select an Asset', 'error'); return; }
+  if (!data.ComplaintCategory) { showToast('Please select a Complaint Category', 'error'); return; }
+  if (!data.ComplaintDescription) { showToast('Please enter a Complaint Description', 'error'); return; }
+  if (!data.Priority) { showToast('Please select a Priority', 'error'); return; }
+  showLoading(true);
+  document.getElementById('jcSubmitBtn').disabled = true;
+  google.script.run
+    .withSuccessHandler(function(result) {
+      showLoading(false);
+      showToast('Job card opened successfully - Status: OPEN');
+      document.getElementById('jcSubmitBtn').disabled = false;
+      resetOpenForm();
+    })
+    .withFailureHandler(function(err) {
+      showLoading(false);
+      showToast(err.message || 'Failed to open job card', 'error');
+      document.getElementById('jcSubmitBtn').disabled = false;
+    })
+    .addJobCard(data);
+}
+</script>
+
+<style>
+.fault-image-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.fault-image-row .image-upload-area {
+  flex: 1;
+  min-height: 120px;
+}
+.btn-camera {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  white-space: nowrap;
+  margin-top: 0;
+}
+</style>

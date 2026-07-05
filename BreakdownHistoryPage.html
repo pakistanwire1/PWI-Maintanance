@@ -1,0 +1,124 @@
+<div id="breakdownPage" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Breakdown History</div>
+    </div>
+    <div class="filter-bar">
+      <div class="form-group">
+        <label>Machine</label>
+        <select class="form-control" id="bdMachine" onchange="filterBreakdowns()"><option value="">All Machines</option></select>
+      </div>
+      <div class="form-group">
+        <label>Department</label>
+        <select class="form-control" id="bdDepartment" onchange="filterBreakdowns()"><option value="">All Departments</option></select>
+      </div>
+      <div class="form-group">
+        <label>From</label>
+        <input type="date" class="form-control" id="bdFrom" onchange="filterBreakdowns()">
+      </div>
+      <div class="form-group">
+        <label>To</label>
+        <input type="date" class="form-control" id="bdTo" onchange="filterBreakdowns()">
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select class="form-control" id="bdPriority" onchange="filterBreakdowns()">
+          <option value="">All</option>
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+      </div>
+    </div>
+    <div class="dashboard-grid" id="breakdownStats">
+      <div class="stat-card stat-danger">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
+        <div class="stat-info"><h3 id="bdTotalCount">0</h3><p>Total Breakdowns</p></div>
+      </div>
+      <div class="stat-card stat-warning">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
+        <div class="stat-info"><h3 id="bdTotalDowntime">0</h3><p>Total Downtime (hrs)</p></div>
+      </div>
+    </div>
+    <div id="breakdownTableContainer"></div>
+  </div>
+</div>
+
+<script>
+var breakdownData = [];
+var breakdownPage = 1;
+
+function loadBreakdownData() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      console.log('=== PIPELINE: getBreakdownHistory() returned', data ? data.length : 'null/undefined', 'records');
+      if (data && data.length > 0) {
+        console.log('=== PIPELINE: First record =', JSON.stringify(data[0]));
+      } else if (data && data.length === 0) {
+        console.warn('=== PIPELINE: Backend returned EMPTY ARRAY for BreakdownHistory');
+      } else {
+        console.error('=== PIPELINE: Backend returned null/undefined for BreakdownHistory');
+      }
+      breakdownData = data || [];
+      showLoading(false);
+      populateBreakdownFilters();
+      renderBreakdownTable();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load breakdown history', 'error'); })
+    .getBreakdownHistory();
+}
+
+function populateBreakdownFilters() {
+  var machines = getUniqueValues(breakdownData, 'Machine');
+  populateSelectFromList('bdMachine', machines, 'All Machines');
+  var depts = getUniqueValues(breakdownData, 'Department');
+  populateSelectFromList('bdDepartment', depts, 'All Departments');
+}
+
+function renderBreakdownTable() {
+  var filterData = getFilteredBreakdownData();
+  updateBreakdownStats(filterData);
+  renderTable(filterData, [
+    { key: 'JobCardNo', label: 'Job Card' },
+    { key: 'OpenDateTime', label: 'Date', datetime: true },
+    { key: 'Machine', label: 'Machine' },
+    { key: 'Department', label: 'Department' },
+    { key: 'ComplaintDescription', label: 'Description' },
+    { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Low': 'success', 'Medium': 'warning', 'High': 'danger', 'Critical': 'danger' } },
+    { key: 'AssignedTechnician', label: 'Technician' },
+    { key: 'Downtime', label: 'Duration (hrs)' },
+    { key: 'Remarks', label: 'Remarks' }
+  ], null, breakdownPage, PAGE_SIZE, 'breakdownTableContainer');
+  registerPageState('breakdownTableContainer', function(p) { breakdownPage = p; renderBreakdownTable(); });
+}
+
+function breakdownTablePage(p) { breakdownPage = p; renderBreakdownTable(); }
+
+function getFilteredBreakdownData() {
+  var machine = document.getElementById('bdMachine').value;
+  var dept = document.getElementById('bdDepartment').value;
+  var from = document.getElementById('bdFrom').value;
+  var to = document.getElementById('bdTo').value;
+  var priority = document.getElementById('bdPriority').value;
+  return breakdownData.filter(function(row) {
+    if (machine && row.Machine !== machine) return false;
+    if (dept && row.Department !== dept) return false;
+    if (priority && row.Priority !== priority) return false;
+    var dateStr = row.OpenDateTime || row.DateCreated || row.Date;
+    if (from && dateStr) { var d = new Date(dateStr); if (d < new Date(from)) return false; }
+    if (to && dateStr) { var d = new Date(dateStr); if (d > new Date(to + 'T23:59:59')) return false; }
+    return true;
+  });
+}
+
+function filterBreakdowns() { breakdownPage = 1; renderBreakdownTable(); }
+
+function updateBreakdownStats(filtered) {
+  var total = filtered.length;
+  var downtime = filtered.reduce(function(sum, r) { return sum + (parseFloat(r.TotalDuration || r.Downtime) || 0); }, 0);
+  document.getElementById('bdTotalCount').textContent = total;
+  document.getElementById('bdTotalDowntime').textContent = downtime.toFixed(2);
+}
+</script>

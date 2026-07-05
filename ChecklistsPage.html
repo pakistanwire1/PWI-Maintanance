@@ -1,0 +1,325 @@
+<div id="checklistsPage" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Checklist Templates</div>
+      <div class="card-actions">
+        <button class="btn btn-primary" onclick="openTemplateForm()">+ New Template</button>
+      </div>
+    </div>
+    <div id="templateTableContainer"></div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Checklists</div>
+      <div class="card-actions">
+        <button class="btn btn-success" onclick="openChecklistForm()">+ New Checklist</button>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <div class="form-group">
+        <select class="form-control" id="clStatusFilter" onchange="renderChecklistsTable()">
+          <option value="">All Status</option>
+          <option value="Pending">Pending</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </div>
+    </div>
+    <div id="checklistsTableContainer"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="templateFormModal" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="templateFormTitle">Checklist Template</div>
+      <button class="modal-close" onclick="hideModal('templateFormModal')">&times;</button>
+    </div>
+    <form id="templateForm" onsubmit="return saveTemplate(event)">
+      <div class="modal-body">
+        <input type="hidden" name="TemplateID" id="editTemplateId">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Template Name *</label>
+            <input type="text" name="TemplateName" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select name="Category" class="form-control" id="templateCategory"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Checklist Items (one per line)</label>
+          <textarea name="Items" class="form-control" rows="6" placeholder="Item 1&#10;Item 2&#10;Item 3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="hideModal('templateFormModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="checklistFormModal" style="display:none">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title" id="checklistFormTitle">New Checklist</div>
+      <button class="modal-close" onclick="hideModal('checklistFormModal')">&times;</button>
+    </div>
+    <form id="checklistForm" onsubmit="return saveChecklist(event)">
+      <div class="modal-body">
+        <input type="hidden" name="ChecklistID" id="editChecklistId">
+        <input type="hidden" name="TemplateName" id="clTemplateName">
+        <input type="hidden" name="Results" id="clResults">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Template *</label>
+            <select name="TemplateID" class="form-control" id="clTemplate" required onchange="onTemplateChange()"></select>
+          </div>
+          <div class="form-group">
+            <label>Machine *</label>
+            <select name="Machine" class="form-control" id="clMachine" required></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" name="Date" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Assigned To</label>
+            <select name="AssignedTo" class="form-control" id="clTechnician"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select name="Status" class="form-control">
+            <option value="Pending">Pending</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+        <div id="checklistItemsContainer" class="card" style="display:none;margin-top:16px">
+          <div class="card-title mb-12">Checklist Items</div>
+          <div id="checklistItems"></div>
+        </div>
+        <div class="form-group">
+          <label>Remarks</label>
+          <textarea name="Remarks" class="form-control"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="hideModal('checklistFormModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var templateData = [];
+var checklistData = [];
+var templatePage = 1;
+var checklistPage = 1;
+
+function loadChecklistsData() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      console.log('=== PIPELINE: getChecklistTemplates() returned', data ? data.length : 'null/undefined', 'records');
+      if (data && data.length > 0) {
+        console.log('=== PIPELINE: First record =', JSON.stringify(data[0]));
+      } else if (data && data.length === 0) {
+        console.warn('=== PIPELINE: Backend returned EMPTY ARRAY for ChecklistTemplates');
+      } else {
+        console.error('=== PIPELINE: Backend returned null/undefined for ChecklistTemplates');
+      }
+      templateData = data || [];
+      showLoading(false);
+      renderTemplatesTable();
+      loadChecklistsSub();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load data', 'error'); })
+    .getChecklistTemplates();
+}
+
+function loadChecklistsSub() {
+  google.script.run
+    .withSuccessHandler(function(data) { 
+      console.log('=== PIPELINE: getChecklists() returned', data ? data.length : 'null/undefined', 'records');
+      if (data && data.length > 0) {
+        console.log('=== PIPELINE: First record =', JSON.stringify(data[0]));
+      } else if (data && data.length === 0) {
+        console.warn('=== PIPELINE: Backend returned EMPTY ARRAY for Checklists');
+      } else {
+        console.error('=== PIPELINE: Backend returned null/undefined for Checklists');
+      }
+      checklistData = data || []; renderChecklistsTable(); 
+    })
+    .withFailureHandler(function(err) { showToast('Failed to load checklists', 'error'); })
+    .getChecklists();
+}
+
+function renderTemplatesTable() {
+  renderTable(templateData, [
+    { key: 'TemplateID', label: 'ID' },
+    { key: 'TemplateName', label: 'Template Name' },
+    { key: 'Category', label: 'Category' },
+    { key: 'Items', label: 'Items', format: function(v) { return v ? v.split('\n').length + ' items' : '0'; } }
+  ], [
+    { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editTemplate('{id}')", idField: 'TemplateID' },
+    { label: 'Del', icon: 'trash', color: 'danger', onclick: "deleteTemplate('{id}')", idField: 'TemplateID' }
+  ], templatePage, PAGE_SIZE, 'templateTableContainer');
+  registerPageState('templateTableContainer', function(p) { templatePage = p; renderTemplatesTable(); });
+}
+
+function renderChecklistsTable() {
+  var statusFilter = document.getElementById('clStatusFilter').value;
+  var filtered = statusFilter ? checklistData.filter(function(c) { return c.Status === statusFilter; }) : checklistData;
+  renderTable(filtered, [
+    { key: 'ChecklistID', label: 'ID' },
+    { key: 'TemplateName', label: 'Template' },
+    { key: 'Machine', label: 'Machine' },
+    { key: 'Date', label: 'Date', date: true },
+    { key: 'AssignedTo', label: 'Assigned To' },
+    { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Pending': 'warning', 'Completed': 'success' } }
+  ], [
+    { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editChecklist('{id}')", idField: 'ChecklistID' },
+    { label: 'Del', icon: 'trash', color: 'danger', onclick: "deleteChecklist('{id}')", idField: 'ChecklistID' }
+  ], checklistPage, PAGE_SIZE, 'checklistsTableContainer');
+  registerPageState('checklistsTableContainer', function(p) { checklistPage = p; renderChecklistsTable(); });
+}
+
+function openTemplateForm() {
+  document.getElementById('editTemplateId').value = '';
+  resetForm('templateForm');
+  populateSelectFromList('templateCategory', CONSTANTS.CHECKLIST_CATEGORIES, 'Select Category');
+  openModalForm('templateForm', 'New Checklist Template');
+}
+
+function editTemplate(id) {
+  var item = templateData.find(function(r) { return r.TemplateID === id; });
+  if (!item) return;
+  populateSelectFromList('templateCategory', CONSTANTS.CHECKLIST_CATEGORIES, 'Select Category');
+  setFormData('templateForm', item);
+  document.getElementById('editTemplateId').value = id;
+  openModalForm('templateForm', 'Edit Template - ' + id);
+}
+
+function saveTemplate(e) {
+  e.preventDefault();
+  var data = getFormData('templateForm');
+  var id = document.getElementById('editTemplateId').value;
+  showLoading(true);
+  if (id) {
+    google.script.run
+      .withSuccessHandler(function(result) { templateData = result; showLoading(false); hideModal('templateFormModal'); showToast('Template updated'); renderTemplatesTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to update template', 'error'); })
+      .updateChecklistTemplate(id, data);
+  } else {
+    google.script.run
+      .withSuccessHandler(function(result) { templateData = result; showLoading(false); hideModal('templateFormModal'); showToast('Template added'); renderTemplatesTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to add template', 'error'); })
+      .addChecklistTemplate(data);
+  }
+}
+
+function deleteTemplate(id) {
+  showConfirm('Delete Template', 'Are you sure?', function() {
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) { templateData = result; showLoading(false); showToast('Template deleted'); renderTemplatesTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to delete template', 'error'); })
+      .deleteChecklistTemplate(id);
+  });
+}
+
+function openChecklistForm() {
+  document.getElementById('editChecklistId').value = '';
+  resetForm('checklistForm');
+  document.getElementById('checklistItemsContainer').style.display = 'none';
+  document.getElementById('checklistForm').querySelector('input[name="Date"]').value = new Date().toISOString().split('T')[0];
+  populateSelect('clTemplate', templateData, 'TemplateID', 'TemplateName', 'Select Template');
+  google.script.run.withSuccessHandler(function(m) { populateSelect('clMachine', m, 'MachineID', 'MachineName', 'Select Machine'); }).withFailureHandler(function() {}).getMachines();
+  google.script.run.withSuccessHandler(function(t) { populateSelect('clTechnician', t, 'EmployeeID', 'TechnicianName', 'Select'); }).withFailureHandler(function() {}).getTechnicians();
+  openModalForm('checklistForm', 'New Checklist');
+}
+
+function onTemplateChange() {
+  var templateId = document.getElementById('clTemplate').value;
+  var template = templateData.find(function(t) { return t.TemplateID === templateId; });
+  var container = document.getElementById('checklistItemsContainer');
+  if (!template || !template.Items) { container.style.display = 'none'; return; }
+  container.style.display = 'block';
+  document.getElementById('clTemplateName').value = template.TemplateName;
+  var items = template.Items.split('\n').filter(function(i) { return i.trim(); });
+  var html = '';
+  items.forEach(function(item, idx) {
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">' +
+      '<input type="checkbox" name="cl_item_' + idx + '" value="Pass" onchange="updateChecklistResults()">' +
+      '<span>' + item + '</span></div>';
+  });
+  document.getElementById('checklistItems').innerHTML = html;
+}
+
+function updateChecklistResults() {
+  var results = [];
+  document.querySelectorAll('#checklistItems input[type="checkbox"]').forEach(function(cb) {
+    results.push({ item: cb.nextElementSibling.textContent, status: cb.checked ? 'Pass' : 'Fail' });
+  });
+  document.getElementById('clResults').value = JSON.stringify(results);
+}
+
+function editChecklist(id) {
+  var item = checklistData.find(function(r) { return r.ChecklistID === id; });
+  if (!item) return;
+  populateSelect('clTemplate', templateData, 'TemplateID', 'TemplateName', 'Select Template');
+  google.script.run.withSuccessHandler(function(m) { populateSelect('clMachine', m, 'MachineID', 'MachineName', 'Select Machine'); }).withFailureHandler(function() {}).getMachines();
+  google.script.run.withSuccessHandler(function(t) { populateSelect('clTechnician', t, 'EmployeeID', 'TechnicianName', 'Select'); }).withFailureHandler(function() {}).getTechnicians();
+  setFormData('checklistForm', item);
+  document.getElementById('editChecklistId').value = id;
+  populateSelect('clTemplate', templateData, 'TemplateID', 'TemplateName', 'Select Template');
+  if (item.Results) {
+    try {
+      var results = JSON.parse(item.Results);
+      document.getElementById('checklistItemsContainer').style.display = 'block';
+      var html = '';
+      results.forEach(function(r, idx) {
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">' +
+          '<input type="checkbox" name="cl_item_' + idx + '" value="Pass" ' + (r.status === 'Pass' ? 'checked' : '') + ' onchange="updateChecklistResults()">' +
+          '<span>' + r.item + '</span></div>';
+      });
+      document.getElementById('checklistItems').innerHTML = html;
+    } catch(e) {}
+  }
+  openModalForm('checklistForm', 'Edit Checklist - ' + id);
+}
+
+function saveChecklist(e) {
+  e.preventDefault();
+  updateChecklistResults();
+  var data = getFormData('checklistForm');
+  var id = document.getElementById('editChecklistId').value;
+  showLoading(true);
+  if (id) {
+    google.script.run
+      .withSuccessHandler(function(result) { checklistData = result; showLoading(false); hideModal('checklistFormModal'); showToast('Checklist updated'); renderChecklistsTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to update checklist', 'error'); })
+      .updateChecklist(id, data);
+  } else {
+    google.script.run
+      .withSuccessHandler(function(result) { checklistData = result; showLoading(false); hideModal('checklistFormModal'); showToast('Checklist created'); renderChecklistsTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to create checklist', 'error'); })
+      .addChecklist(data);
+  }
+}
+
+function deleteChecklist(id) {
+  showConfirm('Delete Checklist', 'Are you sure?', function() {
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) { checklistData = result; showLoading(false); showToast('Checklist deleted'); renderChecklistsTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to delete checklist', 'error'); })
+      .deleteChecklist(id);
+  });
+}
+</script>

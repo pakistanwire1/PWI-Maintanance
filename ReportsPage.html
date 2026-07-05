@@ -1,0 +1,152 @@
+<div id="reportsPage" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Reports</div>
+    </div>
+    <div class="filter-bar">
+      <div class="form-group">
+        <label>Report Type</label>
+        <select class="form-control" id="rptType" onchange="onReportTypeChange()">
+          <option value="machine_history">Machine History</option>
+          <option value="technician_performance">Technician Performance</option>
+          <option value="department">Department Report</option>
+          <option value="breakdown">Breakdown Report</option>
+          <option value="downtime">Downtime Report</option>
+          <option value="monthly">Monthly Report</option>
+          <option value="pm_compliance">PM Compliance</option>
+        </select>
+      </div>
+      <div class="form-group" id="rptMachineGroup" style="display:none">
+        <label>Machine</label>
+        <select class="form-control" id="rptMachine"></select>
+      </div>
+      <div class="form-group" id="rptTechnicianGroup" style="display:none">
+        <label>Technician</label>
+        <select class="form-control" id="rptTechnician"></select>
+      </div>
+      <div class="form-group" id="rptDeptGroup" style="display:none">
+        <label>Department</label>
+        <select class="form-control" id="rptDepartment"></select>
+      </div>
+      <div class="form-group" id="rptYearGroup" style="display:none">
+        <label>Year</label>
+        <input type="number" class="form-control" id="rptYear" value="2026">
+      </div>
+      <div class="form-group">
+        <button class="btn btn-primary" onclick="generateReport()" style="margin-top:20px">Generate Report</button>
+        <button class="btn btn-secondary" onclick="exportReport()" style="margin-top:20px">Export CSV</button>
+      </div>
+    </div>
+    <div id="reportTableContainer"></div>
+  </div>
+</div>
+
+<script>
+var reportData = [];
+
+function loadReportsData() {
+  google.script.run.withSuccessHandler(function(m) { populateSelect('rptMachine', m, 'MachineID', 'MachineName', 'All Machines'); }).withFailureHandler(function() {}).getMachines();
+  google.script.run.withSuccessHandler(function(t) { populateSelect('rptTechnician', t, 'EmployeeID', 'TechnicianName', 'All Technicians'); }).withFailureHandler(function() {}).getTechnicians();
+  google.script.run.withSuccessHandler(function(d) {
+    var list = (d || []).map(function(x) { return x.Name || x.Department; }).filter(function(n) { return n; });
+    populateSelectFromList('rptDepartment', list, 'All Departments');
+  }).withFailureHandler(function() {}).getDepartments();
+  generateReport();
+}
+
+function onReportTypeChange() {
+  var type = document.getElementById('rptType').value;
+  document.getElementById('rptMachineGroup').style.display = (type === 'machine_history' || type === 'downtime') ? 'block' : 'none';
+  document.getElementById('rptTechnicianGroup').style.display = type === 'technician_performance' ? 'block' : 'none';
+  document.getElementById('rptDeptGroup').style.display = type === 'department' ? 'block' : 'none';
+  document.getElementById('rptYearGroup').style.display = type === 'monthly' ? 'block' : 'none';
+}
+
+function generateReport() {
+  var type = document.getElementById('rptType').value;
+  var filters = {
+    machine: (document.getElementById('rptMachine') || {}).value || '',
+    technician: (document.getElementById('rptTechnician') || {}).value || '',
+    department: (document.getElementById('rptDepartment') || {}).value || '',
+    year: (document.getElementById('rptYear') || {}).value || ''
+  };
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) { 
+      console.log('=== PIPELINE: getReportData() returned', data ? data.length : 'null/undefined', 'records');
+      if (data && data.length > 0) {
+        console.log('=== PIPELINE: First record =', JSON.stringify(data[0]));
+      } else if (data && data.length === 0) {
+        console.warn('=== PIPELINE: Backend returned EMPTY ARRAY for Reports');
+      } else {
+        console.error('=== PIPELINE: Backend returned null/undefined for Reports');
+      }
+      reportData = data || []; showLoading(false); renderReportTable(type, data); 
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to generate report', 'error'); })
+    .getReportData(type, filters);
+}
+
+function renderReportTable(type, data) {
+  var columnMap = {
+    machine_history: [
+      { key: 'JobCardNo', label: 'Job Card' }, { key: 'Date', label: 'Date', datetime: true },
+      { key: 'Machine', label: 'Machine' }, { key: 'Complaint', label: 'Complaint' },
+      { key: 'Technician', label: 'Technician' }, { key: 'Status', label: 'Status', badge: true,
+        badgeMap: { 'Open': 'primary', 'In Progress': 'warning', 'Running': 'warning', 'Completed': 'success', 'Closed': 'success' } },
+      { key: 'Priority', label: 'Priority' }, { key: 'Downtime', label: 'Duration (hrs)' }
+    ],
+    technician_performance: [
+      { key: 'technician', label: 'Technician' }, { key: 'totalJobs', label: 'Total Jobs' },
+      { key: 'completed', label: 'Completed' }, { key: 'totalDowntime', label: 'Total Downtime' }
+    ],
+    department: [
+      { key: 'department', label: 'Department' }, { key: 'totalJobs', label: 'Total Jobs' },
+      { key: 'openJobs', label: 'Open' }, { key: 'closedJobs', label: 'Closed' },
+      { key: 'totalDowntime', label: 'Downtime (hrs)' }
+    ],
+    breakdown: [
+      { key: 'JobCardNo', label: 'Job Card' }, { key: 'Date', label: 'Date', datetime: true },
+      { key: 'Machine', label: 'Machine' }, { key: 'Department', label: 'Dept' },
+      { key: 'ComplaintDescription', label: 'Description' }, { key: 'Priority', label: 'Priority' },
+      { key: 'AssignedTechnician', label: 'Technician' }, { key: 'Downtime', label: 'Duration' }
+    ],
+    downtime: [
+      { key: 'JobCardNo', label: 'Job Card' }, { key: 'Date', label: 'Date', datetime: true },
+      { key: 'Machine', label: 'Machine' }, { key: 'Department', label: 'Dept' },
+      { key: 'Downtime', label: 'Duration (hrs)' }, { key: 'Priority', label: 'Priority' },
+      { key: 'Technician', label: 'Technician' }
+    ],
+    monthly: [
+      { key: 'month', label: 'Month' }, { key: 'total', label: 'Total Jobs' },
+      { key: 'closed', label: 'Closed' }, { key: 'downtime', label: 'Downtime (hrs)' }
+    ],
+    pm_compliance: [
+      { key: 'PMNumber', label: 'PM No' }, { key: 'Machine', label: 'Machine' },
+      { key: 'Frequency', label: 'Frequency' }, { key: 'NextDueDate', label: 'Next Due' },
+      { key: 'LastDone', label: 'Last Done' }, { key: 'Status', label: 'Status', badge: true },
+      { key: 'Compliant', label: 'Compliant', badge: true, badgeMap: { 'Yes': 'success', 'No': 'danger' } }
+    ]
+  };
+  renderTable(data, columnMap[type] || [], null, 1, 100, 'reportTableContainer');
+}
+
+function exportReport() {
+  if (!reportData || reportData.length === 0) { showToast('No data to export', 'warning'); return; }
+  var headers = Object.keys(reportData[0]);
+  var csv = headers.join(',') + '\n';
+  reportData.forEach(function(row) {
+    csv += headers.map(function(h) {
+      var val = String(row[h] || '').replace(/"/g, '""');
+      return '"' + val + '"';
+    }).join(',') + '\n';
+  });
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = document.getElementById('rptType').value + '_report.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>

@@ -1,0 +1,232 @@
+<div id="techniciansPage" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Technician Master</div>
+      <div class="card-actions">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="form-control" id="technicianSearch" placeholder="Search technicians..." onkeyup="searchTechniciansTable()">
+        </div>
+        <button class="btn btn-primary" onclick="openTechnicianForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add Technician</button>
+      </div>
+    </div>
+    <div id="techniciansTableContainer"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="technicianFormModal" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="technicianFormTitle">Add Technician</div>
+      <button class="modal-close" onclick="hideModal('technicianFormModal')">&times;</button>
+    </div>
+    <form id="technicianForm" onsubmit="return saveTechnician(event)">
+      <div class="modal-body">
+        <input type="hidden" name="originalId" id="editTechId">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Employee ID *</label>
+            <input type="text" name="EmployeeID" class="form-control" required id="techEmpId">
+          </div>
+          <div class="form-group">
+            <label>Employee Code</label>
+            <input type="text" name="EmployeeCode" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Technician Name *</label>
+          <input type="text" name="TechnicianName" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Designation</label>
+          <input type="text" name="Designation" class="form-control" placeholder="e.g. Senior Technician">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Department</label>
+            <select name="Department" class="form-control" id="techDept" onchange="onTechDeptChange()">
+              <option value="">Select Department</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Section</label>
+            <select name="Section" class="form-control" id="techSection">
+              <option value="">Select Section</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Skill</label>
+            <select name="Skill" class="form-control" id="techSkill"></select>
+          </div>
+          <div class="form-group">
+            <label>Shift</label>
+            <select name="Shift" class="form-control" id="techShift"></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Mobile</label>
+            <input type="text" name="Mobile" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="Email" class="form-control">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Joining Date</label>
+            <input type="date" name="JoiningDate" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select name="Status" class="form-control">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="hideModal('technicianFormModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var techniciansData = [];
+var techniciansPage = 1;
+
+function loadTechniciansData() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      techniciansData = data || [];
+      showLoading(false);
+      renderTechniciansTable();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load technicians', 'error'); })
+    .getTechnicians();
+}
+
+function renderTechniciansTable() {
+  renderTable(techniciansData, [
+    { key: 'EmployeeID', label: 'Emp ID' },
+    { key: 'EmployeeCode', label: 'Code' },
+    { key: 'TechnicianName', label: 'Name' },
+    { key: 'Designation', label: 'Designation' },
+    { key: 'Department', label: 'Department' },
+    { key: 'Section', label: 'Section' },
+    { key: 'Skill', label: 'Skill' },
+    { key: 'Shift', label: 'Shift' },
+    { key: 'Mobile', label: 'Mobile' },
+    { key: 'Email', label: 'Email' },
+    { key: 'JoiningDate', label: 'Joining Date' },
+    { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Active': 'success', 'Inactive': 'secondary' } }
+  ], [
+    { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editTechnician('{id}')", idField: 'EmployeeID' },
+    { label: 'Del', icon: 'trash', color: 'danger', onclick: "deleteTechnician('{id}')", idField: 'EmployeeID' }
+  ], techniciansPage, PAGE_SIZE, 'techniciansTableContainer');
+  registerPageState('techniciansTableContainer', function(p) { techniciansPage = p; renderTechniciansTable(); });
+}
+
+function loadTechDepartments() {
+  google.script.run
+    .withSuccessHandler(function(depts) {
+      var sel = document.getElementById('techDept');
+      sel.innerHTML = '<option value="">Select Department</option>';
+      (depts || []).forEach(function(d) {
+        sel.innerHTML += '<option value="' + escapeHtml(d.Department) + '">' + escapeHtml(d.Department) + '</option>';
+      });
+    })
+    .withFailureHandler(function(err) { console.error('Failed to load departments'); })
+    .getDepartmentList();
+}
+
+function onTechDeptChange() {
+  var dept = document.getElementById('techDept').value;
+  var secSel = document.getElementById('techSection');
+  secSel.innerHTML = '<option value="">Select Section</option>';
+  if (!dept) return;
+  google.script.run
+    .withSuccessHandler(function(sections) {
+      (sections || []).forEach(function(s) {
+        secSel.innerHTML += '<option value="' + escapeHtml(s.Section) + '">' + escapeHtml(s.Section) + '</option>';
+      });
+    })
+    .withFailureHandler(function(err) { console.error('Failed to load sections'); })
+    .getSectionList();
+}
+
+function openTechnicianForm() {
+  document.getElementById('editTechId').value = '';
+  document.getElementById('techEmpId').disabled = false;
+  resetForm('technicianForm');
+  loadTechDepartments();
+  document.getElementById('techSection').innerHTML = '<option value="">Select Section</option>';
+  populateSelectFromList('techSkill', CONSTANTS.TECH_SKILLS, 'Select Skill');
+  populateSelectFromList('techShift', CONSTANTS.TECH_SHIFTS, 'Select Shift');
+  openModalForm('technicianForm', 'Add Technician');
+}
+
+function editTechnician(id) {
+  var item = techniciansData.find(function(r) { return r.EmployeeID === id; });
+  if (!item) return;
+  loadTechDepartments();
+  populateSelectFromList('techSkill', CONSTANTS.TECH_SKILLS, 'Select Skill');
+  populateSelectFromList('techShift', CONSTANTS.TECH_SHIFTS, 'Select Shift');
+  setFormData('technicianForm', item);
+  document.getElementById('editTechId').value = id;
+  document.getElementById('techEmpId').disabled = true;
+  onTechDeptChange();
+  setTimeout(function() {
+    if (item.Section) {
+      document.getElementById('techSection').value = item.Section;
+    }
+  }, 300);
+  openModalForm('technicianForm', 'Edit Technician - ' + id);
+}
+
+function saveTechnician(e) {
+  e.preventDefault();
+  var data = getFormData('technicianForm');
+  var id = document.getElementById('editTechId').value;
+  showLoading(true);
+
+  if (id) {
+    google.script.run
+      .withSuccessHandler(function(result) { techniciansData = result; showLoading(false); hideModal('technicianFormModal'); showToast('Technician updated successfully'); renderTechniciansTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to update technician', 'error'); })
+      .updateTechnician(id, data);
+  } else {
+    google.script.run
+      .withSuccessHandler(function(result) { techniciansData = result; showLoading(false); hideModal('technicianFormModal'); showToast('Technician added successfully'); renderTechniciansTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to add technician', 'error'); })
+      .addTechnician(data);
+  }
+}
+
+function deleteTechnician(id) {
+  showConfirm('Delete Technician', 'Are you sure you want to delete this technician?', function() {
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) { techniciansData = result; showLoading(false); showToast('Technician deleted successfully'); renderTechniciansTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast('Failed to delete technician', 'error'); })
+      .deleteTechnician(id);
+  });
+}
+
+function searchTechniciansTable() {
+  var query = document.getElementById('technicianSearch').value;
+  if (!query) { renderTechniciansTable(); return; }
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(result) { techniciansData = result; showLoading(false); techniciansPage = 1; renderTechniciansTable(); })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Search failed', 'error'); })
+    .searchTechnicians(query);
+}
+</script>

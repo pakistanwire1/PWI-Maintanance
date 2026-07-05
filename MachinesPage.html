@@ -1,0 +1,292 @@
+<div id="machinesPage" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Machine Master</div>
+      <div class="card-actions">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="form-control" id="machineSearch" placeholder="Search machines..." onkeyup="searchMachinesTable()">
+        </div>
+        <button class="btn btn-primary" onclick="openMachineForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add Machine</button>
+      </div>
+    </div>
+    <div id="machinesTableContainer"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="machineFormModal">
+  <div class="modal modal-wide" style="max-width:900px">
+    <div class="modal-header">
+      <div class="modal-title" id="machineFormTitle">Add Machine</div>
+      <button class="modal-close" onclick="hideModal('machineFormModal')">&times;</button>
+    </div>
+    <form id="machineForm" onsubmit="return saveMachine(event)">
+      <div class="modal-body">
+        <input type="hidden" name="MachineID" id="editMachineId">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Machine Code *</label>
+            <input type="text" name="MachineCode" class="form-control" id="mcCode" oninput="document.getElementById('mcNumber').value=this.value" required>
+          </div>
+          <div class="form-group">
+            <label>Machine Name *</label>
+            <input type="text" name="MachineName" class="form-control" id="mcName" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Machine Number</label>
+            <input type="text" name="MachineNumber" class="form-control" id="mcNumber" readonly placeholder="Auto from Code">
+          </div>
+          <div class="form-group">
+            <label>Department *</label>
+            <select name="DeptID" class="form-control" id="mcDept" onchange="onMachineDeptChange()">
+              <option value="">Select Department</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Section</label>
+            <select name="SectionID" class="form-control" id="mcSection">
+              <option value="">Auto from Department</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" name="Location" class="form-control" id="mcLocation">
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Machine Type</label>
+            <select name="MachineType" class="form-control" id="mcType"></select>
+          </div>
+          <div class="form-group">
+            <label>Manufacturer</label>
+            <input type="text" name="Manufacturer" class="form-control" id="mcManufacturer">
+          </div>
+          <div class="form-group">
+            <label>Model</label>
+            <input type="text" name="Model" class="form-control" id="mcModel">
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Serial No</label>
+            <input type="text" name="SerialNo" class="form-control" id="mcSerialNo">
+          </div>
+          <div class="form-group">
+            <label>Capacity</label>
+            <input type="text" name="Capacity" class="form-control" id="mcCapacity" placeholder="e.g. 500 kg">
+          </div>
+          <div class="form-group">
+            <label>Power Rating</label>
+            <input type="text" name="PowerRating" class="form-control" id="mcPower" placeholder="e.g. 50 kW">
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Install Date</label>
+            <input type="date" name="InstallDate" class="form-control" id="mcInstallDate">
+          </div>
+          <div class="form-group">
+            <label>Warranty Expiry</label>
+            <input type="date" name="WarrantyExpiry" class="form-control" id="mcWarranty">
+          </div>
+          <div class="form-group">
+            <label>Criticality</label>
+            <select name="Criticality" class="form-control" id="mcCriticality">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>QR Code</label>
+            <input type="text" name="QRCode" class="form-control" id="mcQRCode" placeholder="Scan or enter QR code">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select name="Status" class="form-control">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Under Maintenance">Under Maintenance</option>
+              <option value="Retired">Retired</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="hideModal('machineFormModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var machinesData = [];
+var machinesPage = 1;
+var machineDeptCache = null;
+
+function loadMachinesData() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      machinesData = data || [];
+      showLoading(false);
+      renderMachinesTable();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load machines', 'error'); })
+    .getMachines();
+}
+
+function renderMachinesTable() {
+  renderTable(machinesData, [
+    { key: 'MachineID', label: 'ID' },
+    { key: 'MachineCode', label: 'Code' },
+    { key: 'MachineName', label: 'Machine Name' },
+    { key: 'MachineNumber', label: 'Number' },
+    { key: 'Department', label: 'Dept' },
+    { key: 'Section', label: 'Section' },
+    { key: 'Location', label: 'Location' },
+    { key: 'MachineType', label: 'Type' },
+    { key: 'Manufacturer', label: 'Mfr' },
+    { key: 'Model', label: 'Model' },
+    { key: 'Capacity', label: 'Capacity' },
+    { key: 'PowerRating', label: 'Power' },
+    { key: 'Criticality', label: 'Criticality', badge: true, badgeMap: { 'Critical': 'danger', 'High': 'warning', 'Medium': 'primary', 'Low': 'success' } },
+    { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Active': 'success', 'Inactive': 'secondary', 'Under Maintenance': 'warning', 'Retired': 'danger' } }
+  ], [
+    { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editMachine('{id}')", idField: 'MachineID' },
+    { label: 'Del', icon: 'trash', color: 'danger', onclick: "deleteMachine('{id}')", idField: 'MachineID' }
+  ], machinesPage, PAGE_SIZE, 'machinesTableContainer');
+  registerPageState('machinesTableContainer', function(p) { machinesPage = p; renderMachinesTable(); });
+}
+
+function loadMachineDeptCache(callback) {
+  if (machineDeptCache) { if (callback) callback(machineDeptCache); return; }
+  google.script.run
+    .withSuccessHandler(function(depts) {
+      machineDeptCache = depts || [];
+      if (callback) callback(machineDeptCache);
+    })
+    .withFailureHandler(function() { machineDeptCache = []; if (callback) callback([]); })
+    .getDepartmentList();
+}
+
+function populateMachineDeptDropdown(selectedDeptId) {
+  var sel = document.getElementById('mcDept');
+  loadMachineDeptCache(function(depts) {
+    sel.innerHTML = '<option value="">Select Department</option>';
+    depts.forEach(function(d) {
+      var opt = document.createElement('option');
+      opt.value = d.DeptID;
+      opt.textContent = d.Department || '';
+      if (selectedDeptId && (opt.value === selectedDeptId)) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    if (selectedDeptId) onMachineDeptChange();
+  });
+}
+
+function onMachineDeptChange() {
+  var deptId = document.getElementById('mcDept').value;
+  var sectionSel = document.getElementById('mcSection');
+  sectionSel.innerHTML = '<option value="">Select Section</option>';
+  if (deptId && machineDeptCache) {
+    var dept = machineDeptCache.find(function(d) { return d.DeptID === deptId; });
+    if (dept && dept.SectionID) {
+      var opt = document.createElement('option');
+      opt.value = dept.SectionID;
+      opt.textContent = dept.Section || '';
+      opt.selected = true;
+      sectionSel.appendChild(opt);
+    }
+  }
+}
+
+function openMachineForm() {
+  document.getElementById('editMachineId').value = '';
+  resetForm('machineForm');
+  document.getElementById('mcCriticality').value = 'Low';
+  document.getElementById('mcType').innerHTML = '';
+  var types = CONSTANTS.MACHINE_TYPES || [];
+  types.forEach(function(t) {
+    var opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    document.getElementById('mcType').appendChild(opt);
+  });
+  populateMachineDeptDropdown('');
+  openModalForm('machineForm', 'Add Machine');
+}
+
+function editMachine(id) {
+  var item = machinesData.find(function(r) { return r.MachineID === id; });
+  if (!item) return;
+  document.getElementById('mcType').innerHTML = '';
+  var types = CONSTANTS.MACHINE_TYPES || [];
+  types.forEach(function(t) {
+    var opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    document.getElementById('mcType').appendChild(opt);
+  });
+  setFormData('machineForm', item);
+  document.getElementById('editMachineId').value = id;
+  populateMachineDeptDropdown(item.DeptID || '');
+  openModalForm('machineForm', 'Edit Machine - ' + id);
+}
+
+function saveMachine(e) {
+  e.preventDefault();
+  var data = getFormData('machineForm');
+  var id = document.getElementById('editMachineId').value;
+  if (!data.MachineCode) { showToast('Machine Code is required', 'warning'); return; }
+  if (!data.MachineName) { showToast('Machine Name is required', 'warning'); return; }
+  data.MachineNumber = data.MachineNumber || data.MachineCode;
+  var deptSel = document.getElementById('mcDept');
+  if (deptSel.selectedIndex > 0) {
+    data.Department = deptSel.options[deptSel.selectedIndex].textContent;
+  }
+  var secSel = document.getElementById('mcSection');
+  if (secSel.selectedIndex > 0) {
+    data.Section = secSel.options[secSel.selectedIndex].textContent;
+  }
+  showLoading(true);
+  if (id) {
+    google.script.run
+      .withSuccessHandler(function(result) { machinesData = result; showLoading(false); hideModal('machineFormModal'); showToast('Machine updated successfully'); renderMachinesTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to update machine', 'error'); })
+      .updateMachine(id, data);
+  } else {
+    google.script.run
+      .withSuccessHandler(function(result) { machinesData = result; showLoading(false); hideModal('machineFormModal'); showToast('Machine added successfully'); renderMachinesTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to add machine', 'error'); })
+      .addMachine(data);
+  }
+}
+
+function deleteMachine(id) {
+  showConfirm('Delete Machine', 'Are you sure you want to delete this machine?', function() {
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) { machinesData = result; showLoading(false); showToast('Machine deleted successfully'); renderMachinesTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast('Failed to delete machine', 'error'); })
+      .deleteMachine(id);
+  });
+}
+
+function searchMachinesTable() {
+  var query = document.getElementById('machineSearch').value;
+  if (!query) { renderMachinesTable(); return; }
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(result) { machinesData = result; showLoading(false); machinesPage = 1; renderMachinesTable(); })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Search failed', 'error'); })
+    .searchMachines(query);
+}
+</script>

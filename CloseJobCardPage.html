@@ -1,0 +1,313 @@
+<div id="closejobcardPage" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 8px var(--primary-glow);vertical-align:middle;margin-right:8px"></span>
+        Close Job Card — Running Jobs
+      </div>
+      <div class="card-actions">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="form-control" id="closeJcSearch" placeholder="Search running jobs..." onkeyup="searchCloseJc()">
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="form-group">
+        <select class="form-control" id="closeJcDeptFilter" onchange="filterCloseJc()">
+          <option value="">All Departments</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <select class="form-control" id="closeJcTechnicianFilter" onchange="filterCloseJc()">
+          <option value="">All Technicians</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="closeJcTableContainer"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="closeJcModal" style="display:none">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title">
+        <span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.4);vertical-align:middle;margin-right:8px"></span>
+        Close Job — <span id="closeJcRef"></span>
+      </div>
+      <button class="modal-close" onclick="hideModal('closeJcModal')">&times;</button>
+    </div>
+    <form id="closeJcForm" onsubmit="return saveCloseJc(event)">
+      <div class="modal-body">
+        <input type="hidden" name="JobCardNo" id="closeJcJobNo">
+        <input type="hidden" name="Status" value="Closed">
+
+        <div class="time-summary-panel">
+          <div class="ts-header">Time Summary</div>
+          <div class="ts-timeline">
+            <div class="ts-node">
+              <div class="ts-dot ts-dot-created"></div>
+              <div class="ts-body">
+                <span class="ts-body-label">Opened</span>
+                <span class="ts-body-time" id="closeJcOpenedDisplay">—</span>
+              </div>
+            </div>
+            <div class="ts-line"></div>
+            <div class="ts-node">
+              <div class="ts-dot ts-dot-start"></div>
+              <div class="ts-body">
+                <span class="ts-body-label">Started</span>
+                <span class="ts-body-time" id="closeJcStartedDisplay">—</span>
+              </div>
+            </div>
+            <div class="ts-line"></div>
+            <div class="ts-node">
+              <div class="ts-dot ts-dot-close"></div>
+              <div class="ts-body">
+                <span class="ts-body-label">Closed</span>
+                <span class="ts-body-time" id="closeJcClosedDisplay">—</span>
+              </div>
+            </div>
+          </div>
+          <div class="ts-divider"></div>
+          <div class="ts-stats">
+            <div class="ts-stat">
+              <span class="ts-stat-label">Waiting Time</span>
+              <span class="ts-stat-value ts-stat-waiting" id="closeJcWaitingDisplay">0h 0m</span>
+              <span class="ts-stat-desc">Opened → Started</span>
+            </div>
+            <div class="ts-stat">
+              <span class="ts-stat-label">Working Time</span>
+              <span class="ts-stat-value ts-stat-working" id="closeJcWorkingDisplay">0h 0m</span>
+              <span class="ts-stat-desc">Started → Closed</span>
+            </div>
+            <div class="ts-stat">
+              <span class="ts-stat-label">Total Downtime</span>
+              <span class="ts-stat-value ts-stat-breakdown" id="closeJcBreakdownDisplay">0h 0m</span>
+              <span class="ts-stat-desc">Opened → Closed</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Root Cause *</label>
+            <input type="text" name="RootCause" class="form-control" placeholder="Root cause of failure" required>
+          </div>
+          <div class="form-group">
+            <label>Spare Parts Used</label>
+            <input type="text" name="SpareParts" class="form-control" placeholder="Parts, spares, materials used">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Corrective Action *</label>
+          <textarea name="CorrectiveAction" class="form-control" rows="3" placeholder="Actions performed to resolve the issue..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Close Remarks</label>
+          <textarea name="Remarks" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Repair Image</label>
+          <div class="image-upload-area" id="closeRepairImageArea">
+            <input type="file" accept="image/*" id="closeRepairImageInput" style="display:none" onchange="handleRepairImageSelect(event)">
+            <input type="hidden" name="RepairImage" id="closeRepairImageData">
+            <div class="upload-placeholder" onclick="document.getElementById('closeRepairImageInput').click()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span>Click to upload Repair Image</span>
+              <small>Supports: JPG, PNG, WEBP (max 5MB)</small>
+            </div>
+            <div class="image-preview" id="closeRepairImagePreview" style="display:none">
+              <img id="closeRepairImagePreviewImg" alt="Repair Image Preview">
+              <button type="button" class="image-remove-btn" onclick="removeRepairImage()">&times;</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:0">
+          <small style="color:var(--text-muted);font-size:11px">
+            Close Date & Time will be captured automatically.
+            All durations calculated automatically.
+            Status will change from <strong>Running</strong> to <strong>Closed</strong>.
+          </small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="hideModal('closeJcModal')">Cancel</button>
+        <button type="submit" class="btn btn-success">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+          Complete & Close
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var closeJcData = [];
+var closeJcPage = 1;
+var closeJcTimer = null;
+
+function loadCloseJobCardsData() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      closeJcData = data || [];
+      showLoading(false);
+      populateCloseJcSelects();
+      renderCloseJc();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load job cards', 'error'); })
+    .getJobCardsByStatus('Running');
+}
+
+function populateCloseJcSelects() {
+  var deptFilter = document.getElementById('closeJcDeptFilter');
+  var techFilter = document.getElementById('closeJcTechnicianFilter');
+  deptFilter.innerHTML = '<option value="">All Departments</option>';
+  techFilter.innerHTML = '<option value="">All Technicians</option>';
+  var depts = [], techs = [];
+  closeJcData.forEach(function(jc) {
+    if (jc.Department && depts.indexOf(jc.Department) === -1) depts.push(jc.Department);
+    if (jc.AssignedTechnician && techs.indexOf(jc.AssignedTechnician) === -1) techs.push(jc.AssignedTechnician);
+  });
+  depts.sort().forEach(function(d) { deptFilter.innerHTML += '<option value="' + d + '">' + d + '</option>'; });
+  techs.sort().forEach(function(t) { techFilter.innerHTML += '<option value="' + t + '">' + t + '</option>'; });
+}
+
+function renderCloseJc() {
+  var dept = document.getElementById('closeJcDeptFilter').value;
+  var tech = document.getElementById('closeJcTechnicianFilter').value;
+  var list = closeJcData;
+  var userDept = getUserDept();
+  var isAdminUser = isAdmin();
+  if (!isAdminUser && userDept) list = list.filter(function(jc) { return jc.Department === userDept; });
+  if (dept) list = list.filter(function(jc) { return jc.Department === dept; });
+  if (tech) list = list.filter(function(jc) { return jc.AssignedTechnician === tech; });
+  var canClose = isAdminUser || hasPermission('closeJobCard');
+
+  renderTable(list, [
+    { key: 'JobCardNo', label: 'Job Card No' },
+    { key: 'DateTime', label: 'Opened', datetime: true },
+    { key: 'Machine', label: 'Machine' },
+    { key: 'Department', label: 'Dept' },
+    { key: 'AssignedTechnician', label: 'Technician' },
+    { key: 'StartTime', label: 'Working', format: function(val, row) {
+      var st = row.StartTime || row.StartDateTime;
+      return '<span class="live-timer" data-start="' + st + '">' + formatDurationFromDates(st) + '</span>';
+    }}
+  ], [
+    { label: 'Close', icon: 'close', color: 'success', onclick: "openCloseJc('{id}')", idField: 'JobCardNo', condition: function() { return canClose; } }
+  ], closeJcPage, PAGE_SIZE, 'closeJcTableContainer');
+  registerPageState('closeJcTableContainer', function(p) { closeJcPage = p; renderCloseJc(); });
+}
+
+function filterCloseJc() { closeJcPage = 1; renderCloseJc(); }
+
+function openCloseJc(id) {
+  if (!hasPermission('closeJobCard') && !isAdmin()) {
+    showToast('You do not have permission to close job cards', 'warning');
+    return;
+  }
+  var item = closeJcData.find(function(r) { return r.JobCardNo === id; });
+  if (!item) return;
+  resetForm('closeJcForm');
+  document.getElementById('closeJcJobNo').value = id;
+  document.getElementById('closeJcRef').textContent = id;
+  updateCloseJcTimeSummary();
+  if (closeJcTimer) clearInterval(closeJcTimer);
+  closeJcTimer = setInterval(updateCloseJcTimeSummary, 10000);
+  showModal('closeJcModal');
+}
+
+function updateCloseJcTimeSummary() {
+  var item = closeJcData.find(function(r) { return r.JobCardNo === document.getElementById('closeJcJobNo').value; });
+  if (!item) return;
+  var openedStr = item.DateTime || item.OpenTime || item.OpenDateTime;
+  var startStr = item.StartTime || item.StartDateTime;
+  var now = new Date();
+
+  if (openedStr) {
+    document.getElementById('closeJcOpenedDisplay').textContent = formatDateTime(openedStr);
+    var waitingMs = (startStr ? new Date(startStr) : now).getTime() - new Date(openedStr).getTime();
+    document.getElementById('closeJcWaitingDisplay').textContent = formatDuration(waitingMs);
+  }
+  if (startStr) {
+    document.getElementById('closeJcStartedDisplay').textContent = formatDateTime(startStr);
+    var workingMs = now.getTime() - new Date(startStr).getTime();
+    document.getElementById('closeJcWorkingDisplay').textContent = formatDuration(workingMs);
+  }
+  document.getElementById('closeJcClosedDisplay').textContent = formatDateTime(now);
+  if (openedStr) {
+    var breakdownMs = now.getTime() - new Date(openedStr).getTime();
+    document.getElementById('closeJcBreakdownDisplay').textContent = formatDuration(breakdownMs);
+  }
+}
+
+function handleRepairImageSelect(evt) {
+  var file = evt.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Image must be less than 5MB', 'error');
+    evt.target.value = '';
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('closeRepairImageData').value = e.target.result;
+    var preview = document.getElementById('closeRepairImagePreview');
+    var placeholder = document.querySelector('#closeRepairImageArea .upload-placeholder');
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+    document.getElementById('closeRepairImagePreviewImg').src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeRepairImage() {
+  document.getElementById('closeRepairImageData').value = '';
+  document.getElementById('closeRepairImageInput').value = '';
+  document.getElementById('closeRepairImagePreview').style.display = 'none';
+  document.querySelector('#closeRepairImageArea .upload-placeholder').style.display = 'flex';
+}
+
+function saveCloseJc(e) {
+  e.preventDefault();
+  var data = getFormData('closeJcForm');
+  var id = data.JobCardNo;
+  if (!data.RootCause || !data.CorrectiveAction) {
+    showToast('Please fill in Root Cause and Corrective Action', 'error');
+    return;
+  }
+  if (closeJcTimer) { clearInterval(closeJcTimer); closeJcTimer = null; }
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(result) {
+      closeJcData = result || [];
+      showLoading(false);
+      hideModal('closeJcModal');
+      showToast('Job card closed successfully');
+      renderCloseJc();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to close job card', 'error'); })
+    .updateJobCard(id, data);
+}
+
+function searchCloseJc() {
+  var q = document.getElementById('closeJcSearch').value.toLowerCase();
+  if (!q) { closeJcPage = 1; renderCloseJc(); return; }
+  var filtered = closeJcData.filter(function(jc) {
+    return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(q) !== -1) ||
+           (jc.Machine && jc.Machine.toLowerCase().indexOf(q) !== -1) ||
+           (jc.AssignedTechnician && jc.AssignedTechnician.toLowerCase().indexOf(q) !== -1);
+  });
+  closeJcData = filtered;
+  closeJcPage = 1;
+  renderCloseJc();
+}
+</script>
