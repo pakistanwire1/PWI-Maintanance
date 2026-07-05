@@ -1,4 +1,30 @@
 <script>
+var LOGO_URL = 'assets/images/logo.png';
+
+(function() {
+  var cached = localStorage.getItem('cmms_logo_cache');
+  if (cached) {
+    LOGO_URL = cached;
+    document.querySelectorAll('.logo-img, .login-logo-img, .topbar-logo-img, .loading-logo-img, .sidebar-logo-img').forEach(function(el) { if (el) el.src = cached; });
+    document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(function(el) { if (el) el.href = cached; });
+  } else {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      var dataUrl = canvas.toDataURL('image/png');
+      localStorage.setItem('cmms_logo_cache', dataUrl);
+      LOGO_URL = dataUrl;
+      document.querySelectorAll('.logo-img, .login-logo-img, .topbar-logo-img, .loading-logo-img, .sidebar-logo-img').forEach(function(el) { if (el) el.src = dataUrl; });
+      document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(function(el) { if (el) el.href = dataUrl; });
+    };
+    img.src = LOGO_URL;
+  }
+})();
+
 var currentUser = null;
 var currentPage = 'dashboard';
 var PAGE_SIZE = 10;
@@ -77,15 +103,12 @@ function updateUserInfo() {
   document.querySelectorAll('.sidebar-item[data-page]').forEach(function(el) {
     var page = el.dataset.page;
     var show = true;
-    // Dashboard always visible
     if (page === 'dashboard') { show = true; }
-    // Masters
     else if (page === 'machines') { show = isAdmin || hasPermission('manageMachines'); }
     else if (page === 'assets') { show = isAdmin || hasPermission('manageAssets'); }
     else if (page === 'technicians') { show = isAdmin || hasPermission('manageMachines'); }
     else if (page === 'departments') { show = isAdmin || hasPermission('manageMachines'); }
     else if (page === 'sections') { show = isAdmin || hasPermission('manageMachines'); }
-    // Operations
     else if (page === 'openjobcard') { show = isAdmin || hasPermission('openJobCard'); }
     else if (page === 'startjobcard') { show = isAdmin || hasPermission('startJobCard'); }
     else if (page === 'closejobcard') { show = isAdmin || hasPermission('closeJobCard'); }
@@ -94,15 +117,12 @@ function updateUserInfo() {
     else if (page === 'checklists') { show = isAdmin || hasPermission('managePM'); }
     else if (page === 'pm') { show = isAdmin || hasPermission('managePM'); }
     else if (page === 'spareparts') { show = isAdmin || hasPermission('manageSpareParts'); }
-    // Analysis
     else if (page === 'breakdown') { show = isAdmin || hasPermission('viewReports'); }
     else if (page === 'reports') { show = isAdmin || hasPermission('viewReports'); }
-    // System
     else if (page === 'settings') { show = isAdmin || hasPermission('manageUsers'); }
     el.style.display = show ? '' : 'none';
   });
 
-  // Show/hide settings gear in topbar
   var settingsBtn = document.getElementById('topbarSettingsBtn');
   if (settingsBtn) {
     settingsBtn.style.display = (isAdmin || hasPermission('manageUsers')) ? '' : 'none';
@@ -238,7 +258,6 @@ function startClock() {
   setInterval(updateClock, 30000);
 }
 
-// ===== THEME SYSTEM =====
 function loadTheme() {
   var prefs = localStorage.getItem('cmms_themePrefs');
   if (prefs) {
@@ -258,7 +277,6 @@ function applyTheme(prefs) {
     mode = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   }
   document.documentElement.setAttribute('data-theme', mode === 'light' ? 'light' : 'dark');
-  // Accent color
   if (prefs.accentColor) {
     document.documentElement.style.setProperty('--primary', prefs.accentColor);
     var r = parseInt(prefs.accentColor.slice(1,3), 16);
@@ -268,17 +286,14 @@ function applyTheme(prefs) {
     document.documentElement.style.setProperty('--primary-light', `rgba(${r},${g},${b},0.14)`);
     document.documentElement.style.setProperty('--primary-glow', `rgba(${r},${g},${b},0.25)`);
   }
-  // Font size
   var sizes = { small: '12px', medium: '14px', large: '16px' };
   document.documentElement.style.fontSize = sizes[prefs.fontSize] || '14px';
-  // Card style
   var cardGlass = document.querySelectorAll('.card, .stat-card, .chart-card, .modal');
   cardGlass.forEach(function(el) {
     el.style.backdropFilter = prefs.cardStyle === 'solid' ? 'none' : '';
     el.style.webkitBackdropFilter = prefs.cardStyle === 'solid' ? 'none' : '';
     el.style.background = prefs.cardStyle === 'solid' ? '' : '';
   });
-  // Sidebar style
   var sidebar = document.getElementById('mainSidebar');
   if (sidebar) {
     sidebar.style.borderRightWidth = prefs.sidebarStyle === 'borderless' ? '0' : '';
@@ -307,7 +322,6 @@ function updateThemeToggleIcon(mode) {
   }
 }
 
-// ===== DATE/TIME HELPERS =====
 function formatDateTime(date) {
   if (!date) return '';
   var d = date instanceof Date ? date : new Date(date);
@@ -387,10 +401,10 @@ function showToast(message, type) {
     container.id = 'toastContainer';
     document.body.appendChild(container);
   }
-  var icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+  var icons = { success: '\u2713', error: '\u2715', warning: '\u26A0', info: '\u2139' };
   var toast = document.createElement('div');
   toast.className = 'toast toast-' + type;
-  toast.innerHTML = '<span>' + (icons[type] || 'ℹ') + '</span><span>' + message + '</span>';
+  toast.innerHTML = '<span>' + (icons[type] || '\u2139') + '</span><span>' + message + '</span>';
   container.appendChild(toast);
   setTimeout(function() {
     toast.style.opacity = '0';
@@ -723,7 +737,6 @@ function onGlobalSearch(query) {
   }
 }
 
-// ===== NOTIFICATION SYSTEM =====
 var notifications = [];
 var unreadCount = 0;
 
@@ -901,7 +914,6 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// Dashboard filter
 var globalDashboardFilter = 'today';
 
 function setDashboardFilter(filter, btn) {
@@ -911,7 +923,6 @@ function setDashboardFilter(filter, btn) {
   loadDashboardData();
 }
 
-// Skeleton loader helpers
 function showSkeleton(containerId, type) {
   var el = document.getElementById(containerId);
   if (!el) return;
@@ -1027,7 +1038,6 @@ function loadAreasForSelect(selectId) {
 function runFrontendDiagnostic(context) {
   console.log('=== FRONTEND DIAGNOSTIC [' + context + '] ===');
   
-  // 1. Check page container IDs
   var pageIds = ['dashboardPage', 'assetsPage', 'machinesPage', 'techniciansPage',
                  'departmentsPage', 'sectionsPage',
                  'jobcardsPage', 'openjobcardPage', 'startjobcardPage', 'closejobcardPage',
@@ -1040,7 +1050,6 @@ function runFrontendDiagnostic(context) {
   if (missing.length > 0) console.error('MISSING page elements:', missing);
   else console.log('All page elements exist');
   
-  // 2. Check appContainer state
   var ac = document.getElementById('appContainer');
   if (ac) {
     var acStyle = window.getComputedStyle(ac);
@@ -1048,11 +1057,9 @@ function runFrontendDiagnostic(context) {
     if (acStyle.display === 'none') console.error('appContainer has display:none!');
   } else console.error('appContainer not found!');
   
-  // 3. Check loginPage state
   var lp = document.getElementById('loginPage');
   if (lp) console.log('loginPage display:', window.getComputedStyle(lp).display);
   
-  // 4. Check dashboardPage state
   var dp = document.getElementById('dashboardPage');
   if (dp) {
     var dpStyle = window.getComputedStyle(dp);
@@ -1061,7 +1068,6 @@ function runFrontendDiagnostic(context) {
     if (!dp.classList.contains('active')) console.error('dashboardPage missing active class!');
   } else console.error('dashboardPage not found!');
   
-  // 5. Check loading overlay
   var lo = document.getElementById('loadingOverlay');
   if (lo) {
     var loStyle = window.getComputedStyle(lo);
@@ -1069,7 +1075,6 @@ function runFrontendDiagnostic(context) {
     if (loStyle.display !== 'none') console.warn('loadingOverlay is VISIBLE - may cause blank page!');
   }
   
-  // 6. Check CSS rules for .page
   var pages = document.querySelectorAll('.page');
   console.log('Elements with .page class:', pages.length);
   pages.forEach(function(p) {
@@ -1079,7 +1084,6 @@ function runFrontendDiagnostic(context) {
     }
   });
   
-  // 7. Check body background
   var bodyStyle = window.getComputedStyle(document.body);
   console.log('body background:', bodyStyle.backgroundColor, '| body height:', bodyStyle.height);
   

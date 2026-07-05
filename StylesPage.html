@@ -103,6 +103,18 @@
     width: 30px; height: 30px; color: var(--primary); flex-shrink: 0;
     filter: drop-shadow(0 0 10px var(--primary-glow));
   }
+  .sidebar-logo-wrapper {
+    width: 30px; height: 30px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sidebar-logo-img {
+    width: 100%; height: 100%; object-fit: contain;
+    filter: drop-shadow(0 0 10px var(--primary-glow));
+  }
+  .sidebar-logo-fallback {
+    color: var(--primary); width: 30px; height: 30px;
+    filter: drop-shadow(0 0 10px var(--primary-glow));
+  }
   .sidebar-brand-text { transition: opacity 0.2s ease; white-space: nowrap; overflow: hidden; }
   .sidebar.collapsed .sidebar-brand-text { opacity: 0; width: 0; }
   .sidebar-brand-text h2 { font-size: 16px; color: #fff; font-weight: 700; letter-spacing: -0.3px; }
@@ -922,39 +934,7 @@
   .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
   .alert-info { background: var(--primary-light); color: var(--primary); border: 1px solid rgba(99,102,241,0.3); }
 
-  /* ===== LOGIN ===== */
-  .login-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background: var(--bg-primary);
-    background-image:
-      radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 50%, rgba(6,182,212,0.05) 0%, transparent 50%);
-    padding: 20px;
-  }
-
-  .login-card {
-    background: var(--bg-card-glass);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    box-shadow: var(--shadow-lg);
-    padding: 36px;
-    width: 100%;
-    max-width: 400px;
-  }
-
-  .login-header { text-align: center; margin-bottom: 30px; }
-  .login-icon { margin-bottom: 14px; color: var(--primary); }
-  .login-header h1 { font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
-  .login-header p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
-
-  .login-footer { text-align: center; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border); }
-  .login-footer p { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-  .login-footer small { font-size: 11px; color: var(--text-muted); }
+  /* ===== LOGIN (self-contained in LoginPage.html) ===== */
 
   /* ===== FILTER BAR ===== */
   .filter-bar {
@@ -1482,7 +1462,6 @@
   [data-theme="light"] .stat-card .stat-info h3 { color: var(--text); }
   [data-theme="light"] .sidebar-brand-text h2 { color: var(--text); }
   [data-theme="light"] .topbar-brand span { color: var(--text); }
-  [data-theme="light"] .login-header h1 { color: var(--text); }
   [data-theme="light"] .loading-overlay { background: rgba(240,242,245,0.88); }
 
   /* ===== RESPONSIVE ===== */

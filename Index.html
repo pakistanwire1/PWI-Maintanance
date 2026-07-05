@@ -2,6 +2,8 @@
 <html>
 <head>
   <base target="_top">
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <link rel="apple-touch-icon" href="assets/images/logo.png">
   <?!= include('StylesPage'); ?>
 </head>
 <body>
@@ -19,7 +21,7 @@
           </button>
           <div class="topbar-brand" onclick="navigateTo('dashboard')" style="cursor:pointer" title="Go to Dashboard">
             <div class="topbar-logo-mini">
-              <img class="topbar-logo-img" id="topbarLogoImg" alt="PWI" style="display:none" onload="this.style.display='block';document.getElementById('topbarLogoFallback').style.display='none'">
+              <img class="topbar-logo-img" id="topbarLogoImg" alt="PWI" src="assets/images/logo.png" style="display:none" onload="this.style.display='block';document.getElementById('topbarLogoFallback').style.display='none'" onerror="document.getElementById('topbarLogoFallback').style.display='block'">
               <svg class="topbar-logo-fallback" id="topbarLogoFallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="24" height="24">
                 <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
                 <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>

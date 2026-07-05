@@ -1,8 +1,14 @@
 <div class="sidebar" id="mainSidebar">
   <div class="sidebar-brand">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-      <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
-    </svg>
+    <div class="sidebar-logo-wrapper">
+      <img class="sidebar-logo-img" id="sidebarLogoImg" alt="PWI" src="assets/images/logo.png" style="display:none" onload="this.style.display='block'" onerror="this.style.display='none'">
+      <svg class="sidebar-logo-fallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="30" height="30">
+        <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
+        <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
+        <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
+        <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+      </svg>
+    </div>
     <div class="sidebar-brand-text">
       <h2>CMMS</h2>
       <small>Maintenance Management</small>

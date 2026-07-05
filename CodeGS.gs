@@ -4,7 +4,6 @@ function doGet() {
   var template = HtmlService.createTemplateFromFile('WelcomePage');
   var html = template.evaluate()
     .setTitle('CMMS - Welcome')
-    .setFaviconUrl('https://img.icons8.com/fluency/48/maintenance.png')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   Logger.log('doGet() completed, HTML length: ' + html.getContent().length);
@@ -17,7 +16,6 @@ function getAppHtml() {
   var template = HtmlService.createTemplateFromFile('Index');
   var html = template.evaluate()
     .setTitle(CONFIG.APP_NAME)
-    .setFaviconUrl('https://img.icons8.com/fluency/48/maintenance.png')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   Logger.log('getAppHtml() completed, HTML length: ' + html.getContent().length);

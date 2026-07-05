@@ -3,182 +3,356 @@
 <head>
   <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <link rel="apple-touch-icon" href="assets/images/logo.png">
   <title>CMMS - Welcome</title>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%; height: 100%; overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: #05060a;
+      background: #03050a;
       color: #eef0f6;
     }
+
     .ws-bg {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
       background:
-        radial-gradient(ellipse at 15% 50%, rgba(25,55,109,0.35) 0%, transparent 55%),
-        radial-gradient(ellipse at 85% 30%, rgba(99,102,241,0.10) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 80%, rgba(25,55,109,0.20) 0%, transparent 40%),
-        linear-gradient(180deg, #05060a 0%, #0a0e1a 50%, #05060a 100%);
+        radial-gradient(ellipse at 20% 40%, rgba(25,55,109,0.50) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 60%, rgba(99,102,241,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 20%, rgba(6,182,212,0.08) 0%, transparent 40%),
+        linear-gradient(170deg, #020308 0%, #0a0e1a 30%, #05070f 70%, #03050a 100%);
     }
-    .ws-factory {
-      position: fixed; bottom: 0; left: 0; width: 100%; height: 42%; z-index: 1;
+
+    .ws-bg::after {
+      content: '';
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background:
-        linear-gradient(0deg, #05060a 5%, transparent 55%),
+        radial-gradient(circle at 30% 50%, rgba(59,130,246,0.04) 0%, transparent 40%),
+        radial-gradient(circle at 70% 30%, rgba(99,102,241,0.03) 0%, transparent 40%);
+      animation: wsBgPulse 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes wsBgPulse {
+      0% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+
+    .ws-grid {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+      background-image:
+        linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse at center, #000 25%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse at center, #000 25%, transparent 70%);
+    }
+
+    .ws-factory {
+      position: fixed; bottom: 0; left: 0; width: 100%; height: 45%; z-index: 1;
+      background:
+        linear-gradient(0deg, #03050a 8%, transparent 60%),
         repeating-linear-gradient(
           90deg,
-          rgba(59,130,246,0.045) 0px, rgba(59,130,246,0.045) 3px,
-          transparent 3px, transparent 15px,
-          rgba(25,55,109,0.035) 15px, rgba(25,55,109,0.035) 18px,
-          transparent 18px, transparent 30px
+          rgba(59,130,246,0.06) 0px, rgba(59,130,246,0.06) 3px,
+          transparent 3px, transparent 18px,
+          rgba(25,55,109,0.05) 18px, rgba(25,55,109,0.05) 21px,
+          transparent 21px, transparent 36px
         );
-      mask-image: linear-gradient(0deg, #000 12%, transparent 78%);
-      -webkit-mask-image: linear-gradient(0deg, #000 12%, transparent 78%);
+      mask-image: linear-gradient(0deg, #000 10%, transparent 80%);
+      -webkit-mask-image: linear-gradient(0deg, #000 10%, transparent 80%);
     }
-    .ws-factory::after {
+
+    .ws-factory::before {
       content: '';
-      position: absolute; top: 20%; left: 5%; width: 90%; height: 2px;
+      position: absolute; top: 15%; left: 0; width: 100%; height: 40%;
       background: repeating-linear-gradient(
         90deg,
-        rgba(59,130,246,0.06) 0px, rgba(59,130,246,0.06) 40px,
-        transparent 40px, transparent 80px
+        transparent 0px, transparent 60px,
+        rgba(59,130,246,0.04) 60px, rgba(59,130,246,0.04) 64px,
+        transparent 64px, transparent 100px,
+        rgba(99,102,241,0.03) 100px, rgba(99,102,241,0.03) 103px,
+        transparent 103px, transparent 140px
       );
     }
+
+    .ws-factory::after {
+      content: '';
+      position: absolute; top: 25%; left: 8%; width: 84%; height: 1px;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(59,130,246,0.08) 0px, rgba(59,130,246,0.08) 50px,
+        transparent 50px, transparent 100px
+      );
+    }
+
+    .ws-floating {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+      pointer-events: none; overflow: hidden;
+    }
+
+    .ws-floating span {
+      position: absolute;
+      width: 4px; height: 4px;
+      background: rgba(59,130,246,0.25);
+      border-radius: 50%;
+      animation: wsFloat linear infinite;
+    }
+
+    .ws-floating span:nth-child(1) { left: 10%; top: 20%; width: 3px; height: 3px; animation-duration: 18s; animation-delay: 0s; }
+    .ws-floating span:nth-child(2) { left: 25%; top: 60%; width: 5px; height: 5px; animation-duration: 22s; animation-delay: 2s; background: rgba(99,102,241,0.20); }
+    .ws-floating span:nth-child(3) { left: 45%; top: 15%; width: 3px; height: 3px; animation-duration: 16s; animation-delay: 4s; }
+    .ws-floating span:nth-child(4) { left: 65%; top: 70%; width: 4px; height: 4px; animation-duration: 20s; animation-delay: 1s; background: rgba(6,182,212,0.20); }
+    .ws-floating span:nth-child(5) { left: 80%; top: 30%; width: 3px; height: 3px; animation-duration: 24s; animation-delay: 3s; }
+    .ws-floating span:nth-child(6) { left: 50%; top: 80%; width: 5px; height: 5px; animation-duration: 19s; animation-delay: 5s; background: rgba(59,130,246,0.15); }
+    .ws-floating span:nth-child(7) { left: 15%; top: 85%; width: 3px; height: 3px; animation-duration: 21s; animation-delay: 7s; }
+    .ws-floating span:nth-child(8) { left: 90%; top: 50%; width: 4px; height: 4px; animation-duration: 17s; animation-delay: 2s; background: rgba(99,102,241,0.15); }
+    .ws-floating span:nth-child(9) { left: 35%; top: 40%; width: 3px; height: 3px; animation-duration: 23s; animation-delay: 6s; }
+    .ws-floating span:nth-child(10) { left: 70%; top: 10%; width: 5px; height: 5px; animation-duration: 15s; animation-delay: 4s; background: rgba(6,182,212,0.15); }
+
+    @keyframes wsFloat {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100vh) translateX(80px); opacity: 0; }
+    }
+
+    .ws-glow-line {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+      pointer-events: none;
+    }
+
+    .ws-glow-line::before {
+      content: '';
+      position: absolute; top: 35%; left: -20%; width: 140%; height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.10) 20%, rgba(99,102,241,0.15) 50%, rgba(59,130,246,0.10) 80%, transparent 100%);
+      animation: wsGlowSweep 6s ease-in-out infinite;
+    }
+
+    .ws-glow-line::after {
+      content: '';
+      position: absolute; top: 55%; left: -20%; width: 140%; height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(6,182,212,0.06) 20%, rgba(99,102,241,0.10) 50%, rgba(6,182,212,0.06) 80%, transparent 100%);
+      animation: wsGlowSweep 8s ease-in-out 2s infinite;
+    }
+
+    @keyframes wsGlowSweep {
+      0% { transform: translateX(-5%); opacity: 0.3; }
+      50% { transform: translateX(5%); opacity: 1; }
+      100% { transform: translateX(-5%); opacity: 0.3; }
+    }
+
     .ws-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
-      background: radial-gradient(ellipse at center, rgba(5,6,10,0.15) 0%, rgba(5,6,10,0.75) 100%);
+      background: radial-gradient(ellipse at center, rgba(3,5,10,0.10) 0%, rgba(3,5,10,0.70) 100%);
     }
+
     .ws-wrapper {
       position: relative; z-index: 3;
       display: flex; align-items: center; justify-content: center;
       width: 100%; height: 100%; padding: 20px;
     }
+
     .ws-card {
-      background: rgba(10,14,30,0.55);
-      backdrop-filter: blur(28px) saturate(1.5);
-      -webkit-backdrop-filter: blur(28px) saturate(1.5);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 24px;
-      padding: 48px 56px;
-      max-width: 480px; width: 100%;
+      background: rgba(8,12,28,0.50);
+      backdrop-filter: blur(32px) saturate(1.6);
+      -webkit-backdrop-filter: blur(32px) saturate(1.6);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 28px;
+      padding: 52px 60px;
+      max-width: 500px; width: 100%;
       text-align: center;
       box-shadow:
-        0 0 90px rgba(25,55,109,0.10),
-        0 30px 60px rgba(0,0,0,0.6),
-        inset 0 1px 0 rgba(255,255,255,0.05);
-      animation: ws-in 1.2s ease-out forwards;
+        0 0 120px rgba(25,55,109,0.12),
+        0 0 60px rgba(99,102,241,0.05),
+        0 40px 80px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      animation: ws-in 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      position: relative;
+      overflow: hidden;
     }
+
+    .ws-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(59,130,246,0.30), transparent);
+    }
+
     @keyframes ws-in {
-      0% { opacity: 0; transform: translateY(24px) scale(0.96); }
+      0% { opacity: 0; transform: translateY(30px) scale(0.95); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .ws-logo-area {
-      width: 120px; height: 120px;
-      margin: 0 auto 18px;
-      border-radius: 20px;
-      background: rgba(25,55,109,0.25);
-      border: 1px solid rgba(59,130,246,0.12);
+      width: 130px; height: 130px;
+      margin: 0 auto 20px;
+      border-radius: 24px;
+      background: rgba(25,55,109,0.20);
+      border: 1px solid rgba(59,130,246,0.10);
       display: flex; align-items: center; justify-content: center;
       position: relative; overflow: hidden;
+      opacity: 0; animation: wsLogoIn 1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s forwards;
     }
+
+    .ws-logo-area::after {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 24px;
+      background: radial-gradient(circle at 30% 30%, rgba(59,130,246,0.10), transparent 60%);
+      pointer-events: none;
+    }
+
+    @keyframes wsLogoIn {
+      0% { opacity: 0; transform: scale(0.8) rotate(-3deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0); }
+    }
+
     .ws-logo-area .logo-img {
       width: 100%; height: 100%;
       object-fit: contain;
-      padding: 14px;
+      padding: 18px;
+      position: relative; z-index: 1;
     }
+
     .ws-logo-area .logo-fallback {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2px;
+      gap: 3px;
+      position: relative; z-index: 1;
     }
+
     .ws-logo-area .logo-fallback .logo-icon {
-      width: 54px; height: 54px;
+      width: 56px; height: 56px;
       color: #3b82f6;
-      filter: drop-shadow(0 0 14px rgba(59,130,246,0.20));
-      animation: ws-glow 3s ease-in-out infinite;
+      filter: drop-shadow(0 0 20px rgba(59,130,246,0.25));
+      animation: ws-glow 4s ease-in-out infinite;
     }
+
     .ws-logo-area .logo-fallback .logo-letter {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 800;
-      letter-spacing: 0.25em;
+      letter-spacing: 0.3em;
       color: #3b82f6;
-      opacity: 0.7;
+      opacity: 0.6;
     }
+
     @keyframes ws-glow {
-      0%, 100% { filter: drop-shadow(0 0 14px rgba(59,130,246,0.20)); }
-      50% { filter: drop-shadow(0 0 26px rgba(59,130,246,0.40)); }
+      0%, 100% { filter: drop-shadow(0 0 20px rgba(59,130,246,0.25)); }
+      50% { filter: drop-shadow(0 0 35px rgba(59,130,246,0.45)); }
+    }
+
+    .ws-glow-ring {
+      position: absolute; top: -20px; left: -20px; right: -20px; bottom: -20px;
+      border-radius: 44px;
+      border: 1px solid rgba(59,130,246,0.05);
+      animation: wsRingPulse 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes wsRingPulse {
+      0%, 100% { transform: scale(1); opacity: 0.3; }
+      50% { transform: scale(1.03); opacity: 0.6; }
     }
 
     .ws-company {
-      font-size: 18px; font-weight: 700;
-      color: #eef0f6;
-      letter-spacing: 0.03em;
-      margin-bottom: 4px;
-      opacity: 0; animation: ws-up 0.6s ease-out 0.25s forwards;
-    }
-    .ws-division {
-      font-size: 12px;
-      color: #9498b8;
-      font-weight: 500;
-      margin-bottom: 1px;
-      opacity: 0; animation: ws-up 0.6s ease-out 0.35s forwards;
-    }
-    .ws-division-highlight {
-      color: #3b82f6;
-      font-weight: 600;
-    }
-    .ws-title {
-      font-size: 11px;
-      color: #9498b8;
-      letter-spacing: 0.05em;
-      margin-top: 12px;
-      margin-bottom: 20px;
-      opacity: 0; animation: ws-up 0.6s ease-out 0.45s forwards;
-    }
-    .ws-sep {
-      width: 50px; height: 2px;
-      background: linear-gradient(90deg, transparent, #3b82f6, transparent);
-      margin: 0 auto 18px;
-      border-radius: 2px;
-      opacity: 0; animation: ws-up 0.6s ease-out 0.55s forwards;
-    }
-    .ws-welcome {
-      font-size: 36px; font-weight: 800;
-      background: linear-gradient(135deg, #eef0f6 0%, #3b82f6 100%);
+      font-size: 20px; font-weight: 700;
+      background: linear-gradient(135deg, #eef0f6 0%, #c4c8e0 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 8px;
-      letter-spacing: -0.02em;
-      opacity: 0; animation: ws-up 0.6s ease-out 0.65s forwards;
+      letter-spacing: 0.02em;
+      margin-bottom: 6px;
+      line-height: 1.3;
+      opacity: 0; animation: ws-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
     }
+
+    .ws-division-container {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; margin-top: 2px;
+      opacity: 0; animation: ws-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.7s forwards;
+    }
+
+    .ws-division {
+      font-size: 11px;
+      color: #9498b8;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    .ws-division-sep {
+      width: 3px; height: 3px;
+      background: #3b82f6;
+      border-radius: 50%;
+      opacity: 0.5;
+    }
+
+    .ws-title {
+      font-size: 10px;
+      color: #5c6085;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-top: 14px;
+      margin-bottom: 22px;
+      font-weight: 500;
+      opacity: 0; animation: ws-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.9s forwards;
+    }
+
+    .ws-sep {
+      width: 60px; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(59,130,246,0.50), transparent);
+      margin: 0 auto 20px;
+      border-radius: 2px;
+      opacity: 0; animation: ws-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 1.05s forwards;
+    }
+
+    .ws-welcome {
+      font-size: 40px; font-weight: 800;
+      background: linear-gradient(135deg, #eef0f6 0%, #3b82f6 50%, #6366f1 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      opacity: 0; animation: ws-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 1.2s forwards;
+    }
+
     .ws-version {
       font-size: 11px;
-      color: #3b82f6;
-      letter-spacing: 0.04em;
+      color: rgba(59,130,246,0.70);
+      letter-spacing: 0.06em;
       font-weight: 500;
-      margin-bottom: 24px;
-      opacity: 0; animation: ws-up 0.6s ease-out 0.75s forwards;
+      margin-bottom: 28px;
+      opacity: 0; animation: ws-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 1.35s forwards;
     }
+
     @keyframes ws-up {
-      0% { opacity: 0; transform: translateY(10px); }
+      0% { opacity: 0; transform: translateY(14px); }
       100% { opacity: 1; transform: translateY(0); }
     }
 
     .ws-progress {
       width: 100%; height: 3px;
-      background: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.05);
       border-radius: 3px; overflow: hidden;
-      margin-bottom: 20px;
-      opacity: 0; animation: ws-fade 0.4s ease-out 1s forwards;
+      margin-bottom: 22px;
+      opacity: 0; animation: ws-fade 0.5s ease-out 1.6s forwards;
     }
+
     .ws-progress-bar {
       height: 100%; width: 0%;
-      background: linear-gradient(90deg, #3b82f6, #6366f1);
+      background: linear-gradient(90deg, #3b82f6, #6366f1, #3b82f6);
+      background-size: 200% 100%;
       border-radius: 3px;
       transition: width 0.3s linear;
+      animation: wsProgShine 1.5s linear infinite;
     }
+
+    @keyframes wsProgShine {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
     @keyframes ws-fade {
       0% { opacity: 0; }
       100% { opacity: 1; }
@@ -186,73 +360,110 @@
 
     .ws-btn {
       display: inline-flex; align-items: center; gap: 10px;
-      padding: 14px 40px;
-      background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(99,102,241,0.10));
-      color: #3b82f6;
-      border: 1px solid rgba(59,130,246,0.15);
-      border-radius: 14px;
-      font-size: 15px; font-weight: 700;
-      letter-spacing: 0.08em;
+      padding: 16px 44px;
+      background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(99,102,241,0.08));
+      color: #60a5fa;
+      border: 1px solid rgba(59,130,246,0.12);
+      border-radius: 16px;
+      font-size: 14px; font-weight: 700;
+      letter-spacing: 0.06em;
       cursor: pointer;
-      transition: all 0.35s ease;
-      opacity: 0; animation: ws-fade 0.5s ease-out 1.15s forwards;
+      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      opacity: 0; animation: ws-fade 0.6s ease-out 1.9s forwards;
+      font-family: inherit;
+      position: relative;
+      overflow: hidden;
     }
+
+    .ws-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(59,130,246,0.10), transparent);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .ws-btn:hover::before { opacity: 1; }
+
     .ws-btn:hover {
-      background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(99,102,241,0.18));
-      border-color: rgba(59,130,246,0.35);
+      border-color: rgba(59,130,246,0.30);
       transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(59,130,246,0.15);
+      box-shadow: 0 12px 40px rgba(59,130,246,0.12), 0 0 30px rgba(59,130,246,0.06);
+      color: #93bbfb;
     }
+
     .ws-btn:disabled {
-      opacity: 0.5; cursor: not-allowed; transform: none;
+      opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none;
     }
+
     .ws-btn svg {
-      transition: transform 0.3s ease;
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     }
+
     .ws-btn:hover:not(:disabled) svg {
-      transform: translateX(3px);
+      transform: translateX(4px);
     }
+
     .ws-error {
       font-size: 11px; color: #ef4444;
-      margin-top: 12px;
+      margin-top: 14px;
       display: none;
     }
+
     .ws-retry-btn {
       display: none;
-      margin-top: 8px;
-      padding: 6px 18px;
-      background: rgba(239,68,68,0.12);
+      margin-top: 10px;
+      padding: 7px 20px;
+      background: rgba(239,68,68,0.10);
       color: #ef4444;
-      border: 1px solid rgba(239,68,68,0.25);
-      border-radius: 8px;
+      border: 1px solid rgba(239,68,68,0.20);
+      border-radius: 10px;
       cursor: pointer;
       font-size: 12px;
       font-family: inherit;
       font-weight: 600;
       transition: all 0.2s ease;
     }
+
     .ws-retry-btn:hover {
-      background: rgba(239,68,68,0.2);
+      background: rgba(239,68,68,0.18);
+    }
+
+    .ws-loading-text {
+      font-size: 11px;
+      color: #5c6085;
+      margin-bottom: 14px;
+      letter-spacing: 0.08em;
+      opacity: 0; animation: ws-fade 0.5s ease-out 1.6s forwards;
     }
 
     @media (max-width: 520px) {
-      .ws-card { padding: 32px 24px; border-radius: 18px; }
-      .ws-welcome { font-size: 28px; }
-      .ws-company { font-size: 15px; }
-      .ws-logo-area { width: 100px; height: 100px; }
-      .ws-logo-area .logo-fallback .logo-icon { width: 42px; height: 42px; }
-      .ws-btn { padding: 12px 30px; font-size: 13px; }
+      .ws-card { padding: 36px 28px; border-radius: 22px; }
+      .ws-welcome { font-size: 30px; }
+      .ws-company { font-size: 16px; }
+      .ws-logo-area { width: 110px; height: 110px; }
+      .ws-logo-area .logo-fallback .logo-icon { width: 44px; height: 44px; }
+      .ws-btn { padding: 14px 32px; font-size: 13px; }
+      .ws-division-container { flex-direction: column; gap: 2px; }
+      .ws-division-sep { display: none; }
     }
   </style>
 </head>
 <body>
   <div class="ws-bg"></div>
+  <div class="ws-grid"></div>
   <div class="ws-factory"></div>
+  <div class="ws-floating">
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+  <div class="ws-glow-line"></div>
   <div class="ws-overlay"></div>
   <div class="ws-wrapper">
     <div class="ws-card">
       <div class="ws-logo-area" id="wsLogoArea">
-        <img class="logo-img" id="wsLogoImg" alt="Pakistan Wire Industries" style="display:none" onload="this.style.display='block';document.getElementById('wsLogoFallback').style.display='none'">
+        <div class="ws-glow-ring"></div>
+        <img class="logo-img" id="wsLogoImg" alt="Pakistan Wire Industries" src="assets/images/logo.png" style="display:none" onload="this.style.display='block';document.getElementById('wsLogoFallback').style.display='none'" onerror="document.getElementById('wsLogoFallback').style.display='flex'">
         <div class="logo-fallback" id="wsLogoFallback">
           <svg class="logo-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
@@ -264,12 +475,16 @@
         </div>
       </div>
       <div class="ws-company">Pakistan Wire Industries (Pvt.) Ltd.</div>
-      <div class="ws-division"><span class="ws-division-highlight">Spoke Division</span></div>
-      <div class="ws-division"><span class="ws-division-highlight">Control Cable Division</span></div>
+      <div class="ws-division-container">
+        <span class="ws-division">Spoke Division</span>
+        <span class="ws-division-sep"></span>
+        <span class="ws-division">Control Cable Division</span>
+      </div>
       <div class="ws-title">Computerized Maintenance Management System</div>
       <div class="ws-sep"></div>
       <div class="ws-welcome">Welcome</div>
       <div class="ws-version">Enterprise Edition 2026</div>
+      <div class="ws-loading-text" id="wsLoadingText">Initializing system...</div>
       <div class="ws-progress">
         <div class="ws-progress-bar" id="wsProgressBar"></div>
       </div>
@@ -286,6 +501,8 @@
   <script>
     var wsTimer = null;
     var wsLoaded = false;
+    var loadingTexts = ['Initializing system...', 'Loading modules...', 'Preparing interface...', 'Almost ready...'];
+    var textIndex = 0;
 
     function wsEnter() {
       if (wsLoaded) return;
@@ -293,7 +510,7 @@
       if (wsTimer) { clearTimeout(wsTimer); wsTimer = null; }
       var btn = document.getElementById('wsBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;display:inline-block;animation:spin 0.6s linear infinite;margin-right:6px"></span> Loading...';
+      btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;display:inline-block;animation:spin 0.6s linear infinite;margin-right:8px"></span> Loading...';
       document.getElementById('wsError').style.display = 'none';
       document.getElementById('wsRetryBtn').style.display = 'none';
       google.script.run
@@ -325,20 +542,34 @@
 
     function wsStart() {
       var bar = document.getElementById('wsProgressBar');
+      var loadingText = document.getElementById('wsLoadingText');
       if (!bar) return;
-      var duration = 3000, start = Date.now();
+      var duration = 2800, start = Date.now();
+
       function tick() {
-        var pct = Math.min(100, ((Date.now() - start) / duration) * 100);
+        var elapsed = Date.now() - start;
+        var pct = Math.min(100, (elapsed / duration) * 100);
         bar.style.width = pct + '%';
+
+        var newIndex = Math.min(3, Math.floor(pct / 25));
+        if (newIndex !== textIndex && loadingText) {
+          textIndex = newIndex;
+          loadingText.textContent = loadingTexts[textIndex];
+          loadingText.style.opacity = '0';
+          setTimeout(function() { loadingText.style.opacity = '1'; }, 50);
+        }
+
         if (pct >= 100) wsEnter();
         else wsTimer = setTimeout(tick, 50);
       }
       wsTimer = setTimeout(tick, 50);
     }
+
     wsStart();
   </script>
   <style>
     @keyframes spin { to { transform: rotate(360deg); } }
+    #wsLoadingText { transition: opacity 0.3s ease; }
   </style>
 </body>
 </html>
