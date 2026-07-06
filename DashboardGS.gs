@@ -166,6 +166,31 @@ function getDashboardData(filter, userDepartment) {
       if ((techs[ti].Status || '').toLowerCase() === 'active') activeTechs++;
     }
 
+    var totalStockValue = 0;
+    for (var si = 0; si < parts.length; si++) {
+      var stock = parseFloat(parts[si].CurrentStock || parts[si].Stock) || 0;
+      var cost = parseFloat(parts[si].UnitCost || parts[si].Cost) || 0;
+      totalStockValue += stock * cost;
+    }
+
+    var outOfStockParts = 0;
+    var lowStockCount = 0;
+    for (var si = 0; si < parts.length; si++) {
+      var stock = parseFloat(parts[si].CurrentStock || parts[si].Stock) || 0;
+      var min = parseFloat(parts[si].MinimumStock) || 0;
+      if (stock <= 0) outOfStockParts++;
+      if (min > 0 && stock <= min) lowStockCount++;
+    }
+
+    var pmCompleted = 0, pmScheduled = 0, pmInProgress = 0;
+    for (var pi = 0; pi < pms.length; pi++) {
+      var ps = (pms[pi].Status || '').toLowerCase();
+      if (ps === 'completed') pmCompleted++;
+      else if (ps === 'in progress') pmInProgress++;
+      else if (ps === 'scheduled') pmScheduled++;
+    }
+    var pmCompliance = (pms.length > 0) ? Math.round((pmCompleted / pms.length) * 100) : 0;
+
     return {
       totalMachines: totalMachines,
       runningMachines: runningMachines,
@@ -198,7 +223,14 @@ function getDashboardData(filter, userDepartment) {
       avgWorkingTime: avgWorkingTime,
       avgBreakdownTime: avgBreakdownTime,
       maxBreakdownTime: maxBreakdownTime,
-      minBreakdownTime: minBreakdownTime
+      minBreakdownTime: minBreakdownTime,
+      totalStockValue: Math.round(totalStockValue * 100) / 100,
+      outOfStockParts: outOfStockParts,
+      lowStockCount: lowStockCount,
+      pmCompleted: pmCompleted,
+      pmScheduled: pmScheduled,
+      pmInProgress: pmInProgress,
+      pmCompliance: pmCompliance
     };
   } catch (e) {
     return handleError('getDashboardData', e);

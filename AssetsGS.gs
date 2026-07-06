@@ -1,6 +1,6 @@
 var ASSET_COLS = ['AssetID','AssetCode','AssetName','AssetType','Category','MachineID','MachineName','DeptID','Department','SectionID','Section','Location','Manufacturer','Model','SerialNo','Specification','PurchaseDate','InstallDate','WarrantyExpiry','Criticality','Supplier','Cost','Status','QRCode','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
 
-function initializeAssetMaster() {
+function initAssetSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheetName = 'Assets';
   var sheet = ss.getSheetByName(sheetName);
@@ -100,7 +100,7 @@ function initializeAssetMaster() {
 }
 
 function initAssetsSheet() {
-  initializeAssetMaster();
+  initAssetSheet();
 }
 
 function normalizeAsset(a) {
@@ -180,6 +180,7 @@ function addAsset(data) {
   if (!data.Status) data.Status = CONFIG.STATUS.ACTIVE;
   var result = addRow(CONFIG.SHEET_NAMES.ASSETS, data);
   logActivity('Add Asset', data.AssetID + ' - ' + data.AssetName);
+  try { createNotification('Asset Added: ' + (data.AssetName || ''), 'New asset ' + (data.AssetName || '') + ' (' + (data.AssetCode || '') + ') has been added to the system.', CONFIG.NOTIFICATION_MODULES.ASSET, CONFIG.PRIORITY.LOW, data.CreatedBy, '', "navigateTo('assets')"); } catch(e) {}
   return result.map(normalizeAsset);
 }
 

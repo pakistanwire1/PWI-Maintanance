@@ -161,7 +161,8 @@ function approveJobCard(id, approvalData) {
   try {
     var current = getJobCard(id);
     if (!current) throw new Error('Job card not found: ' + id);
-    if (current.Status !== 'CLOSED' && current.Status !== 'Completed') {
+    var s = (current.Status || '').toLowerCase();
+    if (s !== 'closed' && s !== 'completed') {
       throw new Error('Job card must be in CLOSED/COMPLETED status before approval.');
     }
     var isApproved = approvalData.ApprovalStatus === 'Approved';
@@ -181,6 +182,9 @@ function approveJobCard(id, approvalData) {
     logActivity('Approve Job Card', id + ' -> ' + approvalData.ApprovalStatus);
     Logger.log('approveJobCard() SUCCESS: ' + id + ' status=' + data.Status);
     console.log('approveJobCard() SUCCESS: ' + id + ' status=' + data.Status);
+    if (isApproved) {
+      try { createNotification('Job Approved: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been approved.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.ApprovedBy, current.ComplaintBy || '', "navigateTo('jobcards')"); } catch(e) {}
+    }
     return result.map(function(jc) { return normalizeJobCard(jc); });
   } catch (e) {
     Logger.log('approveJobCard() ERROR: ' + e.message);
@@ -273,6 +277,7 @@ function addJobCard(data) {
 
   var result = addRow(CONFIG.SHEET_NAMES.JOBCARDS, data);
   logActivity('Add Job Card', data.JobCardNo);
+  try { createNotification('Job Card Opened: ' + (data.JobCardNo || ''), 'Job card ' + (data.JobCardNo || '') + ' opened for ' + (data.Machine || '') + ' - ' + (data.ComplaintDescription || '').substring(0, 100), CONFIG.NOTIFICATION_MODULES.JOBCARD, data.Priority || CONFIG.PRIORITY.MEDIUM, data.CreatedBy, data.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
 
@@ -309,6 +314,12 @@ function updateJobCard(id, data) {
   data.UpdatedAt = getCurrentTimestamp();
   var result = updateRow(CONFIG.SHEET_NAMES.JOBCARDS, 'JobCardNo', id, data);
   logActivity('Update Job Card', id);
+  if (data.Status === CONFIG.STATUS.RUNNING) {
+    try { createNotification('Job Started: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been started.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
+  }
+  if (data.Status === CONFIG.STATUS.CLOSED) {
+    try { createNotification('Job Closed: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been closed.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
+  }
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
 
@@ -337,6 +348,12 @@ function updateJobCardStatus(id, status) {
   data.UpdatedAt = getCurrentTimestamp();
   var result = updateRow(CONFIG.SHEET_NAMES.JOBCARDS, 'JobCardNo', id, data);
   logActivity('Update Job Card Status', id + ' -> ' + status);
+  if (status === CONFIG.STATUS.RUNNING) {
+    try { createNotification('Job Started: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been started.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
+  }
+  if (status === CONFIG.STATUS.CLOSED) {
+    try { createNotification('Job Closed: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been closed.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
+  }
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
 

@@ -1,4 +1,44 @@
 <div id="sparepartsPage" class="page">
+  <div id="lowStockAlertBar" style="display:none;margin-bottom:12px">
+    <div class="card" style="border-left:4px solid var(--warning);margin-bottom:0">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px">
+        <span class="badge badge-warning" id="lowStockCountBadge">0</span>
+        <span style="color:var(--text-primary);font-weight:500">Low Stock Parts Alert</span>
+        <button class="btn btn-sm btn-warning" onclick="toggleLowStockView()">View Low Stock</button>
+        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('lowStockAlertBar').style.display='none'">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-bar" id="spFilterBar">
+    <div class="form-group">
+      <label>Category</label>
+      <select class="form-control" id="spFilterCategory">
+        <option value="">All Categories</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select class="form-control" id="spFilterStatus">
+        <option value="">All Status</option>
+        <option value="Active">Active</option>
+        <option value="Inactive">Inactive</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Manufacturer</label>
+      <input type="text" class="form-control" id="spFilterManufacturer" placeholder="Manufacturer">
+    </div>
+    <div class="form-group">
+      <label>Supplier</label>
+      <input type="text" class="form-control" id="spFilterSupplier" placeholder="Supplier">
+    </div>
+    <div class="form-group" style="align-self:flex-end">
+      <button class="btn btn-primary btn-sm" onclick="applyFilter()">Apply</button>
+      <button class="btn btn-secondary btn-sm" onclick="clearFilter()">Clear</button>
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-header">
       <div class="card-title">Spare Parts Inventory</div>
@@ -8,6 +48,8 @@
           <input type="text" class="form-control" id="spSearch" placeholder="Search parts..." onkeyup="searchSPTable()">
         </div>
         <button class="btn btn-primary" onclick="openSPForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add Part</button>
+        <button class="btn btn-secondary" onclick="exportCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>
+        <button class="btn btn-warning" id="lowStockToggle" onclick="toggleLowStockView()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2L2 18h16L10 2z"/><line x1="10" y1="8" x2="10" y2="12"/><line x1="10" y1="14" x2="10.01" y2="14"/></svg> Low Stock</button>
       </div>
     </div>
     <div id="spTableContainer"></div>
@@ -15,7 +57,7 @@
 </div>
 
 <div class="modal-overlay" id="spFormModal" style="display:none">
-  <div class="modal">
+  <div class="modal modal-wide" style="max-width:900px">
     <div class="modal-header">
       <div class="modal-title" id="spFormTitle">Add Spare Part</div>
       <button class="modal-close" onclick="hideModal('spFormModal')">&times;</button>
@@ -26,7 +68,7 @@
         <div class="form-row">
           <div class="form-group">
             <label>Part Code</label>
-            <input type="text" name="PartCode" class="form-control" placeholder="Auto-generated if empty">
+            <input type="text" name="PartCode" class="form-control" id="spPartCode" placeholder="Auto-generated">
           </div>
           <div class="form-group">
             <label>Part Name *</label>
@@ -35,72 +77,170 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Store</label>
-            <input type="text" name="Store" class="form-control">
+            <label>Category</label>
+            <input type="text" name="Category" class="form-control">
           </div>
           <div class="form-group">
-            <label>Unit</label>
-            <select name="Unit" class="form-control" id="spUnit"></select>
+            <label>Manufacturer</label>
+            <input type="text" name="Manufacturer" class="form-control">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Machine Compatibility</label>
+            <input type="text" name="MachineCompatibility" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Asset Compatibility</label>
+            <input type="text" name="AssetCompatibility" class="form-control">
           </div>
         </div>
         <div class="form-row-3">
           <div class="form-group">
-            <label>Stock *</label>
-            <input type="number" name="Stock" class="form-control" required min="0" step="0.01">
+            <label>Unit</label>
+            <select name="Unit" class="form-control" id="spFormUnit"></select>
+          </div>
+          <div class="form-group">
+            <label>Store Location</label>
+            <input type="text" name="StoreLocation" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Bin Number</label>
+            <input type="text" name="BinNumber" class="form-control">
+          </div>
+        </div>
+        <div class="form-row-4">
+          <div class="form-group">
+            <label>Current Stock</label>
+            <input type="number" name="CurrentStock" class="form-control" min="0" step="0.01">
           </div>
           <div class="form-group">
             <label>Minimum Stock</label>
             <input type="number" name="MinimumStock" class="form-control" min="0" step="0.01">
           </div>
           <div class="form-group">
-            <label>Cost</label>
-            <input type="number" name="Cost" class="form-control" min="0" step="0.01">
+            <label>Maximum Stock</label>
+            <input type="number" name="MaximumStock" class="form-control" min="0" step="0.01">
           </div>
+          <div class="form-group">
+            <label>Reorder Level</label>
+            <input type="number" name="ReorderLevel" class="form-control" min="0" step="0.01">
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Supplier</label>
+            <input type="text" name="Supplier" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Unit Cost</label>
+            <input type="number" name="UnitCost" class="form-control" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Barcode</label>
+            <input type="text" name="Barcode" class="form-control">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label>Status</label>
+            <select name="Status" class="form-control">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Remarks</label>
+          <textarea name="Remarks" class="form-control" rows="3"></textarea>
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="hideModal('spFormModal')">Cancel</button>
-        <button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>
+        <button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="spHistoryModal" style="display:none">
+  <div class="modal modal-wide" style="max-width:800px">
+    <div class="modal-header">
+      <div class="modal-title">Stock History - <span id="spHistoryPartCode"></span></div>
+      <button class="modal-close" onclick="hideModal('spHistoryModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="spHistoryContainer"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="hideModal('spHistoryModal')">Close</button>
+    </div>
   </div>
 </div>
 
 <script>
 var spData = [];
 var spPage = 1;
+var spFilter = { category: '', status: '', manufacturer: '', supplier: '' };
+var spLowStockOnly = false;
+var spSearchDebounce = null;
 
 function loadSparePartsData() {
   showLoading(true);
   google.script.run
     .withSuccessHandler(function(data) {
-      console.log('=== PIPELINE: getSpareParts() returned', data ? data.length : 'null/undefined', 'records');
-      if (data && data.length > 0) {
-        console.log('=== PIPELINE: First record =', JSON.stringify(data[0]));
-      } else if (data && data.length === 0) {
-        console.warn('=== PIPELINE: Backend returned EMPTY ARRAY for SpareParts');
-      } else {
-        console.error('=== PIPELINE: Backend returned null/undefined for SpareParts');
-      }
       spData = data || [];
       showLoading(false);
       renderSPTable();
+      populateFilterCategory();
+      checkLowStockAlert();
     })
     .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load spare parts', 'error'); })
     .getSpareParts();
+}
+
+function checkLowStockAlert() {
+  google.script.run
+    .withSuccessHandler(function(data) {
+      var count = data ? data.length : 0;
+      var bar = document.getElementById('lowStockAlertBar');
+      var badge = document.getElementById('lowStockCountBadge');
+      if (count > 0) {
+        bar.style.display = 'block';
+        badge.textContent = count + ' part' + (count > 1 ? 's' : '') + ' below reorder level';
+      } else {
+        bar.style.display = 'none';
+      }
+    })
+    .withFailureHandler(function() {})
+    .getLowStockParts();
+}
+
+function populateFilterCategory() {
+  var cats = getUniqueValues(spData, 'Category');
+  var sel = document.getElementById('spFilterCategory');
+  sel.innerHTML = '<option value="">All Categories</option>';
+  cats.forEach(function(c) {
+    var opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    sel.appendChild(opt);
+  });
 }
 
 function renderSPTable() {
   renderTable(spData, [
     { key: 'PartCode', label: 'Part Code' },
     { key: 'PartName', label: 'Part Name' },
-    { key: 'Store', label: 'Store' },
-    { key: 'Stock', label: 'Stock' },
-    { key: 'MinimumStock', label: 'Min Stock' },
+    { key: 'Category', label: 'Category' },
     { key: 'Unit', label: 'Unit' },
-    { key: 'Cost', label: 'Cost', format: function(v) { return v ? parseFloat(v).toFixed(2) : '0.00'; } }
+    { key: 'CurrentStock', label: 'Stock' },
+    { key: 'MinimumStock', label: 'Min Stock' },
+    { key: 'UnitCost', label: 'Unit Cost', format: function(v) { return parseFloat(v || 0).toFixed(2); } },
+    { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Active': 'success', 'Inactive': 'danger' } }
   ], [
     { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editSP('{id}')", idField: 'PartCode' },
+    { label: 'History', icon: 'view', color: 'primary', onclick: "showStockHistory('{id}')", idField: 'PartCode' },
     { label: 'Del', icon: 'trash', color: 'danger', onclick: "deleteSP('{id}')", idField: 'PartCode' }
   ], spPage, PAGE_SIZE, 'spTableContainer');
   registerPageState('spTableContainer', function(p) { spPage = p; renderSPTable(); });
@@ -109,16 +249,18 @@ function renderSPTable() {
 function openSPForm() {
   document.getElementById('editSpId').value = '';
   resetForm('spForm');
-  populateSelectFromList('spUnit', CONSTANTS.UNITS, 'Select Unit');
+  document.getElementById('spPartCode').readOnly = false;
+  populateSelectFromList('spFormUnit', CONSTANTS.UNITS, 'Select Unit');
   openModalForm('spForm', 'Add Spare Part');
 }
 
 function editSP(id) {
   var item = spData.find(function(r) { return r.PartCode === id; });
   if (!item) return;
-  populateSelectFromList('spUnit', CONSTANTS.UNITS, 'Select Unit');
+  populateSelectFromList('spFormUnit', CONSTANTS.UNITS, 'Select Unit');
   setFormData('spForm', item);
   document.getElementById('editSpId').value = id;
+  document.getElementById('spPartCode').readOnly = true;
   openModalForm('spForm', 'Edit Part - ' + id);
 }
 
@@ -129,22 +271,22 @@ function saveSP(e) {
   showLoading(true);
   if (id) {
     google.script.run
-      .withSuccessHandler(function(result) { spData = result; showLoading(false); hideModal('spFormModal'); showToast('Part updated'); renderSPTable(); })
+      .withSuccessHandler(function(result) { spData = result; showLoading(false); hideModal('spFormModal'); showToast('Part updated successfully', 'success'); renderSPTable(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to update part', 'error'); })
       .updateSparePart(id, data);
   } else {
     google.script.run
-      .withSuccessHandler(function(result) { spData = result; showLoading(false); hideModal('spFormModal'); showToast('Part added'); renderSPTable(); })
+      .withSuccessHandler(function(result) { spData = result; showLoading(false); hideModal('spFormModal'); showToast('Part added successfully', 'success'); renderSPTable(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to add part', 'error'); })
       .addSparePart(data);
   }
 }
 
 function deleteSP(id) {
-  showConfirm('Delete Part', 'Are you sure?', function() {
+  showConfirm('Delete Part', 'Are you sure you want to delete this spare part?', function() {
     showLoading(true);
     google.script.run
-      .withSuccessHandler(function(result) { spData = result; showLoading(false); showToast('Part deleted'); renderSPTable(); })
+      .withSuccessHandler(function(result) { spData = result; showLoading(false); showToast('Part deleted successfully', 'success'); renderSPTable(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to delete part', 'error'); })
       .deleteSparePart(id);
   });
@@ -153,10 +295,107 @@ function deleteSP(id) {
 function searchSPTable() {
   var query = document.getElementById('spSearch').value;
   if (!query) { renderSPTable(); return; }
+  if (spSearchDebounce) clearTimeout(spSearchDebounce);
+  spSearchDebounce = setTimeout(function() {
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) { spData = result; showLoading(false); spPage = 1; renderSPTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast('Search failed', 'error'); })
+      .searchSpareParts(query);
+  }, 300);
+}
+
+function applyFilter() {
+  spFilter.category = document.getElementById('spFilterCategory').value;
+  spFilter.status = document.getElementById('spFilterStatus').value;
+  spFilter.manufacturer = document.getElementById('spFilterManufacturer').value;
+  spFilter.supplier = document.getElementById('spFilterSupplier').value;
   showLoading(true);
   google.script.run
-    .withSuccessHandler(function(result) { spData = result; showLoading(false); spPage = 1; renderSPTable(); })
-    .withFailureHandler(function(err) { showLoading(false); showToast('Search failed', 'error'); })
-    .searchSpareParts(query);
+    .withSuccessHandler(function(data) {
+      spData = data || [];
+      showLoading(false);
+      spPage = 1;
+      renderSPTable();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Filter failed', 'error'); })
+    .filterSpareParts(spFilter);
+}
+
+function clearFilter() {
+  document.getElementById('spFilterCategory').value = '';
+  document.getElementById('spFilterStatus').value = '';
+  document.getElementById('spFilterManufacturer').value = '';
+  document.getElementById('spFilterSupplier').value = '';
+  spFilter = { category: '', status: '', manufacturer: '', supplier: '' };
+  loadSparePartsData();
+}
+
+function showStockHistory(partCode) {
+  document.getElementById('spHistoryPartCode').textContent = partCode;
+  document.getElementById('spHistoryContainer').innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg><h3>Loading...</h3></div>';
+  showModal('spHistoryModal');
+  google.script.run
+    .withSuccessHandler(function(data) {
+      if (!data || data.length === 0) {
+        document.getElementById('spHistoryContainer').innerHTML =
+          '<div class="empty-state">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>' +
+            '<h3>No History Found</h3>' +
+            '<p>No stock movements recorded for this part.</p>' +
+          '</div>';
+      } else {
+        renderTable(data, [
+          { key: 'Date', label: 'Date', datetime: true },
+          { key: 'TransactionType', label: 'Type' },
+          { key: 'Quantity', label: 'Qty' },
+          { key: 'BalanceBefore', label: 'Before' },
+          { key: 'BalanceAfter', label: 'After' },
+          { key: 'ReferenceNo', label: 'Reference' }
+        ], null, 1, 10, 'spHistoryContainer');
+      }
+    })
+    .withFailureHandler(function(err) { showToast('Failed to load stock history', 'error'); })
+    .getStockHistory(partCode);
+}
+
+function exportCSV() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(csvData) {
+      showLoading(false);
+      if (!csvData) { showToast('No data to export', 'warning'); return; }
+      var blob = new Blob([csvData], { type: 'text/csv' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'SpareParts_' + new Date().toISOString().slice(0, 10) + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Export completed', 'success');
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Export failed', 'error'); })
+    .exportSparePartsCSV();
+}
+
+function toggleLowStockView() {
+  spLowStockOnly = !spLowStockOnly;
+  var btn = document.getElementById('lowStockToggle');
+  if (spLowStockOnly) {
+    btn.classList.add('active');
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(data) {
+        spData = data || [];
+        showLoading(false);
+        spPage = 1;
+        renderSPTable();
+      })
+      .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load low stock parts', 'error'); })
+      .getLowStockParts();
+  } else {
+    btn.classList.remove('active');
+    loadSparePartsData();
+  }
 }
 </script>

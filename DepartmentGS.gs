@@ -1,6 +1,6 @@
 var DEPT_COLS = ['DepartmentID','Department','DepartmentCode','SectionID','Section','DepartmentHead','Description','SundayOff','HoursPerDay','Status','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
 
-function initializeDepartmentMaster() {
+function initDepartmentSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheetName = 'Departments';
   var sheet = ss.getSheetByName(sheetName);
@@ -107,7 +107,7 @@ function initializeDepartmentMaster() {
 }
 
 function initDepartmentsSheet() {
-  initializeDepartmentMaster();
+  initDepartmentSheet();
 }
 
 function normalizeDepartment(dept) {

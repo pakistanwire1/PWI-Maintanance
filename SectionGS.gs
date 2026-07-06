@@ -1,6 +1,6 @@
 var SECTION_COLS = ['SectionID','Section','Description','Status','CreatedBy','CreatedAt','SundayOff','HoursPerDay','SectionCode','DepartmentCount','UpdatedBy','UpdatedAt'];
 
-function initializeSectionMaster() {
+function initSectionSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheetName = 'Sections';
   var sheet = ss.getSheetByName(sheetName);
@@ -112,7 +112,7 @@ function initializeSectionMaster() {
 }
 
 function initSectionsSheet() {
-  initializeSectionMaster();
+  initSectionSheet();
 }
 
 function normalizeSection(s) {

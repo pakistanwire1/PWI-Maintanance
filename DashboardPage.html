@@ -110,6 +110,44 @@
         <div class="stat-info"><h3 id="statLowStock">0</h3><p>Low Stock Parts</p><div class="stat-subtitle"><span class="trend-down" id="statLowStockTrend">&#9660; 0</span> need reorder</div></div>
       </div>
     </div>
+    <div class="stat-card stat-primary">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v8M12 15v8M4.22 4.22l5.66 5.66M14.12 14.12l5.66 5.66M1 12h8M15 12h8"/></svg></div>
+        <div class="stat-info"><h3 id="statStockValue">$0</h3><p>Stock Value</p><div class="stat-subtitle"><span class="trend-up" id="statStockValueTrend">&#9650; $0</span> inventory value</div></div>
+      </div>
+    </div>
+    <div class="stat-card stat-danger">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="stat-info"><h3 id="statOutOfStock">0</h3><p>Out of Stock</p><div class="stat-subtitle"><span class="trend-down" id="statOutOfStockTrend">&#9660; 0</span> items unavailable</div></div>
+      </div>
+    </div>
+    <div class="stat-card stat-success">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div class="stat-info"><h3 id="statPMCompliance">0%</h3><p>PM Compliance</p><div class="stat-subtitle"><span class="trend-up" id="statPMComplianceTrend">&#9650; 0%</span> this period</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid" style="margin-bottom:16px;grid-template-columns:1fr">
+    <div class="card" style="padding:0">
+      <div class="card-header" style="padding:14px 18px">
+        <div class="card-title" style="font-size:14px;font-weight:600">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          Recent Notifications
+        </div>
+        <div class="card-actions" style="display:flex;gap:10px;align-items:center">
+          <span class="dash-notif-counter" id="dashNotifUnread" style="color:var(--danger)"><span class="counter-num" id="dashNotifUnreadNum">0</span> Unread</span>
+          <span class="dash-notif-counter" id="dashNotifCritical" style="color:var(--danger)"><span class="counter-num" id="dashNotifCriticalNum">0</span> Critical</span>
+          <span class="dash-notif-counter" id="dashNotifApproval" style="color:var(--purple)"><span class="counter-num" id="dashNotifApprovalNum">0</span> Pending Approval</span>
+          <button class="btn btn-xs btn-primary" onclick="navigateTo('notifications')">View All</button>
+        </div>
+      </div>
+      <div id="dashboardNotifications" style="padding:0 18px 14px">
+        <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Loading notifications...</div>
+      </div>
+    </div>
   </div>
 
   <div class="charts-grid">
@@ -169,14 +207,85 @@ function loadDashboardData() {
       document.getElementById('statPMDue').textContent = data.pmDue || 0;
       document.getElementById('statPMOverdue').textContent = data.pmOverdue || 0;
       document.getElementById('statLowStock').textContent = data.lowStockParts || 0;
+      document.getElementById('statStockValue').textContent = '$' + (data.totalStockValue || 0).toFixed(2);
+      document.getElementById('statOutOfStock').textContent = data.outOfStockParts || 0;
+      document.getElementById('statPMCompliance').textContent = (data.pmCompliance || 0) + '%';
 
       drawDashboardCharts(data);
+      loadDashboardNotifications();
     })
     .withFailureHandler(function(err) {
       document.querySelectorAll('#dashboardCards .stat-info').forEach(function(el) { el.classList.remove('loading'); });
       showToast('Failed to load dashboard data', 'error');
     })
     .getDashboardData(globalDashboardFilter, currentUser && currentUser.department ? currentUser.department : '');
+}
+
+function loadDashboardNotifications() {
+  var email = (currentUser && currentUser.email) || '';
+  google.script.run
+    .withSuccessHandler(function(result) {
+      renderDashboardNotifications(result.data || []);
+      if (result.stats) {
+        var u = document.getElementById('dashNotifUnreadNum');
+        var c = document.getElementById('dashNotifCriticalNum');
+        var a = document.getElementById('dashNotifApprovalNum');
+        if (u) u.textContent = result.stats.unread || 0;
+        if (c) c.textContent = result.stats.critical || 0;
+        if (a) a.textContent = result.stats.pendingApproval || 0;
+      }
+    })
+    .withFailureHandler(function() {
+      var el = document.getElementById('dashboardNotifications');
+      if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Failed to load</div>';
+    })
+    .getDashboardNotifications(10, email);
+}
+
+function renderDashboardNotifications(items) {
+  var el = document.getElementById('dashboardNotifications');
+  if (!el) return;
+  if (!items || items.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No notifications</div>';
+    return;
+  }
+  var typeColors = {
+    'Information': { color: '#06b6d4', bg: 'rgba(6,182,212,0.11)' },
+    'Success': { color: '#22c55e', bg: 'rgba(34,197,94,0.11)' },
+    'Warning': { color: '#f59e0b', bg: 'rgba(245,158,11,0.11)' },
+    'Critical': { color: '#ef4444', bg: 'rgba(239,68,68,0.11)' },
+    'Approval': { color: '#a855f7', bg: 'rgba(168,85,247,0.11)' },
+    'Reminder': { color: '#f97316', bg: 'rgba(249,115,22,0.11)' },
+    'System': { color: '#9498b8', bg: 'rgba(148,152,184,0.11)' }
+  };
+  var priorityBadge = { 'Critical': 'danger', 'High': 'warning', 'Medium': 'info', 'Low': 'success' };
+  var html = '<div style="display:flex;flex-direction:column;gap:6px">';
+  items.forEach(function(n) {
+    var notifType = n.NotificationType || 'Information';
+    var tc = typeColors[notifType] || typeColors['Information'];
+    var priBadge = priorityBadge[n.Priority] || 'primary';
+    var isUnread = (n.ReadStatus || '').toLowerCase() !== 'read';
+    var dt = n.CreatedDateTime || '';
+    var displayDt = '';
+    if (dt) {
+      var d = new Date(dt);
+      if (!isNaN(d.getTime())) displayDt = getTimeAgo(dt);
+    }
+    html +=
+      '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);background:var(--bg-input);' + (isUnread ? 'border-left:3px solid var(--primary);background:var(--primary-light);' : '') + 'cursor:pointer" onclick="handleNotifClick(\'' + escapeHtml(n.NotificationID) + '\',\'' + escapeHtml(n.ActionURL || '') + '\')">' +
+        '<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:' + tc.bg + ';color:' + tc.color + ';font-size:12px;font-weight:700">' + (notifType.charAt(0)) + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(n.Title) + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);display:flex;gap:6px;align-items:center">' +
+            '<span class="badge badge-' + priBadge + '" style="font-size:8px;padding:0 5px">' + escapeHtml(n.Priority || '') + '</span>' +
+            '<span class="badge badge-secondary" style="font-size:8px;padding:0 5px">' + escapeHtml(n.Module || '') + '</span>' +
+            '<span>' + displayDt + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
 }
 
 function drawDashboardCharts(data) {

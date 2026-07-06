@@ -1,12 +1,13 @@
 function onOpen() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui = SpreadsheetApp.getUi();
+
   var menuItems = [
     { name: 'Initialize Database', functionName: 'reinitializeDatabase' },
     { name: 'Setup Test Data', functionName: 'setupTestData' },
     null,
     { name: 'Reset System', functionName: 'resetSystem' }
   ];
-  var menu = SpreadsheetApp.getUi().createMenu('CMMS');
+  var menu = ui.createMenu('CMMS');
   menuItems.forEach(function(item) {
     if (item === null) {
       menu.addSeparator();
@@ -15,20 +16,43 @@ function onOpen() {
     }
   });
   menu.addToUi();
+
+  var toolsMenu = ui.createMenu('CMMS Tools');
+  toolsMenu.addItem('Initialize Sample Data', 'initializeAllSampleData');
+  toolsMenu.addSeparator();
+  toolsMenu.addItem('Initialize Section Data', 'initializeSectionMaster');
+  toolsMenu.addItem('Initialize Department Data', 'initializeDepartmentMaster');
+  toolsMenu.addItem('Initialize Machine Data', 'initializeMachineMaster');
+  toolsMenu.addItem('Initialize Asset Data', 'initializeAssetMaster');
+  toolsMenu.addItem('Initialize Technician Data', 'initializeTechnicianMaster');
+  toolsMenu.addItem('Initialize User Data', 'initializeUsers');
+  toolsMenu.addItem('Initialize Spare Parts Data', 'initializeSpareParts');
+  toolsMenu.addItem('Initialize PM Templates', 'initializePMTemplates');
+  toolsMenu.addSeparator();
+  toolsMenu.addItem('Initialize All Transaction Data', 'initializeAllTransactionSampleData');
+  toolsMenu.addSeparator();
+  toolsMenu.addItem('Initialize PM History', 'initializePMHistory');
+  toolsMenu.addItem('Initialize Stock History', 'initializeStockHistory');
+  toolsMenu.addItem('Initialize Inventory Transactions', 'initializeInventoryTransactions');
+  toolsMenu.addItem('Initialize Goods Receipt', 'initializeGoodsReceipt');
+  toolsMenu.addItem('Initialize Notifications', 'initializeNotifications');
+  toolsMenu.addToUi();
 }
 
 function initializeSystem() {
   var results = [];
-  results.push(initializeSectionMaster());
-  results.push(initializeDepartmentMaster());
-  results.push(initializeMachineMaster());
-  results.push(initializeAssetMaster());
-  results.push(initializeTechnicianMaster());
+  results.push(initSectionSheet());
+  results.push(initDepartmentSheet());
+  results.push(initMachineSheet());
+  results.push(initAssetSheet());
+  results.push(initTechnicianSheet());
   results.push(initializeUserMaster());
   initJobCardsSheet();
   initChecklistSheets();
   initPMSheet();
   initSparePartsSheet();
+  initInventorySheet();
+  initNotificationsSheet();
   initSettingsSheet();
   logActivity('System Init', 'All sheets initialized successfully');
   return results;
@@ -44,15 +68,17 @@ function reinitializeDatabase() {
   if (response !== ui.Button.YES) return;
   var results = [];
   try {
-    results.push(initializeSectionMaster());
-    results.push(initializeDepartmentMaster());
-    results.push(initializeMachineMaster());
-    results.push(initializeAssetMaster());
-    results.push(initializeTechnicianMaster());
+    results.push(initSectionSheet());
+    results.push(initDepartmentSheet());
+    results.push(initMachineSheet());
+    results.push(initAssetSheet());
+    results.push(initTechnicianSheet());
     initJobCardsSheet();
     initChecklistSheets();
     initPMSheet();
     initSparePartsSheet();
+    initInventorySheet();
+    initNotificationsSheet();
     initSettingsSheet();
     logActivity('Database Init', 'All master tables reinitialized');
     var msg = 'Database initialized successfully.';
@@ -233,6 +259,37 @@ function setupTestData() {
   });
 
   logActivity('Setup Test Data', 'Test data loaded successfully');
+
+  var sampleParts = [
+    { PartName: 'Spindle Bearing SKF-6205', Category: 'Bearings', Manufacturer: 'SKF', Unit: 'Pcs', CurrentStock: '10', MinimumStock: '5', MaximumStock: '20', ReorderLevel: '8', UnitCost: '150', Supplier: 'SKF India', StoreLocation: 'Store A', BinNumber: 'A-01', Status: 'Active' },
+    { PartName: 'Hydraulic Seal Kit', Category: 'Seals', Manufacturer: 'Parker', Unit: 'Set', CurrentStock: '3', MinimumStock: '5', MaximumStock: '15', ReorderLevel: '5', UnitCost: '850', Supplier: 'Parker Hannifin', StoreLocation: 'Store A', BinNumber: 'A-02', Status: 'Active' },
+    { PartName: 'Air Filter Element', Category: 'Filters', Manufacturer: 'Donaldson', Unit: 'Pcs', CurrentStock: '20', MinimumStock: '10', MaximumStock: '50', ReorderLevel: '15', UnitCost: '250', Supplier: 'Donaldson India', StoreLocation: 'Store B', BinNumber: 'B-01', Status: 'Active' },
+    { PartName: 'Hydraulic Oil ISO 68', Category: 'Lubricants', Manufacturer: 'Shell', Unit: 'Liter', CurrentStock: '50', MinimumStock: '20', MaximumStock: '100', ReorderLevel: '30', UnitCost: '180', Supplier: 'Shell India', StoreLocation: 'Store C', BinNumber: 'C-01', Status: 'Active' },
+    { PartName: 'Drive Belt B-1600', Category: 'Belts', Manufacturer: 'Gates', Unit: 'Pcs', CurrentStock: '2', MinimumStock: '5', MaximumStock: '20', ReorderLevel: '5', UnitCost: '450', Supplier: 'Gates India', StoreLocation: 'Store B', BinNumber: 'B-02', Status: 'Active' }
+  ];
+  sampleParts.forEach(function(p) {
+    p.PartCode = generateId(CONFIG.SHEET_NAMES.SPARE_PARTS, CONFIG.ID_PREFIXES.SPARE_PART);
+    p.CreatedAt = getCurrentTimestamp();
+    p.CreatedBy = 'admin@cmms.com';
+    addRow(CONFIG.SHEET_NAMES.SPARE_PARTS, p);
+  });
+
+  var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
+  var techs = getAllData(CONFIG.SHEET_NAMES.TECHNICIANS) || [];
+  if (machines.length > 0 && techs.length > 0) {
+    var samplePMs = [
+      { Title: 'CNC Spindle Alignment Check', MachineID: machines[0].MachineID || '', MachineName: machines[0].MachineName || '', Frequency: '1', FrequencyType: 'Monthly', Priority: 'High', Status: 'Scheduled', StartDate: getTodayDateString(), DueDate: getDateNDaysFromNow(5), NextDueDate: getDateNDaysFromNow(35), AssignedTechnician: techs[0].EmployeeID || '', AssignedTechnicianName: techs[0].TechnicianName || '', Department: machines[0].Department || '', Section: machines[0].Section || '' },
+      { Title: 'Hydraulic Press Oil Change', MachineID: machines.length > 1 ? machines[1].MachineID || '' : '', MachineName: machines.length > 1 ? machines[1].MachineName || '' : '', Frequency: '3', FrequencyType: 'Monthly', Priority: 'Medium', Status: 'Scheduled', StartDate: getTodayDateString(), DueDate: getDateNDaysFromNow(-2), NextDueDate: getDateNDaysFromNow(28), AssignedTechnician: techs.length > 1 ? techs[1].EmployeeID || '' : '', AssignedTechnicianName: techs.length > 1 ? techs[1].TechnicianName || '' : '', Department: machines.length > 1 ? machines[1].Department || '' : '', Section: machines.length > 1 ? machines[1].Section || '' : '' },
+      { Title: 'Air Compressor Filter Inspection', MachineID: machines.length > 2 ? machines[2].MachineID || '' : '', MachineName: machines.length > 2 ? machines[2].MachineName || '' : '', Frequency: '1', FrequencyType: 'Weekly', Priority: 'Low', Status: 'Scheduled', StartDate: getTodayDateString(), DueDate: getDateNDaysFromNow(3), NextDueDate: getDateNDaysFromNow(10), AssignedTechnician: techs.length > 2 ? techs[2].EmployeeID || '' : '', AssignedTechnicianName: techs.length > 2 ? techs[2].TechnicianName || '' : '', Department: machines.length > 2 ? machines[2].Department || '' : '', Section: machines.length > 2 ? machines[2].Section || '' : '' }
+    ];
+    samplePMs.forEach(function(pm) {
+      pm.PMNumber = generateId(CONFIG.SHEET_NAMES.PREVENTIVE_MAINTENANCE, CONFIG.ID_PREFIXES.PM);
+      pm.CreatedAt = getCurrentTimestamp();
+      pm.CreatedBy = 'admin@cmms.com';
+      addRow(CONFIG.SHEET_NAMES.PREVENTIVE_MAINTENANCE, pm);
+    });
+  }
+
   return 'Test data setup complete. All modules populated with sample data.';
 }
 

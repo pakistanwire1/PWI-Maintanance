@@ -14,7 +14,13 @@ var CONFIG = {
     REPORTS: 'Reports',
     SETTINGS: 'Settings',
     LOGS: 'Logs',
-    DASHBOARD: 'Dashboard'
+    DASHBOARD: 'Dashboard',
+    STOCK_HISTORY: 'StockHistory',
+    INVENTORY_TRANSACTIONS: 'InventoryTransactions',
+    GOODS_RECEIPT: 'GoodsReceipt',
+    PM_HISTORY: 'PMHistory',
+    PM_CALENDAR: 'PMCalendar',
+    NOTIFICATIONS: 'Notifications'
   },
 
   STATUS: {
@@ -85,6 +91,10 @@ var CONFIG = {
     'Electronics', 'Multi-Skill'
   ],
 
+  CHECKLIST_TEMPLATE_FIELDS: [
+    'TemplateID', 'TemplateName', 'Category', 'Items', 'Description', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
+  ],
+
   CHECKLIST_CATEGORIES: [
     'Mechanical', 'Electrical', 'Hydraulic', 'Pneumatic',
     'Safety', 'Quality', 'Daily', 'Weekly', 'Monthly'
@@ -124,7 +134,7 @@ var CONFIG = {
     'CanOpenJobCard', 'CanStartJobCard', 'CanCloseJobCard', 'CanApproveJobCard',
     'CanManageMachines', 'CanManageAssets', 'CanManageSpareParts', 'CanManagePM',
     'CanManageTechnicians', 'CanManageDepartments', 'CanManageSections', 'CanManageUsers',
-    'CanViewDashboard', 'CanViewReports', 'IsAdmin'
+    'CanViewDashboard', 'CanViewReports', 'CanManageInventory', 'IsAdmin'
   ],
 
   USER_FIELDS: [
@@ -133,7 +143,7 @@ var CONFIG = {
     'CanOpenJobCard', 'CanStartJobCard', 'CanCloseJobCard', 'CanApproveJobCard',
     'CanManageMachines', 'CanManageAssets', 'CanManageSpareParts', 'CanManagePM',
     'CanManageTechnicians', 'CanManageDepartments', 'CanManageSections', 'CanManageUsers',
-    'CanViewDashboard', 'CanViewReports', 'IsAdmin',
+    'CanViewDashboard', 'CanViewReports', 'CanManageInventory', 'IsAdmin',
     'LastLogin', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
   ],
 
@@ -206,5 +216,146 @@ var CONFIG = {
     'DeptID', 'Department', 'SectionID', 'Section', 'Location', 'Manufacturer', 'Model',
     'SerialNo', 'Specification', 'PurchaseDate', 'InstallDate', 'WarrantyExpiry', 'Criticality',
     'Supplier', 'Cost', 'Status', 'QRCode', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
-  ]
+  ],
+
+  SPARE_PART_FIELDS: [
+    'PartCode', 'PartName', 'Category', 'Manufacturer', 'MachineCompatibility', 'AssetCompatibility',
+    'Unit', 'MinimumStock', 'MaximumStock', 'CurrentStock', 'ReorderLevel',
+    'StoreLocation', 'BinNumber', 'UnitCost', 'Supplier', 'Barcode', 'Status',
+    'Remarks', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
+  ],
+
+  INVENTORY_TRANSACTION_FIELDS: [
+    'TransactionID', 'TransactionType', 'PartCode', 'PartName', 'Quantity',
+    'ReferenceNo', 'ReferenceType', 'FromLocation', 'ToLocation',
+    'UnitCost', 'TotalCost', 'Remarks', 'ProcessedBy', 'ProcessedAt',
+    'CreatedBy', 'CreatedAt'
+  ],
+
+  GOODS_RECEIPT_FIELDS: [
+    'GRNNo', 'PartCode', 'PartName', 'Quantity', 'UnitCost', 'TotalCost',
+    'Supplier', 'InvoiceNo', 'PONo', 'ReceivedBy', 'ReceivedDate',
+    'Remarks', 'Status', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
+  ],
+
+  STOCK_HISTORY_FIELDS: [
+    'PartCode', 'PartName', 'TransactionType', 'Quantity', 'BalanceBefore', 'BalanceAfter',
+    'ReferenceNo', 'Remarks', 'CreatedBy', 'CreatedAt'
+  ],
+
+  PM_FIELDS: [
+    'PMNumber', 'Title', 'MachineID', 'MachineName', 'Department', 'Section',
+    'Frequency', 'FrequencyType', 'AssignedTechnician', 'AssignedTechnicianName',
+    'ChecklistTemplate', 'Priority', 'Status',
+    'StartDate', 'DueDate', 'NextDueDate', 'CompletionDate',
+    'ComplianceStatus', 'Remarks', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
+  ],
+
+  PM_HISTORY_FIELDS: [
+    'PMNumber', 'Title', 'MachineName', 'CompletionDate', 'NextDueDate',
+    'TechnicianName', 'Status', 'Remarks', 'CreatedBy', 'CreatedAt'
+  ],
+
+  NOTIFICATION_FIELDS: [
+    'NotificationID', 'Title', 'Message', 'Module', 'NotificationType', 'Priority', 'CreatedBy',
+    'AssignedTo', 'CreatedDateTime', 'ReadStatus', 'ActionURL'
+  ],
+
+  NOTIFICATION_MODULES: {
+    JOBCARD: 'Job Card',
+    PM: 'Preventive Maintenance',
+    SPARE_PART: 'Spare Part',
+    INVENTORY: 'Inventory',
+    GOODS_RECEIPT: 'Goods Receipt',
+    USER: 'User',
+    MACHINE: 'Machine',
+    ASSET: 'Asset',
+    SYSTEM: 'System',
+    BREAKDOWN: 'Breakdown'
+  },
+
+  NOTIFICATION_PRIORITY: {
+    LOW: 'Low',
+    MEDIUM: 'Medium',
+    HIGH: 'High',
+    CRITICAL: 'Critical'
+  },
+
+  FREQUENCY_TYPES: ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Half Yearly', 'Yearly'],
+
+  PM_STATUSES: {
+    SCHEDULED: 'Scheduled',
+    IN_PROGRESS: 'In Progress',
+    COMPLETED: 'Completed',
+    OVERDUE: 'Overdue',
+    MISSED: 'Missed',
+    SKIPPED: 'Skipped'
+  },
+
+  TRANSACTION_TYPES: {
+    GOODS_RECEIPT: 'Goods Receipt',
+    ISSUE: 'Issue',
+    RETURN: 'Return',
+    TRANSFER: 'Transfer',
+    ADJUSTMENT: 'Adjustment'
+  },
+
+  NOTIFICATION_TYPES: {
+    LOW_STOCK: 'LowStock',
+    PM_DUE: 'PMDue',
+    PM_OVERDUE: 'PMOverdue',
+    BREAKDOWN: 'Breakdown',
+    PENDING_JC: 'PendingJobCard',
+    WAITING_APPROVAL: 'WaitingApproval',
+    JC_OPENED: 'JobCardOpened',
+    JC_STARTED: 'JobCardStarted',
+    JC_CLOSED: 'JobCardClosed',
+    JC_APPROVED: 'JobCardApproved',
+    GOODS_RECEIPT: 'GoodsReceipt',
+    SPARE_ISSUED: 'SparePartsIssued',
+    USER_CREATED: 'UserCreated',
+    MACHINE_ADDED: 'MachineAdded',
+    ASSET_ADDED: 'AssetAdded',
+    SYSTEM_ERROR: 'SystemError',
+    PM_CREATED: 'PMCreated',
+    PM_COMPLETED: 'PMCompleted',
+    DEPT_ADDED: 'DepartmentAdded',
+    TECH_ADDED: 'TechnicianAdded',
+    MATERIAL_RETURN: 'MaterialReturn',
+    PURCHASE_REQUEST: 'PurchaseRequest',
+    JC_ACCEPTED: 'JobCardAccepted',
+    JC_ESCALATED: 'JobCardEscalated',
+    PM_ASSIGNMENT: 'PMAssignment',
+    SPARE_AVAILABLE: 'SparePartsAvailable',
+    NEW_ASSIGNMENT: 'NewAssignment',
+    PRIORITY_CHANGED: 'PriorityChanged'
+  },
+
+  NOTIFICATION_DISPLAY_TYPES: [
+    'Information', 'Success', 'Warning', 'Critical', 'Approval', 'Reminder', 'System'
+  ],
+
+  NOTIFICATION_ACTIONS: {
+    JOBCARD: 'navigateTo(\'jobcards\')',
+    PM: 'navigateTo(\'pm\')',
+    SPARE_PART: 'navigateTo(\'spareparts\')',
+    DASHBOARD: 'navigateTo(\'dashboard\')',
+    SETTINGS: 'navigateTo(\'settings\')',
+    INVENTORY: 'navigateTo(\'inventory\')',
+    GOODS_RECEIPT: 'navigateTo(\'goodsreceipt\')',
+    MACHINES: 'navigateTo(\'machines\')',
+    ASSETS: 'navigateTo(\'assets\')'
+  },
+
+  ROLE_NOTIFICATION_MAP: {
+    Admin: { viewAll: true },
+    Operator: { moduleFilter: ['Job Card'], fieldCheck: 'CreatedBy' },
+    Production: { moduleFilter: ['Job Card'], fieldCheck: 'CreatedBy' },
+    Technician: { moduleFilter: null, fieldCheck: 'AssignedTo' },
+    Supervisor: { viewApproval: true, viewCritical: true },
+    'Department Manager': { viewApproval: true, viewCritical: true },
+    'Maintenance Manager': { viewApproval: true, viewCritical: true },
+    Store: { moduleFilter: ['Inventory', 'Spare Part', 'Goods Receipt'] },
+    Viewer: { moduleFilter: [] }
+  }
 };

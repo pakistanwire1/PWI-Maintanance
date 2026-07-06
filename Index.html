@@ -2,8 +2,8 @@
 <html>
 <head>
   <base target="_top">
-  <link rel="icon" type="image/png" href="assets/images/logo.png">
-  <link rel="apple-touch-icon" href="assets/images/logo.png">
+  <link rel="icon" type="image/png" href="?img=logo">
+  <link rel="apple-touch-icon" href="?img=logo">
   <?!= include('StylesPage'); ?>
 </head>
 <body>
@@ -21,7 +21,7 @@
           </button>
           <div class="topbar-brand" onclick="navigateTo('dashboard')" style="cursor:pointer" title="Go to Dashboard">
             <div class="topbar-logo-mini">
-              <img class="topbar-logo-img" id="topbarLogoImg" alt="PWI" src="assets/images/logo.png" style="display:none" onload="this.style.display='block';document.getElementById('topbarLogoFallback').style.display='none'" onerror="document.getElementById('topbarLogoFallback').style.display='block'">
+              <img class="topbar-logo-img" id="topbarLogoImg" alt="PWI" src="?img=logo" style="display:none" onload="this.style.display='block';document.getElementById('topbarLogoFallback').style.display='none'" onerror="document.getElementById('topbarLogoFallback').style.display='block'">
               <svg class="topbar-logo-fallback" id="topbarLogoFallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="24" height="24">
                 <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
                 <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
@@ -54,6 +54,9 @@
           <button class="topbar-btn notification-btn" onclick="toggleNotificationPanel()" title="Notifications">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
             <span class="notification-badge" id="notificationBadge" style="display:none">0</span>
+          </button>
+          <button class="topbar-btn" id="topbarRefreshBtn" onclick="refreshCurrentPage()" title="Refresh Data">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px" id="refreshIcon"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg>
           </button>
           <button class="topbar-btn" onclick="navigateTo('settings')" title="Settings" id="topbarSettingsBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
@@ -95,6 +98,12 @@
         <?!= include('ChecklistsPage'); ?>
         <?!= include('PMPage'); ?>
         <?!= include('SparePartsPage'); ?>
+        <?!= include('InventoryPage'); ?>
+        <?!= include('InventoryTransactionsPage'); ?>
+        <?!= include('StockHistoryPage'); ?>
+        <?!= include('GoodsReceiptPage'); ?>
+        <?!= include('PMHistoryPage'); ?>
+        <?!= include('NotificationsPage'); ?>
         <?!= include('BreakdownHistoryPage'); ?>
         <?!= include('ReportsPage'); ?>
         <?!= include('SettingsPage'); ?>
@@ -104,8 +113,56 @@
   <div class="notification-overlay" id="notificationOverlay" onclick="toggleNotificationPanel()"></div>
   <div class="notification-panel" id="notificationPanel">
     <div class="notification-panel-header">
-      <h3>Notifications</h3>
+      <h3>Notification Center</h3>
       <button class="close-btn" onclick="toggleNotificationPanel()">&times;</button>
+    </div>
+    <div class="notification-panel-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="notifSearchInput" placeholder="Search notifications..." oninput="onNotifSearchInput()">
+    </div>
+    <div class="notification-panel-filters">
+      <div class="notif-filter-tabs" id="notifFilterTabs">
+        <button class="notif-filter-tab active" data-filter="all" onclick="setNotifListFilter('all')">All</button>
+        <button class="notif-filter-tab" data-filter="unread" onclick="setNotifListFilter('unread')">Unread</button>
+        <button class="notif-filter-tab" data-filter="read" onclick="setNotifListFilter('read')">Read</button>
+      </div>
+      <div class="notif-filter-dropdowns">
+        <select class="notif-filter-select" id="notifFilterPriority" onchange="applyNotifListFilters()">
+          <option value="">All Priority</option>
+          <option value="Critical">Critical</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <select class="notif-filter-select" id="notifFilterModule" onchange="applyNotifListFilters()">
+          <option value="">All Modules</option>
+          <option value="Job Card">Job Card</option>
+          <option value="Preventive Maintenance">PM</option>
+          <option value="Spare Part">Spare Part</option>
+          <option value="Inventory">Inventory</option>
+          <option value="Goods Receipt">Goods Receipt</option>
+          <option value="Breakdown">Breakdown</option>
+          <option value="Machine">Machine</option>
+          <option value="Asset">Asset</option>
+          <option value="User">User</option>
+          <option value="System">System</option>
+        </select>
+        <select class="notif-filter-select" id="notifFilterType" onchange="applyNotifListFilters()">
+          <option value="">All Types</option>
+          <option value="Information">Information</option>
+          <option value="Success">Success</option>
+          <option value="Warning">Warning</option>
+          <option value="Critical">Critical</option>
+          <option value="Approval">Approval</option>
+          <option value="Reminder">Reminder</option>
+          <option value="System">System</option>
+        </select>
+      </div>
+    </div>
+    <div class="notification-panel-toolbar">
+      <button class="btn btn-xs btn-success" onclick="markAllNotifRead()" title="Mark All as Read">&#10003; Mark Read</button>
+      <button class="btn btn-xs btn-danger" onclick="deleteAllNotifications()" title="Clear All">&#10005; Clear All</button>
+      <span class="notif-count-badge" id="notifPanelCount">0 notifications</span>
     </div>
     <div class="notification-list" id="notificationList">
       <div class="notification-empty">

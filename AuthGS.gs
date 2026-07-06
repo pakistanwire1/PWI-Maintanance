@@ -242,6 +242,7 @@ function addUser(data) {
     logActivity('Add User', data.Email);
     Logger.log('addUser() SUCCESS: email=' + data.Email + ', result length=' + result.length);
     console.log('addUser() SUCCESS: email=' + data.Email);
+    try { createNotification('New User Created: ' + (data.Name || data.Email), 'User ' + (data.Name || data.Email) + ' has been created with role ' + (data.Role || '') + '.', CONFIG.NOTIFICATION_MODULES.USER, CONFIG.PRIORITY.LOW, data.CreatedBy, data.Email, "navigateTo('settings')"); } catch(e) {}
     return result;
   } catch (e) {
     Logger.log('addUser() ERROR: email=' + data.Email + ', message=' + e.message + ' stack=' + e.stack);

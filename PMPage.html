@@ -1,46 +1,263 @@
 <div id="pmPage" class="page">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">Preventive Maintenance</div>
-      <div class="card-actions">
+  <div class="dashboard-grid" id="pmSummaryCards" style="margin-bottom:16px">
+    <div class="stat-card stat-primary">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg></div>
+        <div class="stat-info"><h3 id="pmTotalCount">0</h3><p>Total PMs</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-success">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="stat-info"><h3 id="pmCompletedCount">0</h3><p>Completed</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-info">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="stat-info"><h3 id="pmScheduledCount">0</h3><p>Scheduled</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-danger">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="stat-info"><h3 id="pmOverdueCount">0</h3><p>Overdue</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-warning">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></div>
+        <div class="stat-info"><h3 id="pmDueThisMonth">0</h3><p>Due This Month</p></div>
+      </div>
+    </div>
+    <div class="stat-card" id="pmComplianceStat">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12A10 10 0 1112 2a10 10 0 0110 10z"/><path d="M12 6v6l4 2"/></svg></div>
+        <div class="stat-info"><h3 id="pmComplianceRate">0%</h3><p>Compliance</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workflow-tabs">
+    <button class="workflow-tab active" data-tab="schedule" onclick="switchPMTab('schedule', this)">
+      <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
+      <span class="tab-label">Schedule</span>
+    </button>
+    <button class="workflow-tab" data-tab="calendar" onclick="switchPMTab('calendar', this)">
+      <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg></span>
+      <span class="tab-label">Calendar</span>
+    </button>
+    <button class="workflow-tab" data-tab="history" onclick="switchPMTab('history', this)">
+      <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+      <span class="tab-label">History</span>
+    </button>
+    <button class="workflow-tab" data-tab="compliance" onclick="switchPMTab('compliance', this)">
+      <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12A10 10 0 1112 2a10 10 0 0110 10z"/><path d="M16 8l-6 6-3-3"/></svg></span>
+      <span class="tab-label">Compliance</span>
+    </button>
+  </div>
+
+  <div id="pmScheduleView">
+    <div class="filter-bar" id="pmFilterBar">
+      <div class="form-group">
+        <label>Search</label>
         <div class="search-box">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" class="form-control" id="pmSearch" placeholder="Search PM..." onkeyup="searchPMTable()">
         </div>
-        <button class="btn btn-primary" onclick="openPMForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add PM</button>
+      </div>
+      <div class="form-group">
+        <label>Machine</label>
+        <select class="form-control" id="pmFilterMachine">
+          <option value="">All Machines</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Technician</label>
+        <select class="form-control" id="pmFilterTechnician">
+          <option value="">All Technicians</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select class="form-control" id="pmFilterStatus">
+          <option value="">All Status</option>
+          <option value="Scheduled">Scheduled</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Overdue">Overdue</option>
+          <option value="Missed">Missed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select class="form-control" id="pmFilterPriority">
+          <option value="">All Priority</option>
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+      </div>
+      <div class="form-group" style="align-self:flex-end">
+        <button class="btn btn-primary btn-sm" onclick="applyPMFilter()">Apply</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearPMFilter()">Clear</button>
       </div>
     </div>
-    <div id="pmTableContainer"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Preventive Maintenance Schedule</div>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="openPMForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add PM</button>
+          <button class="btn btn-secondary" onclick="openBulkGenerateForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M17 3H3v14h14V3z"/><path d="M7 10h6"/><path d="M10 7v6"/></svg> Bulk Generate</button>
+          <button class="btn btn-secondary" onclick="exportPMCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export</button>
+        </div>
+      </div>
+      <div id="pmTableContainer"></div>
+    </div>
+  </div>
+
+  <div id="pmCalendarView" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <button class="btn btn-sm btn-secondary" onclick="prevMonth()" style="margin-right:8px"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M12 5l-5 5 5 5"/></svg></button>
+          <span id="pmCalTitle" style="font-size:18px;font-weight:600">Month Year</span>
+          <button class="btn btn-sm btn-secondary" onclick="nextMonth()" style="margin-left:8px"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M8 5l5 5-5 5"/></svg></button>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-sm btn-primary" onclick="goToToday()">Today</button>
+        </div>
+      </div>
+      <div id="pmCalendarGrid"></div>
+      <div id="pmCalendarDayDetail" style="padding:16px;border-top:1px solid var(--border)"></div>
+    </div>
+  </div>
+
+  <div id="pmHistoryView" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">PM History</div>
+        <div class="card-actions">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" class="form-control" id="pmHistorySearch" placeholder="Search history..." onkeyup="searchPMHistory()">
+          </div>
+        </div>
+      </div>
+      <div id="pmHistoryContainer"></div>
+    </div>
+  </div>
+
+  <div id="pmComplianceView" style="display:none">
+    <div class="dashboard-grid" style="grid-template-columns:1fr 1fr;margin-bottom:16px">
+      <div class="card" style="margin-bottom:0">
+        <div class="card-header">
+          <div class="card-title">Compliance Rate</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px">
+          <div id="pmComplianceLarge" style="font-size:72px;font-weight:800;line-height:1">0%</div>
+          <div style="font-size:14px;color:var(--text-muted);margin-top:8px">Overall PM Compliance</div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-header">
+          <div class="card-title">Breakdown</div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:12px" id="pmComplianceBreakdown"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Machine-wise Compliance</div>
+      </div>
+      <div id="pmMachineComplianceContainer"></div>
+    </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="pmFormModal" style="display:none">
-  <div class="modal">
+  <div class="modal modal-wide" style="max-width:700px">
     <div class="modal-header">
       <div class="modal-title" id="pmFormTitle">Add PM Record</div>
       <button class="modal-close" onclick="hideModal('pmFormModal')">&times;</button>
     </div>
     <form id="pmForm" onsubmit="return savePM(event)">
       <div class="modal-body">
-        <input type="hidden" name="PMNumber" id="editPmId">
+        <input type="hidden" name="id" id="editPmId">
         <div class="form-row">
           <div class="form-group">
-            <label>Machine *</label>
-            <select name="Machine" class="form-control" id="pmMachine" required></select>
+            <label>PM Number</label>
+            <input type="text" name="PMNumber" class="form-control" id="pmFormNumber" readonly placeholder="Auto-generated">
           </div>
           <div class="form-group">
-            <label>Frequency (Days) *</label>
-            <input type="number" name="Frequency" class="form-control" required min="1">
+            <label>Title *</label>
+            <input type="text" name="Title" class="form-control" required placeholder="PM title">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Next Due Date</label>
-            <input type="date" name="NextDueDate" class="form-control">
+            <label>Machine *</label>
+            <select name="MachineID" class="form-control" id="pmFormMachine" required onchange="onPMMachineChange()">
+              <option value="">Select Machine</option>
+            </select>
           </div>
           <div class="form-group">
-            <label>Technician</label>
-            <select name="Technician" class="form-control" id="pmTechnician"></select>
+            <label>Machine Name</label>
+            <input type="text" name="MachineName" class="form-control" id="pmFormMachineName" readonly>
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Department</label>
+            <input type="text" name="Department" class="form-control" id="pmFormDepartment" readonly>
+          </div>
+          <div class="form-group">
+            <label>Section</label>
+            <input type="text" name="Section" class="form-control" id="pmFormSection" readonly>
+          </div>
+          <div class="form-group">
+            <label>Frequency *</label>
+            <input type="number" name="Frequency" class="form-control" required min="1">
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Frequency Type</label>
+            <select name="FrequencyType" class="form-control">
+              <option value="Daily">Daily</option>
+              <option value="Weekly">Weekly</option>
+              <option value="Monthly" selected>Monthly</option>
+              <option value="Quarterly">Quarterly</option>
+              <option value="Half Yearly">Half Yearly</option>
+              <option value="Yearly">Yearly</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Assigned Technician</label>
+            <select name="AssignedTechnician" class="form-control" id="pmFormTechnician" onchange="onPMTechChange()">
+              <option value="">Select Technician</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tech Name</label>
+            <input type="text" name="AssignedTechnicianName" class="form-control" id="pmFormTechName" readonly>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Checklist Template</label>
+            <input type="text" name="ChecklistTemplate" class="form-control" placeholder="Optional template name">
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select name="Priority" class="form-control">
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
           </div>
         </div>
         <div class="form-row">
@@ -48,23 +265,156 @@
             <label>Status</label>
             <select name="Status" class="form-control">
               <option value="Scheduled">Scheduled</option>
-              <option value="Overdue">Overdue</option>
+              <option value="In Progress">In Progress</option>
               <option value="Completed">Completed</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Last Done</label>
-            <input type="date" name="LastDone" class="form-control">
+            <label>Start Date</label>
+            <input type="date" name="StartDate" class="form-control">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Due Date</label>
+            <input type="date" name="DueDate" class="form-control" id="pmFormDueDate">
+          </div>
+          <div class="form-group">
+            <label>Next Due Date</label>
+            <input type="date" name="NextDueDate" class="form-control" id="pmFormNextDueDate">
           </div>
         </div>
         <div class="form-group">
           <label>Remarks</label>
-          <textarea name="Remarks" class="form-control"></textarea>
+          <textarea name="Remarks" class="form-control" rows="3"></textarea>
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="hideModal('pmFormModal')">Cancel</button>
-        <button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>
+        <button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pmCompleteModal" style="display:none">
+  <div class="modal" style="max-width:550px">
+    <div class="modal-header">
+      <div class="modal-title">Complete PM</div>
+      <button class="modal-close" onclick="hideModal('pmCompleteModal')">&times;</button>
+    </div>
+    <form id="pmCompleteForm" onsubmit="return saveComplete(event)">
+      <div class="modal-body">
+        <input type="hidden" name="id" id="completePmId">
+        <div class="form-row">
+          <div class="form-group">
+            <label>PM Number</label>
+            <input type="text" class="form-control" id="completePmNumber" readonly>
+          </div>
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" class="form-control" id="completePmTitle" readonly>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Machine</label>
+            <input type="text" class="form-control" id="completePmMachine" readonly>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <input type="text" class="form-control" id="completePmStatus" readonly value="Completed">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Completion Date *</label>
+            <input type="date" name="CompletionDate" class="form-control" id="completePmDate" required>
+          </div>
+          <div class="form-group">
+            <label>Next Due Date *</label>
+            <input type="date" name="NextDueDate" class="form-control" id="completePmNextDue" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Remarks</label>
+          <textarea name="Remarks" class="form-control" id="completePmRemarks" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="hideModal('pmCompleteModal')">Cancel</button>
+        <button type="submit" class="btn btn-success"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="10" cy="10" r="9"/><path d="M7 10l2 2 4-4"/></svg> Complete PM</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pmBulkModal" style="display:none">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <div class="modal-title">Bulk Generate PMs</div>
+      <button class="modal-close" onclick="hideModal('pmBulkModal')">&times;</button>
+    </div>
+    <form id="pmBulkForm" onsubmit="return saveBulkGenerate(event)">
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Machine *</label>
+            <select name="MachineID" class="form-control" id="pmBulkMachine" required>
+              <option value="">Select Machine</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Frequency *</label>
+            <input type="number" name="Frequency" class="form-control" required min="1">
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Frequency Type</label>
+            <select name="FrequencyType" class="form-control">
+              <option value="Daily">Daily</option>
+              <option value="Weekly">Weekly</option>
+              <option value="Monthly" selected>Monthly</option>
+              <option value="Quarterly">Quarterly</option>
+              <option value="Half Yearly">Half Yearly</option>
+              <option value="Yearly">Yearly</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Number of Cycles</label>
+            <input type="number" name="Cycles" class="form-control" value="12" min="1" max="52">
+          </div>
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" name="StartDate" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Title Prefix</label>
+          <input type="text" name="TitlePrefix" class="form-control" placeholder="e.g., Monthly Inspection - ">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Technician</label>
+            <select name="AssignedTechnician" class="form-control" id="pmBulkTechnician">
+              <option value="">Select Technician</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select name="Priority" class="form-control">
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="hideModal('pmBulkModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M17 3H3v14h14V3z"/><path d="M7 10h6"/><path d="M10 7v6"/></svg> Generate</button>
       </div>
     </form>
   </div>
@@ -73,62 +423,172 @@
 <script>
 var pmData = [];
 var pmPage = 1;
+var pmActiveTab = 'schedule';
+var pmFilter = { search: '', machine: '', technician: '', status: '', priority: '' };
+var pmSearchDebounce = null;
+var pmHistoryPage = 1;
+var pmCalYear = new Date().getFullYear();
+var pmCalMonth = new Date().getMonth();
+var pmMachinesCache = [];
+var pmTechsCache = [];
 
 function loadPMData() {
   showLoading(true);
   google.script.run
     .withSuccessHandler(function(data) {
-      console.log('=== PIPELINE: getPMRecords() returned', data ? data.length : 'null/undefined', 'records');
-      if (data && data.length > 0) {
-        console.log('=== PIPELINE: First record =', JSON.stringify(data[0]));
-      } else if (data && data.length === 0) {
-        console.warn('=== PIPELINE: Backend returned EMPTY ARRAY for PM');
-      } else {
-        console.error('=== PIPELINE: Backend returned null/undefined for PM');
-      }
       pmData = data || [];
       showLoading(false);
+      updatePMSummary();
       renderPMTable();
+      loadPMFilterSelects();
     })
     .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load PM records', 'error'); })
     .getPMRecords();
 }
 
+function loadPMFilterSelects() {
+  google.script.run
+    .withSuccessHandler(function(m) {
+      pmMachinesCache = m || [];
+      var sel = document.getElementById('pmFilterMachine');
+      sel.innerHTML = '<option value="">All Machines</option>';
+      m.forEach(function(item) { sel.innerHTML += '<option value="' + (item.MachineID || item.id) + '">' + (item.MachineName || item.name) + '</option>'; });
+    })
+    .withFailureHandler(function() {})
+    .getMachines();
+  google.script.run
+    .withSuccessHandler(function(t) {
+      pmTechsCache = t || [];
+      var sel = document.getElementById('pmFilterTechnician');
+      sel.innerHTML = '<option value="">All Technicians</option>';
+      t.forEach(function(item) { sel.innerHTML += '<option value="' + (item.EmployeeID || item.id) + '">' + (item.TechnicianName || item.name) + '</option>'; });
+    })
+    .withFailureHandler(function() {})
+    .getTechnicians();
+}
+
+function updatePMSummary() {
+  var total = pmData.length;
+  var completed = pmData.filter(function(r) { return r.Status === 'Completed'; }).length;
+  var scheduled = pmData.filter(function(r) { return r.Status === 'Scheduled'; }).length;
+  var overdue = pmData.filter(function(r) { return r.Status === 'Overdue'; }).length;
+  var now = new Date();
+  var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  var monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  var dueThisMonth = pmData.filter(function(r) {
+    if (r.Status === 'Completed') return false;
+    var d = r.DueDate ? new Date(r.DueDate) : null;
+    return d && d >= monthStart && d <= monthEnd;
+  }).length;
+  var complianceRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+  document.getElementById('pmTotalCount').textContent = total;
+  document.getElementById('pmCompletedCount').textContent = completed;
+  document.getElementById('pmScheduledCount').textContent = scheduled;
+  document.getElementById('pmOverdueCount').textContent = overdue;
+  document.getElementById('pmDueThisMonth').textContent = dueThisMonth;
+  document.getElementById('pmComplianceRate').textContent = complianceRate + '%';
+  var complianceStat = document.getElementById('pmComplianceStat');
+  complianceStat.className = 'stat-card';
+  if (complianceRate > 80) complianceStat.classList.add('stat-success');
+  else if (complianceRate >= 50) complianceStat.classList.add('stat-warning');
+  else complianceStat.classList.add('stat-danger');
+}
+
 function renderPMTable() {
   renderTable(pmData, [
     { key: 'PMNumber', label: 'PM No' },
-    { key: 'Machine', label: 'Machine' },
-    { key: 'Frequency', label: 'Frequency (Days)' },
-    { key: 'NextDueDate', label: 'Next Due', date: true },
-    { key: 'Technician', label: 'Technician' },
-    { key: 'LastDone', label: 'Last Done', date: true },
-    { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Scheduled': 'primary', 'Overdue': 'danger', 'Completed': 'success' } }
+    { key: 'Title', label: 'Title' },
+    { key: 'MachineName', label: 'Machine' },
+    { key: 'Frequency', label: 'Freq' },
+    { key: 'FrequencyType', label: 'Type' },
+    { key: 'DueDate', label: 'Due Date', date: true },
+    { key: 'AssignedTechnicianName', label: 'Technician' },
+    { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Completed': 'success', 'Scheduled': 'primary', 'Overdue': 'danger', 'In Progress': 'info', 'Missed': 'danger' } },
+    { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Critical': 'danger', 'High': 'warning', 'Medium': 'info', 'Low': 'success' } }
   ], [
-    { label: 'Complete', icon: 'complete', color: 'success', onclick: "completePM('{id}')", idField: 'PMNumber', condition: function(r) { return r.Status !== 'Completed'; } },
+    { label: 'Complete', icon: 'complete', color: 'success', onclick: "openCompleteForm('{id}')", idField: 'PMNumber', condition: function(r) { return r.Status !== 'Completed'; } },
     { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editPM('{id}')", idField: 'PMNumber' },
     { label: 'Del', icon: 'trash', color: 'danger', onclick: "deletePM('{id}')", idField: 'PMNumber' }
   ], pmPage, PAGE_SIZE, 'pmTableContainer');
   registerPageState('pmTableContainer', function(p) { pmPage = p; renderPMTable(); });
 }
 
+function switchPMTab(tab, btn) {
+  pmActiveTab = tab;
+  document.querySelectorAll('#pmPage .workflow-tab').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  document.getElementById('pmScheduleView').style.display = tab === 'schedule' ? '' : 'none';
+  document.getElementById('pmCalendarView').style.display = tab === 'calendar' ? '' : 'none';
+  document.getElementById('pmHistoryView').style.display = tab === 'history' ? '' : 'none';
+  document.getElementById('pmComplianceView').style.display = tab === 'compliance' ? '' : 'none';
+  if (tab === 'calendar') renderCalendar(pmCalYear, pmCalMonth);
+  else if (tab === 'history') loadPMHistory();
+  else if (tab === 'compliance') loadPMCompliance();
+}
+
 function openPMForm() {
   document.getElementById('editPmId').value = '';
+  document.getElementById('pmFormNumber').value = '';
   resetForm('pmForm');
-  var dueDate = new Date(); dueDate.setDate(dueDate.getDate() + 30);
-  document.getElementById('pmForm').querySelector('input[name="NextDueDate"]').value = dueDate.toISOString().split('T')[0];
-  google.script.run.withSuccessHandler(function(m) { populateSelect('pmMachine', m, 'MachineID', 'MachineName', 'Select Machine'); }).withFailureHandler(function() {}).getMachines();
-  google.script.run.withSuccessHandler(function(t) { populateSelect('pmTechnician', t, 'EmployeeID', 'TechnicianName', 'Select'); }).withFailureHandler(function() {}).getTechnicians();
-  openModalForm('pmForm', 'New PM Record');
+  loadMachinesForSelect('pmFormMachine');
+  loadTechniciansForSelect('pmFormTechnician');
+  var today = new Date().toISOString().split('T')[0];
+  document.getElementById('pmFormDueDate').value = today;
+  var nextDue = new Date(); nextDue.setDate(nextDue.getDate() + 30);
+  document.getElementById('pmFormNextDueDate').value = nextDue.toISOString().split('T')[0];
+  openModalForm('pmForm', 'Add PM Record');
 }
 
 function editPM(id) {
   var item = pmData.find(function(r) { return r.PMNumber === id; });
   if (!item) return;
-  google.script.run.withSuccessHandler(function(m) { populateSelect('pmMachine', m, 'MachineID', 'MachineName', 'Select Machine'); }).withFailureHandler(function() {}).getMachines();
-  google.script.run.withSuccessHandler(function(t) { populateSelect('pmTechnician', t, 'EmployeeID', 'TechnicianName', 'Select'); }).withFailureHandler(function() {}).getTechnicians();
-  setFormData('pmForm', item);
+  loadMachinesForSelect('pmFormMachine');
+  loadTechniciansForSelect('pmFormTechnician');
   document.getElementById('editPmId').value = id;
+  document.getElementById('pmFormNumber').value = item.PMNumber || '';
+  document.getElementById('pmFormNumber').readOnly = true;
+  setFormData('pmForm', item);
   openModalForm('pmForm', 'Edit PM - ' + id);
+}
+
+function loadMachinesForSelect(id) {
+  google.script.run
+    .withSuccessHandler(function(m) {
+      pmMachinesCache = m || [];
+      populateSelect(id, pmMachinesCache, 'MachineID', 'MachineName', 'Select Machine');
+    })
+    .withFailureHandler(function() {})
+    .getMachines();
+}
+
+function loadTechniciansForSelect(id) {
+  google.script.run
+    .withSuccessHandler(function(t) {
+      pmTechsCache = t || [];
+      populateSelect(id, pmTechsCache, 'EmployeeID', 'TechnicianName', 'Select Technician');
+    })
+    .withFailureHandler(function() {})
+    .getTechnicians();
+}
+
+function onPMMachineChange() {
+  var mid = document.getElementById('pmFormMachine').value;
+  var machine = pmMachinesCache.find(function(m) { return (m.MachineID || m.id) === mid; });
+  if (machine) {
+    document.getElementById('pmFormMachineName').value = machine.MachineName || machine.name || '';
+    document.getElementById('pmFormDepartment').value = machine.Department || '';
+    document.getElementById('pmFormSection').value = machine.Section || '';
+  } else {
+    document.getElementById('pmFormMachineName').value = '';
+    document.getElementById('pmFormDepartment').value = '';
+    document.getElementById('pmFormSection').value = '';
+  }
+}
+
+function onPMTechChange() {
+  var tid = document.getElementById('pmFormTechnician').value;
+  var tech = pmTechsCache.find(function(t) { return (t.EmployeeID || t.id) === tid; });
+  document.getElementById('pmFormTechName').value = tech ? (tech.TechnicianName || tech.name || '') : '';
 }
 
 function savePM(e) {
@@ -138,44 +598,367 @@ function savePM(e) {
   showLoading(true);
   if (id) {
     google.script.run
-      .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmFormModal'); showToast('PM updated successfully'); renderPMTable(); })
+      .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmFormModal'); showToast('PM updated successfully', 'success'); updatePMSummary(); renderPMTable(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to update PM', 'error'); })
       .updatePMRecord(id, data);
   } else {
     google.script.run
-      .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmFormModal'); showToast('PM record added successfully'); renderPMTable(); })
+      .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmFormModal'); showToast('PM record added successfully', 'success'); updatePMSummary(); renderPMTable(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to add PM', 'error'); })
       .addPMRecord(data);
   }
 }
 
 function deletePM(id) {
-  showConfirm('Delete PM Record', 'Are you sure?', function() {
+  showConfirm('Delete PM Record', 'Are you sure you want to delete this PM record?', function() {
     showLoading(true);
     google.script.run
-      .withSuccessHandler(function(result) { pmData = result; showLoading(false); showToast('PM record deleted'); renderPMTable(); })
+      .withSuccessHandler(function(result) { pmData = result; showLoading(false); showToast('PM record deleted', 'success'); updatePMSummary(); renderPMTable(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to delete PM', 'error'); })
       .deletePMRecord(id);
   });
 }
 
-function completePM(id) {
-  showConfirm('Complete PM', 'Mark this PM as completed?', function() {
-    showLoading(true);
-    google.script.run
-      .withSuccessHandler(function(result) { pmData = result; showLoading(false); showToast('PM completed successfully'); renderPMTable(); })
-      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to complete PM', 'error'); })
-      .completePM(id);
-  });
+function openCompleteForm(id) {
+  var item = pmData.find(function(r) { return r.PMNumber === id; });
+  if (!item) return;
+  document.getElementById('completePmId').value = id;
+  document.getElementById('completePmNumber').value = item.PMNumber || '';
+  document.getElementById('completePmTitle').value = item.Title || '';
+  document.getElementById('completePmMachine').value = item.MachineName || '';
+  document.getElementById('completePmStatus').value = 'Completed';
+  var today = new Date().toISOString().split('T')[0];
+  document.getElementById('completePmDate').value = today;
+  var freq = parseInt(item.Frequency) || 30;
+  var nextDue = new Date(); nextDue.setDate(nextDue.getDate() + freq);
+  document.getElementById('completePmNextDue').value = nextDue.toISOString().split('T')[0];
+  document.getElementById('completePmRemarks').value = '';
+  resetForm('pmCompleteForm');
+  document.getElementById('completePmId').value = id;
+  document.getElementById('completePmDate').value = today;
+  document.getElementById('completePmNextDue').value = nextDue.toISOString().split('T')[0];
+  openModalForm('pmCompleteForm', 'Complete PM - ' + id);
+}
+
+function saveComplete(e) {
+  e.preventDefault();
+  var id = document.getElementById('completePmId').value;
+  var data = getFormData('pmCompleteForm');
+  data.Status = 'Completed';
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmCompleteModal'); showToast('PM completed successfully', 'success'); updatePMSummary(); renderPMTable(); })
+    .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to complete PM', 'error'); })
+    .completePM(id, data);
 }
 
 function searchPMTable() {
   var query = document.getElementById('pmSearch').value;
-  if (!query) { renderPMTable(); return; }
+  pmFilter.search = query;
+  if (pmSearchDebounce) clearTimeout(pmSearchDebounce);
+  pmSearchDebounce = setTimeout(function() {
+    if (!query && !pmFilter.machine && !pmFilter.technician && !pmFilter.status && !pmFilter.priority) {
+      loadPMData();
+      return;
+    }
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) { pmData = result; showLoading(false); pmPage = 1; renderPMTable(); })
+      .withFailureHandler(function(err) { showLoading(false); showToast('Search failed', 'error'); })
+      .searchPMRecords(query);
+  }, 300);
+}
+
+function applyPMFilter() {
+  pmFilter.machine = document.getElementById('pmFilterMachine').value;
+  pmFilter.technician = document.getElementById('pmFilterTechnician').value;
+  pmFilter.status = document.getElementById('pmFilterStatus').value;
+  pmFilter.priority = document.getElementById('pmFilterPriority').value;
+  showLoading(true);
+  var filtered = pmData;
+  if (pmFilter.machine) filtered = filtered.filter(function(r) { return r.MachineID === pmFilter.machine || r.MachineName === pmFilter.machine; });
+  if (pmFilter.technician) filtered = filtered.filter(function(r) { return r.AssignedTechnician === pmFilter.technician || r.AssignedTechnicianName === pmFilter.technician; });
+  if (pmFilter.status) filtered = filtered.filter(function(r) { return r.Status === pmFilter.status; });
+  if (pmFilter.priority) filtered = filtered.filter(function(r) { return r.Priority === pmFilter.priority; });
+  pmData = filtered;
+  showLoading(false);
+  pmPage = 1;
+  renderPMTable();
+}
+
+function clearPMFilter() {
+  document.getElementById('pmFilterMachine').value = '';
+  document.getElementById('pmFilterTechnician').value = '';
+  document.getElementById('pmFilterStatus').value = '';
+  document.getElementById('pmFilterPriority').value = '';
+  document.getElementById('pmSearch').value = '';
+  pmFilter = { search: '', machine: '', technician: '', status: '', priority: '' };
+  loadPMData();
+}
+
+function openBulkGenerateForm() {
+  resetForm('pmBulkForm');
+  loadMachinesForSelect('pmBulkMachine');
+  loadTechniciansForSelect('pmBulkTechnician');
+  var today = new Date().toISOString().split('T')[0];
+  document.getElementById('pmBulkForm').querySelector('[name="StartDate"]').value = today;
+  openModalForm('pmBulkForm', 'Bulk Generate PMs');
+}
+
+function saveBulkGenerate(e) {
+  e.preventDefault();
+  var data = getFormData('pmBulkForm');
+  data.Cycles = parseInt(data.Cycles) || 12;
   showLoading(true);
   google.script.run
-    .withSuccessHandler(function(result) { pmData = result; showLoading(false); pmPage = 1; renderPMTable(); })
+    .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmBulkModal'); showToast('PMs generated successfully', 'success'); updatePMSummary(); renderPMTable(); })
+    .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to generate PMs', 'error'); })
+    .bulkGeneratePMs(data);
+}
+
+function exportPMCSV() {
+  if (!pmData || pmData.length === 0) { showToast('No data to export', 'warning'); return; }
+  var headers = ['PMNumber','Title','MachineName','Department','Section','Frequency','FrequencyType','AssignedTechnicianName','Priority','Status','StartDate','DueDate','NextDueDate','CompletionDate','ComplianceStatus','Remarks'];
+  var csv = headers.join(',') + '\n';
+  pmData.forEach(function(r) {
+    var row = headers.map(function(h) {
+      var val = r[h] !== undefined && r[h] !== null ? r[h] : '';
+      val = String(val).replace(/"/g, '""');
+      if (val.indexOf(',') > -1 || val.indexOf('"') > -1 || val.indexOf('\n') > -1) val = '"' + val + '"';
+      return val;
+    });
+    csv += row.join(',') + '\n';
+  });
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'PM_Schedule_' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Export completed', 'success');
+}
+
+function renderCalendar(year, month) {
+  pmCalYear = year;
+  pmCalMonth = month;
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('pmCalTitle').textContent = months[month] + ' ' + year;
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      showLoading(false);
+      var calData = data || [];
+      buildCalendarGrid(year, month, calData);
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load calendar data', 'error'); })
+    .getPMCalendarData(year, month + 1);
+}
+
+function buildCalendarGrid(year, month, calData) {
+  var firstDay = new Date(year, month, 1).getDay();
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var today = new Date();
+  var todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  var html = '<table class="calendar-table" style="width:100%;border-collapse:collapse"><thead><tr>';
+  var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  dayNames.forEach(function(d) { html += '<th style="padding:8px;text-align:center;font-weight:600;font-size:12px;color:var(--text-muted);border-bottom:2px solid var(--border)">' + d + '</th>'; });
+  html += '</tr></thead><tbody>';
+  var day = 1;
+  for (var row = 0; row < 6; row++) {
+    if (day > daysInMonth) break;
+    html += '<tr>';
+    for (var col = 0; col < 7; col++) {
+      if (row === 0 && col < firstDay) {
+        html += '<td style="padding:4px;border:1px solid var(--border);background:var(--bg-secondary)"></td>';
+      } else if (day > daysInMonth) {
+        html += '<td style="padding:4px;border:1px solid var(--border);background:var(--bg-secondary)"></td>';
+      } else {
+        var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+        var isToday = dateStr === todayStr;
+        var dayPMs = calData.filter(function(p) {
+          var d = p.DueDate || p.NextDueDate || p.CompletionDate;
+          return d && d.slice(0, 10) === dateStr;
+        });
+        var colors = [];
+        dayPMs.forEach(function(p) {
+          if (p.Status === 'Completed') colors.push('success');
+          else if (p.Status === 'Overdue') colors.push('danger');
+          else if (p.Status === 'In Progress') colors.push('info');
+          else colors.push('warning');
+        });
+        var dotHtml = '';
+        if (dayPMs.length > 0) {
+          var uniqueColors = colors.filter(function(c, i) { return colors.indexOf(c) === i; });
+          dotHtml = '<div style="display:flex;gap:3px;justify-content:center;margin-top:2px;flex-wrap:wrap">';
+          uniqueColors.forEach(function(c) {
+            dotHtml += '<span style="width:6px;height:6px;border-radius:50%;background:var(--' + c + ')"></span>';
+          });
+          dotHtml += '</div>';
+        }
+        var dayStyle = 'padding:6px 4px;border:1px solid var(--border);text-align:center;vertical-align:top;cursor:pointer;font-size:13px;min-height:60px';
+        if (isToday) dayStyle += ';background:var(--primary);color:#fff;font-weight:700';
+        html += '<td style="' + dayStyle + '" onclick="showPMDayDetail(\'' + dateStr + '\')">';
+        html += '<div style="font-weight:' + (isToday ? '700' : '500') + '">' + day + '</div>';
+        html += dotHtml;
+        if (dayPMs.length > 0) {
+          html += '<div style="font-size:10px;color:var(--text-muted);margin-top:2px">' + dayPMs.length + ' PMs</div>';
+        }
+        html += '</td>';
+        day++;
+      }
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('pmCalendarGrid').innerHTML = html;
+  document.getElementById('pmCalendarDayDetail').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:8px">Click on a day to view PM details</div>';
+}
+
+function showPMDayDetail(dateStr) {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      showLoading(false);
+      var pmList = data || [];
+      if (pmList.length === 0) {
+        document.getElementById('pmCalendarDayDetail').innerHTML = '<div class="empty-state" style="padding:16px"><h3>No PMs for ' + dateStr + '</h3></div>';
+        return;
+      }
+      renderTable(pmList, [
+        { key: 'PMNumber', label: 'PM No' },
+        { key: 'Title', label: 'Title' },
+        { key: 'MachineName', label: 'Machine' },
+        { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Completed': 'success', 'Scheduled': 'primary', 'Overdue': 'danger', 'In Progress': 'info', 'Missed': 'danger' } }
+      ], null, 1, 5, 'pmCalendarDayDetail');
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load day details', 'error'); })
+    .getPMByDateRange(dateStr, dateStr);
+}
+
+function prevMonth() {
+  pmCalMonth--;
+  if (pmCalMonth < 0) { pmCalMonth = 11; pmCalYear--; }
+  renderCalendar(pmCalYear, pmCalMonth);
+}
+
+function nextMonth() {
+  pmCalMonth++;
+  if (pmCalMonth > 11) { pmCalMonth = 0; pmCalYear++; }
+  renderCalendar(pmCalYear, pmCalMonth);
+}
+
+function goToToday() {
+  var now = new Date();
+  pmCalYear = now.getFullYear();
+  pmCalMonth = now.getMonth();
+  renderCalendar(pmCalYear, pmCalMonth);
+}
+
+function loadPMHistory() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      showLoading(false);
+      renderHistoryTable(data || []);
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load PM history', 'error'); })
+    .getPMHistory();
+}
+
+function renderHistoryTable(data) {
+  renderTable(data, [
+    { key: 'PMNumber', label: 'PM No' },
+    { key: 'Title', label: 'Title' },
+    { key: 'MachineName', label: 'Machine' },
+    { key: 'CompletionDate', label: 'Completed', date: true },
+    { key: 'AssignedTechnicianName', label: 'Technician' },
+    { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Completed': 'success', 'Scheduled': 'primary', 'Overdue': 'danger', 'In Progress': 'info', 'Missed': 'danger' } }
+  ], null, pmHistoryPage, PAGE_SIZE, 'pmHistoryContainer');
+  registerPageState('pmHistoryContainer', function(p) { pmHistoryPage = p; loadPMHistory(); });
+}
+
+function searchPMHistory() {
+  var query = document.getElementById('pmHistorySearch').value;
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      showLoading(false);
+      var filtered = (data || []).filter(function(r) {
+        if (!query) return true;
+        var q = query.toLowerCase();
+        return (r.PMNumber && r.PMNumber.toLowerCase().indexOf(q) > -1) ||
+               (r.Title && r.Title.toLowerCase().indexOf(q) > -1) ||
+               (r.MachineName && r.MachineName.toLowerCase().indexOf(q) > -1);
+      });
+      renderHistoryTable(filtered);
+    })
     .withFailureHandler(function(err) { showLoading(false); showToast('Search failed', 'error'); })
-    .searchPMRecords(query);
+    .getPMHistory();
+}
+
+function loadPMCompliance() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      showLoading(false);
+      renderComplianceView(data || { total: 0, completed: 0, overdue: 0, complianceRate: 0 });
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load compliance data', 'error'); })
+    .getPMCompliance();
+}
+
+function renderComplianceView(compliance) {
+  var rate = compliance.complianceRate || 0;
+  var total = compliance.total || 0;
+  var completed = compliance.completed || 0;
+  var overdue = compliance.overdue || 0;
+  var missed = compliance.missed || 0;
+  var scheduled = total - completed - overdue - missed;
+  if (scheduled < 0) scheduled = 0;
+  document.getElementById('pmComplianceLarge').textContent = rate + '%';
+  document.getElementById('pmComplianceLarge').style.color = rate > 80 ? 'var(--success)' : rate >= 50 ? 'var(--warning)' : 'var(--danger)';
+  var breakdownHtml = '';
+  var items = [
+    { label: 'Completed', count: completed, color: 'var(--success)', pct: total > 0 ? Math.round((completed / total) * 100) : 0 },
+    { label: 'Overdue', count: overdue, color: 'var(--danger)', pct: total > 0 ? Math.round((overdue / total) * 100) : 0 },
+    { label: 'Missed', count: missed, color: 'var(--danger)', pct: total > 0 ? Math.round((missed / total) * 100) : 0 },
+    { label: 'Scheduled', count: scheduled, color: 'var(--info)', pct: total > 0 ? Math.round((scheduled / total) * 100) : 0 }
+  ];
+  items.forEach(function(item) {
+    breakdownHtml +=
+      '<div style="display:flex;align-items:center;gap:12px">' +
+        '<div style="width:12px;height:12px;border-radius:3px;background:' + item.color + ';flex-shrink:0"></div>' +
+        '<div style="flex:1;font-size:13px">' + item.label + '</div>' +
+        '<div style="font-weight:600;font-size:14px;min-width:40px;text-align:right">' + item.count + '</div>' +
+        '<div style="font-size:12px;color:var(--text-muted);min-width:40px;text-align:right">' + item.pct + '%</div>' +
+        '<div style="width:100px;height:6px;background:var(--bg-secondary);border-radius:3px;overflow:hidden">' +
+          '<div style="width:' + item.pct + '%;height:100%;background:' + item.color + ';border-radius:3px"></div>' +
+        '</div>' +
+      '</div>';
+  });
+  document.getElementById('pmComplianceBreakdown').innerHTML = breakdownHtml;
+  loadMachineCompliance();
+}
+
+function loadMachineCompliance() {
+  var machines = {};
+  pmData.forEach(function(r) {
+    var key = r.MachineName || 'Unknown';
+    if (!machines[key]) machines[key] = { total: 0, completed: 0 };
+    machines[key].total++;
+    if (r.Status === 'Completed') machines[key].completed++;
+  });
+  var tableData = Object.keys(machines).map(function(k) {
+    var m = machines[k];
+    var rate = m.total > 0 ? Math.round((m.completed / m.total) * 100) : 0;
+    return { Machine: k, Total: m.total, Completed: m.completed, Rate: rate + '%' };
+  });
+  renderTable(tableData, [
+    { key: 'Machine', label: 'Machine' },
+    { key: 'Total', label: 'Total PMs' },
+    { key: 'Completed', label: 'Completed' },
+    { key: 'Rate', label: 'Compliance %' }
+  ], null, 1, PAGE_SIZE, 'pmMachineComplianceContainer');
 }
 </script>

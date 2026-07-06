@@ -162,18 +162,84 @@ function validateUserData(data) {
 
 function validateSparePartData(data) {
   var rules = [
-    { field: 'PartName', label: 'Part Name', required: true },
-    { field: 'Stock', label: 'Stock', required: true, numeric: true, positive: true }
+    { field: 'PartName', label: 'Part Name', required: true }
   ];
-  return validateFormFields(data, rules);
+  var errors = validateFormFields(data, rules);
+  if (data.CurrentStock !== undefined && data.CurrentStock !== '') {
+    var numErr = validatePositiveNumber(data.CurrentStock, 'Current Stock');
+    if (numErr) errors.push(numErr);
+  }
+  if (data.UnitCost !== undefined && data.UnitCost !== '') {
+    var numErr = validatePositiveNumber(data.UnitCost, 'Unit Cost');
+    if (numErr) errors.push(numErr);
+  }
+  if (data.MinimumStock !== undefined && data.MinimumStock !== '') {
+    var numErr = validatePositiveNumber(data.MinimumStock, 'Minimum Stock');
+    if (numErr) errors.push(numErr);
+  }
+  if (data.MaximumStock !== undefined && data.MaximumStock !== '') {
+    var numErr = validatePositiveNumber(data.MaximumStock, 'Maximum Stock');
+    if (numErr) errors.push(numErr);
+  }
+  if (data.ReorderLevel !== undefined && data.ReorderLevel !== '') {
+    var numErr = validatePositiveNumber(data.ReorderLevel, 'Reorder Level');
+    if (numErr) errors.push(numErr);
+  }
+  return errors;
 }
 
 function validatePMData(data) {
   var rules = [
-    { field: 'Machine', label: 'Machine', required: true },
+    { field: 'Title', label: 'Title', required: true },
+    { field: 'MachineID', label: 'Machine', required: true },
     { field: 'Frequency', label: 'Frequency', required: true, numeric: true, positive: true }
   ];
+  var errors = validateFormFields(data, rules);
+  if (data.FrequencyType && ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Half Yearly', 'Yearly'].indexOf(data.FrequencyType) === -1) {
+    errors.push('Invalid Frequency Type. Must be Daily, Weekly, Monthly, Quarterly, Half Yearly, or Yearly.');
+  }
+  return errors;
+}
+
+function validateGRNData(data) {
+  var rules = [
+    { field: 'PartCode', label: 'Part Code', required: true },
+    { field: 'Quantity', label: 'Quantity', required: true, numeric: true, positive: true },
+    { field: 'UnitCost', label: 'Unit Cost', required: true, numeric: true, positive: true }
+  ];
   return validateFormFields(data, rules);
+}
+
+function validateIssueData(data) {
+  var rules = [
+    { field: 'PartCode', label: 'Part Code', required: true },
+    { field: 'Quantity', label: 'Quantity', required: true, numeric: true, positive: true }
+  ];
+  return validateFormFields(data, rules);
+}
+
+function validateTransferData(data) {
+  var rules = [
+    { field: 'PartCode', label: 'Part Code', required: true },
+    { field: 'Quantity', label: 'Quantity', required: true, numeric: true, positive: true },
+    { field: 'ToLocation', label: 'To Location', required: true }
+  ];
+  return validateFormFields(data, rules);
+}
+
+function validateAdjustmentData(data) {
+  var rules = [
+    { field: 'PartCode', label: 'Part Code', required: true },
+    { field: 'Quantity', label: 'Quantity', required: true, numeric: true }
+  ];
+  var errors = validateFormFields(data, rules);
+  if (data.Quantity && parseFloat(data.Quantity) === 0) {
+    errors.push('Quantity must not be zero.');
+  }
+  if (!data.Reason || data.Reason.trim() === '') {
+    errors.push('Reason is required for adjustments.');
+  }
+  return errors;
 }
 
 function validateChecklistTemplateData(data) {

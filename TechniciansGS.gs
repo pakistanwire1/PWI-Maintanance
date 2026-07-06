@@ -1,6 +1,6 @@
 var TECH_COLS = ['EmployeeID','EmployeeCode','TechnicianName','Designation','Department','Section','Skill','Shift','Mobile','Email','JoiningDate','Status','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
 
-function initializeTechnicianMaster() {
+function initTechnicianSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheetName = 'Technicians';
   var sheet = ss.getSheetByName(sheetName);
@@ -110,7 +110,7 @@ function initializeTechnicianMaster() {
 }
 
 function initTechniciansSheet() {
-  initializeTechnicianMaster();
+  initTechnicianSheet();
 }
 
 function normalizeTechnician(t) {

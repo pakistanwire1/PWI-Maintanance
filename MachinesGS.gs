@@ -1,6 +1,6 @@
 var MACHINE_COLS = ['MachineID','MachineCode','MachineName','MachineNumber','DeptID','Department','SectionID','Section','Location','MachineType','Manufacturer','Model','SerialNo','Capacity','PowerRating','InstallDate','WarrantyExpiry','Criticality','Status','QRCode','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
 
-function initializeMachineMaster() {
+function initMachineSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheetName = 'Machines';
   var sheet = ss.getSheetByName(sheetName);
@@ -101,7 +101,7 @@ function initializeMachineMaster() {
 }
 
 function initMachinesSheet() {
-  initializeMachineMaster();
+  initMachineSheet();
 }
 
 function normalizeMachine(m) {
@@ -176,6 +176,7 @@ function addMachine(data) {
   if (!data.Status) data.Status = CONFIG.STATUS.ACTIVE;
   var result = addRow(CONFIG.SHEET_NAMES.MACHINES, data);
   logActivity('Add Machine', data.MachineID + ' - ' + data.MachineName);
+  try { createNotification('Machine Added: ' + (data.MachineName || ''), 'New machine ' + (data.MachineName || '') + ' (' + (data.MachineCode || '') + ') has been added to the system.', CONFIG.NOTIFICATION_MODULES.MACHINE, CONFIG.PRIORITY.LOW, data.CreatedBy, '', "navigateTo('machines')"); } catch(e) {}
   return result.map(normalizeMachine);
 }
 

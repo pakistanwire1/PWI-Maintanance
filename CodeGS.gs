@@ -1,5 +1,9 @@
-function doGet() {
+function doGet(e) {
   Logger.log('doGet() called');
+
+  if (e && e.parameter && e.parameter.img === 'logo') {
+    return serveLogo();
+  }
 
   var template = HtmlService.createTemplateFromFile('WelcomePage');
   var html = template.evaluate()

@@ -1,0 +1,323 @@
+<div id="goodsreceiptPage" class="page">
+  <div class="dashboard-grid" id="grSummaryCards" style="margin-bottom:16px">
+    <div class="stat-card stat-primary">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg></div>
+        <div class="stat-info"><h3 id="grTotalGRNs">0</h3><p>Total GRNs</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-success">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="stat-info"><h3 id="grReceived">0</h3><p>Received</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-warning">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></div>
+        <div class="stat-info"><h3 id="grPending">0</h3><p>Pending</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-info">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="stat-info"><h3 id="grTotalQty">0</h3><p>Total Quantity</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-bar" id="grFilterBar">
+    <div class="form-group">
+      <label>Search</label>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" class="form-control" id="grSearch" placeholder="Search GRN..." onkeyup="searchGRTable()">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select class="form-control" id="grFilterStatus">
+        <option value="">All Status</option>
+        <option value="Received">Received</option>
+        <option value="Pending">Pending</option>
+        <option value="Cancelled">Cancelled</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Supplier</label>
+      <input type="text" class="form-control" id="grFilterSupplier" placeholder="Filter by supplier...">
+    </div>
+    <div class="form-group">
+      <label>From</label>
+      <input type="date" class="form-control" id="grFilterFromDate">
+    </div>
+    <div class="form-group">
+      <label>To</label>
+      <input type="date" class="form-control" id="grFilterToDate">
+    </div>
+    <div class="form-group" style="align-self:flex-end">
+      <button class="btn btn-primary btn-sm" onclick="applyGRFilter()">Apply</button>
+      <button class="btn btn-secondary btn-sm" onclick="clearGRFilter()">Clear</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Goods Receipt Notes</div>
+      <div class="card-actions">
+        <button class="btn btn-secondary" onclick="exportGRCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export Excel</button>
+        <button class="btn btn-secondary" onclick="exportGRPDF()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg> PDF</button>
+        <button class="btn btn-secondary" onclick="printGR()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg> Print</button>
+        <button class="btn btn-secondary" onclick="loadGoodsReceiptData()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg> Refresh</button>
+      </div>
+    </div>
+    <div id="grTableContainer"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="grViewModal" style="display:none">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title" id="grViewTitle">Goods Receipt Details</div>
+      <button class="modal-close" onclick="hideModal('grViewModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="view-grid">
+        <div class="view-section">
+          <h4>Receipt Info</h4>
+          <div class="view-row"><span>GRN No</span><strong id="grViewGRNNo">-</strong></div>
+          <div class="view-row"><span>Part Code</span><strong id="grViewPartCode">-</strong></div>
+          <div class="view-row"><span>Part Name</span><strong id="grViewPartName">-</strong></div>
+          <div class="view-row"><span>Quantity</span><strong id="grViewQty">-</strong></div>
+          <div class="view-row"><span>Status</span><strong id="grViewStatus">-</strong></div>
+        </div>
+        <div class="view-section">
+          <h4>Financial</h4>
+          <div class="view-row"><span>Unit Cost</span><strong id="grViewUnitCost">-</strong></div>
+          <div class="view-row"><span>Total Cost</span><strong id="grViewTotalCost">-</strong></div>
+          <div class="view-row"><span>Supplier</span><strong id="grViewSupplier">-</strong></div>
+          <div class="view-row"><span>Invoice No</span><strong id="grViewInvoiceNo">-</strong></div>
+          <div class="view-row"><span>PO No</span><strong id="grViewPONo">-</strong></div>
+        </div>
+      </div>
+      <div class="view-grid" style="margin-top:16px">
+        <div class="view-section">
+          <h4>Receiving</h4>
+          <div class="view-row"><span>Received By</span><strong id="grViewReceivedBy">-</strong></div>
+          <div class="view-row"><span>Received Date</span><strong id="grViewReceivedDate">-</strong></div>
+        </div>
+        <div class="view-section">
+          <h4>Audit</h4>
+          <div class="view-row"><span>Created By</span><strong id="grViewCreatedBy">-</strong></div>
+          <div class="view-row"><span>Created At</span><strong id="grViewCreatedAt">-</strong></div>
+          <div class="view-row"><span>Updated At</span><strong id="grViewUpdatedAt">-</strong></div>
+        </div>
+      </div>
+      <div class="view-grid" style="margin-top:16px">
+        <div class="view-section" style="grid-column:1/-1">
+          <h4>Remarks</h4>
+          <p id="grViewRemarks" style="color:var(--text);font-size:13px;line-height:1.5">-</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('grViewModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var grData = [];
+var grPage = 1;
+var grFilter = { search: '', status: '', supplier: '', fromDate: '', toDate: '' };
+var grSearchDebounce = null;
+
+function loadGoodsReceiptData() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      grData = data || [];
+      showLoading(false);
+      updateGRSummary();
+      renderGRTable();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load goods receipt data', 'error'); })
+    .getGoodsReceipt();
+}
+
+function updateGRSummary() {
+  var total = grData.length;
+  var received = grData.filter(function(r) { return (r.Status || '').toLowerCase() === 'received'; }).length;
+  var pending = grData.filter(function(r) { return (r.Status || '').toLowerCase() !== 'received'; }).length;
+  var totalQty = 0;
+  grData.forEach(function(r) { totalQty += parseFloat(r.Quantity) || 0; });
+  document.getElementById('grTotalGRNs').textContent = total;
+  document.getElementById('grReceived').textContent = received;
+  document.getElementById('grPending').textContent = pending;
+  document.getElementById('grTotalQty').textContent = totalQty.toFixed(2);
+}
+
+function renderGRTable() {
+  var data = applyGRClientFilters(grData);
+  var columns = [
+    { key: 'GRNNo', label: 'GRN No' },
+    { key: 'PartCode', label: 'Part Code' },
+    { key: 'PartName', label: 'Part Name' },
+    { key: 'Quantity', label: 'Qty' },
+    { key: 'UnitCost', label: 'Unit Cost', format: function(v) { return parseFloat(v || 0).toFixed(2); } },
+    { key: 'TotalCost', label: 'Total Cost', format: function(v) { return parseFloat(v || 0).toFixed(2); } },
+    { key: 'Supplier', label: 'Supplier' },
+    { key: 'InvoiceNo', label: 'Invoice' },
+    { key: 'ReceivedDate', label: 'Received', date: true },
+    { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Received': 'success', 'Pending': 'warning', 'Cancelled': 'danger' } }
+  ];
+  var actions = [
+    { label: 'View', icon: 'view', color: 'primary', onclick: "viewGR('{id}')", idField: 'GRNNo' }
+  ];
+  renderTable(data, columns, actions, grPage, PAGE_SIZE, 'grTableContainer');
+  registerPageState('grTableContainer', function(p) { grPage = p; renderGRTable(); });
+}
+
+function viewGR(id) {
+  var item = grData.find(function(r) { return r.GRNNo === id; });
+  if (!item) { showToast('Record not found', 'error'); return; }
+  document.getElementById('grViewGRNNo').textContent = item.GRNNo || '-';
+  document.getElementById('grViewPartCode').textContent = item.PartCode || '-';
+  document.getElementById('grViewPartName').textContent = item.PartName || '-';
+  document.getElementById('grViewQty').textContent = item.Quantity || '0';
+  document.getElementById('grViewStatus').textContent = item.Status || '-';
+  document.getElementById('grViewUnitCost').textContent = item.UnitCost ? parseFloat(item.UnitCost).toFixed(2) : '0.00';
+  document.getElementById('grViewTotalCost').textContent = item.TotalCost ? parseFloat(item.TotalCost).toFixed(2) : '0.00';
+  document.getElementById('grViewSupplier').textContent = item.Supplier || '-';
+  document.getElementById('grViewInvoiceNo').textContent = item.InvoiceNo || '-';
+  document.getElementById('grViewPONo').textContent = item.PONo || '-';
+  document.getElementById('grViewReceivedBy').textContent = item.ReceivedBy || '-';
+  document.getElementById('grViewReceivedDate').textContent = item.ReceivedDate || item.CreatedAt || '-';
+  document.getElementById('grViewCreatedBy').textContent = item.CreatedBy || '-';
+  document.getElementById('grViewCreatedAt').textContent = item.CreatedAt || '-';
+  document.getElementById('grViewUpdatedAt').textContent = item.UpdatedAt || '-';
+  document.getElementById('grViewRemarks').textContent = item.Remarks || '-';
+  openModalForm('grView', 'Goods Receipt - ' + id);
+}
+
+function searchGRTable() {
+  var query = document.getElementById('grSearch').value;
+  grFilter.search = query;
+  if (grSearchDebounce) clearTimeout(grSearchDebounce);
+  grSearchDebounce = setTimeout(function() { grPage = 1; renderGRTable(); }, 300);
+}
+
+function applyGRFilter() {
+  grFilter.status = document.getElementById('grFilterStatus').value;
+  grFilter.supplier = document.getElementById('grFilterSupplier').value;
+  grFilter.fromDate = document.getElementById('grFilterFromDate').value;
+  grFilter.toDate = document.getElementById('grFilterToDate').value;
+  grPage = 1;
+  renderGRTable();
+}
+
+function clearGRFilter() {
+  document.getElementById('grFilterStatus').value = '';
+  document.getElementById('grFilterSupplier').value = '';
+  document.getElementById('grFilterFromDate').value = '';
+  document.getElementById('grFilterToDate').value = '';
+  document.getElementById('grSearch').value = '';
+  grFilter = { search: '', status: '', supplier: '', fromDate: '', toDate: '' };
+  grPage = 1;
+  renderGRTable();
+}
+
+function applyGRClientFilters(data) {
+  if (grFilter.search) {
+    var q = grFilter.search.toLowerCase();
+    data = data.filter(function(r) {
+      return (r.GRNNo && r.GRNNo.toLowerCase().indexOf(q) > -1) ||
+             (r.PartCode && r.PartCode.toLowerCase().indexOf(q) > -1) ||
+             (r.PartName && r.PartName.toLowerCase().indexOf(q) > -1) ||
+             (r.Supplier && r.Supplier.toLowerCase().indexOf(q) > -1) ||
+             (r.InvoiceNo && r.InvoiceNo.toLowerCase().indexOf(q) > -1);
+    });
+  }
+  if (grFilter.status) data = data.filter(function(r) { return r.Status === grFilter.status; });
+  if (grFilter.supplier) {
+    var s = grFilter.supplier.toLowerCase();
+    data = data.filter(function(r) { return r.Supplier && r.Supplier.toLowerCase().indexOf(s) > -1; });
+  }
+  if (grFilter.fromDate) {
+    var from = new Date(grFilter.fromDate);
+    data = data.filter(function(r) {
+      var d = r.ReceivedDate ? new Date(r.ReceivedDate) : r.CreatedAt ? new Date(r.CreatedAt) : null;
+      return d && d >= from;
+    });
+  }
+  if (grFilter.toDate) {
+    var to = new Date(grFilter.toDate);
+    to.setHours(23, 59, 59, 999);
+    data = data.filter(function(r) {
+      var d = r.ReceivedDate ? new Date(r.ReceivedDate) : r.CreatedAt ? new Date(r.CreatedAt) : null;
+      return d && d <= to;
+    });
+  }
+  return data;
+}
+
+function exportGRCSV() {
+  var data = applyGRClientFilters(grData);
+  if (!data || data.length === 0) { showToast('No data to export', 'warning'); return; }
+  var headers = ['GRNNo','PartCode','PartName','Quantity','UnitCost','TotalCost','Supplier','InvoiceNo','PONo','ReceivedBy','ReceivedDate','Remarks','Status','CreatedBy','CreatedAt'];
+  var csv = headers.join(',') + '\n';
+  data.forEach(function(r) {
+    var row = headers.map(function(h) {
+      var val = r[h] !== undefined && r[h] !== null ? r[h] : '';
+      val = String(val).replace(/"/g, '""');
+      if (val.indexOf(',') > -1 || val.indexOf('"') > -1 || val.indexOf('\n') > -1) val = '"' + val + '"';
+      return val;
+    });
+    csv += row.join(',') + '\n';
+  });
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'GoodsReceipt_' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Export completed', 'success');
+}
+
+function exportGRPDF() {
+  var data = applyGRClientFilters(grData);
+  if (!data || data.length === 0) { showToast('No data to export', 'warning'); return; }
+  var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#1F4E78;color:#fff}</style></head><body>';
+  html += '<h2 style="text-align:center">Goods Receipt Report</h2><p style="text-align:center">Generated: ' + new Date().toLocaleString() + '</p>';
+  html += '<table><thead><tr><th>GRN No</th><th>Part Code</th><th>Part Name</th><th>Qty</th><th>Unit Cost</th><th>Total Cost</th><th>Supplier</th><th>Invoice</th><th>Status</th></tr></thead><tbody>';
+  data.forEach(function(r) {
+    html += '<tr><td>' + escHtml(r.GRNNo || '') + '</td><td>' + escHtml(r.PartCode || '') + '</td><td>' + escHtml(r.PartName || '') + '</td><td>' + escHtml(String(r.Quantity || '')) + '</td><td>' + (r.UnitCost ? parseFloat(r.UnitCost).toFixed(2) : '0.00') + '</td><td>' + (r.TotalCost ? parseFloat(r.TotalCost).toFixed(2) : '0.00') + '</td><td>' + escHtml(r.Supplier || '') + '</td><td>' + escHtml(r.InvoiceNo || '') + '</td><td>' + escHtml(r.Status || '') + '</td></tr>';
+  });
+  html += '</tbody></table></body></html>';
+  var blob = new Blob([html], { type: 'text/html' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'GoodsReceipt_' + new Date().toISOString().slice(0, 10) + '.html';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('PDF export completed', 'success');
+}
+
+function printGR() {
+  var data = applyGRClientFilters(grData);
+  if (!data || data.length === 0) { showToast('No data to print', 'warning'); return; }
+  var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px}th,td{border:1px solid #000;padding:4px;text-align:left}th{background:#1F4E78;color:#fff}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>';
+  html += '<h2 style="text-align:center">Goods Receipt Report</h2><p style="text-align:center">Generated: ' + new Date().toLocaleString() + '</p>';
+  html += '<table><thead><tr><th>GRN No</th><th>Part Code</th><th>Part Name</th><th>Qty</th><th>Unit Cost</th><th>Total Cost</th><th>Supplier</th><th>Status</th></tr></thead><tbody>';
+  data.forEach(function(r) {
+    html += '<tr><td>' + escHtml(r.GRNNo || '') + '</td><td>' + escHtml(r.PartCode || '') + '</td><td>' + escHtml(r.PartName || '') + '</td><td>' + escHtml(String(r.Quantity || '')) + '</td><td>' + (r.UnitCost ? parseFloat(r.UnitCost).toFixed(2) : '0.00') + '</td><td>' + (r.TotalCost ? parseFloat(r.TotalCost).toFixed(2) : '0.00') + '</td><td>' + escHtml(r.Supplier || '') + '</td><td>' + escHtml(r.Status || '') + '</td></tr>';
+  });
+  html += '</tbody></table></body></html>';
+  var w = window.open('', '', 'width=800,height=600');
+  w.document.write(html);
+  w.document.close();
+  w.print();
+}
+</script>
