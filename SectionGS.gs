@@ -165,6 +165,7 @@ function createSection(data) {
   data.UpdatedAt = data.CreatedAt;
   var result = addRow(CONFIG.SHEET_NAMES.SECTIONS, data);
   logActivity('Add Section', data.Section);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.SECTION, CONFIG.AUDIT_ACTIONS.CREATE, data.SectionID, data.Section || '', '', 'Code: ' + (data.SectionCode || ''), 'Success', 'Section created'); } catch(e) {}
   return result.map(normalizeSection);
 }
 
@@ -183,12 +184,15 @@ function modifySection(id, data) {
   data.UpdatedAt = getCurrentTimestamp();
   var result = updateRow(CONFIG.SHEET_NAMES.SECTIONS, 'SectionID', id, data);
   logActivity('Update Section', id);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.SECTION, CONFIG.AUDIT_ACTIONS.UPDATE, id, current.Section || '', '', JSON.stringify(data).substring(0, 150), 'Success', 'Section updated'); } catch(e) {}
   return result.map(normalizeSection);
 }
 
 function removeSection(id) {
+  var current = getSection(id);
   var result = deleteRow(CONFIG.SHEET_NAMES.SECTIONS, 'SectionID', id);
   logActivity('Delete Section', id);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.SECTION, CONFIG.AUDIT_ACTIONS.DELETE, id, current ? current.Section : '', '', 'Section deleted', 'Success', 'Section deleted'); } catch(e) {}
   return result.map(normalizeSection);
 }
 

@@ -134,6 +134,8 @@ function updateUserInfo() {
     else if (page === 'notifications') { show = true; }
     else if (page === 'breakdown') { show = isAdmin || hasPermission('viewReports'); }
     else if (page === 'reports') { show = isAdmin || hasPermission('viewReports'); }
+    else if (page === 'audit') { show = isAdmin || currentUser.role === 'Department Manager' || currentUser.role === 'Maintenance Manager'; }
+    else if (page === 'qr') { show = true; }
     else if (page === 'settings') { show = isAdmin || hasPermission('manageUsers'); }
     el.style.display = show ? '' : 'none';
   });
@@ -171,6 +173,10 @@ function setText(id, text) {
 
 function handleLogout() {
   showConfirm('Sign Out', 'Are you sure you want to sign out?', function() {
+    var email = (currentUser && currentUser.email) || '';
+    if (email) {
+      google.script.run.logUserLogout(email);
+    }
     stopAutoRefresh();
     stopNotificationRefresh();
     currentUser = null;
@@ -206,7 +212,8 @@ function navigateTo(page) {
     technicians: 'Technician Master', departments: 'Department Master', sections: 'Section Master', jobcards: 'All Job Cards', checklists: 'Checklists',
     pm: 'Preventive Maintenance', spareparts: 'Spare Parts', inventory: 'Inventory Management', inventorytransactions: 'Inventory Transactions',
     stockhistory: 'Stock History', goodsreceipt: 'Goods Receipt', pmhistory: 'PM History', notifications: 'Notifications',
-    breakdown: 'Breakdown History',
+    breakdown: 'Breakdown History', audit: 'Audit Trail',
+    qr: 'QR & Barcode Center',
     reports: 'Reports', settings: 'Settings', openjobcard: 'Open Job Card',
     startjobcard: 'Start Job Card', closejobcard: 'Close Job Card'
   };
@@ -225,7 +232,9 @@ function navigateTo(page) {
     stockhistory: 'loadStockHistoryData',
     goodsreceipt: 'loadGoodsReceiptData',
     pmhistory: 'loadPMHistoryData',
-    notifications: 'loadNotificationsData'
+    notifications: 'loadNotificationsData',
+    audit: 'loadAuditLogsData',
+    qr: 'loadQRBarcodeData'
   };
   var fnName = window.__loadFnMap[page] || 'load' + capitalize(page) + 'Data';
   console.log('navigateTo() looking for function: ' + fnName + ' exists:', typeof window[fnName] === 'function');
@@ -1425,7 +1434,7 @@ function runFrontendDiagnostic(context) {
                  'jobcardsPage', 'openjobcardPage', 'startjobcardPage', 'closejobcardPage',
                   'checklistsPage', 'pmPage', 'sparepartsPage', 
                  'inventorytransactionsPage', 'stockhistoryPage', 'goodsreceiptPage', 'pmhistoryPage', 'notificationsPage',
-                 'breakdownPage', 'reportsPage', 'settingsPage'];
+                 'breakdownPage', 'reportsPage', 'settingsPage', 'auditPage', 'qrPage'];
   var missing = [];
   pageIds.forEach(function(id) {
     if (!document.getElementById(id)) missing.push(id);

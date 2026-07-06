@@ -158,6 +158,7 @@ function loginUser(email, password) {
           var user = users[i];
           Logger.log('loginUser(): raw user keys=' + Object.keys(user).join(','));
           console.log('loginUser(): raw user keys=' + Object.keys(user).join(','));
+          try { createAuditLog(CONFIG.AUDIT_MODULES.LOGIN, CONFIG.AUDIT_ACTIONS.LOGIN, '', user.Name || email, '', 'Role: ' + (user.Role || ''), 'Success', 'User logged in'); } catch(e) {}
           return {
             success: true,
             user: {
@@ -243,6 +244,7 @@ function addUser(data) {
     Logger.log('addUser() SUCCESS: email=' + data.Email + ', result length=' + result.length);
     console.log('addUser() SUCCESS: email=' + data.Email);
     try { createNotification('New User Created: ' + (data.Name || data.Email), 'User ' + (data.Name || data.Email) + ' has been created with role ' + (data.Role || '') + '.', CONFIG.NOTIFICATION_MODULES.USER, CONFIG.PRIORITY.LOW, data.CreatedBy, data.Email, "navigateTo('settings')"); } catch(e) {}
+    try { createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.CREATE, data.UserID, data.Name || data.Email, '', 'Role: ' + (data.Role || '') + ', Dept: ' + (data.Department || ''), 'Success', 'User created'); } catch(e) {}
     return result;
   } catch (e) {
     Logger.log('addUser() ERROR: email=' + data.Email + ', message=' + e.message + ' stack=' + e.stack);
@@ -258,12 +260,17 @@ function updateUser(email, data) {
     if (data.Password && data.Password.trim() === '') {
       delete data.Password;
     }
+    var oldUser = getRecordById(CONFIG.SHEET_NAMES.USERS, 'Email', email);
     data.UpdatedBy = Session.getActiveUser().getEmail();
     data.UpdatedAt = getCurrentTimestamp();
     var result = updateRow(CONFIG.SHEET_NAMES.USERS, 'Email', email, data);
     logActivity('Update User', email);
     Logger.log('updateUser() SUCCESS: email=' + email + ', result length=' + result.length);
     console.log('updateUser() SUCCESS: email=' + email);
+    try { createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.UPDATE, email, data.Name || (oldUser ? oldUser.Name : ''), '', JSON.stringify(data).substring(0, 200), 'Success', 'User updated'); } catch(e) {}
+    if (oldUser && data.Role && data.Role !== oldUser.Role) {
+      try { createAuditLog(CONFIG.AUDIT_MODULES.PERMISSION, CONFIG.AUDIT_ACTIONS.PERMISSION_CHANGE, email, oldUser.Name || email, 'Role: ' + (oldUser.Role || ''), 'Role: ' + (data.Role || ''), 'Success', 'User role changed from ' + (oldUser.Role || 'None') + ' to ' + (data.Role || 'None')); } catch(e) {}
+    }
     return result;
   } catch (e) {
     Logger.log('updateUser() ERROR: email=' + email + ', message=' + e.message + ' stack=' + e.stack);
@@ -272,9 +279,19 @@ function updateUser(email, data) {
   }
 }
 
+function logUserLogout(email) {
+  try {
+    createAuditLog(CONFIG.AUDIT_MODULES.LOGOUT, CONFIG.AUDIT_ACTIONS.LOGOUT, '', email || '', '', '', 'Success', 'User logged out');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 function deleteUser(email) {
   var result = deleteRow(CONFIG.SHEET_NAMES.USERS, 'Email', email);
   logActivity('Delete User', email);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.DELETE, email, '', '', '', 'Success', 'User deleted'); } catch(e) {}
   return result;
 }
 

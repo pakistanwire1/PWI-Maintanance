@@ -1,4 +1,4 @@
-var ASSET_COLS = ['AssetID','AssetCode','AssetName','AssetType','Category','MachineID','MachineName','DeptID','Department','SectionID','Section','Location','Manufacturer','Model','SerialNo','Specification','PurchaseDate','InstallDate','WarrantyExpiry','Criticality','Supplier','Cost','Status','QRCode','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
+var ASSET_COLS = ['AssetID','AssetCode','AssetName','AssetType','Category','MachineID','MachineName','DeptID','Department','SectionID','Section','Location','Manufacturer','Model','SerialNo','Specification','PurchaseDate','InstallDate','WarrantyExpiry','Criticality','Supplier','Cost','Status','QRCode','Barcode','QRGeneratedDate','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
 
 function initAssetSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -181,6 +181,8 @@ function addAsset(data) {
   var result = addRow(CONFIG.SHEET_NAMES.ASSETS, data);
   logActivity('Add Asset', data.AssetID + ' - ' + data.AssetName);
   try { createNotification('Asset Added: ' + (data.AssetName || ''), 'New asset ' + (data.AssetName || '') + ' (' + (data.AssetCode || '') + ') has been added to the system.', CONFIG.NOTIFICATION_MODULES.ASSET, CONFIG.PRIORITY.LOW, data.CreatedBy, '', "navigateTo('assets')"); } catch(e) {}
+  try { createAuditLog(CONFIG.AUDIT_MODULES.ASSET, CONFIG.AUDIT_ACTIONS.CREATE, data.AssetID, data.AssetName || '', '', 'Code: ' + (data.AssetCode || '') + ', Type: ' + (data.AssetType || '') + ', Dept: ' + (data.Department || ''), 'Success', 'Asset created'); } catch(e) {}
+  try { generateQRBarcodeForNewRecord('Asset', data.AssetID, data); } catch(e) { console.error('QR gen error: ' + e.message); }
   return result.map(normalizeAsset);
 }
 
@@ -195,12 +197,15 @@ function updateAsset(id, data) {
   data.UpdatedAt = getCurrentTimestamp();
   var result = updateRow(CONFIG.SHEET_NAMES.ASSETS, 'AssetID', id, data);
   logActivity('Update Asset', id);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.ASSET, CONFIG.AUDIT_ACTIONS.UPDATE, id, current.AssetName || '', '', JSON.stringify(data).substring(0, 150), 'Success', 'Asset updated'); } catch(e) {}
   return result.map(normalizeAsset);
 }
 
 function deleteAsset(id) {
+  var current = getAsset(id);
   var result = deleteRow(CONFIG.SHEET_NAMES.ASSETS, 'AssetID', id);
   logActivity('Delete Asset', id);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.ASSET, CONFIG.AUDIT_ACTIONS.DELETE, id, current ? current.AssetName : '', '', 'Asset deleted', 'Success', 'Asset deleted'); } catch(e) {}
   return result.map(normalizeAsset);
 }
 

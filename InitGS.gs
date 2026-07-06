@@ -36,6 +36,9 @@ function onOpen() {
   toolsMenu.addItem('Initialize Inventory Transactions', 'initializeInventoryTransactions');
   toolsMenu.addItem('Initialize Goods Receipt', 'initializeGoodsReceipt');
   toolsMenu.addItem('Initialize Notifications', 'initializeNotifications');
+  toolsMenu.addItem('Initialize Audit Trail', 'initAuditTrailSheet');
+  toolsMenu.addSeparator();
+  toolsMenu.addItem('Initialize QR / Barcode Data', 'initQRBarcodeData');
   toolsMenu.addToUi();
 }
 
@@ -54,7 +57,10 @@ function initializeSystem() {
   initInventorySheet();
   initNotificationsSheet();
   initSettingsSheet();
+  initAuditTrailSheet();
+  initQRBarcodeData();
   logActivity('System Init', 'All sheets initialized successfully');
+  createAuditLog(CONFIG.AUDIT_MODULES.SETTINGS, CONFIG.AUDIT_ACTIONS.CREATE, '', 'System Initialized', '', 'All sheets initialized', 'Success', 'System initialization completed');
   return results;
 }
 
@@ -80,6 +86,8 @@ function reinitializeDatabase() {
     initInventorySheet();
     initNotificationsSheet();
     initSettingsSheet();
+    initAuditTrailSheet();
+    initQRBarcodeData();
     logActivity('Database Init', 'All master tables reinitialized');
     var msg = 'Database initialized successfully.';
     results.forEach(function(r) {
@@ -291,6 +299,30 @@ function setupTestData() {
   }
 
   return 'Test data setup complete. All modules populated with sample data.';
+}
+
+function initQRBarcodeData() {
+  try {
+    var mods = [
+      { sheet: CONFIG.SHEET_NAMES.MACHINES, idField: 'MachineID', nameField: 'MachineName', codeField: 'MachineCode', module: 'Machine' },
+      { sheet: CONFIG.SHEET_NAMES.ASSETS, idField: 'AssetID', nameField: 'AssetName', codeField: 'AssetCode', module: 'Asset' },
+      { sheet: CONFIG.SHEET_NAMES.SPARE_PARTS, idField: 'PartCode', nameField: 'PartName', codeField: 'PartCode', module: 'Spare Part' }
+    ];
+    mods.forEach(function(cfg) {
+      var records = getAllData(cfg.sheet) || [];
+      records.forEach(function(r) {
+        var id = r[cfg.idField];
+        if (id && (!r.QRCode || !r.Barcode)) {
+          try { generateQRBarcodeForNewRecord(cfg.module, id, r); } catch(e) {}
+        }
+      });
+    });
+    Logger.log('initQRBarcodeData() completed');
+    console.log('initQRBarcodeData() completed');
+  } catch(e) {
+    Logger.log('initQRBarcodeData() ERROR: ' + e.message);
+    console.log('initQRBarcodeData() ERROR: ' + e.message);
+  }
 }
 
 function setRowData(obj) {

@@ -92,6 +92,7 @@ function addPMRecord(data) {
     Logger.log('addPMRecord() SUCCESS: ' + data.PMNumber);
     console.log('addPMRecord() SUCCESS: ' + data.PMNumber);
     try { createNotification('PM Created: ' + (data.Title || data.PMNumber), 'Preventive maintenance ' + (data.Title || data.PMNumber) + ' for ' + (data.MachineName || '') + ' has been scheduled.', CONFIG.NOTIFICATION_MODULES.PM, data.Priority || CONFIG.PRIORITY.MEDIUM, data.CreatedBy, data.AssignedTechnicianName || '', "navigateTo('pm')"); } catch(e) {}
+    try { createAuditLog(CONFIG.AUDIT_MODULES.PM, CONFIG.AUDIT_ACTIONS.CREATE, data.PMNumber, data.Title || '', '', 'Machine: ' + (data.MachineName || '') + ', Frequency: ' + (data.Frequency || '') + ' ' + (data.FrequencyType || ''), 'Success', 'PM schedule created'); } catch(e) {}
     return result.map(function(pm) { return normalizePM(pm); });
   } catch (e) {
     Logger.log('addPMRecord() ERROR: ' + e.message);
@@ -119,6 +120,10 @@ function updatePMRecord(id, data) {
     data.UpdatedAt = getCurrentTimestamp();
     var result = updateRow(CONFIG.SHEET_NAMES.PREVENTIVE_MAINTENANCE, 'PMNumber', id, data);
     logActivity('Update PM Record', id);
+    try {
+      var pmAction = (data.Status && data.Status === CONFIG.PM_STATUSES.SKIPPED) ? CONFIG.AUDIT_ACTIONS.CANCEL : CONFIG.AUDIT_ACTIONS.UPDATE;
+      createAuditLog(CONFIG.AUDIT_MODULES.PM, pmAction, id, current.Title || '', '', data.Status ? 'Status: ' + data.Status : JSON.stringify(data).substring(0, 150), 'Success', pmAction === CONFIG.AUDIT_ACTIONS.CANCEL ? 'PM schedule cancelled' : 'PM schedule updated');
+    } catch(e) {}
     Logger.log('updatePMRecord() SUCCESS: ' + id);
     console.log('updatePMRecord() SUCCESS: ' + id);
     return result.map(function(pm) { return normalizePM(pm); });
@@ -133,8 +138,10 @@ function deletePMRecord(id) {
   Logger.log('deletePMRecord() called: id=' + id);
   console.log('deletePMRecord() called: id=' + id);
   try {
+    var current = getPMRecord(id);
     var result = deleteRow(CONFIG.SHEET_NAMES.PREVENTIVE_MAINTENANCE, 'PMNumber', id);
     logActivity('Delete PM Record', id);
+    try { createAuditLog(CONFIG.AUDIT_MODULES.PM, CONFIG.AUDIT_ACTIONS.DELETE, id, current ? current.Title : '', '', 'PM record deleted', 'Success', 'PM schedule deleted'); } catch(e) {}
     Logger.log('deletePMRecord() SUCCESS: ' + id);
     console.log('deletePMRecord() SUCCESS: ' + id);
     return result.map(function(pm) { return normalizePM(pm); });
@@ -196,6 +203,7 @@ function completePM(id, completionData) {
     };
     addRow(CONFIG.SHEET_NAMES.PM_HISTORY, historyRecord);
     logActivity('Complete PM', id);
+    try { createAuditLog(CONFIG.AUDIT_MODULES.PM, CONFIG.AUDIT_ACTIONS.COMPLETE, id, current.Title || '', '', 'Compliance: ' + (data.ComplianceStatus || '') + ', Machine: ' + (current.MachineName || ''), 'Success', 'PM completed'); } catch(e) {}
     Logger.log('completePM() SUCCESS: ' + id);
     console.log('completePM() SUCCESS: ' + id);
     return result.map(function(pm) { return normalizePM(pm); });

@@ -171,6 +171,7 @@ function createTechnician(data) {
   data.UpdatedAt = data.CreatedAt;
   var result = addRow(CONFIG.SHEET_NAMES.TECHNICIANS, data);
   logActivity('Add Technician', data.EmployeeID + ' - ' + data.TechnicianName);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.TECHNICIAN, CONFIG.AUDIT_ACTIONS.CREATE, data.EmployeeID, data.TechnicianName || '', '', 'Skill: ' + (data.Skill || '') + ', Dept: ' + (data.Department || ''), 'Success', 'Technician created'); } catch(e) {}
   return result.map(normalizeTechnician);
 }
 
@@ -191,6 +192,7 @@ function modifyTechnician(id, data) {
   data.UpdatedAt = getCurrentTimestamp();
   var result = updateRow(CONFIG.SHEET_NAMES.TECHNICIANS, 'EmployeeID', id, data);
   logActivity('Update Technician', id);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.TECHNICIAN, CONFIG.AUDIT_ACTIONS.UPDATE, id, current.TechnicianName || '', '', JSON.stringify(data).substring(0, 150), 'Success', 'Technician updated'); } catch(e) {}
   return result.map(normalizeTechnician);
 }
 
@@ -199,8 +201,10 @@ function updateTechnician(id, data) {
 }
 
 function removeTechnician(id) {
+  var current = getTechnician(id);
   var result = deleteRow(CONFIG.SHEET_NAMES.TECHNICIANS, 'EmployeeID', id);
   logActivity('Delete Technician', id);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.TECHNICIAN, CONFIG.AUDIT_ACTIONS.DELETE, id, current ? current.TechnicianName : '', '', 'Technician deleted', 'Success', 'Technician deleted'); } catch(e) {}
   return result.map(normalizeTechnician);
 }
 

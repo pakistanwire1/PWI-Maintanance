@@ -20,7 +20,8 @@ var CONFIG = {
     GOODS_RECEIPT: 'GoodsReceipt',
     PM_HISTORY: 'PMHistory',
     PM_CALENDAR: 'PMCalendar',
-    NOTIFICATIONS: 'Notifications'
+    NOTIFICATIONS: 'Notifications',
+    AUDIT_TRAIL: 'AuditTrail'
   },
 
   STATUS: {
@@ -111,7 +112,8 @@ var CONFIG = {
     CHECKLIST: 'CL',
     PM: 'PM',
     SPARE_PART: 'SP',
-    SECTION: 'SEC'
+    SECTION: 'SEC',
+    QRCODE: 'QR'
   },
 
   PAGE_SIZE: 10,
@@ -195,7 +197,7 @@ var CONFIG = {
     'MachineID', 'MachineCode', 'MachineName', 'MachineNumber', 'DeptID', 'Department',
     'SectionID', 'Section', 'Location', 'MachineType', 'Manufacturer', 'Model', 'SerialNo',
     'Capacity', 'PowerRating', 'InstallDate', 'WarrantyExpiry', 'Criticality', 'Status',
-    'QRCode', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
+    'QRCode', 'Barcode', 'QRGeneratedDate', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
   ],
 
   TECHNICIAN_FIELDS: [
@@ -215,13 +217,13 @@ var CONFIG = {
     'AssetID', 'AssetCode', 'AssetName', 'AssetType', 'Category', 'MachineID', 'MachineName',
     'DeptID', 'Department', 'SectionID', 'Section', 'Location', 'Manufacturer', 'Model',
     'SerialNo', 'Specification', 'PurchaseDate', 'InstallDate', 'WarrantyExpiry', 'Criticality',
-    'Supplier', 'Cost', 'Status', 'QRCode', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
+    'Supplier', 'Cost', 'Status', 'QRCode', 'Barcode', 'QRGeneratedDate', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
   ],
 
   SPARE_PART_FIELDS: [
     'PartCode', 'PartName', 'Category', 'Manufacturer', 'MachineCompatibility', 'AssetCompatibility',
     'Unit', 'MinimumStock', 'MaximumStock', 'CurrentStock', 'ReorderLevel',
-    'StoreLocation', 'BinNumber', 'UnitCost', 'Supplier', 'Barcode', 'Status',
+    'StoreLocation', 'BinNumber', 'UnitCost', 'Supplier', 'Barcode', 'QRCode', 'QRGeneratedDate', 'Status',
     'Remarks', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
   ],
 
@@ -357,5 +359,62 @@ var CONFIG = {
     'Maintenance Manager': { viewApproval: true, viewCritical: true },
     Store: { moduleFilter: ['Inventory', 'Spare Part', 'Goods Receipt'] },
     Viewer: { moduleFilter: [] }
+  },
+
+  AUDIT_TRAIL_FIELDS: [
+    'AuditID', 'DateTime', 'UserEmail', 'UserName', 'Role', 'Department',
+    'Module', 'Action', 'RecordID', 'RecordName', 'OldValue', 'NewValue',
+    'IPAddress', 'Device', 'Browser', 'Status', 'Remarks'
+  ],
+
+  AUDIT_MODULES: {
+    LOGIN: 'Login',
+    LOGOUT: 'Logout',
+    JOBCARD: 'Job Card',
+    MACHINE: 'Machine',
+    ASSET: 'Asset',
+    DEPARTMENT: 'Department',
+    SECTION: 'Section',
+    TECHNICIAN: 'Technician',
+    USER: 'User',
+    SPARE_PART: 'Spare Part',
+    INVENTORY: 'Inventory',
+    GOODS_RECEIPT: 'Goods Receipt',
+    PM: 'Preventive Maintenance',
+    SETTINGS: 'Settings',
+    PERMISSION: 'Permission',
+    QR_BARCODE: 'QR & Barcode'
+  },
+
+  AUDIT_ACTIONS: {
+    LOGIN: 'Login',
+    LOGOUT: 'Logout',
+    CREATE: 'Create',
+    UPDATE: 'Update',
+    DELETE: 'Delete',
+    APPROVE: 'Approve',
+    REJECT: 'Reject',
+    OPEN: 'Open',
+    START: 'Start',
+    CLOSE: 'Close',
+    COMPLETE: 'Complete',
+    CANCEL: 'Cancel',
+    STOCK_IN: 'Stock In',
+    STOCK_OUT: 'Stock Out',
+    GOODS_RECEIPT: 'Goods Receipt',
+    PERMISSION_CHANGE: 'Permission Changed',
+    SETTINGS_CHANGED: 'Settings Changed',
+    QR_GENERATED: 'QR Generated',
+    BARCODE_GENERATED: 'Barcode Generated',
+    LABEL_PRINTED: 'Label Printed'
+  },
+
+  QR_MODULES: ['Machine', 'Asset', 'Spare Part'],
+
+  QR_LABEL_SIZES: {
+    SMALL: '50x25mm',
+    MEDIUM: '75x50mm',
+    LARGE: '100x50mm',
+    A4_MULTI: 'A4 Multiple'
   }
 };

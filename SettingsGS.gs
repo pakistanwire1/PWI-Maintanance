@@ -94,7 +94,9 @@ function getSettingsData() {
 }
 
 function saveSettingValue(key, value) {
+  var oldValue = getSetting(key);
   saveSetting(key, value);
   logActivity('Update Setting', key + ' = ' + value);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.SETTINGS, CONFIG.AUDIT_ACTIONS.UPDATE, key, '', String(oldValue), String(value), 'Success', 'Setting changed: ' + key); } catch(e) {}
   return getSettingsData();
 }

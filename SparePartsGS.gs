@@ -30,6 +30,8 @@ function normalizeSparePart(p) {
   out.UnitCost = parseFloat(out.UnitCost) || 0;
   out.Supplier = out.Supplier || '';
   out.Barcode = out.Barcode || '';
+  out.QRCode = out.QRCode || '';
+  out.QRGeneratedDate = out.QRGeneratedDate || '';
   out.Status = out.Status || CONFIG.STATUS.ACTIVE;
   out.Remarks = out.Remarks || '';
   out.CreatedBy = out.CreatedBy || '';
@@ -76,6 +78,8 @@ function addSparePart(data) {
   if (data.MinimumStock > 0 && data.CurrentStock <= data.MinimumStock) {
     try { notifyLowStock(data.PartCode, data.PartName, data.CurrentStock, data.MinimumStock); } catch(e) {}
   }
+  try { createAuditLog(CONFIG.AUDIT_MODULES.SPARE_PART, CONFIG.AUDIT_ACTIONS.CREATE, data.PartCode, data.PartName || '', '', 'Stock: ' + (data.CurrentStock || '0') + ', Min: ' + (data.MinimumStock || '0') + ', Max: ' + (data.MaximumStock || '0'), 'Success', 'Spare part created'); } catch(e) {}
+  try { generateQRBarcodeForNewRecord('Spare Part', data.PartCode, data); } catch(e) { console.error('QR gen error: ' + e.message); }
   Logger.log('addSparePart() SUCCESS: ' + data.PartCode);
   console.log('addSparePart() SUCCESS: ' + data.PartCode);
   return result.map(normalizeSparePart);
@@ -105,6 +109,7 @@ function updateSparePart(id, data) {
   if (data.MinimumStock > 0 && data.CurrentStock <= data.MinimumStock) {
     try { notifyLowStock(id, current.PartName, data.CurrentStock, data.MinimumStock); } catch(e) {}
   }
+  try { createAuditLog(CONFIG.AUDIT_MODULES.SPARE_PART, CONFIG.AUDIT_ACTIONS.UPDATE, id, current.PartName || '', '', JSON.stringify(data).substring(0, 150), 'Success', 'Spare part updated'); } catch(e) {}
   Logger.log('updateSparePart() SUCCESS: ' + id);
   console.log('updateSparePart() SUCCESS: ' + id);
   return result.map(normalizeSparePart);
@@ -113,8 +118,10 @@ function updateSparePart(id, data) {
 function deleteSparePart(id) {
   Logger.log('deleteSparePart() called: ' + id);
   console.log('deleteSparePart() called: ' + id);
+  var current = getSparePart(id);
   var result = deleteRow(CONFIG.SHEET_NAMES.SPARE_PARTS, 'PartCode', id);
   logActivity('Delete Spare Part', id);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.SPARE_PART, CONFIG.AUDIT_ACTIONS.DELETE, id, current ? current.PartName : '', '', 'Spare part deleted', 'Success', 'Spare part deleted'); } catch(e) {}
   Logger.log('deleteSparePart() SUCCESS: ' + id);
   console.log('deleteSparePart() SUCCESS: ' + id);
   return result.map(normalizeSparePart);
@@ -242,6 +249,11 @@ function addStockMovement(partCode, transactionType, quantity, referenceNo, rema
   if (balanceAfter <= (parseFloat(part.MinimumStock) || 0)) {
     try { notifyLowStock(partCode, part.PartName, balanceAfter, part.MinimumStock); } catch(e) {}
   }
+  try {
+    var auditAction = transactionType.toLowerCase().indexOf('in') !== -1 ? CONFIG.AUDIT_ACTIONS.STOCK_IN : (transactionType.toLowerCase().indexOf('out') !== -1 ? CONFIG.AUDIT_ACTIONS.STOCK_OUT : CONFIG.AUDIT_ACTIONS.GOODS_RECEIPT);
+    var auditModule = transactionType.toLowerCase().indexOf('goods') !== -1 ? CONFIG.AUDIT_MODULES.GOODS_RECEIPT : CONFIG.AUDIT_MODULES.SPARE_PART;
+    createAuditLog(auditModule, auditAction, partCode, part.PartName || '', String(balanceBefore), String(balanceAfter), balanceAfter <= (parseFloat(part.MinimumStock) || 0) ? 'Warning' : 'Success', transactionType + ': ' + qty + ' units, Ref: ' + (referenceNo || ''));
+  } catch(e) {}
   Logger.log('addStockMovement() SUCCESS: ' + partCode + ' balance=' + balanceAfter);
   console.log('addStockMovement() SUCCESS: ' + partCode + ' balance=' + balanceAfter);
   return result.map(normalizeSparePart);

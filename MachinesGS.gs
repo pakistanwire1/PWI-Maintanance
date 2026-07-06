@@ -1,4 +1,4 @@
-var MACHINE_COLS = ['MachineID','MachineCode','MachineName','MachineNumber','DeptID','Department','SectionID','Section','Location','MachineType','Manufacturer','Model','SerialNo','Capacity','PowerRating','InstallDate','WarrantyExpiry','Criticality','Status','QRCode','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
+var MACHINE_COLS = ['MachineID','MachineCode','MachineName','MachineNumber','DeptID','Department','SectionID','Section','Location','MachineType','Manufacturer','Model','SerialNo','Capacity','PowerRating','InstallDate','WarrantyExpiry','Criticality','Status','QRCode','Barcode','QRGeneratedDate','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
 
 function initMachineSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -177,6 +177,8 @@ function addMachine(data) {
   var result = addRow(CONFIG.SHEET_NAMES.MACHINES, data);
   logActivity('Add Machine', data.MachineID + ' - ' + data.MachineName);
   try { createNotification('Machine Added: ' + (data.MachineName || ''), 'New machine ' + (data.MachineName || '') + ' (' + (data.MachineCode || '') + ') has been added to the system.', CONFIG.NOTIFICATION_MODULES.MACHINE, CONFIG.PRIORITY.LOW, data.CreatedBy, '', "navigateTo('machines')"); } catch(e) {}
+  try { createAuditLog(CONFIG.AUDIT_MODULES.MACHINE, CONFIG.AUDIT_ACTIONS.CREATE, data.MachineID, data.MachineName || '', '', 'Code: ' + (data.MachineCode || '') + ', Type: ' + (data.MachineType || '') + ', Dept: ' + (data.Department || ''), 'Success', 'Machine created'); } catch(e) {}
+  try { generateQRBarcodeForNewRecord('Machine', data.MachineID, data); } catch(e) { console.error('QR gen error: ' + e.message); }
   return result.map(normalizeMachine);
 }
 
@@ -192,12 +194,15 @@ function updateMachine(id, data) {
   data.UpdatedAt = getCurrentTimestamp();
   var result = updateRow(CONFIG.SHEET_NAMES.MACHINES, 'MachineID', id, data);
   logActivity('Update Machine', id);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.MACHINE, CONFIG.AUDIT_ACTIONS.UPDATE, id, current.MachineName || '', '', JSON.stringify(data).substring(0, 150), 'Success', 'Machine updated'); } catch(e) {}
   return result.map(normalizeMachine);
 }
 
 function deleteMachine(id) {
+  var current = getMachine(id);
   var result = deleteRow(CONFIG.SHEET_NAMES.MACHINES, 'MachineID', id);
   logActivity('Delete Machine', id);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.MACHINE, CONFIG.AUDIT_ACTIONS.DELETE, id, current ? current.MachineName : '', '', 'Machine deleted', 'Success', 'Machine deleted'); } catch(e) {}
   return result.map(normalizeMachine);
 }
 

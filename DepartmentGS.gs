@@ -175,6 +175,7 @@ function createDepartment(data) {
   data.CreatedAt = getCurrentTimestamp();
   var result = addRow(CONFIG.SHEET_NAMES.DEPARTMENTS, data);
   logActivity('Add Department', data.Department);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.DEPARTMENT, CONFIG.AUDIT_ACTIONS.CREATE, data.DepartmentID, data.Department || '', '', 'Code: ' + (data.DepartmentCode || '') + ', Section: ' + (data.Section || ''), 'Success', 'Department created'); } catch(e) {}
   return result.map(normalizeDepartment);
 }
 
@@ -189,12 +190,15 @@ function modifyDepartment(id, data) {
   data.UpdatedAt = getCurrentTimestamp();
   var result = updateRow(CONFIG.SHEET_NAMES.DEPARTMENTS, 'DepartmentID', id, data);
   logActivity('Update Department', id);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.DEPARTMENT, CONFIG.AUDIT_ACTIONS.UPDATE, id, current.Department || '', '', JSON.stringify(data).substring(0, 150), 'Success', 'Department updated'); } catch(e) {}
   return result.map(normalizeDepartment);
 }
 
 function removeDepartment(id) {
+  var current = getDepartment(id);
   var result = deleteRow(CONFIG.SHEET_NAMES.DEPARTMENTS, 'DepartmentID', id);
   logActivity('Delete Department', id);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.DEPARTMENT, CONFIG.AUDIT_ACTIONS.DELETE, id, current ? current.Department : '', '', 'Department deleted', 'Success', 'Department deleted'); } catch(e) {}
   return result.map(normalizeDepartment);
 }
 

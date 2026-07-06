@@ -184,6 +184,9 @@ function approveJobCard(id, approvalData) {
     console.log('approveJobCard() SUCCESS: ' + id + ' status=' + data.Status);
     if (isApproved) {
       try { createNotification('Job Approved: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been approved.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.ApprovedBy, current.ComplaintBy || '', "navigateTo('jobcards')"); } catch(e) {}
+      try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.APPROVE, id, current.Machine || '', '', 'Approved by: ' + (data.ApprovedBy || ''), 'Success', 'Job approved'); } catch(e) {}
+    } else {
+      try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.REJECT, id, current.Machine || '', '', 'Rejected by: ' + (data.ApprovedBy || ''), 'Warning', 'Job rejected'); } catch(e) {}
     }
     return result.map(function(jc) { return normalizeJobCard(jc); });
   } catch (e) {
@@ -278,6 +281,7 @@ function addJobCard(data) {
   var result = addRow(CONFIG.SHEET_NAMES.JOBCARDS, data);
   logActivity('Add Job Card', data.JobCardNo);
   try { createNotification('Job Card Opened: ' + (data.JobCardNo || ''), 'Job card ' + (data.JobCardNo || '') + ' opened for ' + (data.Machine || '') + ' - ' + (data.ComplaintDescription || '').substring(0, 100), CONFIG.NOTIFICATION_MODULES.JOBCARD, data.Priority || CONFIG.PRIORITY.MEDIUM, data.CreatedBy, data.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
+  try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.OPEN, data.JobCardNo, data.Machine || '', '', 'Priority: ' + (data.Priority || '') + ', Machine: ' + (data.Machine || ''), 'Success', 'Job card opened'); } catch(e) {}
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
 
@@ -316,9 +320,11 @@ function updateJobCard(id, data) {
   logActivity('Update Job Card', id);
   if (data.Status === CONFIG.STATUS.RUNNING) {
     try { createNotification('Job Started: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been started.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
+    try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.START, id, current.Machine || '', '', 'Assigned: ' + (current.AssignedTechnician || ''), 'Success', 'Job started'); } catch(e) {}
   }
   if (data.Status === CONFIG.STATUS.CLOSED) {
     try { createNotification('Job Closed: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been closed.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
+    try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.CLOSE, id, current.Machine || '', '', 'Waiting: ' + (data.WaitingTime || '0') + 'h, Working: ' + (data.WorkingTime || '0') + 'h', 'Success', 'Job closed'); } catch(e) {}
   }
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
@@ -350,16 +356,20 @@ function updateJobCardStatus(id, status) {
   logActivity('Update Job Card Status', id + ' -> ' + status);
   if (status === CONFIG.STATUS.RUNNING) {
     try { createNotification('Job Started: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been started.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
+    try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.START, id, current.Machine || '', '', 'Status changed to Running', 'Success', 'Job started'); } catch(e) {}
   }
   if (status === CONFIG.STATUS.CLOSED) {
     try { createNotification('Job Closed: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been closed.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
+    try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.CLOSE, id, current.Machine || '', '', 'Status changed to Closed', 'Success', 'Job closed'); } catch(e) {}
   }
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
 
 function deleteJobCard(id) {
+  var current = getJobCard(id);
   var result = deleteRow(CONFIG.SHEET_NAMES.JOBCARDS, 'JobCardNo', id);
   logActivity('Delete Job Card', id);
+  try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.DELETE, id, current ? current.Machine : '', '', 'Job card deleted', 'Success', 'Job card deleted'); } catch(e) {}
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
 
