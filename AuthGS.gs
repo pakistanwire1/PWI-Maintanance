@@ -245,6 +245,7 @@ function addUser(data) {
     console.log('addUser() SUCCESS: email=' + data.Email);
     try { createNotification('New User Created: ' + (data.Name || data.Email), 'User ' + (data.Name || data.Email) + ' has been created with role ' + (data.Role || '') + '.', CONFIG.NOTIFICATION_MODULES.USER, CONFIG.PRIORITY.LOW, data.CreatedBy, data.Email, "navigateTo('settings')"); } catch(e) {}
     try { createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.CREATE, data.UserID, data.Name || data.Email, '', 'Role: ' + (data.Role || '') + ', Dept: ' + (data.Department || ''), 'Success', 'User created'); } catch(e) {}
+    try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.USER_CREATED, { userId: data.UserID || '', name: data.Name || '', email: data.Email || '', role: data.Role || '', department: data.Department || '', designation: data.Designation || '', tempPassword: data.Password || '' }); } catch(e) {}
     return result;
   } catch (e) {
     Logger.log('addUser() ERROR: email=' + data.Email + ', message=' + e.message + ' stack=' + e.stack);
@@ -268,6 +269,9 @@ function updateUser(email, data) {
     Logger.log('updateUser() SUCCESS: email=' + email + ', result length=' + result.length);
     console.log('updateUser() SUCCESS: email=' + email);
     try { createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.UPDATE, email, data.Name || (oldUser ? oldUser.Name : ''), '', JSON.stringify(data).substring(0, 200), 'Success', 'User updated'); } catch(e) {}
+    if (data.Password && oldUser) {
+      try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.PASSWORD_RESET, { userId: oldUser.UserID || '', name: data.Name || oldUser.Name || '', email: email, tempPassword: data.Password }); } catch(e) {}
+    }
     if (oldUser && data.Role && data.Role !== oldUser.Role) {
       try { createAuditLog(CONFIG.AUDIT_MODULES.PERMISSION, CONFIG.AUDIT_ACTIONS.PERMISSION_CHANGE, email, oldUser.Name || email, 'Role: ' + (oldUser.Role || ''), 'Role: ' + (data.Role || ''), 'Success', 'User role changed from ' + (oldUser.Role || 'None') + ' to ' + (data.Role || 'None')); } catch(e) {}
     }

@@ -21,7 +21,8 @@ var CONFIG = {
     PM_HISTORY: 'PMHistory',
     PM_CALENDAR: 'PMCalendar',
     NOTIFICATIONS: 'Notifications',
-    AUDIT_TRAIL: 'AuditTrail'
+    AUDIT_TRAIL: 'AuditTrail',
+    EMAIL_LOGS: 'EmailLogs'
   },
 
   STATUS: {
@@ -416,5 +417,49 @@ var CONFIG = {
     MEDIUM: '75x50mm',
     LARGE: '100x50mm',
     A4_MULTI: 'A4 Multiple'
+  },
+
+  EMAIL_LOGS_FIELDS: [
+    'EmailID', 'DateTime', 'Recipient', 'Subject', 'Module', 'ReferenceID',
+    'Status', 'ErrorMessage', 'SentBy'
+  ],
+
+  EMAIL_SETTINGS_KEYS: {
+    ENABLED: 'email_enabled',
+    SENDER_NAME: 'email_sender_name',
+    REPLY_TO: 'email_reply_to',
+    DAILY_SUMMARY_TIME: 'email_daily_summary_time',
+    WEEKLY_SUMMARY_DAY: 'email_weekly_summary_day'
+  },
+
+  EMAIL_DEFAULTS: {
+    SENDER_NAME: 'CMMS Notification',
+    REPLY_TO: 'noreply@cmms.com',
+    DAILY_SUMMARY_TIME: '08:00',
+    WEEKLY_SUMMARY_DAY: 'Monday'
+  },
+
+  EMAIL_TEMPLATE_TYPES: {
+    JC_OPENED: 'JobCardOpened',
+    JC_ASSIGNED: 'JobAssigned',
+    JC_STARTED: 'JobStarted',
+    JC_CLOSED: 'JobClosed',
+    JC_APPROVED: 'JobApproved',
+    PM_DUE: 'PMDueReminder',
+    PM_OVERDUE: 'PMOverdue',
+    LOW_STOCK: 'LowStockAlert',
+    PURCHASE_REQUEST: 'PurchaseRequest',
+    GOODS_RECEIPT: 'GoodsReceipt',
+    USER_CREATED: 'UserCreated',
+    PASSWORD_RESET: 'PasswordReset',
+    DAILY_SUMMARY: 'DailySummary',
+    WEEKLY_SUMMARY: 'WeeklySummary',
+    MONTHLY_SUMMARY: 'MonthlySummary'
+  },
+
+  EMAIL_STATUS: {
+    PENDING: 'Pending',
+    SENT: 'Sent',
+    FAILED: 'Failed'
   }
 };

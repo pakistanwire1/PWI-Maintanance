@@ -32,8 +32,6 @@
             <span>CMMS</span>
           </div>
           <div class="breadcrumb">
-            <span id="breadcrumbHome">Dashboard</span>
-            <span class="sep">/</span>
             <span id="pageTitle">Dashboard</span>
           </div>
         </div>
@@ -51,6 +49,38 @@
           <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Switch to Light Mode">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
           </button>
+          <div class="email-dropdown-container">
+            <button class="topbar-btn email-btn" onclick="toggleEmailPanel()" title="Email Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span class="email-badge" id="emailBadge" style="display:none">0</span>
+            </button>
+            <div class="email-panel" id="emailPanel">
+              <div class="email-panel-header">
+                <h3>Email Queue</h3>
+              </div>
+              <div class="email-panel-stats">
+                <div class="email-stat-item" style="color:var(--success)">
+                  <span class="email-stat-value" id="emailDropdownSent">0</span>
+                  <span class="email-stat-label">Sent</span>
+                </div>
+                <div class="email-stat-item" style="color:var(--danger)">
+                  <span class="email-stat-value" id="emailDropdownFailed">0</span>
+                  <span class="email-stat-label">Failed</span>
+                </div>
+                <div class="email-stat-item" style="color:var(--warning)">
+                  <span class="email-stat-value" id="emailDropdownPending">0</span>
+                  <span class="email-stat-label">Pending</span>
+                </div>
+              </div>
+              <div class="email-panel-list" id="emailPanelList">
+                <div class="email-panel-empty">Loading...</div>
+              </div>
+              <div class="email-panel-footer">
+                <button class="btn btn-xs btn-primary" onclick="navigateTo('email');closeEmailPanel()">View All Emails</button>
+                <button class="btn btn-xs btn-secondary" onclick="emailRetryFailed();closeEmailPanel()">Retry Failed</button>
+              </div>
+            </div>
+          </div>
           <button class="topbar-btn notification-btn" onclick="toggleNotificationPanel()" title="Notifications">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
             <span class="notification-badge" id="notificationBadge" style="display:none">0</span>
@@ -106,6 +136,7 @@
         <?!= include('NotificationsPage'); ?>
         <?!= include('AuditPage'); ?>
         <?!= include('QRBarcodePage'); ?>
+        <?!= include('EmailSettingsPage'); ?>
         <?!= include('BreakdownHistoryPage'); ?>
         <?!= include('ReportsPage'); ?>
         <?!= include('SettingsPage'); ?>

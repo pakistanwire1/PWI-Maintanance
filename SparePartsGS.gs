@@ -77,6 +77,7 @@ function addSparePart(data) {
   logActivity('Add Spare Part', data.PartCode + ' - ' + data.PartName);
   if (data.MinimumStock > 0 && data.CurrentStock <= data.MinimumStock) {
     try { notifyLowStock(data.PartCode, data.PartName, data.CurrentStock, data.MinimumStock); } catch(e) {}
+    try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.LOW_STOCK, { partCode: data.PartCode || '', partName: data.PartName || '', currentStock: String(data.CurrentStock || '0'), minStock: String(data.MinimumStock || '0'), reorderLevel: String(data.ReorderLevel || '0'), unit: data.Unit || '', storeLocation: data.StoreLocation || '', supplier: data.Supplier || '' }); } catch(e) {}
   }
   try { createAuditLog(CONFIG.AUDIT_MODULES.SPARE_PART, CONFIG.AUDIT_ACTIONS.CREATE, data.PartCode, data.PartName || '', '', 'Stock: ' + (data.CurrentStock || '0') + ', Min: ' + (data.MinimumStock || '0') + ', Max: ' + (data.MaximumStock || '0'), 'Success', 'Spare part created'); } catch(e) {}
   try { generateQRBarcodeForNewRecord('Spare Part', data.PartCode, data); } catch(e) { console.error('QR gen error: ' + e.message); }
@@ -108,6 +109,7 @@ function updateSparePart(id, data) {
   logActivity('Update Spare Part', id);
   if (data.MinimumStock > 0 && data.CurrentStock <= data.MinimumStock) {
     try { notifyLowStock(id, current.PartName, data.CurrentStock, data.MinimumStock); } catch(e) {}
+    try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.LOW_STOCK, { partCode: id, partName: current.PartName || '', currentStock: String(data.CurrentStock || '0'), minStock: String(data.MinimumStock || '0'), reorderLevel: String(data.ReorderLevel || '0'), unit: current.Unit || '', storeLocation: current.StoreLocation || '', supplier: current.Supplier || '' }); } catch(e) {}
   }
   try { createAuditLog(CONFIG.AUDIT_MODULES.SPARE_PART, CONFIG.AUDIT_ACTIONS.UPDATE, id, current.PartName || '', '', JSON.stringify(data).substring(0, 150), 'Success', 'Spare part updated'); } catch(e) {}
   Logger.log('updateSparePart() SUCCESS: ' + id);
@@ -248,6 +250,7 @@ function addStockMovement(partCode, transactionType, quantity, referenceNo, rema
   logActivity('Stock Movement', partCode + ' - ' + transactionType + ' - Qty: ' + qty);
   if (balanceAfter <= (parseFloat(part.MinimumStock) || 0)) {
     try { notifyLowStock(partCode, part.PartName, balanceAfter, part.MinimumStock); } catch(e) {}
+    try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.LOW_STOCK, { partCode: partCode, partName: part.PartName || '', currentStock: String(balanceAfter), minStock: String(part.MinimumStock || '0'), reorderLevel: String(part.ReorderLevel || '0'), unit: part.Unit || '', storeLocation: part.StoreLocation || '', supplier: part.Supplier || '' }); } catch(e) {}
   }
   try {
     var auditAction = transactionType.toLowerCase().indexOf('in') !== -1 ? CONFIG.AUDIT_ACTIONS.STOCK_IN : (transactionType.toLowerCase().indexOf('out') !== -1 ? CONFIG.AUDIT_ACTIONS.STOCK_OUT : CONFIG.AUDIT_ACTIONS.GOODS_RECEIPT);

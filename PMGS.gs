@@ -204,6 +204,7 @@ function completePM(id, completionData) {
     addRow(CONFIG.SHEET_NAMES.PM_HISTORY, historyRecord);
     logActivity('Complete PM', id);
     try { createAuditLog(CONFIG.AUDIT_MODULES.PM, CONFIG.AUDIT_ACTIONS.COMPLETE, id, current.Title || '', '', 'Compliance: ' + (data.ComplianceStatus || '') + ', Machine: ' + (current.MachineName || ''), 'Success', 'PM completed'); } catch(e) {}
+    try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.PM_DUE, { pmNumber: id, title: current.Title || '', machine: current.MachineName || '', assignedTech: current.AssignedTechnicianName || '', dueDate: current.DueDate || '', frequency: (current.Frequency || '') + ' ' + (current.FrequencyType || ''), techEmail: current.AssignedTechnician || '' }); } catch(e) {}
     Logger.log('completePM() SUCCESS: ' + id);
     console.log('completePM() SUCCESS: ' + id);
     return result.map(function(pm) { return normalizePM(pm); });

@@ -134,6 +134,12 @@
         <div class="stat-info"><h3 id="statQRGenerated">0</h3><p>QR Codes</p><div class="stat-subtitle"><span id="statQRGeneratedSub" style="font-size:11px;color:var(--text-muted)">0 pending</span></div></div>
       </div>
     </div>
+    <div class="stat-card stat-primary" onclick="navigateTo('email')" style="cursor:pointer">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+        <div class="stat-info"><h3 id="statEmailSent">0</h3><p>Emails Sent Today</p><div class="stat-subtitle"><span id="statEmailFailed" style="font-size:11px;color:var(--danger)">0 failed</span> &middot; <span id="statEmailPending" style="font-size:11px;color:var(--warning)">0 pending</span></div></div>
+      </div>
+    </div>
   </div>
 
   <div class="dashboard-grid" style="margin-bottom:16px;grid-template-columns:1fr">
@@ -176,27 +182,27 @@
   <div class="charts-grid">
     <div class="chart-card">
       <div class="card-title">Job Status Overview <span class="chart-badge" id="jobStatusBadge">Today</span></div>
-      <div id="chartJobStatus" style="height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+      <div id="chartJobStatus" style="min-height:240px;height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
     </div>
     <div class="chart-card">
       <div class="card-title">Priority Distribution <span class="chart-badge" id="priorityBadge">Current</span></div>
-      <div id="chartPriority" style="height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+      <div id="chartPriority" style="min-height:240px;height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
     </div>
     <div class="chart-card">
       <div class="card-title">MTTR Trend <span class="chart-badge change-down" id="mttrBadge">-0%</span></div>
-      <div id="chartMTTR" style="height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+      <div id="chartMTTR" style="min-height:240px;height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
     </div>
     <div class="chart-card">
       <div class="card-title">MTBF Trend <span class="chart-badge change-up" id="mtbfBadge">+0%</span></div>
-      <div id="chartMTBF" style="height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+      <div id="chartMTBF" style="min-height:240px;height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
     </div>
     <div class="chart-card">
       <div class="card-title">Monthly Jobs <span class="chart-badge" id="monthlyJobsBadge">2026</span></div>
-      <div id="chartMonthlyJobs" style="height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+      <div id="chartMonthlyJobs" style="min-height:240px;height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
     </div>
     <div class="chart-card">
       <div class="card-title">Breakdown Trend <span class="chart-badge" id="breakdownBadge">Monthly</span></div>
-      <div id="chartBreakdown" style="height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+      <div id="chartBreakdown" style="min-height:240px;height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
     </div>
   </div>
 </div>
@@ -238,6 +244,7 @@ function loadDashboardData() {
       loadDashboardNotifications();
       loadDashboardRecentActivities();
       loadDashboardQRStats();
+      loadDashboardEmailStats();
     })
     .withFailureHandler(function(err) {
       document.querySelectorAll('#dashboardCards .stat-info').forEach(function(el) { el.classList.remove('loading'); });
@@ -479,6 +486,20 @@ function loadDashboardQRStats() {
     })
     .withFailureHandler(function() {})
     .getQRStatistics();
+}
+
+function loadDashboardEmailStats() {
+  google.script.run
+    .withSuccessHandler(function(stats) {
+      var sentEl = document.getElementById('statEmailSent');
+      var failedEl = document.getElementById('statEmailFailed');
+      var pendingEl = document.getElementById('statEmailPending');
+      if (sentEl) sentEl.textContent = stats.sentToday || 0;
+      if (failedEl) failedEl.textContent = (stats.failedToday || 0) + ' failed';
+      if (pendingEl) pendingEl.textContent = (stats.pendingToday || 0) + ' pending';
+    })
+    .withFailureHandler(function() {})
+    .emailGetDashboardStats();
 }
 
 function renderDashboardRecentActivities(items) {

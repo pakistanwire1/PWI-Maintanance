@@ -179,6 +179,7 @@ function processGoodsReceipt(data) {
     Logger.log('processGoodsReceipt() SUCCESS: ' + grnNo);
     console.log('processGoodsReceipt() SUCCESS: ' + grnNo);
     try { createNotification('Goods Receipt: ' + grnNo, 'Goods receipt ' + grnNo + ' received for ' + (part.PartName || data.PartCode) + ' - Qty: ' + qty, CONFIG.NOTIFICATION_MODULES.GOODS_RECEIPT, CONFIG.PRIORITY.LOW, currentUser, '', "navigateTo('goodsreceipt')"); } catch(e) {}
+    try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.GOODS_RECEIPT, { grnNo: grnNo, partCode: data.PartCode, partName: part.PartName || data.PartName || '', quantity: String(qty), supplier: data.Supplier || part.Supplier || '', invoiceNo: data.InvoiceNo || '', poNo: data.PONo || '', receivedBy: data.ReceivedBy || currentUser, receivedDate: formatDateTimeISO(now), totalCost: String(totalCost) }); } catch(e) {}
     return { success: true, grnNo: grnNo };
   } catch (e) {
     Logger.log('processGoodsReceipt() ERROR: ' + e.message);

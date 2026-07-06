@@ -136,6 +136,7 @@ function updateUserInfo() {
     else if (page === 'reports') { show = isAdmin || hasPermission('viewReports'); }
     else if (page === 'audit') { show = isAdmin || currentUser.role === 'Department Manager' || currentUser.role === 'Maintenance Manager'; }
     else if (page === 'qr') { show = true; }
+    else if (page === 'email') { show = isAdmin; }
     else if (page === 'settings') { show = isAdmin || hasPermission('manageUsers'); }
     el.style.display = show ? '' : 'none';
   });
@@ -214,11 +215,11 @@ function navigateTo(page) {
     stockhistory: 'Stock History', goodsreceipt: 'Goods Receipt', pmhistory: 'PM History', notifications: 'Notifications',
     breakdown: 'Breakdown History', audit: 'Audit Trail',
     qr: 'QR & Barcode Center',
+    email: 'Email Notification Settings',
     reports: 'Reports', settings: 'Settings', openjobcard: 'Open Job Card',
     startjobcard: 'Start Job Card', closejobcard: 'Close Job Card'
   };
   setText('pageTitle', titles[page] || page);
-  setText('breadcrumbHome', titles[page] || page);
 
   window.__loadFnMap = window.__loadFnMap || {
     jobcards: 'loadJobCardsData',
@@ -234,7 +235,8 @@ function navigateTo(page) {
     pmhistory: 'loadPMHistoryData',
     notifications: 'loadNotificationsData',
     audit: 'loadAuditLogsData',
-    qr: 'loadQRBarcodeData'
+    qr: 'loadQRBarcodeData',
+    email: 'loadEmailSettingsData'
   };
   var fnName = window.__loadFnMap[page] || 'load' + capitalize(page) + 'Data';
   console.log('navigateTo() looking for function: ' + fnName + ' exists:', typeof window[fnName] === 'function');
@@ -1224,6 +1226,122 @@ function stopNotificationRefresh() {
   }
 }
 
+var emailPanelData = { stats: { sentToday: 0, failedToday: 0, pendingToday: 0 }, recentEmails: [] };
+var __emailRefreshTimer = null;
+
+function loadEmailPanelData() {
+  google.script.run
+    .withSuccessHandler(function(data) {
+      emailPanelData = data || emailPanelData;
+      updateEmailBadge();
+      renderEmailDropdown();
+    })
+    .withFailureHandler(function() {})
+    .emailGetPanelData();
+}
+
+function toggleEmailPanel() {
+  var panel = document.getElementById('emailPanel');
+  if (!panel) return;
+  var isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open');
+  if (!isOpen) {
+    document.getElementById('emailPanelList').innerHTML = '<div class="email-panel-empty">Loading...</div>';
+    loadEmailPanelData();
+  } else {
+    closeEmailPanel();
+  }
+}
+
+function closeEmailPanel() {
+  var panel = document.getElementById('emailPanel');
+  if (panel) panel.classList.remove('open');
+}
+
+function updateEmailBadge() {
+  var badge = document.getElementById('emailBadge');
+  if (!badge) return;
+  var pending = emailPanelData.stats ? (emailPanelData.stats.pendingToday || 0) : 0;
+  if (pending > 0) {
+    badge.textContent = pending > 99 ? '99+' : pending;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderEmailDropdown() {
+  var list = document.getElementById('emailPanelList');
+  if (!list) return;
+  var statsEl = document.getElementById('emailDropdownSent');
+  if (statsEl && emailPanelData.stats) {
+    document.getElementById('emailDropdownSent').textContent = emailPanelData.stats.sentToday || '0';
+    document.getElementById('emailDropdownFailed').textContent = emailPanelData.stats.failedToday || '0';
+    document.getElementById('emailDropdownPending').textContent = emailPanelData.stats.pendingToday || '0';
+  }
+  var emails = emailPanelData.recentEmails || [];
+  if (emails.length === 0) {
+    list.innerHTML = '<div class="email-panel-empty">No emails sent yet.</div>';
+    return;
+  }
+  var maxShow = 10;
+  var html = '';
+  var count = Math.min(emails.length, maxShow);
+  for (var i = 0; i < count; i++) {
+    var e = emails[i];
+    var statusClass = e.Status === 'Sent' ? 'sent' : (e.Status === 'Failed' ? 'failed' : 'pending');
+    var statusLabel = e.Status || 'Unknown';
+    var dt = e.DateTime || '';
+    var timeAgo = getTimeAgo(dt);
+    html +=
+      '<div class="email-panel-item">' +
+        '<div class="email-item-main">' +
+          '<div class="email-item-subject" title="' + escapeHtml(e.Subject || '') + '">' + escapeHtml((e.Subject || '').substring(0, 40)) + '</div>' +
+          '<div class="email-item-recipient">' + escapeHtml(e.Recipient || '') + '</div>' +
+        '</div>' +
+        '<div class="email-item-meta">' +
+          '<span class="email-status-dot ' + statusClass + '" title="' + statusLabel + '"></span>' +
+          '<span class="email-item-time">' + timeAgo + '</span>' +
+        '</div>' +
+      '</div>';
+  }
+  if (emails.length > maxShow) {
+    html += '<div class="email-panel-more">+' + (emails.length - maxShow) + ' more</div>';
+  }
+  list.innerHTML = html;
+}
+
+function startEmailPanelRefresh() {
+  if (__emailRefreshTimer) return;
+  __emailRefreshTimer = setInterval(function() {
+    google.script.run
+      .withSuccessHandler(function(data) {
+        emailPanelData = data || emailPanelData;
+        updateEmailBadge();
+        var panel = document.getElementById('emailPanel');
+        if (panel && panel.classList.contains('open')) {
+          renderEmailDropdown();
+        }
+      })
+      .withFailureHandler(function() {})
+      .emailGetPanelData();
+  }, 30000);
+}
+
+function stopEmailPanelRefresh() {
+  if (__emailRefreshTimer) {
+    clearInterval(__emailRefreshTimer);
+    __emailRefreshTimer = null;
+  }
+}
+
+document.addEventListener('click', function(e) {
+  var container = document.querySelector('.email-dropdown-container');
+  if (container && !container.contains(e.target)) {
+    closeEmailPanel();
+  }
+});
+
 function isAdmin() {
   return currentUser && (currentUser.role === 'Admin' || currentUser.isSystemAdmin === true || currentUser.IsAdmin === true);
 }
@@ -1434,7 +1552,7 @@ function runFrontendDiagnostic(context) {
                  'jobcardsPage', 'openjobcardPage', 'startjobcardPage', 'closejobcardPage',
                   'checklistsPage', 'pmPage', 'sparepartsPage', 
                  'inventorytransactionsPage', 'stockhistoryPage', 'goodsreceiptPage', 'pmhistoryPage', 'notificationsPage',
-                 'breakdownPage', 'reportsPage', 'settingsPage', 'auditPage', 'qrPage'];
+                 'breakdownPage', 'reportsPage', 'settingsPage', 'auditPage', 'qrPage', 'emailPage'];
   var missing = [];
   pageIds.forEach(function(id) {
     if (!document.getElementById(id)) missing.push(id);
@@ -1556,6 +1674,8 @@ function diagnoseDataPipeline() {
           initSidebar();
           loadNotifications();
           startNotificationRefresh();
+          loadEmailPanelData();
+          startEmailPanelRefresh();
           startClock();
           initLiveTimers();
           startAutoRefresh();
