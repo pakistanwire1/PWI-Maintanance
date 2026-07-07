@@ -1,0 +1,394 @@
+<div id="whatsappPage" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:8px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        WhatsApp Notification Settings
+      </div>
+      <div class="card-actions">
+        <label class="toggle-switch" style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:var(--text-muted)">Enable WhatsApp</span>
+          <input type="checkbox" id="whatsappEnabled" onchange="toggleWhatsApp()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="whatsapp-grid">
+        <div class="form-group">
+          <label>Company Name</label>
+          <input type="text" id="whatsappCompanyName" class="form-input" placeholder="PWI CMMS">
+        </div>
+        <div class="form-group">
+          <label>Default Country Code</label>
+          <input type="text" id="whatsappCountryCode" class="form-input" placeholder="91" maxlength="5">
+        </div>
+        <div class="form-group">
+          <label>Provider</label>
+          <select id="whatsappProvider" class="form-input" onchange="onWhatsAppProviderChange()">
+            <option value="meta">Meta WhatsApp Cloud API</option>
+            <option value="twilio">Twilio WhatsApp</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>API Endpoint</label>
+          <input type="text" id="whatsappApiEndpoint" class="form-input" placeholder="https://graph.facebook.com/v18.0">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>API Token</label>
+          <input type="password" id="whatsappApiToken" class="form-input" placeholder="Enter API token">
+          <button class="btn btn-xs btn-secondary" onclick="toggleFieldVisibility('whatsappApiToken')" style="margin-top:4px">Show / Hide</button>
+        </div>
+        <div class="form-group">
+          <label>Phone Number ID</label>
+          <input type="text" id="whatsappPhoneNumberId" class="form-input" placeholder="Phone number ID">
+        </div>
+        <div class="form-group">
+          <label>Business Account ID</label>
+          <input type="text" id="whatsappBusinessAccountId" class="form-input" placeholder="Business account ID">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Test Message
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="form-row" style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+        <div class="form-group" style="flex:1;min-width:200px">
+          <label>Test Phone Number</label>
+          <input type="text" id="whatsappTestPhone" class="form-input" placeholder="9876543210">
+        </div>
+        <div class="form-group" style="flex:2;min-width:300px">
+          <label>Test Message</label>
+          <input type="text" id="whatsappTestMessage" class="form-input" placeholder="Test message from CMMS">
+        </div>
+        <button class="btn btn-primary" onclick="whatsappSendTest()" id="whatsappTestBtn" style="height:36px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          Send Test
+        </button>
+      </div>
+      <div id="whatsappTestResult" style="margin-top:8px;font-size:12px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Message Templates
+      </div>
+      <div class="card-actions">
+        <span style="font-size:11px;color:var(--text-muted)">Edit template content below</span>
+      </div>
+    </div>
+    <div class="card-body" id="whatsappTemplatesContainer">
+      <div class="wa-templates-loading" style="text-align:center;padding:20px;color:var(--text-muted)">Loading templates...</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+        Message Logs
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="wa-legend" style="display:flex;gap:16px;margin-bottom:12px">
+        <span style="font-size:12px"><span class="status-dot" style="background:var(--success)"></span> Sent Today: <strong id="waStatSent">0</strong></span>
+        <span style="font-size:12px"><span class="status-dot" style="background:var(--danger)"></span> Failed Today: <strong id="waStatFailed">0</strong></span>
+        <span style="font-size:12px"><span class="status-dot" style="background:var(--warning)"></span> Pending: <strong id="waStatPending">0</strong></span>
+      </div>
+      <div class="table-responsive">
+        <table class="table" id="waLogsTable">
+          <thead>
+            <tr>
+              <th>DateTime</th>
+              <th>Recipient</th>
+              <th>Phone</th>
+              <th>Module</th>
+              <th>Reference</th>
+              <th>Template</th>
+              <th>Status</th>
+              <th>Error</th>
+            </tr>
+          </thead>
+          <tbody id="waLogsBody">
+            <tr><td colspan="8" style="text-align:center;color:var(--text-muted)">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  #whatsappPage .whatsapp-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  #whatsappPage .form-group { display:flex; flex-direction:column; gap:4px; }
+  #whatsappPage .form-group label { font-size:12px; font-weight:500; color:var(--text-muted); }
+  #whatsappPage .form-input {
+    padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    background:var(--bg-secondary); color:var(--text); font-size:13px; outline:none; transition:var(--transition);
+  }
+  #whatsappPage .form-input:focus { border-color:var(--primary); box-shadow:0 0 0 2px var(--primary-light); }
+  #whatsappPage .toggle-switch { cursor:pointer; }
+  #whatsappPage .toggle-switch input { display:none; }
+  #whatsappPage .toggle-slider {
+    width:36px; height:20px; background:var(--border); border-radius:10px; position:relative; transition:var(--transition);
+  }
+  #whatsappPage .toggle-slider::after {
+    content:''; position:absolute; width:16px; height:16px; border-radius:50%;
+    background:white; top:2px; left:2px; transition:var(--transition);
+  }
+  #whatsappPage .toggle-switch input:checked + .toggle-slider { background:var(--primary); }
+  #whatsappPage .toggle-switch input:checked + .toggle-slider::after { left:18px; }
+  #whatsappPage .template-item {
+    border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; overflow:hidden;
+  }
+  #whatsappPage .template-header {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 12px; background:var(--bg-tertiary); cursor:pointer; font-size:13px; font-weight:500;
+  }
+  #whatsappPage .template-body textarea {
+    width:100%; min-height:80px; border:none; border-top:1px solid var(--border);
+    padding:10px; font-family:monospace; font-size:12px; resize:vertical;
+    background:var(--bg-secondary); color:var(--text); outline:none;
+  }
+  #whatsappPage .template-footer {
+    display:flex; justify-content:flex-end; gap:8px; padding:6px 10px;
+    background:var(--bg-tertiary); border-top:1px solid var(--border);
+  }
+  #whatsappPage .status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+  #whatsappPage .table { width:100%; border-collapse:collapse; font-size:12px; }
+  #whatsappPage .table th { text-align:left; padding:8px 10px; border-bottom:2px solid var(--border); font-weight:600; color:var(--text-muted); white-space:nowrap; }
+  #whatsappPage .table td { padding:6px 10px; border-bottom:1px solid var(--border); }
+  #whatsappPage .table tr:hover td { background:var(--bg-tertiary); }
+  #whatsappPage .wa-badge { display:inline-flex; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:600; }
+  #whatsappPage .wa-badge.sent { background:var(--success-bg); color:var(--success); }
+  #whatsappPage .wa-badge.failed { background:var(--danger-bg); color:var(--danger); }
+  #whatsappPage .wa-badge.pending { background:var(--warning-bg); color:var(--warning); }
+  #whatsappPage .wa-save-btn { position:relative; }
+  @media(max-width:768px) {
+    #whatsappPage .whatsapp-grid { grid-template-columns:1fr; }
+  }
+</style>
+
+<script>
+function loadWhatsAppData() {
+  google.script.run
+    .withSuccessHandler(function(data) {
+      renderWhatsAppSettings(data);
+      renderWhatsAppTemplates(data.templates);
+      renderWhatsAppLogs(data.logs, data.stats);
+    })
+    .withFailureHandler(function(err) { console.error('loadWhatsAppData failed:', err); })
+    .whatsappGetSettingsData();
+}
+
+function renderWhatsAppSettings(data) {
+  var s = data.settings || {};
+  document.getElementById('whatsappEnabled').checked = !!s.enabled;
+  document.getElementById('whatsappCompanyName').value = s.companyName || '';
+  document.getElementById('whatsappCountryCode').value = s.defaultCountryCode || '';
+  document.getElementById('whatsappProvider').value = s.provider || 'meta';
+  document.getElementById('whatsappApiEndpoint').value = s.apiEndpoint || '';
+  document.getElementById('whatsappApiToken').value = s.apiToken || '';
+  document.getElementById('whatsappPhoneNumberId').value = s.phoneNumberId || '';
+  document.getElementById('whatsappBusinessAccountId').value = s.businessAccountId || '';
+  document.getElementById('whatsappTestPhone').value = s.testPhone || '';
+  document.getElementById('whatsappTestMessage').value = s.testMessage || '';
+  document.getElementById('whatsappTestResult').textContent = '';
+}
+
+function renderWhatsAppTemplates(templates) {
+  var container = document.getElementById('whatsappTemplatesContainer');
+  if (!templates || templates.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">No templates found.</div>';
+    return;
+  }
+  var html = '';
+  templates.forEach(function(t, idx) {
+    var tid = 'tpl_' + idx;
+    html +=
+      '<div class="template-item">' +
+        '<div class="template-header" onclick="var b=document.getElementById(\'' + tid + '_body\');b.style.display=b.style.display===\'none\'?\'block\':\'none\'">' +
+          '<span>' + escapeHtml(t.TemplateName || '') + ' <span style="font-size:11px;color:var(--text-muted)">(' + escapeHtml(t.EventType || '') + ')</span></span>' +
+          '<span style="font-size:10px;color:var(--text-muted)">Variables: ' + escapeHtml(t.Variables || '') + '</span>' +
+        '</div>' +
+        '<div id="' + tid + '_body" class="template-body" style="display:' + (idx === 0 ? 'block' : 'none') + '">' +
+          '<textarea id="' + tid + '_textarea" onchange="waMarkTemplateDirty(\'' + t.TemplateID + '\',\'' + tid + '\')">' + escapeHtml(t.TemplateBody || '') + '</textarea>' +
+          '<div class="template-footer">' +
+            '<button class="btn btn-xs btn-primary wa-save-btn" id="' + tid + '_savebtn" onclick="waSaveTemplate(\'' + escapeHtml(t.TemplateID || '') + '\',\'' + tid + '\')" disabled>Save</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  });
+  container.innerHTML = html;
+}
+
+var waDirtyTemplates = {};
+function waMarkTemplateDirty(tplId, tid) {
+  waDirtyTemplates[tplId] = tid;
+  var btn = document.getElementById(tid + '_savebtn');
+  if (btn) btn.disabled = false;
+}
+function waSaveTemplate(tplId, tid) {
+  var textarea = document.getElementById(tid + '_textarea');
+  if (!textarea) return;
+  var btn = document.getElementById(tid + '_savebtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.textContent = 'Saved';
+      setTimeout(function() { btn.textContent = 'Save'; }, 2000);
+      delete waDirtyTemplates[tplId];
+      if (res.templates) renderWhatsAppTemplates(res.templates);
+    })
+    .withFailureHandler(function() { btn.textContent = 'Error'; btn.disabled = false; })
+    .whatsappSaveTemplate({ TemplateID: tplId, TemplateBody: textarea.value });
+}
+
+function renderWhatsAppLogs(logs, stats) {
+  if (stats) {
+    document.getElementById('waStatSent').textContent = stats.sentToday || '0';
+    document.getElementById('waStatFailed').textContent = stats.failedToday || '0';
+    document.getElementById('waStatPending').textContent = stats.pendingToday || '0';
+  }
+  var tbody = document.getElementById('waLogsBody');
+  if (!logs || logs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">No logs yet.</td></tr>';
+    return;
+  }
+  var html = '';
+  logs.forEach(function(log) {
+    var statusClass = 'pending';
+    if (log.Status === 'Sent') statusClass = 'sent';
+    else if (log.Status === 'Failed') statusClass = 'failed';
+    html +=
+      '<tr>' +
+        '<td style="white-space:nowrap">' + escapeHtml(String(log.DateTime || '').substring(0, 16)) + '</td>' +
+        '<td>' + escapeHtml(log.Recipient || '') + '</td>' +
+        '<td>' + escapeHtml(log.PhoneNumber || '') + '</td>' +
+        '<td>' + escapeHtml(log.Module || '') + '</td>' +
+        '<td>' + escapeHtml(log.ReferenceID || '') + '</td>' +
+        '<td>' + escapeHtml(log.Template || '') + '</td>' +
+        '<td><span class="wa-badge ' + statusClass + '">' + escapeHtml(log.Status || '') + '</span></td>' +
+        '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escapeHtml(log.ErrorMessage || '') + '">' + escapeHtml((log.ErrorMessage || '').substring(0, 40)) + '</td>' +
+      '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function toggleWhatsApp() {
+  var enabled = document.getElementById('whatsappEnabled').checked;
+  var data = { enabled: enabled };
+  collectWhatsAppSettings(data);
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) showToast(res.message || 'Failed to save', 'error');
+      else showToast('WhatsApp ' + (enabled ? 'enabled' : 'disabled'), 'success');
+    })
+    .withFailureHandler(function() { showToast('Failed to save settings', 'error'); })
+    .whatsappSaveSettings(data);
+}
+
+function collectWhatsAppSettings(data) {
+  data.companyName = document.getElementById('whatsappCompanyName').value;
+  data.defaultCountryCode = document.getElementById('whatsappCountryCode').value;
+  data.provider = document.getElementById('whatsappProvider').value;
+  data.apiEndpoint = document.getElementById('whatsappApiEndpoint').value;
+  data.apiToken = document.getElementById('whatsappApiToken').value;
+  data.phoneNumberId = document.getElementById('whatsappPhoneNumberId').value;
+  data.businessAccountId = document.getElementById('whatsappBusinessAccountId').value;
+  data.testPhone = document.getElementById('whatsappTestPhone').value;
+  data.testMessage = document.getElementById('whatsappTestMessage').value;
+}
+
+function saveWhatsAppSettings() {
+  var data = {};
+  collectWhatsAppSettings(data);
+  data.enabled = document.getElementById('whatsappEnabled').checked;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { showToast(res.message || 'Failed to save', 'error'); return; }
+      showToast('WhatsApp settings saved', 'success');
+    })
+    .withFailureHandler(function() { showToast('Failed to save settings', 'error'); })
+    .whatsappSaveSettings(data);
+}
+
+function whatsappSendTest() {
+  var phone = document.getElementById('whatsappTestPhone').value.trim();
+  var resultEl = document.getElementById('whatsappTestResult');
+  if (!phone) {
+    resultEl.innerHTML = '<span style="color:var(--danger)">✗ Please enter a test phone number.</span>';
+    return;
+  }
+  if (phone.replace(/[^0-9]/g, '').length < 10 && !phone.startsWith('+')) {
+    resultEl.innerHTML = '<span style="color:var(--danger)">✗ Please enter a valid phone number (at least 10 digits). Include country code if using international format.</span>';
+    return;
+  }
+  var btn = document.getElementById('whatsappTestBtn');
+  btn.disabled = true;
+  btn.innerHTML = 'Saving settings...';
+  resultEl.textContent = '';
+  var data = {};
+  collectWhatsAppSettings(data);
+  data.enabled = document.getElementById('whatsappEnabled').checked;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
+        resultEl.innerHTML = '<span style="color:var(--danger)">✗ Failed to save settings: ' + escapeHtml(res.message || 'Unknown error') + '</span>';
+        return;
+      }
+      btn.innerHTML = 'Sending...';
+      google.script.run
+        .withSuccessHandler(function(sendRes) {
+          btn.disabled = false;
+          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
+          if (sendRes.success) {
+            resultEl.innerHTML = '<span style="color:var(--success)">✓ Test message sent successfully!</span>';
+          } else {
+            resultEl.innerHTML = '<span style="color:var(--danger)">✗ Failed: ' + escapeHtml(sendRes.message || 'Unknown error') + '</span>';
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
+          resultEl.innerHTML = '<span style="color:var(--danger)">✗ Error: ' + escapeHtml(err.message) + '</span>';
+        })
+        .whatsappTestSend();
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
+      resultEl.innerHTML = '<span style="color:var(--danger)">✗ Error: ' + escapeHtml(err.message) + '</span>';
+    })
+    .whatsappSaveSettings(data);
+}
+
+function onWhatsAppProviderChange() {
+  var prov = document.getElementById('whatsappProvider').value;
+  var endpoint = document.getElementById('whatsappApiEndpoint');
+  if (prov === 'meta' && !endpoint.value) endpoint.value = 'https://graph.facebook.com/v18.0';
+  else if (prov === 'twilio' && !endpoint.value) endpoint.value = 'https://api.twilio.com/2010-04-01';
+}
+
+function toggleFieldVisibility(id) {
+  var el = document.getElementById(id);
+  if (el) el.type = el.type === 'password' ? 'text' : 'password';
+}
+</script>
