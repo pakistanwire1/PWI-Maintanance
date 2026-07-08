@@ -292,6 +292,84 @@ function emailSendNotification(type, data, overrideRecipient) {
   }
 }
 
+function emailJobCardStatusChange(jobCardNo, eventType, extraData) {
+  Logger.log('emailJobCardStatusChange() called: ' + jobCardNo + ', event=' + eventType);
+  console.log('emailJobCardStatusChange() called: ' + jobCardNo + ', event=' + eventType);
+  try {
+    var jc = getJobCard(jobCardNo);
+    if (!jc) {
+      Logger.log('emailJobCardStatusChange(): Job card not found: ' + jobCardNo);
+      return;
+    }
+    var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
+    var sessionEmail = Session.getActiveUser().getEmail();
+    var sessionUser = users.find(function(u) { return u.Email === sessionEmail; });
+    var sessionName = sessionUser ? sessionUser.Name : sessionEmail;
+
+    // Map assigned technician field to display name(s)
+    var techNames = '';
+    if (jc.AssignedTechnician) {
+      var techList = jc.AssignedTechnician.split(',').map(function(e) { return e.trim(); });
+      techNames = techList.map(function(e) {
+        var u = users.find(function(u2) { return u2.Email === e; });
+        return u ? u.Name : e;
+      }).filter(function(n) { return n; }).join(', ');
+    }
+
+    var now = formatDateTimeISO(new Date());
+
+    var data = {
+      // Unified required fields
+      jobCardNo: jc.JobCardNo || '',
+      machine: jc.Machine || '',
+      section: jc.Section || '',
+      department: jc.Department || '',
+      complaint: jc.ComplaintDescription || '',
+      currentStatus: jc.CurrentStatus || '',
+      userName: sessionName,
+      technicianName: techNames,
+      dateTime: now,
+      remarks: jc.FinalRemarks || jc.InitialRemarks || '',
+
+      // Legacy template fields
+      priority: jc.Priority || '',
+      reportedBy: jc.ComplaintBy || '',
+      assignedTechEmail: jc.AssignedTechnician || '',
+      complaintByEmail: jc.ComplaintByEmail || '',
+      approverEmail: jc.ApprovedBy || '',
+      rootCause: jc.RootCause || '',
+      correctiveAction: jc.CorrectiveAction || '',
+      workingTime: durationToDisplay(jc.WorkingTime || 0),
+      totalDuration: durationToDisplay(jc.Downtime || jc.TotalDuration || 0)
+    };
+
+    // Merge any event-specific extra data (startedBy, closedBy, approvedBy, etc.)
+    if (extraData) {
+      for (var key in extraData) {
+        if (extraData.hasOwnProperty(key)) data[key] = extraData[key];
+      }
+    }
+
+    var templateType;
+    switch (eventType) {
+      case 'OPEN': templateType = CONFIG.EMAIL_TEMPLATE_TYPES.JC_OPENED; break;
+      case 'RUNNING': templateType = CONFIG.EMAIL_TEMPLATE_TYPES.JC_STARTED; break;
+      case 'CLOSED': templateType = CONFIG.EMAIL_TEMPLATE_TYPES.JC_CLOSED; break;
+      case 'PENDING': templateType = CONFIG.EMAIL_TEMPLATE_TYPES.JC_CLOSED; break;
+      case 'APPROVED': templateType = CONFIG.EMAIL_TEMPLATE_TYPES.JC_APPROVED; break;
+      case 'RETURNED': templateType = CONFIG.EMAIL_TEMPLATE_TYPES.JC_RETURNED; break;
+      default:
+        Logger.log('emailJobCardStatusChange(): Unknown event type: ' + eventType);
+        return;
+    }
+
+    emailSendNotification(templateType, data);
+  } catch (e) {
+    Logger.log('emailJobCardStatusChange() ERROR: ' + e.message);
+    console.error('emailJobCardStatusChange() error: ' + e.message);
+  }
+}
+
 function emailRetryFailed() {
   Logger.log('emailRetryFailed() called');
   console.log('emailRetryFailed() called');
@@ -422,6 +500,7 @@ function emailBuildTemplate(type, data) {
     case CONFIG.EMAIL_TEMPLATE_TYPES.JC_STARTED: return emailTemplateJcStarted(data);
     case CONFIG.EMAIL_TEMPLATE_TYPES.JC_CLOSED: return emailTemplateJcClosed(data);
     case CONFIG.EMAIL_TEMPLATE_TYPES.JC_APPROVED: return emailTemplateJcApproved(data);
+    case CONFIG.EMAIL_TEMPLATE_TYPES.JC_RETURNED: return emailTemplateJcReturned(data);
     case CONFIG.EMAIL_TEMPLATE_TYPES.PM_DUE: return emailTemplatePmDue(data);
     case CONFIG.EMAIL_TEMPLATE_TYPES.PM_OVERDUE: return emailTemplatePmOverdue(data);
     case CONFIG.EMAIL_TEMPLATE_TYPES.LOW_STOCK: return emailTemplateLowStock(data);
@@ -486,13 +565,19 @@ function emailTemplateJcOpened(data) {
     '<table>' +
     emailTableRow('Job Card No', data.jobCardNo) +
     emailTableRow('Machine', data.machine) +
-    emailTableRow('Department', data.department) +
     emailTableRow('Section', data.section) +
-    emailTableRow('Priority', '<strong>' + (data.priority || '') + '</strong>') +
+    emailTableRow('Department', data.department) +
     emailTableRow('Complaint', data.complaint) +
+    emailTableRow('Current Status', data.currentStatus) +
     emailTableRow('Reported By', data.reportedBy) +
+    emailTableRow('User Name', data.userName) +
+    emailTableRow('Technician', data.technicianName) +
     emailTableRow('Date/Time', data.dateTime) +
+    emailTableRow('Priority', '<strong>' + (data.priority || '') + '</strong>') +
     '</table>';
+  if (data.remarks) {
+    body += '<div class="email-alert">Remarks: ' + data.remarks + '</div>';
+  }
   if (data.priority === 'Critical' || data.priority === 'High') {
     body += '<div class="email-alert-critical">This is a ' + data.priority + ' priority job that requires immediate attention.</div>';
   }
@@ -519,11 +604,20 @@ function emailTemplateJcStarted(data) {
     '<table>' +
     emailTableRow('Job Card No', data.jobCardNo) +
     emailTableRow('Machine', data.machine) +
+    emailTableRow('Section', data.section) +
+    emailTableRow('Department', data.department) +
+    emailTableRow('Complaint', data.complaint) +
+    emailTableRow('Current Status', data.currentStatus) +
     emailTableRow('Started By', data.startedBy) +
+    emailTableRow('User Name', data.userName) +
+    emailTableRow('Technician', data.technicianName) +
+    emailTableRow('Date/Time', data.dateTime) +
     emailTableRow('Start Time', data.startTime) +
     emailTableRow('Priority', '<strong>' + (data.priority || '') + '</strong>') +
-    emailTableRow('Complaint', data.complaint) +
     '</table>';
+  if (data.remarks) {
+    body += '<div class="email-alert">Remarks: ' + data.remarks + '</div>';
+  }
   return { subject: '[CMMS] Job Started: ' + (data.jobCardNo || ''), html: emailWrapHtml(body) };
 }
 
@@ -533,7 +627,14 @@ function emailTemplateJcClosed(data) {
     '<table>' +
     emailTableRow('Job Card No', data.jobCardNo) +
     emailTableRow('Machine', data.machine) +
+    emailTableRow('Section', data.section) +
+    emailTableRow('Department', data.department) +
+    emailTableRow('Complaint', data.complaint) +
+    emailTableRow('Current Status', data.currentStatus) +
     emailTableRow('Closed By', data.closedBy) +
+    emailTableRow('User Name', data.userName) +
+    emailTableRow('Technician', data.technicianName) +
+    emailTableRow('Date/Time', data.dateTime) +
     emailTableRow('Working Time', data.workingTime) +
     emailTableRow('Total Duration', data.totalDuration) +
     emailTableRow('Root Cause', data.rootCause) +
@@ -551,15 +652,47 @@ function emailTemplateJcApproved(data) {
     '<table>' +
     emailTableRow('Job Card No', data.jobCardNo) +
     emailTableRow('Machine', data.machine) +
+    emailTableRow('Section', data.section) +
+    emailTableRow('Department', data.department) +
+    emailTableRow('Complaint', data.complaint) +
+    emailTableRow('Current Status', data.currentStatus) +
     emailTableRow('Approved By', data.approvedBy) +
+    emailTableRow('User Name', data.userName) +
+    emailTableRow('Technician', data.technicianName) +
+    emailTableRow('Date/Time', data.dateTime) +
     emailTableRow('Approval Status', data.approvalStatus) +
     emailTableRow('Total Duration', data.totalDuration) +
     emailTableRow('Root Cause', data.rootCause) +
     '</table>';
+  if (data.remarks) {
+    body += '<div class="email-alert-success">Remarks: ' + data.remarks + '</div>';
+  }
   if (data.approvalRemarks) {
     body += '<div class="email-alert">Approval Remarks: ' + data.approvalRemarks + '</div>';
   }
   return { subject: '[CMMS] Job Approved: ' + (data.jobCardNo || ''), html: emailWrapHtml(body) };
+}
+
+function emailTemplateJcReturned(data) {
+  var body = '<h2>Job Card Returned</h2>' +
+    '<p>A job card has been returned to the technician for revision.</p>' +
+    '<table>' +
+    emailTableRow('Job Card No', data.jobCardNo) +
+    emailTableRow('Machine', data.machine) +
+    emailTableRow('Section', data.section) +
+    emailTableRow('Department', data.department) +
+    emailTableRow('Complaint', data.complaint) +
+    emailTableRow('Current Status', data.currentStatus) +
+    emailTableRow('Returned By', data.returnedBy) +
+    emailTableRow('User Name', data.userName) +
+    emailTableRow('Technician', data.technicianName) +
+    emailTableRow('Date/Time', data.dateTime) +
+    emailTableRow('Return Reason', data.returnReason) +
+    '</table>';
+  if (data.remarks) {
+    body += '<div class="email-alert">Remarks: ' + data.remarks + '</div>';
+  }
+  return { subject: '[CMMS] Job Returned: ' + (data.jobCardNo || ''), html: emailWrapHtml(body) };
 }
 
 function emailTemplatePmDue(data) {
