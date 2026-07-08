@@ -46,7 +46,7 @@
     <form id="startJcForm" onsubmit="return saveStartJc(event)">
       <div class="modal-body">
         <input type="hidden" name="JobCardNo" id="startJcJobNo">
-        <input type="hidden" name="Status" value="Running">
+        <input type="hidden" name="CurrentStatus" value="RUNNING">
 
         <div class="time-summary-compact" style="margin-bottom:16px">
           <div class="ts-row"><span class="ts-label">Waiting Time</span><span class="ts-value" id="startJcWaitingDisplay">0h 0m</span></div>
@@ -55,14 +55,24 @@
 
         <div class="form-group">
           <label>Assigned Technician *</label>
-          <select name="AssignedTechnician" class="form-control" id="startJcTechnician" required>
-            <option value="">Select Technician</option>
-          </select>
+          <div class="multi-select-wrapper" id="startJcTechnicianWrapper">
+            <div class="multi-select-tags">
+              <input type="text" class="multi-select-search" placeholder="Search technicians...">
+              <input type="hidden" name="AssignedTechnicianIDs" id="startJcTechnicianIDs">
+            </div>
+            <div class="multi-select-dropdown"></div>
+          </div>
+          <input type="hidden" name="AssignedTechnician" id="startJcTechnician">
         </div>
 
         <div class="form-group">
-          <label>Start Remarks</label>
-          <textarea name="Remarks" class="form-control" rows="3" placeholder="Initial assessment and observations..."></textarea>
+          <label>Maintenance Team / Skills</label>
+          <input type="text" name="MaintenanceTeam" class="form-control" id="startJcSkillDisplay" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Initial Remarks</label>
+          <textarea name="InitialRemarks" class="form-control" rows="3" placeholder="Initial assessment and observations..."></textarea>
         </div>
 
         <div style="margin-bottom:0">
@@ -88,6 +98,8 @@
 var startJcData = [];
 var startJcPage = 1;
 var startJcTimer = null;
+var startJcTechMulti = null;
+var startJcTechList = [];
 
 function loadStartJobCardsData() {
   showLoading(true);
@@ -107,16 +119,21 @@ function loadStartJobCardsData() {
 
 function populateStartJcSelects() {
   google.script.run
-    .withSuccessHandler(function(t) { populateSelect('startJcTechnician', t, 'EmployeeID', 'TechnicianName', 'Select Technician'); })
+    .withSuccessHandler(function(techs) {
+      startJcTechList = (techs || []).filter(function(t) { return (t.Status || '').toLowerCase() === 'active'; });
+      startJcTechList.sort(function(a, b) { return (a.TechnicianName || '').localeCompare(b.TechnicianName || ''); });
+      var opts = startJcTechList.map(function(t) { return { value: t.EmployeeID, label: t.TechnicianName }; });
+      startJcTechMulti = initMultiSelect('startJcTechnicianWrapper', opts);
+    })
     .withFailureHandler(function() {})
     .getTechnicians();
   var deptFilter = document.getElementById('startJcDeptFilter');
-  deptFilter.innerHTML = '<option value="">All Departments</option>';
+  if (deptFilter) deptFilter.innerHTML = '<option value="">All Departments</option>';
   var depts = [];
   startJcData.forEach(function(jc) {
     if (jc.Department && depts.indexOf(jc.Department) === -1) depts.push(jc.Department);
   });
-  depts.sort().forEach(function(d) { deptFilter.innerHTML += '<option value="' + d + '">' + d + '</option>'; });
+  depts.sort().forEach(function(d) { if (deptFilter) deptFilter.innerHTML += '<option value="' + d + '">' + d + '</option>'; });
 }
 
 function renderStartJc() {
@@ -157,9 +174,11 @@ function openStartJc(id) {
   var item = startJcData.find(function(r) { return r.JobCardNo === id; });
   if (!item) return;
   resetForm('startJcForm');
-  document.getElementById('startJcJobNo').value = id;
-  document.getElementById('startJcRef').textContent = id;
-  document.getElementById('startJcOpenedDisplay').textContent = formatDateTime(item.DateTime || item.OpenTime || item.OpenDateTime);
+  if (startJcTechMulti) { startJcTechMulti.clear(); }
+  var el = document.getElementById('startJcSkillDisplay'); if (el) el.value = '';
+  el = document.getElementById('startJcJobNo'); if (el) el.value = id;
+  el = document.getElementById('startJcRef'); if (el) el.textContent = id;
+  el = document.getElementById('startJcOpenedDisplay'); if (el) el.textContent = formatDateTime(item.DateTime || item.OpenTime || item.OpenDateTime);
   updateStartJcWaiting();
   if (startJcTimer) clearInterval(startJcTimer);
   startJcTimer = setInterval(updateStartJcWaiting, 10000);
@@ -172,7 +191,25 @@ function updateStartJcWaiting() {
   var dt = item.DateTime || item.OpenTime || item.OpenDateTime;
   if (!dt) return;
   var diff = Date.now() - new Date(dt).getTime();
-  document.getElementById('startJcWaitingDisplay').textContent = formatDuration(diff);
+  var el = document.getElementById('startJcWaitingDisplay'); if (el) el.textContent = formatDuration(diff);
+}
+
+function onMultiSelectChange(selected, allOptions) {
+  var names = [];
+  var skills = [];
+  selected.forEach(function(empId) {
+    var tech = startJcTechList.find(function(t) { return t.EmployeeID === empId; });
+    if (tech) {
+      if (tech.TechnicianName) names.push(tech.TechnicianName);
+      if (tech.Skill) {
+        var s = tech.Skill.split(/[,;\/]/).map(function(sk) { return sk.trim(); });
+        s.forEach(function(sk) { if (sk && skills.indexOf(sk) === -1) skills.push(sk); });
+      }
+    }
+  });
+  var el = document.getElementById('startJcTechnician'); if (el) el.value = names.join(', ');
+  skills.sort();
+  var el = document.getElementById('startJcSkillDisplay'); if (el) el.value = skills.join(', ');
 }
 
 function saveStartJc(e) {
@@ -180,7 +217,7 @@ function saveStartJc(e) {
   var data = getFormData('startJcForm');
   var id = data.JobCardNo;
   if (!data.AssignedTechnician) {
-    showToast('Please select an assigned technician', 'error');
+    showToast('Please select at least one technician', 'error');
     return;
   }
   if (startJcTimer) { clearInterval(startJcTimer); startJcTimer = null; }

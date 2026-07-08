@@ -461,7 +461,7 @@ function checkAndNotifyPendingJobCards() {
     var createdCount = 0;
     for (var i = 0; i < allJCs.length; i++) {
       var jc = allJCs[i];
-      if ((jc.Status || '').toUpperCase() !== 'OPEN') continue;
+      if ((jc.CurrentStatus || jc.Status || '').toUpperCase() !== 'OPEN') continue;
       var openDt = jc.DateTime || jc.OpenDateTime || jc.CreatedAt;
       if (!openDt) continue;
       var opened = new Date(openDt);
@@ -486,11 +486,11 @@ function checkAndNotifyWaitingApproval() {
     var createdCount = 0;
     for (var i = 0; i < allJCs.length; i++) {
       var jc = allJCs[i];
-      var s = (jc.Status || '').toLowerCase();
-      if (s !== 'closed' && s !== 'completed') continue;
-      if (jc.ApprovalStatus && (jc.ApprovalStatus.toLowerCase() === 'approved' || jc.ApprovalStatus.toLowerCase() === 'rejected')) continue;
+      var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
+      if (s !== 'pending') continue;
+      if (jc.ApprovalStatus && jc.ApprovalStatus.toLowerCase() === 'approved') continue;
       var title = 'Approval Required: ' + (jc.JobCardNo || '');
-      var message = 'Job card ' + (jc.JobCardNo || '') + ' for ' + (jc.Machine || '') + ' is CLOSED and waiting for approval.';
+      var message = 'Job card ' + (jc.JobCardNo || '') + ' for ' + (jc.Machine || '') + ' is PENDING and waiting for your review.';
         createNotification(title, message, CONFIG.NOTIFICATION_MODULES.JOBCARD, jc.Priority || CONFIG.PRIORITY.MEDIUM, 'System', '', 'navigateTo(\'jobcards\')', 'Approval');
       createdCount++;
     }
@@ -506,7 +506,7 @@ function checkAndNotifyMachineBreakdown() {
     var createdCount = 0;
     for (var i = 0; i < allJCs.length; i++) {
       var jc = allJCs[i];
-      if ((jc.Status || '').toUpperCase() !== 'RUNNING') continue;
+      if ((jc.CurrentStatus || jc.Status || '').toUpperCase() !== 'RUNNING') continue;
       var priority = (jc.Priority || '').toLowerCase();
       if (priority !== 'critical' && priority !== 'high') continue;
       var title = 'Machine Breakdown: ' + (jc.Machine || '');

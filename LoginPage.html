@@ -11,7 +11,7 @@
       <div class="login-card-glow"></div>
       <div class="login-header">
         <div class="login-logo-area">
-          <img class="login-logo-img" id="loginLogoImg" alt="Pakistan Wire Industries" src="?img=logo" style="display:none" onload="this.style.display='block';document.getElementById('loginLogoFallback').style.display='none'" onerror="document.getElementById('loginLogoFallback').style.display='flex'">
+          <img class="login-logo-img" id="loginLogoImg" alt="Pakistan Wire Industries" src="?img=logo" style="display:none" onload="this.style.display='block';var el=document.getElementById('loginLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('loginLogoFallback');el&&(el.style.display='flex')">
           <div class="login-logo-fallback" id="loginLogoFallback">
             <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">
               <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
@@ -503,23 +503,30 @@
     var emailInput = document.getElementById('loginEmail');
     if (emailInput) {
       emailInput.value = saved;
-      document.getElementById('loginRemember').checked = true;
+      var el = document.getElementById('loginRemember'); if (el) el.checked = true;
     }
   }
 })();
 
 function handleLogin(e) {
   e.preventDefault();
-  var email = document.getElementById('loginEmail').value.trim();
-  var password = document.getElementById('loginPassword').value;
+  var emailEl = document.getElementById('loginEmail');
+  var passEl = document.getElementById('loginPassword');
+  var email = emailEl ? emailEl.value.trim() : '';
+  var password = passEl ? passEl.value : '';
   var btn = document.getElementById('loginBtn');
   var errorDiv = document.getElementById('loginError');
-  var remember = document.getElementById('loginRemember').checked;
+  var rememberEl = document.getElementById('loginRemember');
+  var remember = rememberEl ? rememberEl.checked : false;
 
-  errorDiv.style.display = 'none';
-  btn.disabled = true;
-  btn.querySelector('.login-btn-text').textContent = 'Signing in...';
-  btn.querySelector('.spinner').style.display = 'inline-block';
+  if (errorDiv) errorDiv.style.display = 'none';
+  if (btn) {
+    btn.disabled = true;
+    var btnText = btn.querySelector('.login-btn-text');
+    if (btnText) btnText.textContent = 'Signing in...';
+    var spnr = btn.querySelector('.spinner');
+    if (spnr) spnr.style.display = 'inline-block';
+  }
 
   if (remember) {
     localStorage.setItem('cmms_remember_email', email);
@@ -529,24 +536,36 @@ function handleLogin(e) {
 
   google.script.run
     .withSuccessHandler(function(result) {
-      btn.disabled = false;
-      btn.querySelector('.login-btn-text').textContent = 'Sign In';
-      btn.querySelector('.spinner').style.display = 'none';
+      if (btn) {
+        btn.disabled = false;
+        var btnText = btn.querySelector('.login-btn-text');
+        if (btnText) btnText.textContent = 'Sign In';
+        var spnr = btn.querySelector('.spinner');
+        if (spnr) spnr.style.display = 'none';
+      }
       if (result.success) {
         currentUser = result.user;
         localStorage.setItem('cmms_user', JSON.stringify(result.user));
         showApp();
       } else {
-        errorDiv.textContent = result.message;
-        errorDiv.style.display = 'block';
+        if (errorDiv) {
+          errorDiv.textContent = result.message;
+          errorDiv.style.display = 'block';
+        }
       }
     })
     .withFailureHandler(function(err) {
-      btn.disabled = false;
-      btn.querySelector('.login-btn-text').textContent = 'Sign In';
-      btn.querySelector('.spinner').style.display = 'none';
-      errorDiv.textContent = 'Connection error. Please try again.';
-      errorDiv.style.display = 'block';
+      if (btn) {
+        btn.disabled = false;
+        var btnText = btn.querySelector('.login-btn-text');
+        if (btnText) btnText.textContent = 'Sign In';
+        var spnr = btn.querySelector('.spinner');
+        if (spnr) spnr.style.display = 'none';
+      }
+      if (errorDiv) {
+        errorDiv.textContent = 'Connection error. Please try again.';
+        errorDiv.style.display = 'block';
+      }
     })
     .loginUser(email, password);
   return false;

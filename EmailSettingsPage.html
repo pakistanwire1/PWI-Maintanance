@@ -284,6 +284,7 @@ function saveEmailSetting(key, value) {
 }
 
 function saveEmailSettings(data) {
+  data.email = currentUser && currentUser.email || '';
   google.script.run
     .withSuccessHandler(function(result) {
       if (result.success) showToast('Email setting saved', 'success');

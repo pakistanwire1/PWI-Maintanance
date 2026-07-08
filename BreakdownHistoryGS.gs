@@ -3,12 +3,12 @@ function getBreakdownHistory() {
   Logger.log('getBreakdownHistory(): jobCards=' + jobCards.length);
   console.log('getBreakdownHistory(): jobCards=' + jobCards.length);
   var result = jobCards.filter(function(jc) {
-    var status = (jc.Status || '').toLowerCase();
+    var status = (jc.CurrentStatus || jc.Status || '').toLowerCase();
     return status === 'closed' || status === 'completed';
   });
   Logger.log('getBreakdownHistory(): returning ' + result.length + ' breakdown records');
   console.log('getBreakdownHistory(): returning ' + result.length + ' breakdown records');
-  return result;
+  return result.map(normalizeJobCard);
 }
 
 function getBreakdownHistoryFiltered(filters) {
@@ -39,7 +39,7 @@ function getBreakdownStats() {
   var machineMap = {};
   for (var i = 0; i < breakdowns.length; i++) {
     var b = breakdowns[i];
-    var dt = parseFloat(b.TotalDuration || b.Downtime) || 0;
+    var dt = Math.round(parseDurationToHours(b.TotalDuration || b.Downtime || 0) * 60);
     totalDowntime += dt;
     if (b.Machine) {
       if (!machineMap[b.Machine]) machineMap[b.Machine] = { count: 0, downtime: 0 };
@@ -48,11 +48,11 @@ function getBreakdownStats() {
     }
   }
   var topMachines = Object.keys(machineMap).map(function(m) {
-    return { machine: m, count: machineMap[m].count, downtime: Math.round(machineMap[m].downtime * 100) / 100 };
+    return { machine: m, count: machineMap[m].count, downtime: Math.round(machineMap[m].downtime) };
   }).sort(function(a, b) { return b.count - a.count; }).slice(0, 10);
   return {
     totalBreakdowns: breakdowns.length,
-    totalDowntime: Math.round(totalDowntime * 100) / 100,
+    totalDowntime: Math.round(totalDowntime),
     topMachines: topMachines
   };
 }

@@ -133,6 +133,7 @@
         <button class="btn btn-secondary" onclick="exportAuditCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>
         <button class="btn btn-secondary" onclick="exportAuditPDF()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg> Export PDF</button>
         <button class="btn btn-secondary" onclick="printAuditTable()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg> Print</button>
+        <button class="btn btn-secondary" onclick="runAuditDiagnostic()" title="Run audit pipeline diagnostic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v4"/><path d="M10 14h.01"/></svg> Diagnose</button>
         <button class="btn btn-secondary" onclick="loadAuditLogsData()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg> Refresh</button>
       </div>
     </div>
@@ -176,17 +177,64 @@ function loadAuditLogsData() {
   var email = (currentUser && currentUser.email) || '';
   google.script.run
     .withSuccessHandler(function(data) {
-      auditData = data || [];
-      populateAuditFilterDropdowns();
-      applyAuditFilter();
-      updateAuditSummaryCards();
-      showLoading(false);
+      if (data && data.length > 0) {
+        auditData = data;
+        populateAuditFilterDropdowns();
+        applyAuditFilter();
+        updateAuditSummaryCards();
+        showLoading(false);
+        return;
+      }
+      // getUserAuditLogs returned empty — try getAuditLogs() as fallback
+      console.warn('getUserAuditLogs returned empty, trying getAuditLogs fallback');
+      google.script.run
+        .withSuccessHandler(function(fallbackData) {
+          auditData = fallbackData || [];
+          if (auditData.length === 0) {
+            console.warn('getAuditLogs also returned empty — sheet may have no data or pipeline issue');
+          }
+          populateAuditFilterDropdowns();
+          applyAuditFilter();
+          updateAuditSummaryCards();
+          showLoading(false);
+        })
+        .withFailureHandler(function(err) {
+          showToast('Failed to load audit logs: ' + err.message, 'error');
+          showLoading(false);
+        })
+        .getAuditLogs();
     })
     .withFailureHandler(function(err) {
       showToast('Failed to load audit logs: ' + err.message, 'error');
       showLoading(false);
     })
     .getUserAuditLogs(email);
+}
+
+function runAuditDiagnostic() {
+  showLoading(true);
+  var email = (currentUser && currentUser.email) || '';
+  google.script.run
+    .withSuccessHandler(function(steps) {
+      showLoading(false);
+      var html = '<div style="padding:12px;font-family:monospace;font-size:12px;line-height:1.6">';
+      html += '<h3 style="margin:0 0 12px 0">Audit Pipeline Diagnostic</h3>';
+      steps.forEach(function(s) {
+        var color = s.step.indexOf('ERROR') >= 0 || (s.detail && s.detail.indexOf('NO DATA') >= 0) ? 'var(--danger)' :
+                    s.step.indexOf('OK') >= 0 ? 'var(--success)' : 'inherit';
+        html += '<div style="margin-bottom:6px;padding:6px 8px;background:var(--bg-input);border-radius:4px">';
+        html += '<strong style="color:' + color + '">' + escapeHtml(s.step) + '</strong>';
+        html += '<div style="margin-top:2px;color:var(--text-muted);word-break:break-all">' + escapeHtml(s.detail) + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      showModal('Audit Diagnostics', html);
+    })
+    .withFailureHandler(function(err) {
+      showLoading(false);
+      showToast('Diagnostic failed: ' + err.message, 'error');
+    })
+    .testAuditPipeline(email);
 }
 
 function populateAuditFilterDropdowns() {
@@ -196,6 +244,7 @@ function populateAuditFilterDropdowns() {
     if (r.Department) deptSet[r.Department] = true;
   });
   var userSel = document.getElementById('auditFilterUser');
+  if (!userSel) return;
   var currentVal = userSel.value;
   userSel.innerHTML = '<option value="">All Users</option>';
   Object.keys(userSet).sort().forEach(function(u) {
@@ -206,6 +255,7 @@ function populateAuditFilterDropdowns() {
     userSel.appendChild(opt);
   });
   var deptSel = document.getElementById('auditFilterDept');
+  if (!deptSel) return;
   var currentDept = deptSel.value;
   deptSel.innerHTML = '<option value="">All Departments</option>';
   Object.keys(deptSet).sort().forEach(function(d) {
@@ -261,15 +311,16 @@ function applyAuditFilter() {
 }
 
 function clearAuditFilters() {
-  document.getElementById('auditSearch').value = '';
-  document.getElementById('auditDateFrom').value = '';
-  document.getElementById('auditDateTo').value = '';
-  document.getElementById('auditFilterUser').value = '';
-  document.getElementById('auditFilterDept').value = '';
-  document.getElementById('auditFilterModule').value = '';
-  document.getElementById('auditFilterAction').value = '';
-  document.getElementById('auditFilterStatus').value = '';
-  document.getElementById('auditFilterRole').value = '';
+  var el;
+  el = document.getElementById('auditSearch'); if (el) el.value = '';
+  el = document.getElementById('auditDateFrom'); if (el) el.value = '';
+  el = document.getElementById('auditDateTo'); if (el) el.value = '';
+  el = document.getElementById('auditFilterUser'); if (el) el.value = '';
+  el = document.getElementById('auditFilterDept'); if (el) el.value = '';
+  el = document.getElementById('auditFilterModule'); if (el) el.value = '';
+  el = document.getElementById('auditFilterAction'); if (el) el.value = '';
+  el = document.getElementById('auditFilterStatus'); if (el) el.value = '';
+  el = document.getElementById('auditFilterRole'); if (el) el.value = '';
   applyAuditFilter();
 }
 
@@ -410,10 +461,11 @@ function updateAuditSummaryCards() {
     if (r.Module) moduleSet[r.Module] = true;
     if (r.UserEmail) userSet[r.UserEmail] = true;
   });
-  document.getElementById('auditTotalCount').textContent = total;
-  document.getElementById('auditTodayCount').textContent = todayCount;
-  document.getElementById('auditModuleCount').textContent = Object.keys(moduleSet).length;
-  document.getElementById('auditUserCount').textContent = Object.keys(userSet).length;
+  var el;
+  el = document.getElementById('auditTotalCount'); if (el) el.textContent = total;
+  el = document.getElementById('auditTodayCount'); if (el) el.textContent = todayCount;
+  el = document.getElementById('auditModuleCount'); if (el) el.textContent = Object.keys(moduleSet).length;
+  el = document.getElementById('auditUserCount'); if (el) el.textContent = Object.keys(userSet).length;
 }
 
 function exportAuditCSV() {

@@ -197,21 +197,23 @@ function loadWhatsAppData() {
 
 function renderWhatsAppSettings(data) {
   var s = data.settings || {};
-  document.getElementById('whatsappEnabled').checked = !!s.enabled;
-  document.getElementById('whatsappCompanyName').value = s.companyName || '';
-  document.getElementById('whatsappCountryCode').value = s.defaultCountryCode || '';
-  document.getElementById('whatsappProvider').value = s.provider || 'meta';
-  document.getElementById('whatsappApiEndpoint').value = s.apiEndpoint || '';
-  document.getElementById('whatsappApiToken').value = s.apiToken || '';
-  document.getElementById('whatsappPhoneNumberId').value = s.phoneNumberId || '';
-  document.getElementById('whatsappBusinessAccountId').value = s.businessAccountId || '';
-  document.getElementById('whatsappTestPhone').value = s.testPhone || '';
-  document.getElementById('whatsappTestMessage').value = s.testMessage || '';
-  document.getElementById('whatsappTestResult').textContent = '';
+  var el;
+  el = document.getElementById('whatsappEnabled'); if (el) el.checked = !!s.enabled;
+  el = document.getElementById('whatsappCompanyName'); if (el) el.value = s.companyName || '';
+  el = document.getElementById('whatsappCountryCode'); if (el) el.value = s.defaultCountryCode || '';
+  el = document.getElementById('whatsappProvider'); if (el) el.value = s.provider || 'meta';
+  el = document.getElementById('whatsappApiEndpoint'); if (el) el.value = s.apiEndpoint || '';
+  el = document.getElementById('whatsappApiToken'); if (el) el.value = s.apiToken || '';
+  el = document.getElementById('whatsappPhoneNumberId'); if (el) el.value = s.phoneNumberId || '';
+  el = document.getElementById('whatsappBusinessAccountId'); if (el) el.value = s.businessAccountId || '';
+  el = document.getElementById('whatsappTestPhone'); if (el) el.value = s.testPhone || '';
+  el = document.getElementById('whatsappTestMessage'); if (el) el.value = s.testMessage || '';
+  el = document.getElementById('whatsappTestResult'); if (el) el.textContent = '';
 }
 
 function renderWhatsAppTemplates(templates) {
   var container = document.getElementById('whatsappTemplatesContainer');
+  if (!container) return;
   if (!templates || templates.length === 0) {
     container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">No templates found.</div>';
     return;
@@ -221,7 +223,7 @@ function renderWhatsAppTemplates(templates) {
     var tid = 'tpl_' + idx;
     html +=
       '<div class="template-item">' +
-        '<div class="template-header" onclick="var b=document.getElementById(\'' + tid + '_body\');b.style.display=b.style.display===\'none\'?\'block\':\'none\'">' +
+        '<div class="template-header" onclick="var b=document.getElementById(\'' + tid + '_body\');if(b)b.style.display=b.style.display===\'none\'?\'block\':\'none\'">' +
           '<span>' + escapeHtml(t.TemplateName || '') + ' <span style="font-size:11px;color:var(--text-muted)">(' + escapeHtml(t.EventType || '') + ')</span></span>' +
           '<span style="font-size:10px;color:var(--text-muted)">Variables: ' + escapeHtml(t.Variables || '') + '</span>' +
         '</div>' +
@@ -246,6 +248,7 @@ function waSaveTemplate(tplId, tid) {
   var textarea = document.getElementById(tid + '_textarea');
   if (!textarea) return;
   var btn = document.getElementById(tid + '_savebtn');
+  if (!btn) return;
   btn.disabled = true;
   btn.textContent = 'Saving...';
   google.script.run
@@ -260,12 +263,14 @@ function waSaveTemplate(tplId, tid) {
 }
 
 function renderWhatsAppLogs(logs, stats) {
+  var el;
   if (stats) {
-    document.getElementById('waStatSent').textContent = stats.sentToday || '0';
-    document.getElementById('waStatFailed').textContent = stats.failedToday || '0';
-    document.getElementById('waStatPending').textContent = stats.pendingToday || '0';
+    el = document.getElementById('waStatSent'); if (el) el.textContent = stats.sentToday || '0';
+    el = document.getElementById('waStatFailed'); if (el) el.textContent = stats.failedToday || '0';
+    el = document.getElementById('waStatPending'); if (el) el.textContent = stats.pendingToday || '0';
   }
   var tbody = document.getElementById('waLogsBody');
+  if (!tbody) return;
   if (!logs || logs.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">No logs yet.</td></tr>';
     return;
@@ -293,6 +298,7 @@ function renderWhatsAppLogs(logs, stats) {
 function toggleWhatsApp() {
   var enabled = document.getElementById('whatsappEnabled').checked;
   var data = { enabled: enabled };
+  data.email = currentUser && currentUser.email || '';
   collectWhatsAppSettings(data);
   google.script.run
     .withSuccessHandler(function(res) {
@@ -317,6 +323,7 @@ function collectWhatsAppSettings(data) {
 
 function saveWhatsAppSettings() {
   var data = {};
+  data.email = currentUser && currentUser.email || '';
   collectWhatsAppSettings(data);
   data.enabled = document.getElementById('whatsappEnabled').checked;
   google.script.run
@@ -331,6 +338,8 @@ function saveWhatsAppSettings() {
 function whatsappSendTest() {
   var phone = document.getElementById('whatsappTestPhone').value.trim();
   var resultEl = document.getElementById('whatsappTestResult');
+  var btn = document.getElementById('whatsappTestBtn');
+  if (!resultEl || !btn) return;
   if (!phone) {
     resultEl.innerHTML = '<span style="color:var(--danger)">✗ Please enter a test phone number.</span>';
     return;
@@ -339,11 +348,11 @@ function whatsappSendTest() {
     resultEl.innerHTML = '<span style="color:var(--danger)">✗ Please enter a valid phone number (at least 10 digits). Include country code if using international format.</span>';
     return;
   }
-  var btn = document.getElementById('whatsappTestBtn');
   btn.disabled = true;
   btn.innerHTML = 'Saving settings...';
   resultEl.textContent = '';
   var data = {};
+  data.email = currentUser && currentUser.email || '';
   collectWhatsAppSettings(data);
   data.enabled = document.getElementById('whatsappEnabled').checked;
   google.script.run
@@ -383,6 +392,7 @@ function whatsappSendTest() {
 function onWhatsAppProviderChange() {
   var prov = document.getElementById('whatsappProvider').value;
   var endpoint = document.getElementById('whatsappApiEndpoint');
+  if (!endpoint) return;
   if (prov === 'meta' && !endpoint.value) endpoint.value = 'https://graph.facebook.com/v18.0';
   else if (prov === 'twilio' && !endpoint.value) endpoint.value = 'https://api.twilio.com/2010-04-01';
 }

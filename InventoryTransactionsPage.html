@@ -163,9 +163,10 @@ function loadITFilterParts() {
   google.script.run
     .withSuccessHandler(function(data) {
       var parts = data || [];
-      var sel = document.getElementById('itFilterPart');
-      sel.innerHTML = '<option value="">All Parts</option>';
-      parts.forEach(function(item) { sel.innerHTML += '<option value="' + escHtml(item.PartCode || '') + '">' + escHtml(item.PartName || item.PartCode || '') + '</option>'; });
+  var sel = document.getElementById('itFilterPart');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">All Parts</option>';
+  parts.forEach(function(item) { sel.innerHTML += '<option value="' + escHtml(item.PartCode || '') + '">' + escHtml(item.PartName || item.PartCode || '') + '</option>'; });
     })
     .withFailureHandler(function() {})
     .getSpareParts();
@@ -178,12 +179,13 @@ function updateITSummary() {
   var ret = itData.filter(function(r) { return (r.TransactionType || '').toLowerCase() === 'return'; }).length;
   var transfer = itData.filter(function(r) { return (r.TransactionType || '').toLowerCase() === 'transfer'; }).length;
   var adj = itData.filter(function(r) { return (r.TransactionType || '').toLowerCase() === 'adjustment'; }).length;
-  document.getElementById('itTotalTxns').textContent = total;
-  document.getElementById('itGoodsReceipt').textContent = gr;
-  document.getElementById('itIssues').textContent = issue;
-  document.getElementById('itReturns').textContent = ret;
-  document.getElementById('itTransfers').textContent = transfer;
-  document.getElementById('itAdjustments').textContent = adj;
+  var el;
+  el = document.getElementById('itTotalTxns'); if (el) el.textContent = total;
+  el = document.getElementById('itGoodsReceipt'); if (el) el.textContent = gr;
+  el = document.getElementById('itIssues'); if (el) el.textContent = issue;
+  el = document.getElementById('itReturns'); if (el) el.textContent = ret;
+  el = document.getElementById('itTransfers'); if (el) el.textContent = transfer;
+  el = document.getElementById('itAdjustments'); if (el) el.textContent = adj;
 }
 
 function renderITTable() {
@@ -209,21 +211,22 @@ function renderITTable() {
 function viewIT(id) {
   var item = itData.find(function(r) { return r.TransactionID === id; });
   if (!item) { showToast('Record not found', 'error'); return; }
-  document.getElementById('itViewTxnId').textContent = item.TransactionID || '-';
-  document.getElementById('itViewType').textContent = item.TransactionType || '-';
-  document.getElementById('itViewPartCode').textContent = item.PartCode || '-';
-  document.getElementById('itViewPartName').textContent = item.PartName || '-';
-  document.getElementById('itViewQty').textContent = item.Quantity || '0';
-  document.getElementById('itViewUnitCost').textContent = item.UnitCost ? parseFloat(item.UnitCost).toFixed(2) : '0.00';
-  document.getElementById('itViewTotalCost').textContent = item.TotalCost ? parseFloat(item.TotalCost).toFixed(2) : '0.00';
-  document.getElementById('itViewRefNo').textContent = item.ReferenceNo || '-';
-  document.getElementById('itViewRefType').textContent = item.ReferenceType || '-';
-  document.getElementById('itViewFromLoc').textContent = item.FromLocation || '-';
-  document.getElementById('itViewToLoc').textContent = item.ToLocation || '-';
-  document.getElementById('itViewProcessedBy').textContent = item.ProcessedBy || '-';
-  document.getElementById('itViewProcessedAt').textContent = item.ProcessedAt || '-';
-  document.getElementById('itViewCreatedAt').textContent = item.CreatedAt || '-';
-  document.getElementById('itViewRemarks').textContent = item.Remarks || '-';
+  var el;
+  el = document.getElementById('itViewTxnId'); if (el) el.textContent = item.TransactionID || '-';
+  el = document.getElementById('itViewType'); if (el) el.textContent = item.TransactionType || '-';
+  el = document.getElementById('itViewPartCode'); if (el) el.textContent = item.PartCode || '-';
+  el = document.getElementById('itViewPartName'); if (el) el.textContent = item.PartName || '-';
+  el = document.getElementById('itViewQty'); if (el) el.textContent = item.Quantity || '0';
+  el = document.getElementById('itViewUnitCost'); if (el) el.textContent = item.UnitCost ? parseFloat(item.UnitCost).toFixed(2) : '0.00';
+  el = document.getElementById('itViewTotalCost'); if (el) el.textContent = item.TotalCost ? parseFloat(item.TotalCost).toFixed(2) : '0.00';
+  el = document.getElementById('itViewRefNo'); if (el) el.textContent = item.ReferenceNo || '-';
+  el = document.getElementById('itViewRefType'); if (el) el.textContent = item.ReferenceType || '-';
+  el = document.getElementById('itViewFromLoc'); if (el) el.textContent = item.FromLocation || '-';
+  el = document.getElementById('itViewToLoc'); if (el) el.textContent = item.ToLocation || '-';
+  el = document.getElementById('itViewProcessedBy'); if (el) el.textContent = item.ProcessedBy || '-';
+  el = document.getElementById('itViewProcessedAt'); if (el) el.textContent = item.ProcessedAt || '-';
+  el = document.getElementById('itViewCreatedAt'); if (el) el.textContent = item.CreatedAt || '-';
+  el = document.getElementById('itViewRemarks'); if (el) el.textContent = item.Remarks || '-';
   openModalForm('itView', 'Transaction - ' + id);
 }
 
@@ -244,11 +247,12 @@ function applyITFilter() {
 }
 
 function clearITFilter() {
-  document.getElementById('itFilterType').value = '';
-  document.getElementById('itFilterPart').value = '';
-  document.getElementById('itFilterFromDate').value = '';
-  document.getElementById('itFilterToDate').value = '';
-  document.getElementById('itSearch').value = '';
+  var el;
+  el = document.getElementById('itFilterType'); if (el) el.value = '';
+  el = document.getElementById('itFilterPart'); if (el) el.value = '';
+  el = document.getElementById('itFilterFromDate'); if (el) el.value = '';
+  el = document.getElementById('itFilterToDate'); if (el) el.value = '';
+  el = document.getElementById('itSearch'); if (el) el.value = '';
   itFilter = { search: '', type: '', part: '', fromDate: '', toDate: '' };
   itPage = 1;
   renderITTable();

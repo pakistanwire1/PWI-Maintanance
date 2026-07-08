@@ -113,31 +113,16 @@ function initializeTechnicianMaster() {
   if (hasDataRows(sheet)) return { status: 'skipped', message: 'Sample data already exists.' };
   var now = getCurrentTimestamp();
   var techNames = ['Rajesh Kumar', 'Suresh Patel', 'Amit Singh', 'Vikram Sharma', 'Deepak Verma', 'Ravi Gupta', 'Manish Joshi', 'Prakash Rao', 'Sunil Yadav', 'Anil Kumar', 'Vijay Nair', 'Rohit Deshmukh'];
-  var designations = ['Senior Technician', 'Technician', 'Junior Technician', 'Senior Technician', 'Technician', 'Technician', 'Junior Technician', 'Senior Technician', 'Technician', 'Technician', 'Junior Technician', 'Technician'];
   var skills = ['Mechanical', 'Electrical', 'PLC', 'Hydraulic', 'Mechanical', 'Pneumatic', 'Electrical', 'Hydraulic', 'Mechanical', 'Instrumentation', 'PLC', 'Pneumatic'];
   var shifts = ['General', 'General', 'A', 'B', 'General', 'General', 'A', 'B', 'General', 'General', 'A', 'B'];
-  var mobiles = ['9876543210', '9876543211', '9876543212', '9876543213', '9876543214', '9876543215', '9876543216', '9876543217', '9876543218', '9876543219', '9876543220', '9876543221'];
-  var emails = ['rajesh@cmms.com', 'suresh@cmms.com', 'amit@cmms.com', 'vikram@cmms.com', 'deepak@cmms.com', 'ravi@cmms.com', 'manish@cmms.com', 'prakash@cmms.com', 'sunil@cmms.com', 'anil@cmms.com', 'vijay@cmms.com', 'rohit@cmms.com'];
-  var joiningDates = ['2023-01-15', '2023-02-01', '2023-03-10', '2023-04-05', '2023-05-20', '2023-06-15', '2023-07-01', '2023-08-10', '2023-09-05', '2023-10-01', '2023-11-15', '2023-12-01'];
   var sampleData = [];
   for (var i = 0; i < techNames.length; i++) {
     sampleData.push({
       EmployeeID: 'EMP' + String(i + 1).padStart(3, '0'),
-      EmployeeCode: 'TECH-' + String(i + 1).padStart(3, '0'),
       TechnicianName: techNames[i],
-      Designation: designations[i],
-      Department: 'Facility Maintenance',
-      Section: 'Maintenance',
       Skill: skills[i],
       Shift: shifts[i],
-      Mobile: mobiles[i],
-      Email: emails[i],
-      JoiningDate: joiningDates[i],
-      Status: 'Active',
-      CreatedBy: 'admin@cmms.com',
-      CreatedAt: now,
-      UpdatedBy: 'admin@cmms.com',
-      UpdatedAt: now
+      Status: 'Active'
     });
   }
   insertRows(sheet, fields, sampleData);
@@ -153,7 +138,7 @@ function initializeUsers() {
   if (hasDataRows(sheet)) return { status: 'skipped', message: 'Sample data already exists.' };
   var now = getCurrentTimestamp();
   var sampleData = [
-    { UserID: 'USR001', EmployeeID: 'EMP-ADM', Name: 'Administrator', Email: 'admin@cmms.com', Password: 'admin123', Mobile: '9876543200', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'System Administrator', Role: 'Admin', Status: 'Active', CanOpenJobCard: 'TRUE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'TRUE', CanManageMachines: 'TRUE', CanManageAssets: 'TRUE', CanManageSpareParts: 'TRUE', CanManagePM: 'TRUE', CanManageTechnicians: 'TRUE', CanManageDepartments: 'TRUE', CanManageSections: 'TRUE', CanManageUsers: 'TRUE', CanViewDashboard: 'TRUE', CanViewReports: 'TRUE', CanManageInventory: 'TRUE', IsAdmin: 'TRUE', CreatedBy: 'admin@cmms.com', CreatedAt: now, UpdatedBy: 'admin@cmms.com', UpdatedAt: now },
+    { UserID: 'USR001', EmployeeID: 'EMP-ADM', Name: 'Administrator', Email: 'admin@cmms.com', Password: 'admin123', Mobile: '9876543200', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'System Administrator', Role: 'Admin', Status: 'Active', CanOpenJobCard: 'TRUE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'TRUE', CanReviewPendingJobCard: 'TRUE', CanViewAllJobCards: 'TRUE', CanManageMachines: 'TRUE', CanManageAssets: 'TRUE', CanManageSpareParts: 'TRUE', CanManagePM: 'TRUE', CanManageTechnicians: 'TRUE', CanManageDepartments: 'TRUE', CanManageSections: 'TRUE', CanManageUsers: 'TRUE', CanViewDashboard: 'TRUE', CanViewReports: 'TRUE', CanManageInventory: 'TRUE', IsAdmin: 'TRUE', CreatedBy: 'admin@cmms.com', CreatedAt: now, UpdatedBy: 'admin@cmms.com', UpdatedAt: now },
     { UserID: 'USR002', EmployeeID: 'EMP-MGR', Name: 'Maintenance Manager', Email: 'manager@cmms.com', Password: 'mgr123', Mobile: '9876543201', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'Department Manager', Role: 'Department Manager', Status: 'Active', CanOpenJobCard: 'TRUE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'TRUE', CanManageMachines: 'TRUE', CanManageAssets: 'TRUE', CanManageSpareParts: 'TRUE', CanManagePM: 'TRUE', CanManageTechnicians: 'TRUE', CanManageDepartments: 'TRUE', CanManageSections: 'TRUE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'TRUE', CanManageInventory: 'TRUE', IsAdmin: 'FALSE', CreatedBy: 'admin@cmms.com', CreatedAt: now, UpdatedBy: 'admin@cmms.com', UpdatedAt: now },
     { UserID: 'USR003', EmployeeID: 'EMP-SUP', Name: 'Supervisor User', Email: 'supervisor@cmms.com', Password: 'super123', Mobile: '9876543202', Department: 'Spoke Production', Section: 'Spoke', Designation: 'Maintenance Supervisor', Role: 'Supervisor', Status: 'Active', CanOpenJobCard: 'TRUE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'TRUE', CanManageMachines: 'TRUE', CanManageAssets: 'TRUE', CanManageSpareParts: 'FALSE', CanManagePM: 'TRUE', CanManageTechnicians: 'FALSE', CanManageDepartments: 'FALSE', CanManageSections: 'FALSE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'TRUE', CanManageInventory: 'FALSE', IsAdmin: 'FALSE', CreatedBy: 'admin@cmms.com', CreatedAt: now, UpdatedBy: 'admin@cmms.com', UpdatedAt: now },
     { UserID: 'USR004', EmployeeID: 'EMP-TEC', Name: 'Technician User', Email: 'tech@cmms.com', Password: 'tech123', Mobile: '9876543203', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'Maintenance Technician', Role: 'Technician', Status: 'Active', CanOpenJobCard: 'FALSE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'FALSE', CanManageMachines: 'FALSE', CanManageAssets: 'FALSE', CanManageSpareParts: 'FALSE', CanManagePM: 'FALSE', CanManageTechnicians: 'FALSE', CanManageDepartments: 'FALSE', CanManageSections: 'FALSE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'FALSE', CanManageInventory: 'FALSE', IsAdmin: 'FALSE', CreatedBy: 'admin@cmms.com', CreatedAt: now, UpdatedBy: 'admin@cmms.com', UpdatedAt: now },

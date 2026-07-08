@@ -80,13 +80,16 @@ function capitalize(str) {
 
 function showApp() {
   console.log('showApp() called, currentUser:', currentUser);
-  document.getElementById('loginPage').style.display = 'none';
-  document.getElementById('appContainer').style.display = 'flex';
+  var loginPage = document.getElementById('loginPage'); if (loginPage) loginPage.style.display = 'none';
+  var appContainer = document.getElementById('appContainer'); if (appContainer) appContainer.style.display = 'flex';
   applyTheme();
   updateUserInfo();
   initSidebar();
   loadNotifications();
   startNotificationRefresh();
+  loadEmailPanelData();
+  startEmailPanelRefresh();
+  startBadgeRefresh();
   startClock();
   initLiveTimers();
   navigateTo('dashboard');
@@ -100,14 +103,24 @@ function updateUserInfo() {
     return;
   }
   var initial = currentUser.name.charAt(0).toUpperCase();
-  setText('userAvatar', initial);
+  var photoUrl = currentUser.photoURL || currentUser.PhotoURL || '';
+  function setAvatar(elId, size) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    if (photoUrl) {
+      el.innerHTML = '<img src="' + photoUrl.replace(/"/g, '&quot;') + '" style="width:' + size + ';height:' + size + ';border-radius:50%;object-fit:cover">';
+    } else {
+      el.textContent = initial;
+    }
+  }
+  setAvatar('userAvatar', '34px');
+  setAvatar('topbarAvatar', '28px');
   setText('userName', currentUser.name);
   setText('userRole', currentUser.role + (currentUser.department ? ' - ' + currentUser.department : ''));
-  setText('topbarAvatar', initial);
   setText('topbarName', currentUser.name);
   setText('topbarRole', currentUser.role + (currentUser.department ? ' - ' + currentUser.department : ''));
 
-  var isAdmin = currentUser.role === 'Admin' || currentUser.isSystemAdmin === true;
+  var isAdmin = currentUser.role === 'Admin' || currentUser.role === 'Administrator' || currentUser.isSystemAdmin === true;
 
   document.querySelectorAll('.sidebar-item[data-page]').forEach(function(el) {
     var page = el.dataset.page;
@@ -118,10 +131,12 @@ function updateUserInfo() {
     else if (page === 'technicians') { show = isAdmin || hasPermission('manageMachines'); }
     else if (page === 'departments') { show = isAdmin || hasPermission('manageMachines'); }
     else if (page === 'sections') { show = isAdmin || hasPermission('manageMachines'); }
+    else if (page === 'users') { show = isAdmin || hasPermission('manageUsers'); }
     else if (page === 'openjobcard') { show = isAdmin || hasPermission('openJobCard'); }
     else if (page === 'startjobcard') { show = isAdmin || hasPermission('startJobCard'); }
     else if (page === 'closejobcard') { show = isAdmin || hasPermission('closeJobCard'); }
-    else if (page === 'jobcards') { show = isAdmin || hasPermission('viewReports'); }
+    else if (page === 'pendingjobcard') { show = isAdmin || hasPermission('reviewPendingJobCard'); }
+    else if (page === 'jobcards') { show = isAdmin || hasPermission('viewAllJobCards'); }
     else if (page === 'approvejobcard') { show = isAdmin || hasPermission('approveJobCard'); }
     else if (page === 'checklists') { show = isAdmin || hasPermission('managePM'); }
     else if (page === 'pm') { show = isAdmin || hasPermission('managePM'); }
@@ -137,6 +152,8 @@ function updateUserInfo() {
     else if (page === 'audit') { show = isAdmin || currentUser.role === 'Department Manager' || currentUser.role === 'Maintenance Manager'; }
     else if (page === 'qr') { show = true; }
     else if (page === 'email') { show = isAdmin; }
+    else if (page === 'whatsapp') { show = isAdmin; }
+    else if (page === 'backuprestore') { show = isAdmin; }
     else if (page === 'settings') { show = isAdmin || hasPermission('manageUsers'); }
     el.style.display = show ? '' : 'none';
   });
@@ -150,11 +167,12 @@ function updateUserInfo() {
 function toggleUserMenu(e) {
   if (e) e.stopPropagation();
   var menu = document.getElementById('userMenuDropdown');
-  menu.classList.toggle('show');
+  if (menu) menu.classList.toggle('show');
 }
 
 function closeUserMenu() {
-  document.getElementById('userMenuDropdown').classList.remove('show');
+  var menu = document.getElementById('userMenuDropdown');
+  if (menu) menu.classList.remove('show');
 }
 
 document.addEventListener('click', function(e) {
@@ -172,6 +190,56 @@ function setText(id, text) {
   if (el) el.textContent = text;
 }
 
+function setHtml(id, html) {
+  var el = document.getElementById(id);
+  if (el) el.innerHTML = html; else console.warn('Element not found:', id);
+}
+
+function getVal(id) {
+  var el = document.getElementById(id);
+  return el ? el.value : null;
+}
+
+function setVal(id, val) {
+  var el = document.getElementById(id);
+  if (el) el.value = val; else console.warn('Element not found:', id);
+}
+
+function showEl(id, displayType) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = displayType || 'block'; else console.warn('Element not found:', id);
+}
+
+function hideEl(id) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = 'none'; else console.warn('Element not found:', id);
+}
+
+function addClass(id, cls) {
+  var el = document.getElementById(id);
+  if (el) el.classList.add(cls); else console.warn('Element not found:', id);
+}
+
+function removeClass(id, cls) {
+  var el = document.getElementById(id);
+  if (el) el.classList.remove(cls); else console.warn('Element not found:', id);
+}
+
+function toggleClass(id, cls) {
+  var el = document.getElementById(id);
+  if (el) el.classList.toggle(cls); else console.warn('Element not found:', id);
+}
+
+function setStyle(id, prop, val) {
+  var el = document.getElementById(id);
+  if (el) el.style[prop] = val; else console.warn('Element not found:', id);
+}
+
+function setTextContent(id, val) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = val; else console.warn('Element not found:', id);
+}
+
 function handleLogout() {
   showConfirm('Sign Out', 'Are you sure you want to sign out?', function() {
     var email = (currentUser && currentUser.email) || '';
@@ -182,8 +250,8 @@ function handleLogout() {
     stopNotificationRefresh();
     currentUser = null;
     localStorage.removeItem('cmms_user');
-    document.getElementById('appContainer').style.display = 'none';
-    document.getElementById('loginPage').style.display = 'block';
+    var appContainer = document.getElementById('appContainer'); if (appContainer) appContainer.style.display = 'none';
+    var loginPage = document.getElementById('loginPage'); if (loginPage) loginPage.style.display = 'block';
     var emailEl = document.getElementById('loginEmail');
     var passEl = document.getElementById('loginPassword');
     if (emailEl) emailEl.value = '';
@@ -209,7 +277,11 @@ function navigateTo(page) {
   }
 
   var menuItem = document.querySelector('.sidebar-item[data-page="' + page + '"]');
-  if (menuItem) menuItem.classList.add('active');
+  if (menuItem) {
+    menuItem.classList.add('active');
+    var parentGroup = menuItem.closest('.sidebar-group');
+    if (parentGroup) parentGroup.classList.add('open');
+  }
 
   var titles = {
     dashboard: 'Dashboard', assets: 'Asset Master', machines: 'Machine Master',
@@ -219,8 +291,12 @@ function navigateTo(page) {
     breakdown: 'Breakdown History', audit: 'Audit Trail',
     qr: 'QR & Barcode Center',
     email: 'Email Notification Settings',
-    reports: 'Reports', settings: 'Settings', openjobcard: 'Open Job Card',
-    startjobcard: 'Start Job Card', closejobcard: 'Close Job Card'
+    reports: 'Reports', backuprestore: 'Backup & Restore', settings: 'Settings', openjobcard: 'Open Job Card',
+    users: 'Users',
+    startjobcard: 'Start Job Card', closejobcard: 'Close Job Card',
+    pendingjobcard: 'Pending Review',
+    approvejobcard: 'Approve Job Cards',
+    whatsapp: 'WhatsApp Notifications'
   };
   setText('pageTitle', titles[page] || page);
 
@@ -229,6 +305,7 @@ function navigateTo(page) {
     openjobcard: 'loadOpenJobCardsData',
     startjobcard: 'loadStartJobCardsData',
     closejobcard: 'loadCloseJobCardsData',
+    pendingjobcard: 'loadPendingJobCardsData',
     pm: 'loadPMData',
     spareparts: 'loadSparePartsData',
     inventory: 'loadInventoryData',
@@ -239,7 +316,11 @@ function navigateTo(page) {
     notifications: 'loadNotificationsData',
     audit: 'loadAuditLogsData',
     qr: 'loadQRBarcodeData',
-    email: 'loadEmailSettingsData'
+    email: 'loadEmailSettingsData',
+    users: 'loadUsersData',
+    whatsapp: 'loadWhatsAppData',
+    approvejobcard: 'loadApproveJobCardData',
+    backuprestore: 'loadBackupRestoreData'
   };
   var fnName = window.__loadFnMap[page] || 'load' + capitalize(page) + 'Data';
   console.log('navigateTo() looking for function: ' + fnName + ' exists:', typeof window[fnName] === 'function');
@@ -256,10 +337,7 @@ function openApproveJobCard() {
     showToast('You do not have permission to approve job cards', 'warning');
     return;
   }
-  navigateTo('jobcards');
-  setTimeout(function() {
-    if (typeof switchJcTab === 'function') switchJcTab('pendingapproval');
-  }, 600);
+  navigateTo('approvejobcard');
 }
 
 function toggleSidebar() {
@@ -274,6 +352,18 @@ function toggleSidebar() {
 function initSidebar() {
   var sidebar = document.getElementById('mainSidebar');
   if (!sidebar) return;
+  try {
+    var saved = JSON.parse(localStorage.getItem('cmms_sidebarGroups') || '{}');
+    var hasSaved = Object.keys(saved).length > 0;
+    document.querySelectorAll('.sidebar-group').forEach(function(g) {
+      var key = g.dataset.group;
+      if (hasSaved) {
+        if (saved[key] === true) g.classList.add('open');
+      } else {
+        g.classList.add('open');
+      }
+    });
+  } catch(e) {}
   if (window.innerWidth > 768) {
     sidebar.classList.add('collapsed');
     sidebar.addEventListener('mouseenter', function() {
@@ -282,6 +372,19 @@ function initSidebar() {
     sidebar.addEventListener('mouseleave', function() {
       if (window.innerWidth > 768) sidebar.classList.add('collapsed');
     });
+  }
+}
+
+function toggleSidebarGroup(header) {
+  var group = header.parentElement;
+  group.classList.toggle('open');
+  var key = group.dataset.group;
+  if (key) {
+    try {
+      var saved = JSON.parse(localStorage.getItem('cmms_sidebarGroups') || '{}');
+      saved[key] = group.classList.contains('open');
+      localStorage.setItem('cmms_sidebarGroups', JSON.stringify(saved));
+    } catch(e) {}
   }
 }
 
@@ -399,6 +502,10 @@ function recordTimestamp(fieldId) {
   autoFillDateTime(fieldId);
 }
 
+function pad(n) {
+  return n < 10 ? '0' + n : '' + n;
+}
+
 function formatDuration(ms) {
   if (!ms || ms < 0) ms = 0;
   var totalMinutes = Math.floor(ms / 60000);
@@ -417,6 +524,48 @@ function formatDurationFromDates(startStr, endStr) {
   var start = new Date(startStr);
   var end = endStr ? new Date(endStr) : new Date();
   return formatDuration(end.getTime() - start.getTime());
+}
+
+function displayDuration(val) {
+  if (!val && val !== 0 && val !== '0') return '00:00';
+  if (typeof val === 'string' && (val.indexOf(':') > -1 || val.indexOf('Day') > -1)) return val;
+  var totalMinutes;
+  if (val instanceof Date) {
+    totalMinutes = Math.round(val.getTime() / 60000);
+  } else if (typeof val === 'number') {
+    totalMinutes = Math.floor(val);
+  } else {
+    var hours = parseFloat(val);
+    totalMinutes = isNaN(hours) ? 0 : Math.round(hours * 60);
+  }
+  if (totalMinutes < 0) totalMinutes = 0;
+  var d = Math.floor(totalMinutes / 1440);
+  var h = Math.floor((totalMinutes % 1440) / 60);
+  var m = totalMinutes % 60;
+  if (d > 0) return d + ' Day' + (d > 1 ? 's ' : ' ') + pad(h) + ':' + pad(m);
+  return pad(h) + ':' + pad(m);
+}
+
+function parseDurationToHours(val) {
+  if (!val && val !== 0 && val !== '0') return 0;
+  if (val instanceof Date) return Math.round(val.getTime() / 3600000 * 100) / 100;
+  if (typeof val === 'number') return Math.round(val / 60 * 100) / 100;
+  if (typeof val === 'string') {
+    if (val.indexOf(':') === -1 && val.indexOf('Day') === -1) {
+      var num = parseFloat(val);
+      return isNaN(num) ? 0 : Math.round(num * 100) / 100;
+    }
+    var daysMatch = val.match(/(\d+)\s*Days?\s*/);
+    var timeMatch = val.match(/(\d+):(\d+)/);
+    var totalMinutes = 0;
+    if (daysMatch) totalMinutes += parseInt(daysMatch[1]) * 1440;
+    if (timeMatch) {
+      totalMinutes += parseInt(timeMatch[1]) * 60;
+      totalMinutes += parseInt(timeMatch[2]);
+    }
+    return Math.round(totalMinutes / 60 * 100) / 100;
+  }
+  return 0;
 }
 
 function initLiveTimers() {
@@ -484,15 +633,17 @@ function showConfirm(title, message, onConfirm) {
       '</div>';
     document.body.appendChild(overlay);
   }
-  document.getElementById('confirmTitle').textContent = title;
-  document.getElementById('confirmMessage').textContent = message;
+  setText('confirmTitle', title);
+  setText('confirmMessage', message);
   var btnGroup = document.getElementById('confirmButtons');
+  if (!btnGroup) return;
   btnGroup.innerHTML =
     '<button class="btn btn-secondary" onclick="closeConfirm()">Cancel</button>' +
     '<button class="btn btn-danger" id="confirmActionBtn">Confirm</button>';
   overlay.style.display = 'flex';
   overlay.classList.add('show');
-  document.getElementById('confirmActionBtn').onclick = function() {
+  var confirmBtn = document.getElementById('confirmActionBtn');
+  if (confirmBtn) confirmBtn.onclick = function() {
     closeConfirm();
     if (onConfirm) onConfirm();
   };
@@ -533,6 +684,7 @@ function getUserDept() {
 
 function getFormData(formId) {
   var form = document.getElementById(formId);
+  if (!form) { console.warn('Form not found:', formId); return {}; }
   var data = {};
   form.querySelectorAll('[name]').forEach(function(el) {
     data[el.name] = el.value;
@@ -542,6 +694,7 @@ function getFormData(formId) {
 
 function setFormData(formId, data) {
   var form = document.getElementById(formId);
+  if (!form) { console.warn('Form not found:', formId); return; }
   form.querySelectorAll('[name]').forEach(function(el) {
     if (data[el.name] !== undefined) {
       el.value = data[el.name];
@@ -555,7 +708,7 @@ function resetForm(formId) {
 }
 
 function openModalForm(formId, title) {
-  document.getElementById(formId + 'Title').textContent = title;
+  setText(formId + 'Title', title);
   showModal(formId + 'Modal');
 }
 
@@ -884,6 +1037,16 @@ function showAutoRefreshBanner() {
   if (banner) banner.remove();
 }
 
+function refreshDashboardCounters() {
+  if (currentPage === 'dashboard' && typeof loadDashboardData === 'function') {
+    loadDashboardData();
+  }
+}
+
+setInterval(function() {
+  if (currentPage === 'dashboard') refreshDashboardCounters();
+}, 30000);
+
 // ─── Keyboard Shortcut ──────────────────────────────────────────────
 document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r') {
@@ -1031,14 +1194,7 @@ function toggleNotificationPanel() {
 }
 
 function updateNotificationBadge() {
-  var badge = document.getElementById('notificationBadge');
-  if (!badge) return;
-  if (unreadCount > 0) {
-    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-    badge.style.display = 'flex';
-  } else {
-    badge.style.display = 'none';
-  }
+  updateNotificationBadgeColor(unreadCount);
 }
 
 function setNotifListFilter(filter) {
@@ -1208,7 +1364,8 @@ function getTimeAgo(dateTimeStr) {
 function startNotificationRefresh() {
   if (__notifRefreshTimer) return;
   __notifRefreshTimer = setInterval(function() {
-    if (!document.getElementById('notificationPanel').classList.contains('open')) {
+    var notifPanel = document.getElementById('notificationPanel');
+    if (!notifPanel || !notifPanel.classList.contains('open')) {
       var email = (currentUser && currentUser.email) || '';
       google.script.run
         .withSuccessHandler(function(count) {
@@ -1249,7 +1406,8 @@ function toggleEmailPanel() {
   var isOpen = panel.classList.contains('open');
   panel.classList.toggle('open');
   if (!isOpen) {
-    document.getElementById('emailPanelList').innerHTML = '<div class="email-panel-empty">Loading...</div>';
+    var emailPanelList = document.getElementById('emailPanelList');
+    if (emailPanelList) emailPanelList.innerHTML = '<div class="email-panel-empty">Loading...</div>';
     loadEmailPanelData();
   } else {
     closeEmailPanel();
@@ -1262,25 +1420,17 @@ function closeEmailPanel() {
 }
 
 function updateEmailBadge() {
-  var badge = document.getElementById('emailBadge');
-  if (!badge) return;
   var pending = emailPanelData.stats ? (emailPanelData.stats.pendingToday || 0) : 0;
-  if (pending > 0) {
-    badge.textContent = pending > 99 ? '99+' : pending;
-    badge.style.display = 'flex';
-  } else {
-    badge.style.display = 'none';
-  }
+  updateEmailBadgeColor(pending);
 }
 
 function renderEmailDropdown() {
   var list = document.getElementById('emailPanelList');
   if (!list) return;
-  var statsEl = document.getElementById('emailDropdownSent');
-  if (statsEl && emailPanelData.stats) {
-    document.getElementById('emailDropdownSent').textContent = emailPanelData.stats.sentToday || '0';
-    document.getElementById('emailDropdownFailed').textContent = emailPanelData.stats.failedToday || '0';
-    document.getElementById('emailDropdownPending').textContent = emailPanelData.stats.pendingToday || '0';
+  if (emailPanelData.stats) {
+    setText('emailDropdownSent', emailPanelData.stats.sentToday || '0');
+    setText('emailDropdownFailed', emailPanelData.stats.failedToday || '0');
+    setText('emailDropdownPending', emailPanelData.stats.pendingToday || '0');
   }
   var emails = emailPanelData.recentEmails || [];
   if (emails.length === 0) {
@@ -1345,6 +1495,147 @@ document.addEventListener('click', function(e) {
   }
 });
 
+var __badgeRefreshTimer = null;
+
+function refreshAllBadges() {
+  var email = (currentUser && currentUser.email) || '';
+  if (!email) return;
+  google.script.run
+    .withSuccessHandler(function(data) {
+      if (!data) return;
+      if (data.success === false) {
+        console.warn('refreshAllBadges: backend returned error:', data.message);
+        return;
+      }
+      updateSidebarCounters(data);
+      updateNotificationBadgeColor(data.unreadNotifications);
+      updateEmailBadgeColor(data.pendingEmails);
+      updateWaBadge(data.pendingWhatsApp);
+    })
+    .withFailureHandler(function(err) {
+      console.error('refreshAllBadges: backend call failed:', err);
+    })
+    .getSidebarCounts(email);
+}
+
+var STATUS_CONFIG = {
+  open:     { color: '#22c55e',  bg: 'rgba(34,197,94,0.11)',   badgeClass: 'badge-open',      statClass: 'stat-open',      sidebarClass: 'status-open' },
+  running:  { color: '#6366f1',  bg: 'rgba(99,102,241,0.14)',  badgeClass: 'badge-running',   statClass: 'stat-running',   sidebarClass: 'status-running' },
+  closed:   { color: '#f97316',  bg: 'rgba(249,115,22,0.11)',  badgeClass: 'badge-closed',    statClass: 'stat-closed',    sidebarClass: 'status-closed' },
+  pending:  { color: '#a855f7',  bg: 'rgba(168,85,247,0.11)',  badgeClass: 'badge-pending',   statClass: 'stat-pending',   sidebarClass: 'status-pending' },
+  approved: { color: '#10b981',  bg: 'rgba(16,185,129,0.11)',  badgeClass: 'badge-approved',  statClass: 'stat-approved',  sidebarClass: 'status-approved' },
+  all:      { color: '#64748b',  bg: 'rgba(100,116,139,0.11)', badgeClass: 'badge-all',       statClass: 'stat-all',       sidebarClass: 'status-all' }
+};
+
+function getBadgeColorClass(count) {
+  if (count === 0) return 'badge-zero';
+  if (count <= 9) return 'badge-low';
+  if (count <= 49) return 'badge-medium';
+  return 'badge-high';
+}
+
+function getBadgeColorStyle(count) {
+  if (count === 0) return { bg: 'var(--bg-card)', color: 'var(--text-muted)' };
+  if (count <= 9) return { bg: 'var(--primary)', color: '#fff' };
+  if (count <= 49) return { bg: 'var(--warning)', color: '#000' };
+  return { bg: 'var(--danger)', color: '#fff' };
+}
+
+function updateSidebarCounters(data) {
+  var map = {
+    'openjobcard':     { count: data.openJobCards,     status: 'open' },
+    'startjobcard':    { count: data.startedJobCards,  status: 'running' },
+    'pendingjobcard':  { count: data.pendingJobCards,  status: 'pending' },
+    'closejobcard':    { count: data.closedJobCards,   status: 'closed' },
+    'approvejobcard':  { count: data.approvedJobCards, status: 'approved' },
+    'pm':              { count: data.pendingPM,        status: 'all' },
+    'inventory':       { count: data.inventoryAlerts,  status: 'all' },
+    'goodsreceipt':    { count: data.pendingGR,        status: 'all' }
+  };
+  for (var key in map) {
+    var el = document.getElementById('badge-' + key);
+    if (!el) continue;
+    var item = map[key];
+    var count = item.count || 0;
+    el.textContent = count > 99 ? '99+' : count;
+    if (count === 0) {
+      el.className = 'sidebar-badge badge-zero';
+    } else {
+      var dataStatus = el.getAttribute('data-status');
+      var statusKey = dataStatus || item.status;
+      var sc = STATUS_CONFIG[statusKey];
+      el.className = 'sidebar-badge ' + (sc ? sc.sidebarClass : 'badge-low');
+    }
+  }
+}
+
+function updateNotificationBadgeColor(count) {
+  var badge = document.getElementById('notificationBadge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.textContent = count > 99 ? '99+' : count;
+    badge.style.display = 'flex';
+    var c = getBadgeColorStyle(count);
+    badge.style.background = c.bg;
+    badge.style.color = c.color;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function updateEmailBadgeColor(count) {
+  var badge = document.getElementById('emailBadge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.textContent = count > 99 ? '99+' : count;
+    badge.style.display = 'flex';
+    var c = getBadgeColorStyle(count);
+    badge.style.background = c.bg;
+    badge.style.color = c.color;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function updateWaBadge(count) {
+  var badge = document.getElementById('waBadge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.textContent = count > 99 ? '99+' : count;
+    badge.style.display = 'flex';
+    var c = getBadgeColorStyle(count);
+    badge.style.background = c.bg;
+    badge.style.color = c.color;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function startBadgeRefresh() {
+  if (__badgeRefreshTimer) return;
+  refreshAllBadges();
+  __badgeRefreshTimer = setInterval(function() {
+    refreshAllBadges();
+  }, 15000);
+}
+
+function runBadgeDiagnostic() {
+  var email = (currentUser && currentUser.email) || '';
+  if (!email) { console.error('No user email'); return; }
+  console.log('Running badge diagnostic for:', email);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      console.log('=== BADGE DIAGNOSTIC RESULT ===');
+      console.log(JSON.stringify(data, null, 2));
+      alert('Diagnostic complete. Check console (F12) for full results.\n\nSheets found: ' + (data.existingSheets || []).length + '\nSuccess: ' + data.success);
+    })
+    .withFailureHandler(function(err) {
+      console.error('Diagnostic failed:', err);
+      alert('Diagnostic failed: ' + err);
+    })
+    .diagnoseBadgeCounts(email);
+}
+
 function isAdmin() {
   return currentUser && (currentUser.role === 'Admin' || currentUser.isSystemAdmin === true || currentUser.IsAdmin === true);
 }
@@ -1352,9 +1643,9 @@ function isAdmin() {
 function buildJcDetailView(item) {
   var statusBadge = item.Status === 'Closed' || item.Status === 'Completed' ? 'success' :
                     item.Status === 'Running' ? 'primary' : 'warning';
-  var waitingHrs = parseFloat(item.WaitingTime || 0).toFixed(2);
-  var workingHrs = parseFloat(item.WorkingTime || 0).toFixed(2);
-  var downtimeHrs = parseFloat(item.Downtime || 0).toFixed(2);
+    var waitingHrs = displayDuration(item.WaitingTime);
+    var workingHrs = displayDuration(item.WorkingTime);
+    var downtimeHrs = displayDuration(item.Downtime);
   var faultThumb = item.FaultImage ? '<img src="' + item.FaultImage + '" class="img-thumb" onclick="openFullImage(\'' + item.FaultImage + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '—';
   var repairThumb = item.RepairImage ? '<img src="' + item.RepairImage + '" class="img-thumb" onclick="openFullImage(\'' + item.RepairImage + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '—';
   var html =
@@ -1377,7 +1668,7 @@ function buildJcDetailView(item) {
         '<h4>Work Execution</h4>' +
         '<div class="view-row"><span>Started</span><strong>' + formatDateTime(item.StartDateTime) + '</strong></div>' +
         '<div class="view-row"><span>Assigned Technician</span><strong>' + escapeHtml(item.AssignedTechnician || '-') + '</strong></div>' +
-        '<div class="view-row"><span>Waiting Time</span><strong>' + waitingHrs + ' hrs</strong></div>' +
+        '<div class="view-row"><span>Waiting Time</span><strong>' + waitingHrs + '</strong></div>' +
       '</div>';
   }
   if (item.CloseDateTime) {
@@ -1385,8 +1676,8 @@ function buildJcDetailView(item) {
       '<div class="view-section">' +
         '<h4>Completion</h4>' +
         '<div class="view-row"><span>Closed</span><strong>' + formatDateTime(item.CloseDateTime) + '</strong></div>' +
-        '<div class="view-row"><span>Working Time</span><strong>' + workingHrs + ' hrs</strong></div>' +
-        '<div class="view-row"><span>Total Downtime</span><strong>' + downtimeHrs + ' hrs</strong></div>' +
+        '<div class="view-row"><span>Working Time</span><strong>' + workingHrs + '</strong></div>' +
+        '<div class="view-row"><span>Total Downtime</span><strong>' + downtimeHrs + '</strong></div>' +
         '<div class="view-row"><span>Root Cause</span><strong>' + escapeHtml(item.RootCause || '-') + '</strong></div>' +
         '<div class="view-row"><span>Corrective Action</span><strong>' + escapeHtml(item.CorrectiveAction || '-') + '</strong></div>' +
         '<div class="view-row"><span>Spare Parts</span><strong>' + escapeHtml(item.SpareParts || '-') + '</strong></div>' +
@@ -1417,7 +1708,7 @@ function openFullImage(url) {
       '</div>';
     document.body.appendChild(overlay);
   }
-  document.getElementById('jcFullImage').src = url;
+  var el = document.getElementById('jcFullImage'); if (el) el.src = url;
   showModal('jcImageModal');
 }
 
@@ -1553,6 +1844,7 @@ function runFrontendDiagnostic(context) {
   var pageIds = ['dashboardPage', 'assetsPage', 'machinesPage', 'techniciansPage',
                  'departmentsPage', 'sectionsPage',
                  'jobcardsPage', 'openjobcardPage', 'startjobcardPage', 'closejobcardPage',
+                 'pendingjobcardPage',
                   'checklistsPage', 'pmPage', 'sparepartsPage', 
                  'inventorytransactionsPage', 'stockhistoryPage', 'goodsreceiptPage', 'pmhistoryPage', 'notificationsPage',
                  'breakdownPage', 'reportsPage', 'settingsPage', 'auditPage', 'qrPage', 'emailPage'];
@@ -1670,8 +1962,8 @@ function diagnoseDataPipeline() {
         console.log('IIFE: checkSession returned:', result);
         if (result && result.loggedIn) {
           console.log('IIFE: session valid, showing app');
-          document.getElementById('loginPage').style.display = 'none';
-          document.getElementById('appContainer').style.display = 'flex';
+          var loginPage = document.getElementById('loginPage'); if (loginPage) loginPage.style.display = 'none';
+          var appContainer = document.getElementById('appContainer'); if (appContainer) appContainer.style.display = 'flex';
           applyTheme();
           updateUserInfo();
           initSidebar();
@@ -1687,17 +1979,112 @@ function diagnoseDataPipeline() {
         } else {
           console.log('IIFE: session invalid, clearing stored user');
           localStorage.removeItem('cmms_user');
-          document.getElementById('loginPage').style.display = 'block';
+          var loginPage = document.getElementById('loginPage'); if (loginPage) loginPage.style.display = 'block';
         }
       })
       .withFailureHandler(function(err) {
         console.error('IIFE: checkSession FAILED:', err);
         localStorage.removeItem('cmms_user');
-        document.getElementById('loginPage').style.display = 'block';
+        var loginPage = document.getElementById('loginPage'); if (loginPage) loginPage.style.display = 'block';
       })
       .checkSession();
   } else {
     console.log('IIFE: no stored user found, showing login page');
   }
 })();
+
+function initMultiSelect(wrapperId, options) {
+  var wrapper = document.getElementById(wrapperId);
+  if (!wrapper) return;
+  var tagsEl = wrapper.querySelector('.multi-select-tags');
+  var searchEl = wrapper.querySelector('.multi-select-search');
+  var hiddenEl = wrapper.querySelector('input[type="hidden"]');
+  var dropdownEl = wrapper.querySelector('.multi-select-dropdown');
+  if (!tagsEl || !searchEl || !hiddenEl || !dropdownEl) return;
+  var selected = [];
+  var allOptions = options || [];
+  var isOpen = false;
+
+  function renderTags() {
+    var existing = tagsEl.querySelectorAll('.multi-select-tag');
+    existing.forEach(function(el) { el.remove(); });
+    selected.forEach(function(val) {
+      var opt = allOptions.find(function(o) { return o.value === val; });
+      var label = opt ? opt.label : val;
+      var tag = document.createElement('span');
+      tag.className = 'multi-select-tag';
+      tag.innerHTML = label + '<span class="multi-select-tag-remove" data-value="' + val + '">&times;</span>';
+      tag.querySelector('.multi-select-tag-remove').addEventListener('click', function(e) {
+        e.stopPropagation();
+        removeValue(val);
+      });
+      tagsEl.insertBefore(tag, searchEl);
+    });
+    hiddenEl.value = selected.join(',');
+    if (typeof onMultiSelectChange === 'function') onMultiSelectChange(selected, allOptions);
+  }
+
+  function removeValue(val) {
+    selected = selected.filter(function(v) { return v !== val; });
+    renderTags();
+    renderDropdown();
+  }
+
+  function toggleValue(val) {
+    var idx = selected.indexOf(val);
+    if (idx === -1) {
+      selected.push(val);
+    } else {
+      selected.splice(idx, 1);
+    }
+    renderTags();
+    renderDropdown();
+  }
+
+  function renderDropdown() {
+    var q = searchEl.value.toLowerCase();
+    var visible = allOptions.filter(function(o) {
+      return o.label.toLowerCase().indexOf(q) !== -1;
+    });
+    dropdownEl.innerHTML = '';
+    visible.forEach(function(o) {
+      var isSel = selected.indexOf(o.value) !== -1;
+      var div = document.createElement('div');
+      div.className = 'multi-select-option' + (isSel ? ' selected' : '');
+      div.innerHTML = '<input type="checkbox" ' + (isSel ? 'checked' : '') + '> <span>' + o.label + '</span>';
+      div.addEventListener('click', function() { toggleValue(o.value); });
+      dropdownEl.appendChild(div);
+    });
+    if (visible.length === 0) {
+      dropdownEl.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--text-muted)">No results</div>';
+    }
+  }
+
+  function openDropdown() {
+    isOpen = true;
+    dropdownEl.style.display = 'block';
+    renderDropdown();
+  }
+
+  function closeDropdown() {
+    isOpen = false;
+    dropdownEl.style.display = 'none';
+  }
+
+  searchEl.addEventListener('focus', function() { openDropdown(); });
+  searchEl.addEventListener('input', function() { if (isOpen) renderDropdown(); });
+  document.addEventListener('click', function(e) {
+    if (!wrapper.contains(e.target)) closeDropdown();
+  });
+  tagsEl.addEventListener('click', function() { searchEl.focus(); });
+
+  renderTags();
+
+  return {
+    getValue: function() { return selected.slice(); },
+    setValue: function(vals) { selected = vals.slice(); renderTags(); renderDropdown(); },
+    clear: function() { selected = []; renderTags(); renderDropdown(); },
+    close: closeDropdown
+  };
+}
 </script>

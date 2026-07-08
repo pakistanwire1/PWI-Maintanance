@@ -1,0 +1,281 @@
+<div id="approvejobcardPage" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.4);vertical-align:middle;margin-right:8px"></span>
+        Approve Jobs
+      </div>
+      <div class="card-actions">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="form-control" id="jcaSearch" placeholder="Search pending approvals..." onkeyup="searchApproveJcCards()">
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="form-group">
+        <select class="form-control" id="jcaDeptFilter" onchange="filterApproveJcCards()">
+          <option value="">All Departments</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="jcaTableContainer"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="jcaModal" style="display:none">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title">
+        <span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.4);vertical-align:middle;margin-right:8px"></span>
+        Approve Job — <span id="jcaRef"></span>
+      </div>
+      <button class="modal-close" onclick="hideModal('jcaModal')">&times;</button>
+    </div>
+    <form id="jcaForm" onsubmit="return saveApproveJcCard(event)">
+      <div class="modal-body">
+        <input type="hidden" name="JobCardNo" id="jcaJobNo">
+
+        <div class="time-summary-panel">
+          <div class="ts-header">Job Summary</div>
+          <div class="ts-stats">
+            <div class="ts-stat">
+              <span class="ts-stat-label">Department</span>
+              <span class="ts-stat-value" id="jcaDept">—</span>
+            </div>
+            <div class="ts-stat">
+              <span class="ts-stat-label">Machine</span>
+              <span class="ts-stat-value" id="jcaMachine">—</span>
+            </div>
+            <div class="ts-stat">
+              <span class="ts-stat-label">Technician</span>
+              <span class="ts-stat-value" id="jcaTech">—</span>
+            </div>
+          </div>
+          <div class="ts-stats">
+            <div class="ts-stat">
+              <span class="ts-stat-label">Waiting Time</span>
+              <span class="ts-stat-value" id="jcaWaiting">00:00</span>
+            </div>
+            <div class="ts-stat">
+              <span class="ts-stat-label">Working Time</span>
+              <span class="ts-stat-value" id="jcaWorking">00:00</span>
+            </div>
+            <div class="ts-stat">
+              <span class="ts-stat-label">Total Downtime</span>
+              <span class="ts-stat-value" id="jcaBreakdown">00:00</span>
+            </div>
+          </div>
+          <div class="ts-stats">
+            <div class="ts-stat">
+              <span class="ts-stat-label">Description</span>
+              <span class="ts-stat-value" id="jcaDesc" style="font-weight:400;font-size:12px">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Decision *</label>
+          <div class="radio-group" style="display:flex;gap:24px;margin-top:8px">
+            <label class="radio-inline" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="radio" name="approveDecision" value="approve" checked>
+              <span style="font-size:14px;font-weight:500">Approve</span>
+            </label>
+            <label class="radio-inline" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="radio" name="approveDecision" value="return">
+              <span style="font-size:14px;font-weight:500">Return to Technician</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group" id="jcaReturnReasonGroup" style="display:none">
+          <label>Return Reason *</label>
+          <textarea name="ReturnReason" class="form-control" id="jcaReturnReason" rows="2" placeholder="Why is the job card being returned?"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="hideModal('jcaModal')">Cancel</button>
+        <button type="button" class="btn btn-warning" id="jcaReturnBtn" onclick="submitApproveJcCard('return')" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0016.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 002 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+          Return to Technician
+        </button>
+        <button type="submit" class="btn btn-success" id="jcaApproveBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+          Approve
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var jcaData = [];
+var jcaPage = 1;
+
+function loadApproveJobCardData() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(data) {
+      jcaData = data || [];
+      showLoading(false);
+      populateJcaSelects();
+      renderApproveJcCards();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load job cards', 'error'); })
+    .getJobCardsByStatus('Pending');
+}
+
+function populateJcaSelects() {
+  var deptFilter = document.getElementById('jcaDeptFilter');
+  if (deptFilter) deptFilter.innerHTML = '<option value="">All Departments</option>';
+  var depts = [];
+  jcaData.forEach(function(jc) {
+    var s = (jc.Status || '').toLowerCase();
+    var as = (jc.ApprovalStatus || '').toLowerCase();
+    if (s === 'pending' && as !== 'approved') {
+      if (jc.Department && depts.indexOf(jc.Department) === -1) depts.push(jc.Department);
+    }
+  });
+  depts.sort().forEach(function(d) { if (deptFilter) deptFilter.innerHTML += '<option value="' + d + '">' + d + '</option>'; });
+}
+
+function getPendingApprovalCards() {
+  var dept = document.getElementById('jcaDeptFilter').value;
+  var userDept = getUserDept();
+  var isAdminUser = isAdmin();
+  return jcaData.filter(function(jc) {
+    var s = (jc.Status || '').toLowerCase();
+    var as = (jc.ApprovalStatus || '').toLowerCase();
+    if (s !== 'pending' || as === 'approved') return false;
+    if (!isAdminUser && userDept && jc.Department !== userDept) return false;
+    if (dept && jc.Department !== dept) return false;
+    return true;
+  });
+}
+
+function renderApproveJcCards() {
+  var list = getPendingApprovalCards();
+  renderTable(list, [
+    { key: 'JobCardNo', label: 'Job Card No' },
+    { key: 'DateTime', label: 'Closed', datetime: true },
+    { key: 'Machine', label: 'Machine' },
+    { key: 'Department', label: 'Dept' },
+    { key: 'AssignedTechnician', label: 'Technician' },
+      { key: 'WaitingTime', label: 'Waiting', format: function(val) { return displayDuration(val); } },
+      { key: 'WorkingTime', label: 'Working', format: function(val) { return displayDuration(val); } },
+      { key: 'BreakdownTime', label: 'Breakdown', format: function(val) { return displayDuration(val); } }
+  ], [
+    { label: 'Review', icon: 'complete', color: 'success', onclick: "openApproveJcCard('{id}')", idField: 'JobCardNo' }
+  ], jcaPage, PAGE_SIZE, 'jcaTableContainer');
+  registerPageState('jcaTableContainer', function(p) { jcaPage = p; renderApproveJcCards(); });
+}
+
+function filterApproveJcCards() { jcaPage = 1; renderApproveJcCards(); }
+
+function searchApproveJcCards() {
+  var q = document.getElementById('jcaSearch').value.toLowerCase();
+  if (!q) { jcaPage = 1; renderApproveJcCards(); return; }
+  var filtered = jcaData.filter(function(jc) {
+    var s = (jc.Status || '').toLowerCase();
+    var as = (jc.ApprovalStatus || '').toLowerCase();
+    if (s !== 'pending' || as === 'approved') return false;
+    return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(q) !== -1) ||
+           (jc.Machine && jc.Machine.toLowerCase().indexOf(q) !== -1) ||
+           (jc.AssignedTechnician && jc.AssignedTechnician.toLowerCase().indexOf(q) !== -1);
+  });
+  jcaData = filtered;
+  jcaPage = 1;
+  renderApproveJcCards();
+}
+
+function openApproveJcCard(id) {
+  var item = jcaData.find(function(r) { return r.JobCardNo === id; });
+  if (!item) return;
+  if (!isAdmin() && !hasPermission('approveJobCard')) {
+    showToast('You do not have permission to approve job cards', 'warning');
+    return;
+  }
+  resetForm('jcaForm');
+  var el = document.getElementById('jcaJobNo'); if (el) el.value = id;
+  el = document.getElementById('jcaRef'); if (el) el.textContent = id;
+  el = document.getElementById('jcaDept'); if (el) el.textContent = item.Department || '-';
+  el = document.getElementById('jcaMachine'); if (el) el.textContent = item.Machine || '-';
+  el = document.getElementById('jcaTech'); if (el) el.textContent = item.AssignedTechnician || '-';
+  el = document.getElementById('jcaDesc'); if (el) el.textContent = (item.ComplaintDescription || '').substring(0, 100) + ((item.ComplaintDescription || '').length > 100 ? '...' : '');
+  el = document.getElementById('jcaWaiting'); if (el) el.textContent = displayDuration(item.WaitingTime);
+  el = document.getElementById('jcaWorking'); if (el) el.textContent = displayDuration(item.WorkingTime);
+  el = document.getElementById('jcaBreakdown'); if (el) el.textContent = displayDuration(item.BreakdownTime);
+  el = document.getElementById('jcaRemarks'); if (el) el.value = '';
+  el = document.getElementById('jcaReturnReason'); if (el) el.value = '';
+
+  document.querySelectorAll('input[name="approveDecision"]').forEach(function(r) {
+    r.addEventListener('change', toggleJcaDecision);
+  });
+  toggleJcaDecision();
+
+  showModal('jcaModal');
+}
+
+function toggleJcaDecision() {
+  var decision = document.querySelector('input[name="approveDecision"]:checked');
+  var isReturn = decision && decision.value === 'return';
+  var el = document.getElementById('jcaReturnReasonGroup'); if (el) el.style.display = isReturn ? 'block' : 'none';
+  el = document.getElementById('jcaReturnBtn'); if (el) el.style.display = isReturn ? '' : 'none';
+  el = document.getElementById('jcaApproveBtn'); if (el) el.style.display = isReturn ? 'none' : '';
+}
+
+function submitApproveJcCard(decision) {
+  var id = document.getElementById('jcaJobNo').value;
+  if (!id) return;
+
+  var elRemarks = document.getElementById('jcaRemarks'); var remarks = elRemarks ? elRemarks.value.trim() : '';
+
+  if (decision === 'return') {
+    var reason = document.getElementById('jcaReturnReason').value.trim();
+    if (!reason) {
+      showToast('Please enter the return reason', 'error');
+      return;
+    }
+    var btn = document.getElementById('jcaReturnBtn');
+    if (btn) btn.disabled = true;
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) {
+        jcaData = result || [];
+        showLoading(false);
+        if (btn) btn.disabled = false;
+        hideModal('jcaModal');
+        showToast('Job card returned to technician');
+        renderApproveJcCards();
+      })
+      .withFailureHandler(function(err) { showLoading(false); if (btn) btn.disabled = false; showToast(err.message || 'Failed to return job card', 'error'); })
+      .returnJobCard(id, { ReturnReason: reason, ApprovalRemarks: remarks });
+  } else {
+    var btn = document.getElementById('jcaApproveBtn');
+    if (btn) btn.disabled = true;
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) {
+        jcaData = result || [];
+        showLoading(false);
+        if (btn) btn.disabled = false;
+        hideModal('jcaModal');
+        showToast('Job card approved successfully');
+        renderApproveJcCards();
+      })
+      .withFailureHandler(function(err) {
+        showLoading(false);
+        btn.disabled = false;
+        showToast(err.message || 'Failed to approve job card', 'error');
+      })
+      .approveJobCard(id, { ApprovalStatus: 'Approved', ApprovalRemarks: remarks });
+  }
+}
+
+function saveApproveJcCard(e) {
+  e.preventDefault();
+  var decision = document.querySelector('input[name="approveDecision"]:checked');
+  submitApproveJcCard(decision ? decision.value : 'approve');
+}
+</script>

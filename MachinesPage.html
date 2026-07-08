@@ -26,7 +26,7 @@
         <div class="form-row">
           <div class="form-group">
             <label>Machine Code *</label>
-            <input type="text" name="MachineCode" class="form-control" id="mcCode" oninput="document.getElementById('mcNumber').value=this.value" required>
+            <input type="text" name="MachineCode" class="form-control" id="mcCode" oninput="var el=document.getElementById('mcNumber');if(el)el.value=this.value" required>
           </div>
           <div class="form-group">
             <label>Machine Name *</label>
@@ -182,7 +182,7 @@ function loadMachineDeptCache(callback) {
 function populateMachineDeptDropdown(selectedDeptId) {
   var sel = document.getElementById('mcDept');
   loadMachineDeptCache(function(depts) {
-    sel.innerHTML = '<option value="">Select Department</option>';
+    if (sel) sel.innerHTML = '<option value="">Select Department</option>';
     depts.forEach(function(d) {
       var opt = document.createElement('option');
       opt.value = d.DeptID;
@@ -197,7 +197,7 @@ function populateMachineDeptDropdown(selectedDeptId) {
 function onMachineDeptChange() {
   var deptId = document.getElementById('mcDept').value;
   var sectionSel = document.getElementById('mcSection');
-  sectionSel.innerHTML = '<option value="">Select Section</option>';
+  if (sectionSel) sectionSel.innerHTML = '<option value="">Select Section</option>';
   if (deptId && machineDeptCache) {
     var dept = machineDeptCache.find(function(d) { return d.DeptID === deptId; });
     if (dept && dept.SectionID) {
@@ -211,15 +211,15 @@ function onMachineDeptChange() {
 }
 
 function openMachineForm() {
-  document.getElementById('editMachineId').value = '';
+  var el = document.getElementById('editMachineId'); if (el) el.value = '';
   resetForm('machineForm');
-  document.getElementById('mcCriticality').value = 'Low';
-  document.getElementById('mcType').innerHTML = '';
+  var el2 = document.getElementById('mcCriticality'); if (el2) el2.value = 'Low';
+  var el3 = document.getElementById('mcType'); if (el3) el3.innerHTML = '';
   var types = CONSTANTS.MACHINE_TYPES || [];
   types.forEach(function(t) {
     var opt = document.createElement('option');
     opt.value = t; opt.textContent = t;
-    document.getElementById('mcType').appendChild(opt);
+    var el = document.getElementById('mcType'); if (el) el.appendChild(opt);
   });
   populateMachineDeptDropdown('');
   openModalForm('machineForm', 'Add Machine');
@@ -228,15 +228,15 @@ function openMachineForm() {
 function editMachine(id) {
   var item = machinesData.find(function(r) { return r.MachineID === id; });
   if (!item) return;
-  document.getElementById('mcType').innerHTML = '';
+  var el = document.getElementById('mcType'); if (el) el.innerHTML = '';
   var types = CONSTANTS.MACHINE_TYPES || [];
   types.forEach(function(t) {
     var opt = document.createElement('option');
     opt.value = t; opt.textContent = t;
-    document.getElementById('mcType').appendChild(opt);
+    var mcType = document.getElementById('mcType'); if (mcType) mcType.appendChild(opt);
   });
   setFormData('machineForm', item);
-  document.getElementById('editMachineId').value = id;
+  var el2 = document.getElementById('editMachineId'); if (el2) el2.value = id;
   populateMachineDeptDropdown(item.DeptID || '');
   openModalForm('machineForm', 'Edit Machine - ' + id);
 }

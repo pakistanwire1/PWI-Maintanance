@@ -117,22 +117,22 @@ function renderSectionsTable() {
 function sectionsTablePage(p) { sectionsPage = p; renderSectionsTable(); }
 
 function openSectionForm() {
-  document.getElementById('editSectionId').value = '';
+  var el = document.getElementById('editSectionId'); if (el) el.value = '';
   resetForm('sectionForm');
-  document.getElementById('sectionSundayOff').value = 'Sunday';
-  document.getElementById('sectionHoursPerDay').value = '8';
-  document.getElementById('sectionDeptCount').value = '0';
-  document.getElementById('sectionStatus').value = 'Active';
+  var el2 = document.getElementById('sectionSundayOff'); if (el2) el2.value = 'Sunday';
+  var el3 = document.getElementById('sectionHoursPerDay'); if (el3) el3.value = '8';
+  var el4 = document.getElementById('sectionDeptCount'); if (el4) el4.value = '0';
+  var el5 = document.getElementById('sectionStatus'); if (el5) el5.value = 'Active';
   showModal('sectionFormModal');
-  document.getElementById('sectionFormTitle').textContent = 'Add Section';
+  var el6 = document.getElementById('sectionFormTitle'); if (el6) el6.textContent = 'Add Section';
 }
 
 function editSection(id) {
   var item = sectionsData.find(function(s) { return s.SectionID === id; });
   if (!item) return;
   setFormData('sectionForm', item);
-  document.getElementById('editSectionId').value = id;
-  document.getElementById('sectionFormTitle').textContent = 'Edit Section - ' + id;
+  var el = document.getElementById('editSectionId'); if (el) el.value = id;
+  var el2 = document.getElementById('sectionFormTitle'); if (el2) el2.textContent = 'Edit Section - ' + id;
   showModal('sectionFormModal');
 }
 

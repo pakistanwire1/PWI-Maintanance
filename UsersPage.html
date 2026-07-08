@@ -1,3 +1,9 @@
+<style>
+  #usersTable tr.row-selected { background: var(--primary-light) !important; outline: 2px solid var(--primary); outline-offset: -2px; }
+  #usersTable tr.row-selected td:first-child { border-left: 3px solid var(--primary); }
+  #usersTable tbody tr { cursor: pointer; transition: background 0.15s; }
+  #usersTable tbody tr:hover { background: var(--bg-hover); }
+</style>
 <div id="usersPage" class="page">
   <div class="card">
     <div class="card-header">
@@ -5,86 +11,81 @@
       <div class="card-actions">
         <div class="search-box">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" class="form-control" id="usersSearchInput" placeholder="Search users..." onkeyup="usersSearchTable()">
+          <input type="text" class="form-control" id="userSearch" placeholder="Search users..." onkeyup="searchUsersTable()">
         </div>
-        <select class="form-control" id="usersRoleFilter" onchange="usersFilterTable()" style="width:140px;font-size:12.5px">
-          <option value="">All Roles</option>
-          <option value="Admin">Admin</option>
-          <option value="Department Manager">Department Manager</option>
-          <option value="Maintenance Manager">Maintenance Manager</option>
-          <option value="Supervisor">Supervisor</option>
-          <option value="Technician">Technician</option>
-          <option value="Operator">Operator</option>
-          <option value="Viewer">Viewer</option>
-        </select>
-        <select class="form-control" id="usersStatusFilter" onchange="usersFilterTable()" style="width:120px;font-size:12.5px">
-          <option value="">All Status</option>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
-        </select>
-        <button class="btn btn-secondary" onclick="usersExportExcel()" title="Export to Excel"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export</button>
-        <button class="btn btn-secondary" onclick="loadUsersData()" title="Refresh"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
-        <button class="btn btn-primary" onclick="usersOpenForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add User</button>
+        <button class="btn btn-primary" onclick="usrmgmtOpenForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add User</button>
+        <button class="btn btn-secondary" onclick="editSelectedUser()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M14.5 2.5a1.5 1.5 0 012 2L7 14l-3 1 1-3 9.5-9.5z"/></svg> Edit</button>
+        <button class="btn btn-secondary" onclick="deleteSelectedUser()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M3 5h14"/><path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M16 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5"/><path d="M8 8v6"/><path d="M12 8v6"/></svg> Delete</button>
+        <button class="btn btn-secondary" onclick="resetPwdSelectedUser()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><rect x="3" y="11" width="14" height="7" rx="1"/><path d="M7 11V7a3 3 0 016 0v4"/></svg> Reset Pwd</button>
+        <button class="btn btn-secondary" onclick="refreshUsersTable()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg> Refresh</button>
+        <button class="btn btn-secondary" onclick="exportUsersExcel()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export Excel</button>
       </div>
     </div>
-
-    <div class="users-summary" id="usersSummaryBar">
-      <div class="users-summary-item"><span class="users-summary-value" id="usersTotalCount">0</span><span class="users-summary-label">Total</span></div>
-      <div class="users-summary-item"><span class="users-summary-value" id="usersActiveCount">0</span><span class="users-summary-label">Active</span></div>
-      <div class="users-summary-item"><span class="users-summary-value" id="usersInactiveCount">0</span><span class="users-summary-label">Inactive</span></div>
-    </div>
-
     <div id="usersTableContainer"></div>
   </div>
 </div>
 
-<div class="modal-overlay" id="userFormModal" style="display:none">
-  <div class="modal modal-wide" style="max-width:920px">
+<div class="modal-overlay" id="userFormModal">
+  <div class="modal modal-wide" style="max-width:900px">
     <div class="modal-header">
-      <div class="modal-title" id="userFormModalTitle">Add User</div>
+      <div class="modal-title" id="userFormTitle">Add User</div>
       <button class="modal-close" onclick="hideModal('userFormModal')">&times;</button>
     </div>
-    <form id="userForm" onsubmit="return usersSave(event)">
+    <form id="userForm" onsubmit="return usrmgmtSaveUser(event)">
       <div class="modal-body">
-        <input type="hidden" name="originalEmail" id="userFormOriginalEmail">
+        <input type="hidden" name="UserID" id="editUserId">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+          <div style="width:72px;height:72px;border-radius:50%;overflow:hidden;border:2px solid var(--border);flex-shrink:0;background:var(--bg-card);display:flex;align-items:center;justify-content:center">
+            <div id="formPhotoPlaceholder" style="color:var(--text-muted);font-size:11px;text-align:center;padding:4px">No Photo</div>
+            <img id="formPhotoImg" style="width:100%;height:100%;object-fit:cover;display:none">
+          </div>
+          <div>
+            <input type="file" id="formPhotoInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="onFormPhotoSelected(event)">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="var el=document.getElementById('formPhotoInput');el&&el.click()">Upload Photo</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="formRemovePhotoBtn" onclick="removeFormPhoto()" style="display:none;margin-left:4px">Remove</button>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:4px">JPG/PNG/WEBP, max 2MB</div>
+          </div>
+        </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Employee ID</label>
-            <input type="text" name="EmployeeID" class="form-control" placeholder="e.g. EMP-001">
+            <label>Employee ID *</label>
+            <input type="text" name="EmployeeID" class="form-control" id="uEmpId" required placeholder="e.g. EMP-001">
           </div>
           <div class="form-group">
-            <label>Email <span class="field-required">*</span></label>
-            <input type="email" name="Email" class="form-control" required id="userFormEmail">
+            <label>Employee Name *</label>
+            <input type="text" name="Name" class="form-control" id="uName" required>
           </div>
         </div>
-        <div class="form-group">
-          <label>Name <span class="field-required">*</span></label>
-          <input type="text" name="Name" class="form-control" required>
-        </div>
-        <div class="form-row" id="userFormPasswordRow">
+        <div class="form-row">
           <div class="form-group">
-            <label>Password <span class="field-required" id="userFormPwdRequired">*</span></label>
-            <input type="password" name="Password" class="form-control" id="userFormPassword" autocomplete="new-password">
-          </div>
-          <div class="form-group" id="userFormConfirmPwdGroup">
-            <label>Confirm Password <span class="field-required" id="userFormConfirmPwdRequired">*</span></label>
-            <input type="password" class="form-control" id="userFormConfirmPassword" autocomplete="new-password">
+            <label>Email *</label>
+            <input type="email" name="Email" class="form-control" id="uEmail" required>
           </div>
           <div class="form-group">
             <label>Mobile</label>
-            <input type="text" name="Mobile" class="form-control" placeholder="e.g. 9876543210">
+            <input type="text" name="Mobile" class="form-control" id="uMobile" placeholder="e.g. 9876543210">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Department</label>
-            <select name="Department" class="form-control" id="userFormDepartment" onchange="usersFormDeptChange()">
+            <label>Password</label>
+            <input type="password" name="Password" class="form-control" id="uPassword" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" name="ConfirmPassword" class="form-control" id="uConfirmPassword">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Department *</label>
+            <select name="Department" class="form-control" id="uDept" required>
               <option value="">Select Department</option>
             </select>
           </div>
           <div class="form-group">
             <label>Section</label>
-            <select name="Section" class="form-control" id="userFormSection">
+            <select name="Section" class="form-control" id="uSection">
               <option value="">Select Section</option>
             </select>
           </div>
@@ -92,15 +93,16 @@
         <div class="form-row">
           <div class="form-group">
             <label>Designation</label>
-            <input type="text" name="Designation" class="form-control" placeholder="Job title / designation">
+            <input type="text" name="Designation" class="form-control" id="uDesignation" placeholder="e.g. Maintenance Engineer">
           </div>
           <div class="form-group">
-            <label>Role</label>
-            <select name="Role" class="form-control" id="userFormRole">
-              <option value="Admin">Admin</option>
-              <option value="Department Manager">Department Manager</option>
-              <option value="Maintenance Manager">Maintenance Manager</option>
+            <label>Role *</label>
+            <select name="Role" class="form-control" id="uRole" required>
+              <option value="">Select Role</option>
+              <option value="Administrator">Administrator</option>
+              <option value="Manager">Manager</option>
               <option value="Supervisor">Supervisor</option>
+              <option value="Engineer">Engineer</option>
               <option value="Technician">Technician</option>
               <option value="Operator">Operator</option>
               <option value="Viewer">Viewer</option>
@@ -115,20 +117,61 @@
               <option value="Inactive">Inactive</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>Joining Date</label>
+            <input type="date" name="JoiningDate" class="form-control" id="uJoiningDate">
+          </div>
         </div>
-
-        <div class="form-group">
-          <label style="display:block;margin-bottom:8px;font-weight:600;color:var(--text);font-size:13px">Job Card Permissions</label>
-          <div class="perm-card-grid" id="userFormPermsJobCard"></div>
-        </div>
-        <div class="form-group">
-          <label style="display:block;margin-bottom:8px;font-weight:600;color:var(--text);font-size:13px">Management Permissions</label>
-          <div class="perm-card-grid" id="userFormPermsManagement"></div>
-        </div>
-        <div class="form-group">
-          <label style="display:block;margin-bottom:8px;font-weight:600;color:var(--text);font-size:13px">General Permissions</label>
-          <div class="perm-card-grid" id="userFormPermsGeneral"></div>
-          <small style="color:var(--text-muted);font-size:11px;display:block;margin-top:4px">System Administrator overrides all individual permissions</small>
+        <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">Permissions</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Job Cards</div>
+              <label class="perm-checkbox"><input type="checkbox" name="CanOpenJobCard" value="TRUE"> Open</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanStartJobCard" value="TRUE"> Start</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanCloseJobCard" value="TRUE"> Close</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanReviewPendingJobCard" value="TRUE"> Review Pending</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanViewAllJobCards" value="TRUE"> View All Cards</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanApproveJobCard" value="TRUE"> Approve</label>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Masters</div>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageSections" value="TRUE"> Sections</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageDepartments" value="TRUE"> Departments</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageMachines" value="TRUE"> Machines</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageAssets" value="TRUE"> Assets</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageTechnicians" value="TRUE"> Technicians</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageSpareParts" value="TRUE"> Spare Parts</label>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Maintenance</div>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManagePM" value="TRUE"> Manage PM</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageBreakdown" value="TRUE"> Breakdown Entry</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageInventory" value="TRUE"> Inventory</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageInventory" value="TRUE"> Goods Receipt</label>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Dashboard</div>
+              <label class="perm-checkbox"><input type="checkbox" name="CanViewDashboard" value="TRUE"> View Dashboard</label>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Reports</div>
+              <label class="perm-checkbox"><input type="checkbox" name="CanViewReports" value="TRUE"> View Reports</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanExportReports" value="TRUE"> Export Reports</label>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Administration</div>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageUsers" value="TRUE"> Manage Users</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageSettings" value="TRUE"> Manage Settings</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanViewAudit" value="TRUE"> Audit Trail</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageQR" value="TRUE"> QR Barcode</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageEmail" value="TRUE"> Email Notifications</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageWhatsApp" value="TRUE"> WhatsApp Notifications</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanBackupRestore" value="TRUE"> Backup & Restore</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanSystemConfig" value="TRUE"> System Configuration</label>
+              <label class="perm-checkbox"><input type="checkbox" name="IsAdmin" value="TRUE" id="uIsAdmin" onchange="onAdminCheckChange()"> Is Administrator</label>
+            </div>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -139,42 +182,45 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="resetPasswordModal" style="display:none">
-  <div class="modal" style="max-width:460px">
+<div class="modal-overlay" id="passwordResetModal">
+  <div class="modal" style="max-width:480px">
     <div class="modal-header">
       <div class="modal-title">Reset Password</div>
-      <button class="modal-close" onclick="hideModal('resetPasswordModal')">&times;</button>
+      <button class="modal-close" onclick="hideModal('passwordResetModal')">&times;</button>
     </div>
     <div class="modal-body">
-      <div style="text-align:center;padding:10px 0">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;opacity:0.3;margin-bottom:12px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:6px" id="resetPwdUserName"></p>
-        <p style="color:var(--text-muted);font-size:12px;margin-bottom:16px">A temporary password will be generated. The user will need to change it on next login.</p>
-        <div id="resetPwdResult" style="display:none;margin-bottom:14px">
-          <div style="background:var(--bg-accent-soft);border:1px solid var(--border);border-radius:8px;padding:14px;">
-            <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px">Temporary Password</label>
-            <div style="font-family:monospace;font-size:16px;font-weight:700;color:var(--primary);letter-spacing:2px;word-break:break-all" id="resetPwdGeneratedPw"></div>
-            <button class="btn btn-sm btn-secondary" onclick="usersCopyPwd()" style="margin-top:8px"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><rect x="3" y="3" width="13" height="13" rx="1"/><path d="M7 7h10v10H7z"/></svg> Copy</button>
-          </div>
-        </div>
-        <div class="btn-group" style="justify-content:center">
-          <button class="btn btn-secondary" onclick="hideModal('resetPasswordModal')">Close</button>
-          <button class="btn btn-warning" id="resetPwdGenerateBtn" onclick="usersGenerateResetPwd()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg> Generate &amp; Reset</button>
+      <input type="hidden" id="resetPwUserId">
+      <div class="form-group">
+        <label>Temporary Password *</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" class="form-control" id="resetTempPassword" style="font-family:monospace" required>
+          <button type="button" class="btn btn-secondary" onclick="generateTempPassword()" style="white-space:nowrap">Generate</button>
         </div>
       </div>
+      <div class="form-group">
+        <label class="perm-checkbox" style="margin-top:8px">
+          <input type="checkbox" id="resetForceChange" checked> Force password change on next login
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="hideModal('passwordResetModal')">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="confirmResetPassword()">Reset Password</button>
     </div>
   </div>
 </div>
 
-<div class="modal-overlay" id="viewUserModal" style="display:none">
-  <div class="modal" style="max-width:600px">
+<div class="modal-overlay" id="viewUserModal">
+  <div class="modal" style="max-width:620px">
     <div class="modal-header">
-      <div class="modal-title" id="viewUserModalTitle">View User</div>
+      <div class="modal-title">User Profile</div>
       <button class="modal-close" onclick="hideModal('viewUserModal')">&times;</button>
     </div>
-    <div class="modal-body" id="viewUserModalBody"></div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="hideModal('viewUserModal')">Close</button>
+    <div class="modal-body" id="viewUserContent" style="padding:0">
+      <input type="file" id="profilePhotoInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="onProfilePhotoSelected(event)">
+    </div>
+    <div class="modal-footer" id="profileCardFooter">
+      <button type="button" class="btn btn-secondary" onclick="hideModal('viewUserModal')">Close</button>
     </div>
   </div>
 </div>
@@ -182,452 +228,770 @@
 <script>
 var usersData = [];
 var usersPage = 1;
-var usersSortCol = '';
-var usersSortDir = 'asc';
-var USERS_PERM_GROUPS = {
-  jobCard: ['CanOpenJobCard','CanStartJobCard','CanCloseJobCard','CanApproveJobCard'],
-  management: ['CanManageMachines','CanManageAssets','CanManageSpareParts','CanManagePM','CanManageTechnicians','CanManageDepartments','CanManageSections','CanManageUsers','CanViewDashboard','CanViewReports','CanManageInventory'],
-  general: ['IsAdmin']
-};
-var USERS_PERM_LABELS = {
-  CanOpenJobCard:'Open Job Card', CanStartJobCard:'Start Job Card', CanCloseJobCard:'Close Job Card', CanApproveJobCard:'Approve Job Card',
-  CanManageMachines:'Manage Machines', CanManageAssets:'Manage Assets', CanManageSpareParts:'Manage Spare Parts', CanManagePM:'Manage PM',
-  CanManageTechnicians:'Manage Technicians', CanManageDepartments:'Manage Departments', CanManageSections:'Manage Sections', CanManageUsers:'Manage Users',
-  CanViewDashboard:'View Dashboard', CanViewReports:'View Reports', CanManageInventory:'Manage Inventory',
-  IsAdmin:'System Administrator'
-};
+var sortColumn = '';
+var sortDirection = 'asc';
+var selectedUserId = '';
+var USER_PERM_FIELDS = [
+  'CanOpenJobCard','CanStartJobCard','CanCloseJobCard','CanReviewPendingJobCard','CanViewAllJobCards','CanApproveJobCard',
+  'CanManageSections','CanManageDepartments','CanManageMachines','CanManageAssets','CanManageTechnicians','CanManageSpareParts',
+  'CanManagePM','CanManageBreakdown','CanManageInventory',
+  'CanViewDashboard','CanViewReports','CanExportReports',
+  'CanManageUsers','CanManageSettings','CanViewAudit','CanManageQR','CanManageEmail','CanManageWhatsApp','CanBackupRestore','CanSystemConfig',
+  'IsAdmin'
+];
+var KEY_SVG = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M15 7a4 4 0 11-7.5 2L3 5v3l-2-2 2-2h3l4.5 4.5A4 4 0 0115 7z"/><circle cx="14" cy="6" r="1" fill="currentColor"/></svg>';
+var _formPhotoBase64 = '';
+var _profileViewUserId = '';
 
 function loadUsersData() {
   showLoading(true);
   google.script.run
-    .withSuccessHandler(function(data) { usersData = data || []; showLoading(false); usersPage = 1; usersRenderTable(); })
-    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load users: ' + (err.message || err), 'error'); })
+    .withSuccessHandler(function(data) {
+      usersData = data || [];
+      showLoading(false);
+      usersPage = 1;
+      sortColumn = '';
+      sortDirection = 'asc';
+      usrmgmtRenderTable();
+    })
+    .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load users', 'error'); })
     .getUsers();
 }
 
-function usersRenderTable() {
-  var container = document.getElementById('usersTableContainer');
-  var list = usersGetFilteredData();
-  var total = list.length;
-  var totalPages = Math.ceil(total / PAGE_SIZE) || 1;
-  if (usersPage > totalPages) usersPage = totalPages;
-  var start = (usersPage - 1) * PAGE_SIZE;
-  var end = Math.min(start + PAGE_SIZE, total);
-  var paged = list.slice(start, end);
+function refreshUsersTable() {
+  loadUsersData();
+}
 
-  document.getElementById('usersTotalCount').textContent = usersData.length;
-  document.getElementById('usersActiveCount').textContent = usersData.filter(function(u) { return u.Status === 'Active'; }).length;
-  document.getElementById('usersInactiveCount').textContent = usersData.filter(function(u) { return u.Status !== 'Active'; }).length;
+function usrmgmtRenderTable() {
+  var data = usersData;
 
-  if (!paged.length) {
-    container.innerHTML =
-      '<div class="empty-state">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40" style="opacity:0.3;margin-bottom:12px"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>' +
-        '<h3>No Users Found</h3>' +
-        '<p>' + (usersData.length ? 'No users match the current filter.' : 'No users are registered in the system.') + '</p>' +
-      '</div>';
-    return;
+  if (sortColumn) {
+    data = data.slice().sort(function(a, b) {
+      var va = (a[sortColumn] || '').toString().toLowerCase();
+      var vb = (b[sortColumn] || '').toString().toLowerCase();
+      if (va < vb) return sortDirection === 'asc' ? -1 : 1;
+      if (va > vb) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
   }
 
-  var html = '<div class="table-container"><table class="users-table"><thead><tr>';
-  var cols = [
-    { key:'UserID', label:'User ID', sortable:true },
-    { key:'EmployeeID', label:'Employee ID', sortable:true },
-    { key:'Name', label:'Name', sortable:true },
-    { key:'Email', label:'Email', sortable:true },
-    { key:'Department', label:'Department', sortable:true },
-    { key:'Designation', label:'Designation', sortable:true },
-    { key:'Role', label:'Role', sortable:true },
-    { key:'Status', label:'Status', sortable:true }
-  ];
-  cols.forEach(function(col) {
-    var sortIndicator = '';
-    if (col.sortable) {
-      var isActive = usersSortCol === col.key;
-      var arrow = isActive ? (usersSortDir === 'asc' ? ' &#9650;' : ' &#9660;') : ' &#9650;&#9660;';
-      sortIndicator = '<span class="sort-arrow' + (isActive ? ' active' : '') + '">' + arrow + '</span>';
-      html += '<th class="sortable" onclick="usersSort(\'' + col.key + '\')">' + col.label + sortIndicator + '</th>';
-    } else {
-      html += '<th>' + col.label + '</th>';
-    }
-  });
-  html += '<th style="width:130px">Actions</th></tr></thead><tbody>';
+  var totalPages = Math.ceil(data.length / PAGE_SIZE);
+  var start = (usersPage - 1) * PAGE_SIZE;
+  var end = Math.min(start + PAGE_SIZE, data.length);
+  var pageData = data.slice(start, end);
 
-  paged.forEach(function(u) {
-    var roleBadgeMap = { 'Admin':'danger', 'Department Manager':'primary', 'Maintenance Manager':'warning', 'Supervisor':'info', 'Technician':'info', 'Operator':'secondary', 'Viewer':'secondary' };
-    var rb = roleBadgeMap[u.Role] || 'secondary';
-    var sc = u.Status === 'Active' ? 'success' : 'secondary';
-    var emailSafe = (u.Email || '').replace(/'/g, "\\'");
-    html += '<tr>' +
-      '<td><span class="text-muted">' + escHtml(u.UserID || '') + '</span></td>' +
-      '<td>' + escHtml(u.EmployeeID || '-') + '</td>' +
-      '<td><strong>' + escHtml(u.Name || '') + '</strong></td>' +
-      '<td>' + escHtml(u.Email || '') + '</td>' +
-      '<td>' + escHtml(u.Department || '') + '</td>' +
-      '<td>' + escHtml(u.Designation || '-') + '</td>' +
-      '<td><span class="badge badge-' + rb + '">' + escHtml(u.Role || '') + '</span></td>' +
-      '<td><span class="badge badge-' + sc + '">' + escHtml(u.Status || '') + '</span></td>' +
+  var sortArrow = function(col) {
+    if (sortColumn === col) return sortDirection === 'asc' ? ' &#9650;' : ' &#9660;';
+    return '';
+  };
+
+  var html = '<div class="table-container"><table id="usersTable"><thead><tr>' +
+    '<th onclick="sortUsersTable(\'EmployeeID\')" style="cursor:pointer">Employee ID' + sortArrow('EmployeeID') + '</th>' +
+    '<th onclick="sortUsersTable(\'Name\')" style="cursor:pointer">Employee Name' + sortArrow('Name') + '</th>' +
+    '<th onclick="sortUsersTable(\'Email\')" style="cursor:pointer">Email' + sortArrow('Email') + '</th>' +
+    '<th onclick="sortUsersTable(\'Department\')" style="cursor:pointer">Department' + sortArrow('Department') + '</th>' +
+    '<th onclick="sortUsersTable(\'Designation\')" style="cursor:pointer">Designation' + sortArrow('Designation') + '</th>' +
+    '<th onclick="sortUsersTable(\'Role\')" style="cursor:pointer">Role' + sortArrow('Role') + '</th>' +
+    '<th onclick="sortUsersTable(\'Status\')" style="cursor:pointer">Status' + sortArrow('Status') + '</th>' +
+    '<th onclick="sortUsersTable(\'LastLoginDate\')" style="cursor:pointer">Last Login' + sortArrow('LastLoginDate') + '</th>' +
+    '<th onclick="sortUsersTable(\'CreatedAt\')" style="cursor:pointer">Created Date' + sortArrow('CreatedAt') + '</th>' +
+    '<th style="width:180px">Actions</th>' +
+    '</tr></thead><tbody>';
+
+  pageData.forEach(function(row) {
+    var initial = (row.Name || '?').charAt(0).toUpperCase();
+    var isSelected = selectedUserId === row.UserID;
+    var photoHtml = row.PhotoURL
+      ? '<img src="' + escHtml(row.PhotoURL) + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover">'
+      : '<div style="width:32px;height:32px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;margin:0 auto">' + initial + '</div>';
+
+    var roleBadge = 'primary';
+    if (row.Role === 'Administrator') roleBadge = 'danger';
+    else if (row.Role === 'Manager') roleBadge = 'warning';
+    else if (row.Role === 'Supervisor') roleBadge = 'primary';
+    else if (row.Role === 'Engineer') roleBadge = 'info';
+    else if (row.Role === 'Technician') roleBadge = 'success';
+    else if (row.Role === 'Operator') roleBadge = 'secondary';
+    else if (row.Role === 'Viewer') roleBadge = 'secondary';
+
+    var statusBadge = row.Status === 'Active' ? 'success' : 'danger';
+
+    html += '<tr class="' + (isSelected ? 'row-selected' : '') + '" onclick="selectUserRow(\'' + row.UserID + '\')" data-userid="' + row.UserID + '">' +
+      '<td><span style="display:inline-flex;align-items:center;gap:8px">' + photoHtml + '<span>' + escHtml(row.EmployeeID) + '</span></span></td>' +
+      '<td><strong>' + escHtml(row.Name) + '</strong></td>' +
+      '<td>' + escHtml(row.Email) + '</td>' +
+      '<td>' + escHtml(row.Department) + '</td>' +
+      '<td>' + escHtml(row.Designation) + '</td>' +
+      '<td><span class="badge badge-' + roleBadge + '">' + escHtml(row.Role) + '</span></td>' +
+      '<td><span class="badge badge-' + statusBadge + '">' + escHtml(row.Status) + '</span></td>' +
+      '<td style="font-size:11px;color:var(--text-muted)">' + (row.LastLoginDate || row.LastLogin ? (row.LastLoginDate || row.LastLogin.substring(0, 10)) : '-') + '</td>' +
+      '<td style="font-size:11px;color:var(--text-muted)">' + (row.CreatedAt ? formatDateShort(row.CreatedAt) : '-') + '</td>' +
       '<td><div class="actions-cell">' +
-        iconBtn('view', "usersView('" + emailSafe + "')", 'View') +
-        iconBtn('edit', "usersEdit('" + emailSafe + "')", 'Edit') +
-        '<button class="icon-btn icon-btn-warning" onclick="usersResetPwd(\'' + emailSafe + '\')" title="Reset Password"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:18px;height:18px"><rect x="3" y="11" width="14" height="7" rx="1"/><path d="M7 11V7a3 3 0 016 0v4"/></svg></button>' +
-        iconBtn('trash', "usersDelete('" + emailSafe + "')", 'Delete', 'icon-btn-danger') +
-      '</div></td></tr>';
+        '<button class="icon-btn icon-btn-primary" onclick="event.stopPropagation();viewUser(\'' + row.UserID + '\')" title="View User">' + ICONS.view + '</button>' +
+        '<button class="icon-btn icon-btn-primary" onclick="event.stopPropagation();usrmgmtEditUser(\'' + row.UserID + '\')" title="Edit User">' + ICONS.edit + '</button>' +
+        '<button class="icon-btn icon-btn-warning" onclick="event.stopPropagation();openResetPassword(\'' + row.UserID + '\')" title="Reset Password">' + KEY_SVG + '</button>' +
+        '<button class="icon-btn icon-btn-danger" onclick="event.stopPropagation();usrmgmtDeleteUser(\'' + row.UserID + '\')" title="Delete User">' + ICONS.trash + '</button>' +
+      '</div></td>' +
+    '</tr>';
   });
   html += '</tbody></table></div>';
 
   if (totalPages > 1) {
     html += '<div class="pagination">' +
-      '<div class="pagination-info">Showing ' + (start + 1) + ' to ' + end + ' of ' + total + ' entries</div>' +
+      '<div class="pagination-info">Showing ' + (start + 1) + ' to ' + end + ' of ' + data.length + ' entries</div>' +
       '<div class="pagination-btns">' +
-      '<button onclick="usersSetPage(' + (usersPage - 1) + ')" ' + (usersPage <= 1 ? 'disabled' : '') + '>Prev</button>';
-    var maxBtns = 7;
-    var halfBtns = Math.floor(maxBtns / 2);
-    var fromPage = Math.max(1, usersPage - halfBtns);
-    var toPage = Math.min(totalPages, fromPage + maxBtns - 1);
-    if (toPage - fromPage + 1 < maxBtns) fromPage = Math.max(1, toPage - maxBtns + 1);
-    for (var p = fromPage; p <= toPage; p++) {
-      html += '<button class="' + (p === usersPage ? 'active' : '') + '" onclick="usersSetPage(' + p + ')">' + p + '</button>';
+      '<button onclick="usersTablePage(' + (usersPage - 1) + ')" ' + (usersPage <= 1 ? 'disabled' : '') + '>Prev</button>';
+    for (var p = 1; p <= totalPages; p++) {
+      html += '<button class="' + (p === usersPage ? 'active' : '') + '" onclick="usersTablePage(' + p + ')">' + p + '</button>';
     }
-    html += '<button onclick="usersSetPage(' + (usersPage + 1) + ')" ' + (usersPage >= totalPages ? 'disabled' : '') + '>Next</button>' +
+    html += '<button onclick="usersTablePage(' + (usersPage + 1) + ')" ' + (usersPage >= totalPages ? 'disabled' : '') + '>Next</button>' +
       '</div></div>';
+  } else if (data.length > PAGE_SIZE && totalPages <= 1) {
+    html += '<div class="pagination"><div class="pagination-info">Showing all ' + data.length + ' entries</div></div>';
   }
-  container.innerHTML = html;
+  var container = document.getElementById('usersTableContainer'); if (container) container.innerHTML = html;
 }
 
-function usersSetPage(page) {
-  usersPage = page;
-  usersRenderTable();
-}
-
-function usersSort(col) {
-  if (usersSortCol === col) {
-    usersSortDir = usersSortDir === 'asc' ? 'desc' : 'asc';
+function sortUsersTable(col) {
+  if (sortColumn === col) {
+    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
   } else {
-    usersSortCol = col;
-    usersSortDir = 'asc';
+    sortColumn = col;
+    sortDirection = 'asc';
   }
-  usersData.sort(function(a, b) {
-    var va = (a[col] || '').toString().toLowerCase();
-    var vb = (b[col] || '').toString().toLowerCase();
-    if (va < vb) return usersSortDir === 'asc' ? -1 : 1;
-    if (va > vb) return usersSortDir === 'asc' ? 1 : -1;
-    return 0;
-  });
   usersPage = 1;
-  usersRenderTable();
+  usrmgmtRenderTable();
 }
 
-function usersGetFilteredData() {
-  var query = document.getElementById('usersSearchInput').value.trim().toLowerCase();
-  var roleFilter = document.getElementById('usersRoleFilter').value;
-  var statusFilter = document.getElementById('usersStatusFilter').value;
-  return usersData.filter(function(u) {
-    if (roleFilter && u.Role !== roleFilter) return false;
-    if (statusFilter && u.Status !== statusFilter) return false;
-    if (query) {
-      var match = (u.Name && u.Name.toLowerCase().indexOf(query) !== -1) ||
-                  (u.Email && u.Email.toLowerCase().indexOf(query) !== -1) ||
-                  (u.EmployeeID && u.EmployeeID.toLowerCase().indexOf(query) !== -1) ||
-                  (u.Department && u.Department.toLowerCase().indexOf(query) !== -1) ||
-                  (u.Designation && u.Designation.toLowerCase().indexOf(query) !== -1) ||
-                  (u.UserID && u.UserID.toLowerCase().indexOf(query) !== -1) ||
-                  (u.Role && u.Role.toLowerCase().indexOf(query) !== -1);
-      if (!match) return false;
-    }
-    return true;
-  });
+function usersTablePage(p) {
+  usersPage = p;
+  usrmgmtRenderTable();
 }
 
-function usersSearchTable() {
-  usersPage = 1;
-  usersRenderTable();
+function selectUserRow(userId) {
+  if (selectedUserId === userId) {
+    selectedUserId = '';
+  } else {
+    selectedUserId = userId;
+  }
+  usrmgmtRenderTable();
 }
 
-function usersFilterTable() {
-  usersPage = 1;
-  usersRenderTable();
+function getSelectedUserId() {
+  return selectedUserId;
 }
 
-function usersBuildPermCards() {
-  var groups = [
-    { id: 'userFormPermsJobCard', perms: USERS_PERM_GROUPS.jobCard },
-    { id: 'userFormPermsManagement', perms: USERS_PERM_GROUPS.management },
-    { id: 'userFormPermsGeneral', perms: USERS_PERM_GROUPS.general }
-  ];
-  groups.forEach(function(g) {
-    var container = document.getElementById(g.id);
-    if (!container) return;
-    var html = '';
-    g.perms.forEach(function(p) {
-      html += '<label class="perm-card">' +
-        '<input type="checkbox" name="' + p + '" value="TRUE">' +
-        '<span class="perm-card-check"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 10 8 14 16 6"/></svg></span>' +
-        '<span class="perm-card-label">' + (USERS_PERM_LABELS[p] || p) + '</span>' +
-        '</label>';
-    });
-    container.innerHTML = html;
-  });
+function getSelectedUser() {
+  if (!selectedUserId) return null;
+  return usersData.find(function(r) { return r.UserID === selectedUserId; });
 }
 
-function usersLoadDepts() {
+function editSelectedUser() {
+  var item = getSelectedUser();
+  if (!item) { showToast('Please select a user from the table first', 'warning'); return; }
+  usrmgmtEditUser(item.UserID);
+}
+
+function deleteSelectedUser() {
+  var item = getSelectedUser();
+  if (!item) { showToast('Please select a user from the table first', 'warning'); return; }
+  usrmgmtDeleteUser(item.UserID);
+}
+
+function resetPwdSelectedUser() {
+  var item = getSelectedUser();
+  if (!item) { showToast('Please select a user from the table first', 'warning'); return; }
+  openResetPassword(item.UserID);
+}
+
+function formatDateShort(dateVal) {
+  if (!dateVal) return '';
+  var d = new Date(dateVal);
+  if (isNaN(d.getTime())) return String(dateVal).substring(0, 10);
+  var day = String(d.getDate()).padStart(2, '0');
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var month = months[d.getMonth()];
+  var year = d.getFullYear();
+  return day + ' ' + month + ' ' + year;
+}
+
+function loadUserDepartmentOptions(selected) {
   google.script.run
-    .withSuccessHandler(function(data) {
-      var sel = document.getElementById('userFormDepartment');
+    .withSuccessHandler(function(depts) {
+      var sel = document.getElementById('uDept');
+      if (sel) {
       sel.innerHTML = '<option value="">Select Department</option>';
-      (data || []).forEach(function(d) {
-        if (d.Status === 'Active') {
-          sel.innerHTML += '<option value="' + escHtml(d.Department) + '">' + escHtml(d.Department) + '</option>';
-        }
+      (depts || []).forEach(function(d) {
+        var opt = document.createElement('option');
+        opt.value = d.name;
+        opt.textContent = d.name;
+        if (selected && d.name === selected) opt.selected = true;
+        sel.appendChild(opt);
       });
-    })
-    .withFailureHandler(function() {})
-    .getDepartmentList();
-}
-
-function usersFormDeptChange() {
-  var dept = document.getElementById('userFormDepartment').value;
-  var secSel = document.getElementById('userFormSection');
-  secSel.innerHTML = '<option value="">Select Section</option>';
-  if (!dept) return;
-  google.script.run
-    .withSuccessHandler(function(sections) {
-      (sections || []).forEach(function(s) {
-        secSel.innerHTML += '<option value="' + escHtml(s.Section) + '">' + escHtml(s.Section) + '</option>';
-      });
-    })
-    .withFailureHandler(function() {})
-    .getSectionList();
-}
-
-function usersOpenForm() {
-  document.getElementById('userFormOriginalEmail').value = '';
-  document.getElementById('userFormEmail').disabled = false;
-  document.getElementById('userFormEmail').value = '';
-  document.getElementById('userFormPassword').required = true;
-  document.getElementById('userFormPwdRequired').style.display = 'inline';
-  document.getElementById('userFormConfirmPwdRequired').style.display = 'inline';
-  document.getElementById('userFormConfirmPwdGroup').style.display = 'block';
-  resetForm('userForm');
-  document.getElementById('userFormSection').innerHTML = '<option value="">Select Section</option>';
-  usersBuildPermCards();
-  usersLoadDepts();
-  document.getElementById('userFormModalTitle').textContent = 'Add User';
-  showModal('userFormModal');
-}
-
-function usersEdit(email) {
-  var item = usersData.find(function(r) { return r.Email === email; });
-  if (!item) return;
-  document.getElementById('userFormOriginalEmail').value = email;
-  document.getElementById('userFormEmail').disabled = true;
-  document.getElementById('userFormPassword').required = false;
-  document.getElementById('userFormPwdRequired').style.display = 'none';
-  document.getElementById('userFormConfirmPwdRequired').style.display = 'none';
-  document.getElementById('userFormConfirmPwdGroup').style.display = 'none';
-  setFormData('userForm', item);
-  document.getElementById('userFormModalTitle').textContent = 'Edit User - ' + (item.Name || email);
-  usersBuildPermCards();
-  USERS_PERM_GROUPS.jobCard.concat(USERS_PERM_GROUPS.management).concat(USERS_PERM_GROUPS.general).forEach(function(f) {
-    var el = document.querySelector('#userForm input[name="' + f + '"]');
-    if (el) {
-      var val = item[f];
-      el.checked = val === true || val === 'Yes' || val === 'true' || val === 'TRUE';
-    }
-  });
-  usersLoadDepts();
-  if (item.Department) {
-    setTimeout(function() {
-      document.getElementById('userFormDepartment').value = item.Department || '';
-      usersFormDeptChange();
-      setTimeout(function() {
-        if (item.Section) {
-          document.getElementById('userFormSection').value = item.Section || '';
-        }
-      }, 300);
-    }, 100);
-  }
-  showModal('userFormModal');
-}
-
-function usersSave(e) {
-  e.preventDefault();
-  var data = getFormData('userForm');
-  USERS_PERM_GROUPS.jobCard.concat(USERS_PERM_GROUPS.management).concat(USERS_PERM_GROUPS.general).forEach(function(f) {
-    var el = document.querySelector('#userForm input[name="' + f + '"]');
-    data[f] = el && el.checked ? 'TRUE' : 'FALSE';
-  });
-  var origEmail = document.getElementById('userFormOriginalEmail').value;
-
-  if (!origEmail) {
-    var pw = document.getElementById('userFormPassword').value;
-    var cpw = document.getElementById('userFormConfirmPassword').value;
-    if (pw !== cpw) {
-      showToast('Passwords do not match', 'error');
-      return false;
-    }
-  }
-
-  showLoading(true);
-  if (origEmail) {
-    if (!data.Password) delete data.Password;
-    google.script.run
-      .withSuccessHandler(function(result) { usersData = result; showLoading(false); hideModal('userFormModal'); showToast('User updated successfully', 'success'); usersRenderTable(); })
-      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to update user', 'error'); })
-      .updateUser(origEmail, data);
-  } else {
-    google.script.run
-      .withSuccessHandler(function(result) { usersData = result; showLoading(false); hideModal('userFormModal'); showToast('User added successfully', 'success'); usersRenderTable(); })
-      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to add user', 'error'); })
-      .addUser(data);
-  }
-}
-
-function usersDelete(email) {
-  if (currentUser && email === currentUser.email) { showToast('Cannot delete yourself', 'error'); return; }
-  var item = usersData.find(function(r) { return r.Email === email; });
-  showConfirm('Delete User', 'Are you sure you want to delete "' + escHtml(item ? item.Name : email) + '"? This action cannot be undone.', function() {
-    showLoading(true);
-    google.script.run
-      .withSuccessHandler(function(result) { usersData = result; showLoading(false); showToast('User deleted', 'success'); usersRenderTable(); })
-      .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to delete user', 'error'); })
-      .deleteUser(email);
-  });
-}
-
-var usersResetPwdEmail = '';
-
-function usersResetPwd(email) {
-  usersResetPwdEmail = email;
-  var item = usersData.find(function(r) { return r.Email === email; });
-  document.getElementById('resetPwdUserName').textContent = 'Reset password for: ' + escHtml(item ? item.Name : email);
-  document.getElementById('resetPwdResult').style.display = 'none';
-  document.getElementById('resetPwdGeneratedPw').textContent = '';
-  document.getElementById('resetPwdGenerateBtn').disabled = false;
-  document.getElementById('resetPwdGenerateBtn').innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg> Generate &amp; Reset';
-  showModal('resetPasswordModal');
-}
-
-function usersGenerateResetPwd() {
-  var btn = document.getElementById('resetPwdGenerateBtn');
-  btn.disabled = true;
-  btn.textContent = 'Resetting...';
-  google.script.run
-    .withSuccessHandler(function(result) {
-      btn.disabled = false;
-      btn.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg> Generate &amp; Reset';
-      if (result.success) {
-        document.getElementById('resetPwdGeneratedPw').textContent = result.tempPassword;
-        document.getElementById('resetPwdResult').style.display = 'block';
-        showToast('Password reset successfully', 'success');
-        loadUsersData();
-      } else {
-        showToast('Failed to reset password: ' + (result.message || 'Unknown error'), 'error');
       }
     })
-    .withFailureHandler(function(err) {
-      btn.disabled = false;
-      btn.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg> Generate &amp; Reset';
-      showToast('Failed to reset password: ' + (err.message || err), 'error');
+    .withFailureHandler(function() {})
+    .getUserDepartments();
+}
+
+function loadUserSectionOptions(selected) {
+  google.script.run
+    .withSuccessHandler(function(sections) {
+      var sel = document.getElementById('uSection');
+      if (sel) {
+      sel.innerHTML = '<option value="">Select Section</option>';
+      (sections || []).forEach(function(s) {
+        var opt = document.createElement('option');
+        opt.value = s.name;
+        opt.textContent = s.name;
+        if (selected && s.name === selected) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      }
     })
-    .resetPassword(usersResetPwdEmail);
+    .withFailureHandler(function() {})
+    .getUserSections();
 }
 
-function usersCopyPwd() {
-  var pw = document.getElementById('resetPwdGeneratedPw').textContent;
-  if (!pw) return;
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(pw).then(function() {
-      showToast('Password copied to clipboard', 'success');
-    }).catch(function() {
-      usersFallbackCopy(pw);
-    });
-  } else {
-    usersFallbackCopy(pw);
-  }
+function usrmgmtOpenForm() {
+  var eu = document.getElementById('editUserId'); if (eu) eu.value = '';
+  resetForm('userForm');
+  _formPhotoBase64 = '';
+  clearFormPhoto();
+  var el = document.getElementById('uPassword'); if (el) { el.required = true; el.placeholder = 'Enter password'; }
+  var el = document.getElementById('uConfirmPassword'); if (el) el.required = true;
+  resetUserPermissions();
+  loadUserDepartmentOptions('');
+  loadUserSectionOptions('');
+  openModalForm('userForm', 'Add User');
 }
 
-function usersFallbackCopy(text) {
-  var ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed';
-  ta.style.opacity = '0';
-  document.body.appendChild(ta);
-  ta.select();
-  try {
-    document.execCommand('copy');
-    showToast('Password copied to clipboard', 'success');
-  } catch (e) {
-    showToast('Could not copy password. Please select and copy manually.', 'warning');
-  }
-  document.body.removeChild(ta);
-}
-
-function usersView(email) {
-  var item = usersData.find(function(r) { return r.Email === email; });
+function usrmgmtEditUser(id) {
+  var item = usersData.find(function(r) { return r.UserID === id; });
   if (!item) return;
-  document.getElementById('viewUserModalTitle').textContent = 'User Details - ' + escHtml(item.Name || '');
-  var html = '<div class="view-user-details">';
-  var fields = [
-    { label:'User ID', key:'UserID' },
-    { label:'Employee ID', key:'EmployeeID' },
-    { label:'Name', key:'Name' },
-    { label:'Email', key:'Email' },
-    { label:'Mobile', key:'Mobile' },
-    { label:'Department', key:'Department' },
-    { label:'Section', key:'Section' },
-    { label:'Designation', key:'Designation' },
-    { label:'Role', key:'Role' },
-    { label:'Status', key:'Status' },
-    { label:'Last Login Date', key:'LastLoginDate' },
-    { label:'Last Login Time', key:'LastLoginTime' },
-    { label:'Created By', key:'CreatedBy' },
-    { label:'Created At', key:'CreatedAt' },
-    { label:'Updated By', key:'UpdatedBy' },
-    { label:'Updated At', key:'UpdatedAt' }
-  ];
-  fields.forEach(function(f) {
-    var val = item[f.key] || '-';
-    html += '<div class="view-row"><span>' + f.label + '</span><strong>' + escHtml(val) + '</strong></div>';
+  setFormData('userForm', item);
+  var eu = document.getElementById('editUserId'); if (eu) eu.value = id;
+  var el = document.getElementById('uPassword'); if (el) { el.required = false; el.placeholder = 'Leave blank to keep current'; }
+  var el = document.getElementById('uConfirmPassword'); if (el) el.required = false;
+  var up = document.getElementById('uPassword'); if (up) up.value = '';
+  var ucp = document.getElementById('uConfirmPassword'); if (ucp) ucp.value = '';
+  setFormPhotoPreview(item.PhotoURL || '');
+  _formPhotoBase64 = '';
+  setUserPermissionCheckboxes(item);
+  loadUserDepartmentOptions(item.Department || '');
+  loadUserSectionOptions(item.Section || '');
+  openModalForm('userForm', 'Edit User - ' + (item.Name || item.EmployeeID));
+}
+
+function resetUserPermissions() {
+  document.querySelectorAll('#userForm input[type="checkbox"]').forEach(function(cb) {
+    cb.checked = false;
   });
-  html += '</div>';
-  html += '<div style="margin-top:16px"><label style="display:block;margin-bottom:8px;font-weight:600;font-size:13px;color:var(--text)">Permissions</label><div class="perm-card-grid">';
-  var allPerms = USERS_PERM_GROUPS.jobCard.concat(USERS_PERM_GROUPS.management).concat(USERS_PERM_GROUPS.general);
-  allPerms.forEach(function(p) {
-    var val = item[p];
-    var enabled = val === true || val === 'Yes' || val === 'true' || val === 'TRUE';
-    html += '<div class="perm-card perm-card-view' + (enabled ? ' perm-card-on' : ' perm-card-off') + '">' +
-      '<span class="perm-card-icon">' + (enabled
-        ? '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 10 8 14 16 6"/></svg>'
-        : '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="5" x2="15" y2="15"/><line x1="15" y1="5" x2="5" y2="15"/></svg>') +
-      '</span>' +
-      '<span class="perm-card-label">' + (USERS_PERM_LABELS[p] || p) + '</span></div>';
+}
+
+function setUserPermissionCheckboxes(item) {
+  document.querySelectorAll('#userForm input[type="checkbox"]').forEach(function(cb) {
+    if (cb.name) {
+      cb.checked = item[cb.name] === 'TRUE';
+    }
   });
-  html += '</div></div>';
-  document.getElementById('viewUserModalBody').innerHTML = html;
+  onAdminCheckChange();
+}
+
+function onAdminCheckChange() {
+  var isAdmin = document.getElementById('uIsAdmin').checked;
+  document.querySelectorAll('#userForm input[type="checkbox"]').forEach(function(cb) {
+    if (isAdmin && cb.name) cb.checked = true;
+  });
+}
+
+function onFormPhotoSelected(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { showToast('Photo must be under 2MB', 'warning'); e.target.value = ''; return; }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    _formPhotoBase64 = ev.target.result;
+    var fpp = document.getElementById('formPhotoPlaceholder'); if (fpp) fpp.style.display = 'none';
+    var img = document.getElementById('formPhotoImg');
+    if (img) {
+      img.src = _formPhotoBase64;
+      img.style.display = 'block';
+    }
+    var rmb = document.getElementById('formRemovePhotoBtn'); if (rmb) rmb.style.display = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeFormPhoto() {
+  _formPhotoBase64 = '';
+  var fpi = document.getElementById('formPhotoInput'); if (fpi) fpi.value = '';
+  var fpp = document.getElementById('formPhotoPlaceholder'); if (fpp) fpp.style.display = '';
+  var fim = document.getElementById('formPhotoImg'); if (fim) { fim.style.display = 'none'; fim.src = ''; }
+  var rmb = document.getElementById('formRemovePhotoBtn'); if (rmb) rmb.style.display = 'none';
+}
+
+function clearFormPhoto() {
+  removeFormPhoto();
+}
+
+function setFormPhotoPreview(url) {
+  if (url) {
+    var fpp = document.getElementById('formPhotoPlaceholder'); if (fpp) fpp.style.display = 'none';
+    var img = document.getElementById('formPhotoImg');
+    if (img) {
+      img.src = url;
+      img.style.display = 'block';
+    }
+    var rmb = document.getElementById('formRemovePhotoBtn'); if (rmb) rmb.style.display = '';
+  } else {
+    removeFormPhoto();
+  }
+}
+
+function usrmgmtSaveUser(e) {
+  e.preventDefault();
+  var data = getFormData('userForm');
+  var id = document.getElementById('editUserId').value;
+
+  if (!data.EmployeeID) { showToast('Employee ID is required', 'warning'); return; }
+  if (!data.Name) { showToast('Employee Name is required', 'warning'); return; }
+  if (!data.Email) { showToast('Email is required', 'warning'); return; }
+  if (!data.Department) { showToast('Department is required', 'warning'); return; }
+
+  if (!id) {
+    if (!data.Password) { showToast('Password is required for new users', 'warning'); return; }
+    if (data.Password !== data.ConfirmPassword) { showToast('Passwords do not match', 'warning'); return; }
+  } else {
+    if (data.Password && data.Password !== data.ConfirmPassword) {
+      showToast('Passwords do not match', 'warning'); return;
+    }
+  }
+
+  processUserPermissions(data);
+
+  showLoading(true);
+
+  function usrmgmtSaveUserData(photoUrl, photoDriveId) {
+    if (photoUrl) data.PhotoURL = photoUrl;
+    if (photoDriveId) data.PhotoDriveID = photoDriveId;
+    var runner = google.script.run
+      .withSuccessHandler(function(result) {
+        usersData = result;
+        showLoading(false);
+        hideModal('userFormModal');
+        selectedUserId = '';
+        showToast(id ? 'User updated successfully' : 'User added successfully');
+        usrmgmtRenderTable();
+      })
+      .withFailureHandler(function(err) {
+        showLoading(false);
+        showToast(err.message || 'Failed to save user', 'error');
+      });
+    if (id) runner.updateUser(id, data);
+    else runner.addUser(data);
+  }
+
+  if (_formPhotoBase64) {
+    google.script.run
+      .withSuccessHandler(function(photoResult) {
+        var pr = JSON.parse(photoResult);
+        usrmgmtSaveUserData(pr.url, pr.driveId);
+      })
+      .withFailureHandler(function(err) {
+        showLoading(false);
+        showToast('Photo upload failed: ' + err.message, 'warning');
+      })
+      .uploadUserPhoto(_formPhotoBase64, data.EmployeeID);
+  } else {
+    usrmgmtSaveUserData();
+  }
+}
+
+function processUserPermissions(data) {
+  USER_PERM_FIELDS.forEach(function(p) {
+    data[p] = 'FALSE';
+  });
+  document.querySelectorAll('#userForm input[type="checkbox"]:checked').forEach(function(cb) {
+    if (cb.name) data[cb.name] = 'TRUE';
+  });
+}
+
+function buildProfileCardHtml(item) {
+  var initial = (item.Name || '?').charAt(0).toUpperCase();
+  var photoUrl = item.PhotoURL;
+  var photoHtml = photoUrl
+    ? '<img src="' + escHtml(photoUrl) + '" id="profileCardPhoto" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);display:block;box-shadow:0 0 0 4px var(--primary-light)">'
+    : '<div id="profileCardPhoto" style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;box-shadow:0 0 0 4px var(--primary-light)">' + initial + '</div>';
+
+  var roleBadge = 'primary';
+  if (item.Role === 'Administrator') roleBadge = 'danger';
+  else if (item.Role === 'Manager') roleBadge = 'warning';
+  else if (item.Role === 'Supervisor') roleBadge = 'primary';
+  else if (item.Role === 'Engineer') roleBadge = 'info';
+  else if (item.Role === 'Technician') roleBadge = 'success';
+  else if (item.Role === 'Operator') roleBadge = 'secondary';
+  else if (item.Role === 'Viewer') roleBadge = 'secondary';
+
+  var grantedPerms = USER_PERM_FIELDS.filter(function(p) { return item[p] === 'TRUE' || item[p] === true; });
+  var shortPermLabels = {
+    CanOpenJobCard: 'Open Job Card', CanStartJobCard: 'Start Job Card',
+    CanCloseJobCard: 'Close Job Card', CanReviewPendingJobCard: 'Review Pending', CanViewAllJobCards: 'All Cards', CanApproveJobCard: 'Approve Job Card',
+    CanManageSections: 'Sections', CanManageDepartments: 'Departments',
+    CanManageMachines: 'Machines', CanManageAssets: 'Assets',
+    CanManageTechnicians: 'Technicians', CanManageSpareParts: 'Spare Parts',
+    CanManagePM: 'PM', CanManageBreakdown: 'Breakdown',
+    CanManageInventory: 'Inventory',
+    CanViewDashboard: 'Dashboard', CanViewReports: 'Reports',
+    CanExportReports: 'Export',
+    CanManageUsers: 'Users', CanManageSettings: 'Settings',
+    CanViewAudit: 'Audit', CanManageQR: 'QR/Barcode',
+    CanManageEmail: 'Email', CanManageWhatsApp: 'WhatsApp',
+    CanBackupRestore: 'Backup', CanSystemConfig: 'System Config',
+    IsAdmin: 'Admin'
+  };
+  var permHtml = grantedPerms.length > 0
+    ? grantedPerms.map(function(p) { return '<span class="badge badge-success" style="margin:2px 3px">' + (shortPermLabels[p] || p) + '</span>'; }).join('')
+    : '<span style="color:var(--text-muted);font-size:12px">No permissions granted</span>';
+
+  function infoRow(label, value) {
+    return '<div style="display:flex;flex-direction:column;gap:1px"><div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px">' + label + '</div><div style="font-weight:500;color:var(--text);font-size:13px">' + (value || '-') + '</div></div>';
+  }
+
+  var joinedDate = item.JoiningDate ? formatDateShort(item.JoiningDate) : '-';
+  var lastLogin = item.LastLoginDate || item.LastLogin || '-';
+  if (lastLogin !== '-' && lastLogin.length > 10) lastLogin = lastLogin.substring(0, 10);
+  var createdDate = item.CreatedAt ? formatDateShort(item.CreatedAt) : '-';
+  var forcePwdChange = item.ForcePasswordChange === 'TRUE' ? '<span class="badge badge-warning">Change Required</span>' : '<span class="badge badge-success">OK</span>';
+
+  var hasPhoto = !!photoUrl;
+
+  var statusBadgeHtml = item.Status === 'Active'
+    ? '<span class="badge badge-success">Active</span>'
+    : '<span class="badge badge-danger">Inactive</span>';
+
+  return '' +
+    '<div style="text-align:center;padding:28px 24px 20px;border-bottom:1px solid var(--border)">' +
+      '<div style="position:relative;display:inline-block">' +
+        photoHtml +
+        '<div style="margin-top:8px;display:flex;gap:8px;justify-content:center;font-size:11px">' +
+          '<span style="color:var(--primary);cursor:pointer" onclick="var el=document.getElementById(\'profilePhotoInput\');el&&el.click()">' + (hasPhoto ? 'Change Photo' : 'Upload Photo') + '</span>' +
+          (hasPhoto ? '<span style="color:var(--text-muted)">|</span><span style="color:var(--danger);cursor:pointer" onclick="removeProfilePhoto(\'' + item.UserID + '\')">Remove</span>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:20px;font-weight:700;color:var(--text);margin-top:10px">' + escHtml(item.Name) + '</div>' +
+      (item.Designation ? '<div style="font-size:13px;color:var(--text-muted);margin-top:2px">' + escHtml(item.Designation) + '</div>' : '') +
+      '<div style="margin-top:8px;display:flex;gap:6px;justify-content:center">' +
+        '<span class="badge badge-' + roleBadge + '">' + escHtml(item.Role) + '</span>' + statusBadgeHtml +
+      '</div>' +
+    '</div>' +
+
+    '<div style="padding:20px 24px 12px">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid var(--border)">Personal Information</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 28px">' +
+        infoRow('Employee ID', escHtml(item.EmployeeID)) +
+        infoRow('Mobile', escHtml(item.Mobile || '-')) +
+        infoRow('Email', escHtml(item.Email)) +
+        infoRow('Joining Date', joinedDate) +
+      '</div>' +
+    '</div>' +
+
+    '<div style="padding:0 24px 12px">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid var(--border)">Organization</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 28px">' +
+        infoRow('Department', escHtml(item.Department || '-')) +
+        infoRow('Section', escHtml(item.Section || '-')) +
+        infoRow('Designation', escHtml(item.Designation || '-')) +
+        infoRow('Role', escHtml(item.Role || '-')) +
+      '</div>' +
+    '</div>' +
+
+    '<div style="padding:0 24px 12px">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid var(--border)">Account Information</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 28px">' +
+        infoRow('Status', statusBadgeHtml) +
+        infoRow('Created', createdDate) +
+        infoRow('Last Login', lastLogin) +
+        infoRow('Password', forcePwdChange) +
+      '</div>' +
+    '</div>' +
+
+    '<div style="padding:0 24px 20px">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)">Permissions</div>' +
+      '<div>' + permHtml + '</div>' +
+    '</div>';
+}
+
+function buildProfileCardFooter(item) {
+  return '' +
+    '<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();hideModal(\'viewUserModal\');usrmgmtEditUser(\'' + item.UserID + '\')">' +
+      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M14.5 2.5a1.5 1.5 0 012 2L7 14l-3 1 1-3 9.5-9.5z"/></svg> Edit User</button>' +
+    '<button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();hideModal(\'viewUserModal\');openResetPassword(\'' + item.UserID + '\')">' +
+      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><rect x="3" y="11" width="14" height="7" rx="1"/><path d="M7 11V7a3 3 0 016 0v4"/></svg> Reset Password</button>' +
+    '<button type="button" class="btn btn-secondary" onclick="hideModal(\'viewUserModal\')">Close</button>';
+}
+
+function viewUser(id) {
+  var item = usersData.find(function(r) { return r.UserID === id; });
+  if (!item) return;
+  _profileViewUserId = id;
+  var vuc = document.getElementById('viewUserContent'); if (vuc) vuc.innerHTML = buildProfileCardHtml(item);
+  var pcf = document.getElementById('profileCardFooter'); if (pcf) pcf.innerHTML = buildProfileCardFooter(item);
   showModal('viewUserModal');
 }
 
-function usersExportExcel() {
+function onProfilePhotoSelected(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { showToast('Photo must be under 2MB', 'warning'); e.target.value = ''; return; }
+  var userId = _profileViewUserId;
+  if (!userId) return;
+  var item = usersData.find(function(r) { return r.UserID === userId; });
+  if (!item) return;
+  showLoading(true);
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var base64 = ev.target.result;
+    google.script.run
+      .withSuccessHandler(function(photoResult) {
+        var pr = JSON.parse(photoResult);
+        google.script.run
+          .withSuccessHandler(function(result) {
+            usersData = result;
+            showLoading(false);
+            var updatedItem = usersData.find(function(r) { return r.UserID === userId; });
+            var vuc2 = document.getElementById('viewUserContent'); if (vuc2) vuc2.innerHTML = buildProfileCardHtml(updatedItem || item);
+            var pcf2 = document.getElementById('profileCardFooter'); if (pcf2) pcf2.innerHTML = buildProfileCardFooter(updatedItem || item);
+            if (selectedUserId === userId) usrmgmtRenderTable();
+            showToast('Photo updated successfully');
+          })
+          .withFailureHandler(function(err) {
+            showLoading(false);
+            showToast('Failed to update user: ' + err.message, 'error');
+          })
+          .updateUser(userId, { PhotoURL: pr.url, PhotoDriveID: pr.driveId });
+      })
+      .withFailureHandler(function(err) {
+        showLoading(false);
+        showToast('Photo upload failed: ' + err.message, 'error');
+      })
+      .uploadUserPhoto(base64, item.EmployeeID);
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeProfilePhoto(userId) {
+  showConfirm('Remove Photo', 'Are you sure you want to remove this user\'s photo?', function() {
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) {
+        usersData = result;
+        showLoading(false);
+        var updatedItem = usersData.find(function(r) { return r.UserID === userId; });
+        var vuc3 = document.getElementById('viewUserContent'); if (vuc3) vuc3.innerHTML = buildProfileCardHtml(updatedItem);
+        var pcf3 = document.getElementById('profileCardFooter'); if (pcf3) pcf3.innerHTML = buildProfileCardFooter(updatedItem);
+        if (selectedUserId === userId) usrmgmtRenderTable();
+        showToast('Photo removed');
+      })
+      .withFailureHandler(function(err) {
+        showLoading(false);
+        showToast('Failed to remove photo: ' + err.message, 'error');
+      })
+      .updateUser(userId, { PhotoURL: '', PhotoDriveID: '' });
+  });
+}
+
+function usrmgmtShowDeleteDialog(id) {
+  var overlay = document.getElementById('deleteConfirmOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'deleteConfirmOverlay';
+    overlay.style.display = 'none';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+  overlay.classList.add('show');
+  return overlay;
+}
+
+function usrmgmtCloseDeleteDialog() {
+  var overlay = document.getElementById('deleteConfirmOverlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+    overlay.classList.remove('show');
+  }
+}
+
+function usrmgmtDeleteUser(id) {
+  var item = usersData.find(function(r) { return r.UserID === id; });
+  if (!item) { showToast('User not found', 'error'); return; }
+
+  if (item.Email && currentUser && item.Email === currentUser.email) {
+    showToast('You cannot delete your own account', 'warning');
+    return;
+  }
+
+  if (item.Role === 'Administrator' || item.IsAdmin === 'TRUE') {
+    var otherActiveAdmins = usersData.filter(function(r) {
+      return r.UserID !== id && r.Status === 'Active' && (r.Role === 'Administrator' || r.IsAdmin === 'TRUE');
+    });
+    if (otherActiveAdmins.length === 0) {
+      showToast('Cannot delete the last active Administrator account', 'warning');
+      return;
+    }
+  }
+
+  var isSuperAdmin = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Administrator' || currentUser.isSystemAdmin === true);
+  var overlay = usrmgmtShowDeleteDialog(id);
+  overlay.innerHTML =
+    '<div class="modal" style="max-width:400px">' +
+      '<div class="modal-header"><div class="modal-title">Delete User</div></div>' +
+      '<div class="modal-body">' +
+        '<div style="text-align:center;padding:12px 0">' +
+          '<p style="margin:12px 0 24px;font-size:14px;color:#5f6368">Are you sure you want to delete this user?</p>' +
+          '<div class="btn-group" style="justify-content:center">' +
+            '<button class="btn btn-secondary" onclick="usrmgmtCloseDeleteDialog()">Cancel</button>' +
+            '<button class="btn btn-danger" id="usrmgmtConfirmDeleteBtn">Delete</button>' +
+          '</div>' +
+          (isSuperAdmin
+            ? '<div style="margin-top:14px;font-size:12px"><a href="#" style="color:#dc3545;text-decoration:none" onclick="event.preventDefault();usrmgmtCloseDeleteDialog();usrmgmtPermanentDeleteUser(\'' + id + '\')">Permanently delete this user</a></div>'
+            : '') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  var deleteBtn = document.getElementById('usrmgmtConfirmDeleteBtn');
+  if (deleteBtn) deleteBtn.onclick = function() {
+    usrmgmtCloseDeleteDialog();
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) {
+        usersData = result;
+        showLoading(false);
+        if (selectedUserId === id) selectedUserId = '';
+        showToast('User deactivated successfully');
+        usrmgmtRenderTable();
+      })
+      .withFailureHandler(function(err) {
+        showLoading(false);
+        showToast(err.message || 'Failed to delete user', 'error');
+      })
+      .deleteUser(id);
+  };
+}
+
+function usrmgmtPermanentDeleteUser(id) {
+  var item = usersData.find(function(r) { return r.UserID === id; });
+  if (!item) return;
+  var overlay = usrmgmtShowDeleteDialog(id);
+  overlay.innerHTML =
+    '<div class="modal" style="max-width:400px">' +
+      '<div class="modal-header"><div class="modal-title">Permanent Delete</div></div>' +
+      '<div class="modal-body">' +
+        '<div style="text-align:center;padding:12px 0">' +
+          '<p style="margin:12px 0 24px;font-size:14px;color:#5f6368">Permanently delete "' + escHtml(item.Name || item.Email) + '"? This cannot be undone.</p>' +
+          '<div class="btn-group" style="justify-content:center">' +
+            '<button class="btn btn-secondary" onclick="usrmgmtCloseDeleteDialog()">Cancel</button>' +
+            '<button class="btn btn-danger" id="usrmgmtConfirmPermDeleteBtn">Permanently Delete</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  var permDeleteBtn = document.getElementById('usrmgmtConfirmPermDeleteBtn');
+  if (permDeleteBtn) permDeleteBtn.onclick = function() {
+    usrmgmtCloseDeleteDialog();
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) {
+        usersData = result;
+        showLoading(false);
+        if (selectedUserId === id) selectedUserId = '';
+        showToast('User permanently deleted');
+        usrmgmtRenderTable();
+      })
+      .withFailureHandler(function(err) {
+        showLoading(false);
+        showToast(err.message || 'Failed to permanently delete user', 'error');
+      })
+      .permanentlyDeleteUser(id);
+  };
+}
+
+function openResetPassword(id) {
+  var rpu = document.getElementById('resetPwUserId'); if (rpu) rpu.value = id;
+  var rtp = document.getElementById('resetTempPassword'); if (rtp) rtp.value = '';
+  var el = document.getElementById('resetForceChange'); if (el) el.checked = true;
+  showModal('passwordResetModal');
+}
+
+function generateTempPassword() {
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  var pw = '';
+  for (var i = 0; i < 10; i++) {
+    pw += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  var rtp = document.getElementById('resetTempPassword'); if (rtp) rtp.value = pw;
+}
+
+function confirmResetPassword() {
+  var id = document.getElementById('resetPwUserId').value;
+  var tempPassword = document.getElementById('resetTempPassword').value.trim();
+  var forceChange = document.getElementById('resetForceChange').checked;
+
+  if (!tempPassword || tempPassword.length < 6) {
+    showToast('Password must be at least 6 characters', 'warning');
+    return;
+  }
+
+  showConfirm('Confirm Password Reset', 'Are you sure you want to reset the password for this user?', function() {
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function(result) {
+        usersData = result;
+        showLoading(false);
+        hideModal('passwordResetModal');
+        showToast('Password reset successfully');
+        usrmgmtRenderTable();
+      })
+      .withFailureHandler(function(err) {
+        showLoading(false);
+        showToast(err.message || 'Failed to reset password', 'error');
+      })
+      .resetUserPassword(id, tempPassword, forceChange);
+  });
+}
+
+function searchUsersTable() {
+  var query = document.getElementById('userSearch').value;
+  if (!query) { usrmgmtRenderTable(); return; }
   showLoading(true);
   google.script.run
     .withSuccessHandler(function(result) {
+      usersData = result;
       showLoading(false);
-      if (result.success) {
-        window.open(result.url, '_blank');
-        showToast('Users exported to Excel successfully', 'success');
-      } else {
-        showToast('Export failed', 'error');
-      }
+      usersPage = 1;
+      selectedUserId = '';
+      usrmgmtRenderTable();
     })
     .withFailureHandler(function(err) {
       showLoading(false);
-      showToast('Export failed: ' + (err.message || err), 'error');
+      showToast('Search failed', 'error');
+    })
+    .searchUsers(query);
+}
+
+function exportUsersExcel() {
+  showLoading(true);
+  google.script.run
+    .withSuccessHandler(function(url) {
+      showLoading(false);
+      if (url) window.open(url, '_blank');
+      else showToast('Failed to generate export', 'error');
+    })
+    .withFailureHandler(function(err) {
+      showLoading(false);
+      showToast('Export failed: ' + err.message, 'error');
     })
     .exportUsersToExcel();
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-  usersBuildPermCards();
-});
 </script>

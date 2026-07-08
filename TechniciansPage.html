@@ -138,10 +138,12 @@ function loadTechDepartments() {
   google.script.run
     .withSuccessHandler(function(depts) {
       var sel = document.getElementById('techDept');
-      sel.innerHTML = '<option value="">Select Department</option>';
-      (depts || []).forEach(function(d) {
-        sel.innerHTML += '<option value="' + escapeHtml(d.Department) + '">' + escapeHtml(d.Department) + '</option>';
-      });
+      if (sel) {
+        sel.innerHTML = '<option value="">Select Department</option>';
+        (depts || []).forEach(function(d) {
+          sel.innerHTML += '<option value="' + escapeHtml(d.Department) + '">' + escapeHtml(d.Department) + '</option>';
+        });
+      }
     })
     .withFailureHandler(function(err) { console.error('Failed to load departments'); })
     .getDepartmentList();
@@ -150,24 +152,26 @@ function loadTechDepartments() {
 function onTechDeptChange() {
   var dept = document.getElementById('techDept').value;
   var secSel = document.getElementById('techSection');
-  secSel.innerHTML = '<option value="">Select Section</option>';
+  if (secSel) secSel.innerHTML = '<option value="">Select Section</option>';
   if (!dept) return;
   google.script.run
     .withSuccessHandler(function(sections) {
-      (sections || []).forEach(function(s) {
-        secSel.innerHTML += '<option value="' + escapeHtml(s.Section) + '">' + escapeHtml(s.Section) + '</option>';
-      });
+      if (secSel) {
+        (sections || []).forEach(function(s) {
+          secSel.innerHTML += '<option value="' + escapeHtml(s.Section) + '">' + escapeHtml(s.Section) + '</option>';
+        });
+      }
     })
     .withFailureHandler(function(err) { console.error('Failed to load sections'); })
     .getSectionList();
 }
 
 function openTechnicianForm() {
-  document.getElementById('editTechId').value = '';
-  document.getElementById('techEmpId').disabled = false;
+  var eti = document.getElementById('editTechId'); if (eti) eti.value = '';
+  var el = document.getElementById('techEmpId'); if (el) el.disabled = false;
   resetForm('technicianForm');
   loadTechDepartments();
-  document.getElementById('techSection').innerHTML = '<option value="">Select Section</option>';
+  var ts = document.getElementById('techSection'); if (ts) ts.innerHTML = '<option value="">Select Section</option>';
   populateSelectFromList('techSkill', CONSTANTS.TECH_SKILLS, 'Select Skill');
   populateSelectFromList('techShift', CONSTANTS.TECH_SHIFTS, 'Select Shift');
   openModalForm('technicianForm', 'Add Technician');
@@ -180,12 +184,12 @@ function editTechnician(id) {
   populateSelectFromList('techSkill', CONSTANTS.TECH_SKILLS, 'Select Skill');
   populateSelectFromList('techShift', CONSTANTS.TECH_SHIFTS, 'Select Shift');
   setFormData('technicianForm', item);
-  document.getElementById('editTechId').value = id;
-  document.getElementById('techEmpId').disabled = true;
+  var eti = document.getElementById('editTechId'); if (eti) eti.value = id;
+  var el = document.getElementById('techEmpId'); if (el) el.disabled = true;
   onTechDeptChange();
   setTimeout(function() {
     if (item.Section) {
-      document.getElementById('techSection').value = item.Section;
+      var ts = document.getElementById('techSection'); if (ts) ts.value = item.Section;
     }
   }, 300);
   openModalForm('technicianForm', 'Edit Technician - ' + id);

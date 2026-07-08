@@ -190,7 +190,7 @@ function renderChecklistsTable() {
 }
 
 function openTemplateForm() {
-  document.getElementById('editTemplateId').value = '';
+  var el = document.getElementById('editTemplateId'); if (el) el.value = '';
   resetForm('templateForm');
   populateSelectFromList('templateCategory', CONSTANTS.CHECKLIST_CATEGORIES, 'Select Category');
   openModalForm('templateForm', 'New Checklist Template');
@@ -201,14 +201,14 @@ function editTemplate(id) {
   if (!item) return;
   populateSelectFromList('templateCategory', CONSTANTS.CHECKLIST_CATEGORIES, 'Select Category');
   setFormData('templateForm', item);
-  document.getElementById('editTemplateId').value = id;
+  var el = document.getElementById('editTemplateId'); if (el) el.value = id;
   openModalForm('templateForm', 'Edit Template - ' + id);
 }
 
 function saveTemplate(e) {
   e.preventDefault();
   var data = getFormData('templateForm');
-  var id = document.getElementById('editTemplateId').value;
+  var idEl = document.getElementById('editTemplateId'); var id = idEl ? idEl.value : '';
   showLoading(true);
   if (id) {
     google.script.run
@@ -234,10 +234,13 @@ function deleteTemplate(id) {
 }
 
 function openChecklistForm() {
-  document.getElementById('editChecklistId').value = '';
+  var el;
+  el = document.getElementById('editChecklistId'); if (el) el.value = '';
   resetForm('checklistForm');
-  document.getElementById('checklistItemsContainer').style.display = 'none';
-  document.getElementById('checklistForm').querySelector('input[name="Date"]').value = new Date().toISOString().split('T')[0];
+  el = document.getElementById('checklistItemsContainer'); if (el) el.style.display = 'none';
+  var clForm = document.getElementById('checklistForm');
+  var dateInput = clForm ? clForm.querySelector('input[name="Date"]') : null;
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
   populateSelect('clTemplate', templateData, 'TemplateID', 'TemplateName', 'Select Template');
   google.script.run.withSuccessHandler(function(m) { populateSelect('clMachine', m, 'MachineID', 'MachineName', 'Select Machine'); }).withFailureHandler(function() {}).getMachines();
   google.script.run.withSuccessHandler(function(t) { populateSelect('clTechnician', t, 'EmployeeID', 'TechnicianName', 'Select'); }).withFailureHandler(function() {}).getTechnicians();
@@ -245,12 +248,15 @@ function openChecklistForm() {
 }
 
 function onTemplateChange() {
-  var templateId = document.getElementById('clTemplate').value;
+  var templateIdEl = document.getElementById('clTemplate');
+  if (!templateIdEl) return;
+  var templateId = templateIdEl.value;
   var template = templateData.find(function(t) { return t.TemplateID === templateId; });
   var container = document.getElementById('checklistItemsContainer');
-  if (!template || !template.Items) { container.style.display = 'none'; return; }
+  if (!template || !template.Items) { if (container) container.style.display = 'none'; return; }
+  if (!container) return;
   container.style.display = 'block';
-  document.getElementById('clTemplateName').value = template.TemplateName;
+  var nameEl = document.getElementById('clTemplateName'); if (nameEl) nameEl.value = template.TemplateName;
   var items = template.Items.split('\n').filter(function(i) { return i.trim(); });
   var html = '';
   items.forEach(function(item, idx) {
@@ -258,7 +264,7 @@ function onTemplateChange() {
       '<input type="checkbox" name="cl_item_' + idx + '" value="Pass" onchange="updateChecklistResults()">' +
       '<span>' + item + '</span></div>';
   });
-  document.getElementById('checklistItems').innerHTML = html;
+  var checklistItems = document.getElementById('checklistItems'); if (checklistItems) checklistItems.innerHTML = html;
 }
 
 function updateChecklistResults() {
@@ -266,7 +272,7 @@ function updateChecklistResults() {
   document.querySelectorAll('#checklistItems input[type="checkbox"]').forEach(function(cb) {
     results.push({ item: cb.nextElementSibling.textContent, status: cb.checked ? 'Pass' : 'Fail' });
   });
-  document.getElementById('clResults').value = JSON.stringify(results);
+  var resultsEl = document.getElementById('clResults'); if (resultsEl) resultsEl.value = JSON.stringify(results);
 }
 
 function editChecklist(id) {
@@ -276,19 +282,19 @@ function editChecklist(id) {
   google.script.run.withSuccessHandler(function(m) { populateSelect('clMachine', m, 'MachineID', 'MachineName', 'Select Machine'); }).withFailureHandler(function() {}).getMachines();
   google.script.run.withSuccessHandler(function(t) { populateSelect('clTechnician', t, 'EmployeeID', 'TechnicianName', 'Select'); }).withFailureHandler(function() {}).getTechnicians();
   setFormData('checklistForm', item);
-  document.getElementById('editChecklistId').value = id;
+  var editIdEl = document.getElementById('editChecklistId'); if (editIdEl) editIdEl.value = id;
   populateSelect('clTemplate', templateData, 'TemplateID', 'TemplateName', 'Select Template');
   if (item.Results) {
     try {
       var results = JSON.parse(item.Results);
-      document.getElementById('checklistItemsContainer').style.display = 'block';
+      var containerEl = document.getElementById('checklistItemsContainer'); if (containerEl) containerEl.style.display = 'block';
       var html = '';
       results.forEach(function(r, idx) {
         html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">' +
           '<input type="checkbox" name="cl_item_' + idx + '" value="Pass" ' + (r.status === 'Pass' ? 'checked' : '') + ' onchange="updateChecklistResults()">' +
           '<span>' + r.item + '</span></div>';
       });
-      document.getElementById('checklistItems').innerHTML = html;
+      var checklistItems = document.getElementById('checklistItems'); if (checklistItems) checklistItems.innerHTML = html;
     } catch(e) {}
   }
   openModalForm('checklistForm', 'Edit Checklist - ' + id);
@@ -298,7 +304,7 @@ function saveChecklist(e) {
   e.preventDefault();
   updateChecklistResults();
   var data = getFormData('checklistForm');
-  var id = document.getElementById('editChecklistId').value;
+  var idEl = document.getElementById('editChecklistId'); var id = idEl ? idEl.value : '';
   showLoading(true);
   if (id) {
     google.script.run

@@ -168,10 +168,10 @@ function updateNotifSummary() {
   var read = total - unread;
   var modules = {};
   notifData.forEach(function(r) { if (r.Module) modules[r.Module] = true; });
-  document.getElementById('notifTotal').textContent = total;
-  document.getElementById('notifUnread').textContent = unread;
-  document.getElementById('notifRead').textContent = read;
-  document.getElementById('notifTypes').textContent = Object.keys(modules).length;
+  var el = document.getElementById('notifTotal'); if (el) el.textContent = total;
+  var el = document.getElementById('notifUnread'); if (el) el.textContent = unread;
+  var el = document.getElementById('notifRead'); if (el) el.textContent = read;
+  var el = document.getElementById('notifTypes'); if (el) el.textContent = Object.keys(modules).length;
 }
 
 function renderNotifTable() {
@@ -208,17 +208,17 @@ function renderNotifTable() {
 function viewNotif(id) {
   var item = notifData.find(function(r) { return r.NotificationID === id; });
   if (!item) { showToast('Record not found', 'error'); return; }
-  document.getElementById('notifViewId').textContent = item.NotificationID || '-';
-  document.getElementById('notifViewType').textContent = item.Module || '-';
-  document.getElementById('notifViewNotifType').textContent = item.NotificationType || '-';
-  document.getElementById('notifViewTitleText').textContent = item.Title || '-';
-  document.getElementById('notifViewPriority').textContent = item.Priority || '-';
-  document.getElementById('notifViewCreatedBy').textContent = item.CreatedBy || '-';
-  document.getElementById('notifViewAssignedTo').textContent = item.AssignedTo || '-';
-  document.getElementById('notifViewReadStatus').textContent = item.ReadStatus || '-';
-  document.getElementById('notifViewCreatedAt').textContent = item.CreatedDateTime || '-';
-  document.getElementById('notifViewActionUrl').textContent = item.ActionURL || '-';
-  document.getElementById('notifViewMessage').textContent = item.Message || '-';
+  var el = document.getElementById('notifViewId'); if (el) el.textContent = item.NotificationID || '-';
+  var el = document.getElementById('notifViewType'); if (el) el.textContent = item.Module || '-';
+  var el = document.getElementById('notifViewNotifType'); if (el) el.textContent = item.NotificationType || '-';
+  var el = document.getElementById('notifViewTitleText'); if (el) el.textContent = item.Title || '-';
+  var el = document.getElementById('notifViewPriority'); if (el) el.textContent = item.Priority || '-';
+  var el = document.getElementById('notifViewCreatedBy'); if (el) el.textContent = item.CreatedBy || '-';
+  var el = document.getElementById('notifViewAssignedTo'); if (el) el.textContent = item.AssignedTo || '-';
+  var el = document.getElementById('notifViewReadStatus'); if (el) el.textContent = item.ReadStatus || '-';
+  var el = document.getElementById('notifViewCreatedAt'); if (el) el.textContent = item.CreatedDateTime || '-';
+  var el = document.getElementById('notifViewActionUrl'); if (el) el.textContent = item.ActionURL || '-';
+  var el = document.getElementById('notifViewMessage'); if (el) el.textContent = item.Message || '-';
   openModalForm('notifView', 'Notification - ' + id);
 }
 
@@ -314,41 +314,41 @@ function updateNotifBadge() {
 }
 
 function searchNotifTable() {
-  var query = document.getElementById('notifSearch').value;
+  var el = document.getElementById('notifSearch'); if (!el) return; var query = el.value;
   notifFilter.search = query;
   if (notifSearchDebounce) clearTimeout(notifSearchDebounce);
   notifSearchDebounce = setTimeout(function() { notifPage = 1; renderNotifTable(); }, 300);
 }
 
 function applyNotifFilter() {
-  notifFilter.type = document.getElementById('notifFilterType').value;
-  notifFilter.notifType = document.getElementById('notifFilterNotifType').value;
-  notifFilter.status = document.getElementById('notifFilterStatus').value;
-  notifFilter.priority = document.getElementById('notifFilterPriority').value;
+  var el = document.getElementById('notifFilterType'); if (el) notifFilter.type = el.value;
+  var el = document.getElementById('notifFilterNotifType'); if (el) notifFilter.notifType = el.value;
+  var el = document.getElementById('notifFilterStatus'); if (el) notifFilter.status = el.value;
+  var el = document.getElementById('notifFilterPriority'); if (el) notifFilter.priority = el.value;
   notifPage = 1;
   renderNotifTable();
 }
 
 function clearNotifFilter() {
-  document.getElementById('notifFilterType').value = '';
-  document.getElementById('notifFilterNotifType').value = '';
-  document.getElementById('notifFilterStatus').value = '';
-  document.getElementById('notifFilterPriority').value = '';
-  document.getElementById('notifSearch').value = '';
+  var el = document.getElementById('notifFilterType'); if (el) el.value = '';
+  var el = document.getElementById('notifFilterNotifType'); if (el) el.value = '';
+  var el = document.getElementById('notifFilterStatus'); if (el) el.value = '';
+  var el = document.getElementById('notifFilterPriority'); if (el) el.value = '';
+  var el = document.getElementById('notifSearch'); if (el) el.value = '';
   notifFilter = { search: '', type: '', notifType: '', status: '', priority: '' };
   notifPage = 1;
   renderNotifTable();
 }
 
 function filterNotifByType(type) {
-  document.getElementById('notifFilterType').value = type;
+  var el = document.getElementById('notifFilterType'); if (el) el.value = type;
   notifFilter.type = type;
   notifPage = 1;
   renderNotifTable();
 }
 
 function filterNotifByRead(status) {
-  document.getElementById('notifFilterStatus').value = status;
+  var el = document.getElementById('notifFilterStatus'); if (el) el.value = status;
   notifFilter.status = status;
   notifPage = 1;
   renderNotifTable();

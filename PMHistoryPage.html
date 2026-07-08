@@ -134,7 +134,7 @@ function loadPMHFilterSelects() {
   google.script.run
     .withSuccessHandler(function(m) {
       var sel = document.getElementById('pmhFilterMachine');
-      sel.innerHTML = '<option value="">All Machines</option>';
+      if (sel) sel.innerHTML = '<option value="">All Machines</option>';
       (m || []).forEach(function(item) { sel.innerHTML += '<option value="' + (item.MachineID || '') + '">' + escHtml(item.MachineName || '') + '</option>'; });
     })
     .withFailureHandler(function() {})
@@ -142,7 +142,7 @@ function loadPMHFilterSelects() {
   google.script.run
     .withSuccessHandler(function(t) {
       var sel = document.getElementById('pmhFilterTechnician');
-      sel.innerHTML = '<option value="">All Technicians</option>';
+      if (sel) sel.innerHTML = '<option value="">All Technicians</option>';
       (t || []).forEach(function(item) { sel.innerHTML += '<option value="' + (item.EmployeeID || '') + '">' + escHtml(item.TechnicianName || item.Name || '') + '</option>'; });
     })
     .withFailureHandler(function() {})
@@ -160,10 +160,10 @@ function updatePMHSummary() {
     var d = r.CompletionDate ? new Date(r.CompletionDate) : null;
     return d && d >= monthStart && d <= monthEnd;
   }).length;
-  document.getElementById('pmhTotalCount').textContent = total;
-  document.getElementById('pmhCompletedCount').textContent = completed;
-  document.getElementById('pmhOverdueCount').textContent = overdue;
-  document.getElementById('pmhThisMonth').textContent = thisMonth;
+  var el = document.getElementById('pmhTotalCount'); if (el) el.textContent = total;
+  var el2 = document.getElementById('pmhCompletedCount'); if (el2) el2.textContent = completed;
+  var el3 = document.getElementById('pmhOverdueCount'); if (el3) el3.textContent = overdue;
+  var el4 = document.getElementById('pmhThisMonth'); if (el4) el4.textContent = thisMonth;
 }
 
 function renderPMHTable() {
@@ -188,17 +188,17 @@ function renderPMHTable() {
 function viewPMH(id) {
   var item = pmhData.find(function(r) { return r.PMNumber === id; });
   if (!item) { showToast('Record not found', 'error'); return; }
-  document.getElementById('pmhViewPMNumber').textContent = item.PMNumber || '-';
-  document.getElementById('pmhViewTitle').textContent = item.Title || '-';
-  document.getElementById('pmhViewMachine').textContent = item.MachineName || '-';
-  document.getElementById('pmhViewTechnician').textContent = item.TechnicianName || item.AssignedTechnicianName || '-';
-  document.getElementById('pmhViewStatus').textContent = item.Status || '-';
-  document.getElementById('pmhViewCompletionDate').textContent = item.CompletionDate || '-';
-  document.getElementById('pmhViewNextDue').textContent = item.NextDueDate || '-';
-  document.getElementById('pmhViewCreatedAt').textContent = item.CreatedAt || '-';
-  document.getElementById('pmhViewCreatedBy').textContent = item.CreatedBy || '-';
-  document.getElementById('pmhViewRemarks').textContent = item.Remarks || '-';
-  document.getElementById('pmhViewTitle').textContent = item.Title || 'PM History Details';
+  var el = document.getElementById('pmhViewPMNumber'); if (el) el.textContent = item.PMNumber || '-';
+  var el2 = document.getElementById('pmhViewTitle'); if (el2) el2.textContent = item.Title || '-';
+  var el3 = document.getElementById('pmhViewMachine'); if (el3) el3.textContent = item.MachineName || '-';
+  var el4 = document.getElementById('pmhViewTechnician'); if (el4) el4.textContent = item.TechnicianName || item.AssignedTechnicianName || '-';
+  var el5 = document.getElementById('pmhViewStatus'); if (el5) el5.textContent = item.Status || '-';
+  var el6 = document.getElementById('pmhViewCompletionDate'); if (el6) el6.textContent = item.CompletionDate || '-';
+  var el7 = document.getElementById('pmhViewNextDue'); if (el7) el7.textContent = item.NextDueDate || '-';
+  var el8 = document.getElementById('pmhViewCreatedAt'); if (el8) el8.textContent = item.CreatedAt || '-';
+  var el9 = document.getElementById('pmhViewCreatedBy'); if (el9) el9.textContent = item.CreatedBy || '-';
+  var el10 = document.getElementById('pmhViewRemarks'); if (el10) el10.textContent = item.Remarks || '-';
+  if (el2) el2.textContent = item.Title || 'PM History Details';
   openModalForm('pmhView', 'PM History - ' + id);
 }
 
@@ -221,10 +221,10 @@ function applyPMHFilter() {
 }
 
 function clearPMHFilter() {
-  document.getElementById('pmhFilterMachine').value = '';
-  document.getElementById('pmhFilterTechnician').value = '';
-  document.getElementById('pmhFilterStatus').value = '';
-  document.getElementById('pmhSearch').value = '';
+  var el = document.getElementById('pmhFilterMachine'); if (el) el.value = '';
+  var el2 = document.getElementById('pmhFilterTechnician'); if (el2) el2.value = '';
+  var el3 = document.getElementById('pmhFilterStatus'); if (el3) el3.value = '';
+  var el4 = document.getElementById('pmhSearch'); if (el4) el4.value = '';
   pmhFilter = { search: '', machine: '', technician: '', status: '' };
   pmhPage = 1;
   renderPMHTable();

@@ -463,7 +463,7 @@
     <div class="ws-card">
       <div class="ws-logo-area" id="wsLogoArea">
         <div class="ws-glow-ring"></div>
-        <img class="logo-img" id="wsLogoImg" alt="Pakistan Wire Industries" src="?img=logo" style="display:none" onload="this.style.display='block';document.getElementById('wsLogoFallback').style.display='none'" onerror="document.getElementById('wsLogoFallback').style.display='flex'">
+        <img class="logo-img" id="wsLogoImg" alt="Pakistan Wire Industries" src="?img=logo" style="display:none" onload="this.style.display='block';var el=document.getElementById('wsLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('wsLogoFallback');el&&(el.style.display='flex')">
         <div class="logo-fallback" id="wsLogoFallback">
           <svg class="logo-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
@@ -509,10 +509,12 @@
       wsLoaded = true;
       if (wsTimer) { clearTimeout(wsTimer); wsTimer = null; }
       var btn = document.getElementById('wsBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;display:inline-block;animation:spin 0.6s linear infinite;margin-right:8px"></span> Loading...';
-      document.getElementById('wsError').style.display = 'none';
-      document.getElementById('wsRetryBtn').style.display = 'none';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;display:inline-block;animation:spin 0.6s linear infinite;margin-right:8px"></span> Loading...';
+      }
+      var wsErr = document.getElementById('wsError'); if (wsErr) wsErr.style.display = 'none';
+      var wsRetry = document.getElementById('wsRetryBtn'); if (wsRetry) wsRetry.style.display = 'none';
       google.script.run
         .withSuccessHandler(function(html) {
           if (html && html.length > 0) {
@@ -532,11 +534,13 @@
     function wsEnterFail(msg) {
       console.error('Welcome: Failed to load app -', msg);
       var btn = document.getElementById('wsBtn');
-      btn.disabled = false;
-      btn.innerHTML = 'ENTER CMMS <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
-      document.getElementById('wsErrorText').textContent = 'Could not connect to server: ' + (msg || 'Unknown error');
-      document.getElementById('wsError').style.display = 'block';
-      document.getElementById('wsRetryBtn').style.display = 'inline-block';
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = 'ENTER CMMS <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+      }
+      var wsErrText = document.getElementById('wsErrorText'); if (wsErrText) wsErrText.textContent = 'Could not connect to server: ' + (msg || 'Unknown error');
+      var wsErr = document.getElementById('wsError'); if (wsErr) wsErr.style.display = 'block';
+      var wsRetry = document.getElementById('wsRetryBtn'); if (wsRetry) wsRetry.style.display = 'inline-block';
       wsLoaded = false;
     }
 
@@ -556,7 +560,7 @@
           textIndex = newIndex;
           loadingText.textContent = loadingTexts[textIndex];
           loadingText.style.opacity = '0';
-          setTimeout(function() { loadingText.style.opacity = '1'; }, 50);
+          setTimeout(function() { if (loadingText) loadingText.style.opacity = '1'; }, 50);
         }
 
         if (pct >= 100) wsEnter();

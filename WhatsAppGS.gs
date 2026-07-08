@@ -55,7 +55,7 @@ function whatsappInitTemplatesSheet() {
       { TemplateID: 'TMP001', TemplateName: 'Job Opened', EventType: WHATSAPP.TEMPLATES.JC_OPENED, TemplateBody: '*Job Card Opened*\n\nJob: {{jobCardNo}}\nMachine: {{machine}}\nPriority: {{priority}}\nComplaint: {{complaint}}\nReported By: {{reportedBy}}\nDate: {{dateTime}}', Variables: 'jobCardNo,machine,priority,complaint,reportedBy,dateTime', CreatedBy: 'system', CreatedAt: now },
       { TemplateID: 'TMP002', TemplateName: 'Job Assigned', EventType: WHATSAPP.TEMPLATES.JC_ASSIGNED, TemplateBody: '*Job Assigned*\n\nJob: {{jobCardNo}}\nMachine: {{machine}}\nAssigned To: {{assignedTech}}\nPriority: {{priority}}\nComplaint: {{complaint}}', Variables: 'jobCardNo,machine,assignedTech,priority,complaint', CreatedBy: 'system', CreatedAt: now },
       { TemplateID: 'TMP003', TemplateName: 'Job Started', EventType: WHATSAPP.TEMPLATES.JC_STARTED, TemplateBody: '*Job Started*\n\nJob: {{jobCardNo}}\nMachine: {{machine}}\nStarted By: {{startedBy}}\nStart Time: {{startTime}}\nPriority: {{priority}}', Variables: 'jobCardNo,machine,startedBy,startTime,priority', CreatedBy: 'system', CreatedAt: now },
-      { TemplateID: 'TMP004', TemplateName: 'Job Closed', EventType: WHATSAPP.TEMPLATES.JC_CLOSED, TemplateBody: '*Job Closed*\n\nJob: {{jobCardNo}}\nMachine: {{machine}}\nClosed By: {{closedBy}}\nWorking Time: {{workingTime}}h\nTotal Duration: {{totalDuration}}h', Variables: 'jobCardNo,machine,closedBy,workingTime,totalDuration', CreatedBy: 'system', CreatedAt: now },
+      { TemplateID: 'TMP004', TemplateName: 'Job Closed', EventType: WHATSAPP.TEMPLATES.JC_CLOSED, TemplateBody: '*Job Closed*\n\nJob: {{jobCardNo}}\nMachine: {{machine}}\nClosed By: {{closedBy}}\nWorking Time: {{workingTime}}\nTotal Duration: {{totalDuration}}', Variables: 'jobCardNo,machine,closedBy,workingTime,totalDuration', CreatedBy: 'system', CreatedAt: now },
       { TemplateID: 'TMP005', TemplateName: 'Job Approved', EventType: WHATSAPP.TEMPLATES.JC_APPROVED, TemplateBody: '*Job Approved*\n\nJob: {{jobCardNo}}\nMachine: {{machine}}\nApproved By: {{approvedBy}}\nStatus: {{approvalStatus}}\nRemarks: {{approvalRemarks}}', Variables: 'jobCardNo,machine,approvedBy,approvalStatus,approvalRemarks', CreatedBy: 'system', CreatedAt: now },
       { TemplateID: 'TMP006', TemplateName: 'PM Due Reminder', EventType: WHATSAPP.TEMPLATES.PM_DUE, TemplateBody: '*PM Due Reminder*\n\nPM: {{title}}\nMachine: {{machine}}\nAssigned To: {{assignedTech}}\nDue Date: {{dueDate}}\nFrequency: {{frequency}}', Variables: 'title,machine,assignedTech,dueDate,frequency', CreatedBy: 'system', CreatedAt: now },
       { TemplateID: 'TMP007', TemplateName: 'PM Overdue', EventType: WHATSAPP.TEMPLATES.PM_OVERDUE, TemplateBody: '*PM Overdue Alert*\n\nPM: {{title}}\nMachine: {{machine}}\nOverdue Since: {{dueDate}}\nFrequency: {{frequency}}', Variables: 'title,machine,dueDate,frequency', CreatedBy: 'system', CreatedAt: now },
@@ -105,7 +105,7 @@ function whatsappGetSettings() {
 
 function whatsappSaveSettings(data) {
   try {
-    var currentUser = Session.getActiveUser().getEmail();
+    var currentUser = data && data.email || '';
     var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
     var isAdmin = false;
     for (var ui = 0; ui < users.length; ui++) {

@@ -56,7 +56,7 @@ function emailSaveSettings(data) {
   Logger.log('emailSaveSettings() called: ' + JSON.stringify(data));
   console.log('emailSaveSettings() called');
   try {
-    var currentUser = Session.getActiveUser().getEmail();
+    var currentUser = data && data.email || '';
     var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
     var isAdmin = false;
     for (var ui = 0; ui < users.length; ui++) {
@@ -706,7 +706,7 @@ function emailTemplateWeeklySummary(data) {
     emailTableRow('PMs Completed', data.pmCompleted || '0') +
     emailTableRow('PMs Overdue', data.pmOverdue || '0') +
     emailTableRow('Breakdowns', data.breakdowns || '0') +
-    emailTableRow('Total Downtime (hrs)', data.totalDowntime || '0') +
+    emailTableRow('Total Downtime', data.totalDowntime || '00:00') +
     emailTableRow('Low Stock Items', data.lowStockItems || '0') +
     emailTableRow('Goods Receipts', data.goodsReceipts || '0') +
     '</table>';
@@ -722,7 +722,7 @@ function emailTemplateMonthlySummary(data) {
     emailTableRow('Jobs Closed', data.jobsClosed || '0') +
     emailTableRow('Jobs Approved', data.jobsApproved || '0') +
     emailTableRow('Machine Breakdowns', data.breakdowns || '0') +
-    emailTableRow('Total Downtime (hrs)', data.totalDowntime || '0') +
+    emailTableRow('Total Downtime', data.totalDowntime || '00:00') +
     emailTableRow('MTTR (hrs)', data.mttr || '0') +
     emailTableRow('MTBF', data.mtbf || '0') +
     emailTableRow('Machine Availability', (data.availability || '0') + '%') +
@@ -799,7 +799,7 @@ function emailSendWeeklySummary() {
       pmCompleted: dashboard.pmCompleted || '0',
       pmOverdue: dashboard.pmOverdue || '0',
       breakdowns: '0',
-      totalDowntime: dashboard.breakdownHours || '0',
+      totalDowntime: formatDurationHours(dashboard.breakdownHours || 0),
       lowStockItems: dashboard.lowStockParts || '0',
       goodsReceipts: '0'
     };
@@ -838,7 +838,7 @@ function emailSendMonthlySummary() {
       jobsClosed: dashboard.closedJobs || '0',
       jobsApproved: dashboard.approvedJobs || '0',
       breakdowns: '0',
-      totalDowntime: dashboard.breakdownHours || '0',
+      totalDowntime: formatDurationHours(dashboard.breakdownHours || 0),
       mttr: dashboard.mttr || '0',
       mtbf: dashboard.mtbf || '0',
       availability: dashboard.availability || '0',

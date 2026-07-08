@@ -42,7 +42,7 @@
     <form id="closeJcForm" onsubmit="return saveCloseJc(event)">
       <div class="modal-body">
         <input type="hidden" name="JobCardNo" id="closeJcJobNo">
-        <input type="hidden" name="Status" value="Closed">
+        <input type="hidden" name="CurrentStatus" value="PENDING">
 
         <div class="time-summary-panel">
           <div class="ts-header">Time Summary</div>
@@ -93,9 +93,18 @@
 
         <div class="form-row">
           <div class="form-group">
+            <label>Breakdown Type *</label>
+            <select name="BreakdownType" class="form-control" id="closeJcBreakdownType" required>
+              <option value="">Select Breakdown Type</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label>Root Cause *</label>
             <input type="text" name="RootCause" class="form-control" placeholder="Root cause of failure" required>
           </div>
+        </div>
+
+        <div class="form-row">
           <div class="form-group">
             <label>Spare Parts Used</label>
             <input type="text" name="SpareParts" class="form-control" placeholder="Parts, spares, materials used">
@@ -108,8 +117,8 @@
         </div>
 
         <div class="form-group">
-          <label>Close Remarks</label>
-          <textarea name="Remarks" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+          <label>Final Remarks</label>
+          <textarea name="FinalRemarks" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
         </div>
 
         <div class="form-group">
@@ -117,7 +126,7 @@
           <div class="image-upload-area" id="closeRepairImageArea">
             <input type="file" accept="image/*" id="closeRepairImageInput" style="display:none" onchange="handleRepairImageSelect(event)">
             <input type="hidden" name="RepairImage" id="closeRepairImageData">
-            <div class="upload-placeholder" onclick="document.getElementById('closeRepairImageInput').click()">
+            <div class="upload-placeholder" onclick="var el=document.getElementById('closeRepairImageInput');el&&el.click()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <span>Click to upload Repair Image</span>
               <small>Supports: JPG, PNG, WEBP (max 5MB)</small>
@@ -133,7 +142,7 @@
           <small style="color:var(--text-muted);font-size:11px">
             Close Date & Time will be captured automatically.
             All durations calculated automatically.
-            Status will change from <strong>Running</strong> to <strong>Closed</strong>.
+            Status will change from <strong>Running</strong> to <strong>Pending (Review)</strong>.
           </small>
         </div>
       </div>
@@ -169,15 +178,22 @@ function loadCloseJobCardsData() {
 function populateCloseJcSelects() {
   var deptFilter = document.getElementById('closeJcDeptFilter');
   var techFilter = document.getElementById('closeJcTechnicianFilter');
-  deptFilter.innerHTML = '<option value="">All Departments</option>';
-  techFilter.innerHTML = '<option value="">All Technicians</option>';
+  if (deptFilter) deptFilter.innerHTML = '<option value="">All Departments</option>';
+  if (techFilter) techFilter.innerHTML = '<option value="">All Technicians</option>';
   var depts = [], techs = [];
   closeJcData.forEach(function(jc) {
     if (jc.Department && depts.indexOf(jc.Department) === -1) depts.push(jc.Department);
     if (jc.AssignedTechnician && techs.indexOf(jc.AssignedTechnician) === -1) techs.push(jc.AssignedTechnician);
   });
-  depts.sort().forEach(function(d) { deptFilter.innerHTML += '<option value="' + d + '">' + d + '</option>'; });
-  techs.sort().forEach(function(t) { techFilter.innerHTML += '<option value="' + t + '">' + t + '</option>'; });
+  depts.sort().forEach(function(d) { if (deptFilter) deptFilter.innerHTML += '<option value="' + d + '">' + d + '</option>'; });
+  techs.sort().forEach(function(t) { if (techFilter) techFilter.innerHTML += '<option value="' + t + '">' + t + '</option>'; });
+  google.script.run
+    .withSuccessHandler(function(types) {
+      var active = (types || []).filter(function(t) { return t.Status === 'Active'; });
+      populateSelect('closeJcBreakdownType', active, 'TypeName', 'TypeName', 'Select Breakdown Type');
+    })
+    .withFailureHandler(function() {})
+    .getActiveBreakdownTypes();
 }
 
 function renderCloseJc() {
@@ -217,8 +233,8 @@ function openCloseJc(id) {
   var item = closeJcData.find(function(r) { return r.JobCardNo === id; });
   if (!item) return;
   resetForm('closeJcForm');
-  document.getElementById('closeJcJobNo').value = id;
-  document.getElementById('closeJcRef').textContent = id;
+  var el = document.getElementById('closeJcJobNo'); if (el) el.value = id;
+  el = document.getElementById('closeJcRef'); if (el) el.textContent = id;
   updateCloseJcTimeSummary();
   if (closeJcTimer) clearInterval(closeJcTimer);
   closeJcTimer = setInterval(updateCloseJcTimeSummary, 10000);
@@ -233,19 +249,19 @@ function updateCloseJcTimeSummary() {
   var now = new Date();
 
   if (openedStr) {
-    document.getElementById('closeJcOpenedDisplay').textContent = formatDateTime(openedStr);
+    var el = document.getElementById('closeJcOpenedDisplay'); if (el) el.textContent = formatDateTime(openedStr);
     var waitingMs = (startStr ? new Date(startStr) : now).getTime() - new Date(openedStr).getTime();
-    document.getElementById('closeJcWaitingDisplay').textContent = formatDuration(waitingMs);
+    el = document.getElementById('closeJcWaitingDisplay'); if (el) el.textContent = formatDuration(waitingMs);
   }
   if (startStr) {
-    document.getElementById('closeJcStartedDisplay').textContent = formatDateTime(startStr);
+    var el = document.getElementById('closeJcStartedDisplay'); if (el) el.textContent = formatDateTime(startStr);
     var workingMs = now.getTime() - new Date(startStr).getTime();
-    document.getElementById('closeJcWorkingDisplay').textContent = formatDuration(workingMs);
+    el = document.getElementById('closeJcWorkingDisplay'); if (el) el.textContent = formatDuration(workingMs);
   }
-  document.getElementById('closeJcClosedDisplay').textContent = formatDateTime(now);
+  var el = document.getElementById('closeJcClosedDisplay'); if (el) el.textContent = formatDateTime(now);
   if (openedStr) {
     var breakdownMs = now.getTime() - new Date(openedStr).getTime();
-    document.getElementById('closeJcBreakdownDisplay').textContent = formatDuration(breakdownMs);
+    el = document.getElementById('closeJcBreakdownDisplay'); if (el) el.textContent = formatDuration(breakdownMs);
   }
 }
 
@@ -259,27 +275,31 @@ function handleRepairImageSelect(evt) {
   }
   var reader = new FileReader();
   reader.onload = function(e) {
-    document.getElementById('closeRepairImageData').value = e.target.result;
+    var el = document.getElementById('closeRepairImageData'); if (el) el.value = e.target.result;
     var preview = document.getElementById('closeRepairImagePreview');
     var placeholder = document.querySelector('#closeRepairImageArea .upload-placeholder');
-    preview.style.display = 'block';
-    placeholder.style.display = 'none';
-    document.getElementById('closeRepairImagePreviewImg').src = e.target.result;
+    if (preview) preview.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+    el = document.getElementById('closeRepairImagePreviewImg'); if (el) el.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
 function removeRepairImage() {
-  document.getElementById('closeRepairImageData').value = '';
-  document.getElementById('closeRepairImageInput').value = '';
-  document.getElementById('closeRepairImagePreview').style.display = 'none';
-  document.querySelector('#closeRepairImageArea .upload-placeholder').style.display = 'flex';
+  var el = document.getElementById('closeRepairImageData'); if (el) el.value = '';
+  el = document.getElementById('closeRepairImageInput'); if (el) el.value = '';
+  el = document.getElementById('closeRepairImagePreview'); if (el) el.style.display = 'none';
+  var ph = document.querySelector('#closeRepairImageArea .upload-placeholder'); if (ph) ph.style.display = 'flex';
 }
 
 function saveCloseJc(e) {
   e.preventDefault();
   var data = getFormData('closeJcForm');
   var id = data.JobCardNo;
+  if (!data.BreakdownType) {
+    showToast('Please select Breakdown Type', 'error');
+    return;
+  }
   if (!data.RootCause || !data.CorrectiveAction) {
     showToast('Please fill in Root Cause and Corrective Action', 'error');
     return;

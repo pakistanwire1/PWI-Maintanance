@@ -151,10 +151,11 @@ function updateGRSummary() {
   var pending = grData.filter(function(r) { return (r.Status || '').toLowerCase() !== 'received'; }).length;
   var totalQty = 0;
   grData.forEach(function(r) { totalQty += parseFloat(r.Quantity) || 0; });
-  document.getElementById('grTotalGRNs').textContent = total;
-  document.getElementById('grReceived').textContent = received;
-  document.getElementById('grPending').textContent = pending;
-  document.getElementById('grTotalQty').textContent = totalQty.toFixed(2);
+  var el;
+  el = document.getElementById('grTotalGRNs'); if (el) el.textContent = total;
+  el = document.getElementById('grReceived'); if (el) el.textContent = received;
+  el = document.getElementById('grPending'); if (el) el.textContent = pending;
+  el = document.getElementById('grTotalQty'); if (el) el.textContent = totalQty.toFixed(2);
 }
 
 function renderGRTable() {
@@ -181,22 +182,23 @@ function renderGRTable() {
 function viewGR(id) {
   var item = grData.find(function(r) { return r.GRNNo === id; });
   if (!item) { showToast('Record not found', 'error'); return; }
-  document.getElementById('grViewGRNNo').textContent = item.GRNNo || '-';
-  document.getElementById('grViewPartCode').textContent = item.PartCode || '-';
-  document.getElementById('grViewPartName').textContent = item.PartName || '-';
-  document.getElementById('grViewQty').textContent = item.Quantity || '0';
-  document.getElementById('grViewStatus').textContent = item.Status || '-';
-  document.getElementById('grViewUnitCost').textContent = item.UnitCost ? parseFloat(item.UnitCost).toFixed(2) : '0.00';
-  document.getElementById('grViewTotalCost').textContent = item.TotalCost ? parseFloat(item.TotalCost).toFixed(2) : '0.00';
-  document.getElementById('grViewSupplier').textContent = item.Supplier || '-';
-  document.getElementById('grViewInvoiceNo').textContent = item.InvoiceNo || '-';
-  document.getElementById('grViewPONo').textContent = item.PONo || '-';
-  document.getElementById('grViewReceivedBy').textContent = item.ReceivedBy || '-';
-  document.getElementById('grViewReceivedDate').textContent = item.ReceivedDate || item.CreatedAt || '-';
-  document.getElementById('grViewCreatedBy').textContent = item.CreatedBy || '-';
-  document.getElementById('grViewCreatedAt').textContent = item.CreatedAt || '-';
-  document.getElementById('grViewUpdatedAt').textContent = item.UpdatedAt || '-';
-  document.getElementById('grViewRemarks').textContent = item.Remarks || '-';
+  var el;
+  el = document.getElementById('grViewGRNNo'); if (el) el.textContent = item.GRNNo || '-';
+  el = document.getElementById('grViewPartCode'); if (el) el.textContent = item.PartCode || '-';
+  el = document.getElementById('grViewPartName'); if (el) el.textContent = item.PartName || '-';
+  el = document.getElementById('grViewQty'); if (el) el.textContent = item.Quantity || '0';
+  el = document.getElementById('grViewStatus'); if (el) el.textContent = item.Status || '-';
+  el = document.getElementById('grViewUnitCost'); if (el) el.textContent = item.UnitCost ? parseFloat(item.UnitCost).toFixed(2) : '0.00';
+  el = document.getElementById('grViewTotalCost'); if (el) el.textContent = item.TotalCost ? parseFloat(item.TotalCost).toFixed(2) : '0.00';
+  el = document.getElementById('grViewSupplier'); if (el) el.textContent = item.Supplier || '-';
+  el = document.getElementById('grViewInvoiceNo'); if (el) el.textContent = item.InvoiceNo || '-';
+  el = document.getElementById('grViewPONo'); if (el) el.textContent = item.PONo || '-';
+  el = document.getElementById('grViewReceivedBy'); if (el) el.textContent = item.ReceivedBy || '-';
+  el = document.getElementById('grViewReceivedDate'); if (el) el.textContent = item.ReceivedDate || item.CreatedAt || '-';
+  el = document.getElementById('grViewCreatedBy'); if (el) el.textContent = item.CreatedBy || '-';
+  el = document.getElementById('grViewCreatedAt'); if (el) el.textContent = item.CreatedAt || '-';
+  el = document.getElementById('grViewUpdatedAt'); if (el) el.textContent = item.UpdatedAt || '-';
+  el = document.getElementById('grViewRemarks'); if (el) el.textContent = item.Remarks || '-';
   openModalForm('grView', 'Goods Receipt - ' + id);
 }
 
@@ -217,11 +219,12 @@ function applyGRFilter() {
 }
 
 function clearGRFilter() {
-  document.getElementById('grFilterStatus').value = '';
-  document.getElementById('grFilterSupplier').value = '';
-  document.getElementById('grFilterFromDate').value = '';
-  document.getElementById('grFilterToDate').value = '';
-  document.getElementById('grSearch').value = '';
+  var el;
+  el = document.getElementById('grFilterStatus'); if (el) el.value = '';
+  el = document.getElementById('grFilterSupplier'); if (el) el.value = '';
+  el = document.getElementById('grFilterFromDate'); if (el) el.value = '';
+  el = document.getElementById('grFilterToDate'); if (el) el.value = '';
+  el = document.getElementById('grSearch'); if (el) el.value = '';
   grFilter = { search: '', status: '', supplier: '', fromDate: '', toDate: '' };
   grPage = 1;
   renderGRTable();

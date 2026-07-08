@@ -22,7 +22,9 @@ var CONFIG = {
     PM_CALENDAR: 'PMCalendar',
     NOTIFICATIONS: 'Notifications',
     AUDIT_TRAIL: 'AuditTrail',
-    EMAIL_LOGS: 'EmailLogs'
+    EMAIL_LOGS: 'EmailLogs',
+    MAINTENANCE_TEAMS: 'MaintenanceTeams',
+    BREAKDOWN_TYPES: 'BreakdownTypes'
   },
 
   STATUS: {
@@ -83,6 +85,10 @@ var CONFIG = {
     'Overload', 'Vibration', 'Overheating', 'Other'
   ],
 
+  MAINTENANCE_TEAM_FIELDS: ['TeamID', 'TeamName', 'Status'],
+
+  BREAKDOWN_TYPE_FIELDS: ['TypeID', 'TypeName', 'Status'],
+
   MAINTENANCE_TEAMS: [
     'Mechanical Team', 'Electrical Team', 'Hydraulic Team', 'Pneumatic Team',
     'Electronics Team', 'General Maintenance'
@@ -114,7 +120,10 @@ var CONFIG = {
     PM: 'PM',
     SPARE_PART: 'SP',
     SECTION: 'SEC',
-    QRCODE: 'QR'
+    QRCODE: 'QR',
+    USER: 'USR',
+    MAINTEAM: 'MT',
+    BRKDOWN: 'BT'
   },
 
   PAGE_SIZE: 10,
@@ -124,17 +133,32 @@ var CONFIG = {
   PROFILE_FIELDS: ['Department', 'Designation'],
 
   JOBCARD_FIELDS: [
-    'JobCardNo', 'DateTime', 'Section', 'Department', 'Machine', 'AssetID',
-    'ComplaintCategory', 'ComplaintDescription', 'Priority', 'ComplaintBy',
-    'AssignedTechnician', 'Status', 'OpenTime', 'StartTime', 'CloseTime',
-    'WaitingTime', 'WorkingTime', 'BreakdownTime',
-    'FaultImage', 'RepairImage', 'Remarks',
-    'ApprovedBy', 'ApprovedDateTime', 'ApprovalStatus', 'ApprovalRemarks',
-    'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
+    // SECTION 1 - JOB OPEN INFORMATION (13)
+    'JobCardNo', 'OpenDateTime', 'Section', 'Department', 'Machine', 'AssetID',
+    'ComplaintCategory', 'ComplaintBy', 'ComplaintDescription', 'Priority',
+    'FaultImage', 'CreatedBy', 'CreatedAt',
+    // SECTION 2 - JOB START INFORMATION (6)
+    'AssignedTechnician', 'StartedBy', 'StartDateTime', 'WaitingTime',
+    'InitialRemarks', 'MaintenanceTeam',
+    // SECTION 3 - JOB CLOSE INFORMATION (11)
+    'RootCause', 'CorrectiveAction', 'SpareParts', 'RepairImage',
+    'FinalRemarks', 'ClosedBy', 'CloseDateTime',
+    'WorkingTime', 'Downtime', 'TotalDuration', 'BreakdownType',
+    // SECTION 3b - JOB PENDING INFORMATION (3)
+    'PendingDateTime', 'PendingBy', 'PendingRemarks',
+    // SECTION 4 - JOB APPROVAL INFORMATION (10)
+    'ApprovalStatus', 'ApprovedBy', 'ApprovedDateTime', 'ApprovalRemarks',
+    'ReturnedBy', 'ReturnedDateTime', 'ReturnReason',
+    'UpdatedBy', 'UpdatedAt', 'CurrentStatus',
+    // SUPPLEMENTARY FIELDS (2)
+    'ComplaintByCode', 'ComplaintByEmail',
+    // INTERNAL FIELDS
+    'AssignedTechnicianIDs'
   ],
 
   PERMISSION_FIELDS: [
     'CanOpenJobCard', 'CanStartJobCard', 'CanCloseJobCard', 'CanApproveJobCard',
+    'CanReviewPendingJobCard', 'CanViewAllJobCards', 'CanBackupRestore',
     'CanManageMachines', 'CanManageAssets', 'CanManageSpareParts', 'CanManagePM',
     'CanManageTechnicians', 'CanManageDepartments', 'CanManageSections', 'CanManageUsers',
     'CanViewDashboard', 'CanViewReports', 'CanManageInventory', 'IsAdmin'
@@ -142,23 +166,27 @@ var CONFIG = {
 
   USER_FIELDS: [
     'UserID', 'EmployeeID', 'Name', 'Email', 'Password', 'Mobile',
-    'Department', 'Section', 'Designation', 'Role', 'Status',
+    'Department', 'Section', 'Designation', 'Role', 'Status', 'JoiningDate',
+    'PhotoDriveID', 'PhotoURL',
     'CanOpenJobCard', 'CanStartJobCard', 'CanCloseJobCard', 'CanApproveJobCard',
+    'CanReviewPendingJobCard', 'CanViewAllJobCards', 'CanBackupRestore',
     'CanManageMachines', 'CanManageAssets', 'CanManageSpareParts', 'CanManagePM',
     'CanManageTechnicians', 'CanManageDepartments', 'CanManageSections', 'CanManageUsers',
     'CanViewDashboard', 'CanViewReports', 'CanManageInventory', 'IsAdmin',
+    'ForcePasswordChange',
     'LastLogin', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
   ],
 
-  USER_ROLES: ['Admin', 'Department Manager', 'Maintenance Manager', 'Supervisor', 'Technician', 'Operator', 'Viewer'],
+  USER_ROLES: ['Administrator', 'Manager', 'Supervisor', 'Engineer', 'Technician', 'Operator', 'Viewer'],
 
   DEFAULT_USERS: [
-    { UserID: 'USR001', EmployeeID: 'EMP-ADM', Name: 'Administrator', Email: 'admin@cmms.com', Password: 'admin123', Mobile: '9876543200', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'System Administrator', Role: 'Admin', Status: 'Active', CanOpenJobCard: 'TRUE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'TRUE', CanManageMachines: 'TRUE', CanManageAssets: 'TRUE', CanManageSpareParts: 'TRUE', CanManagePM: 'TRUE', CanManageTechnicians: 'TRUE', CanManageDepartments: 'TRUE', CanManageSections: 'TRUE', CanManageUsers: 'TRUE', CanViewDashboard: 'TRUE', CanViewReports: 'TRUE', IsAdmin: 'TRUE' },
-    { UserID: 'USR002', EmployeeID: 'EMP-MGR', Name: 'Maintenance Manager', Email: 'manager@cmms.com', Password: 'mgr123', Mobile: '9876543201', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'Department Manager', Role: 'Department Manager', Status: 'Active', CanOpenJobCard: 'TRUE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'TRUE', CanManageMachines: 'TRUE', CanManageAssets: 'TRUE', CanManageSpareParts: 'TRUE', CanManagePM: 'TRUE', CanManageTechnicians: 'TRUE', CanManageDepartments: 'TRUE', CanManageSections: 'TRUE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'TRUE', IsAdmin: 'FALSE' },
-    { UserID: 'USR003', EmployeeID: 'EMP-SUP', Name: 'Supervisor User', Email: 'supervisor@cmms.com', Password: 'super123', Mobile: '9876543202', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'Maintenance Supervisor', Role: 'Supervisor', Status: 'Active', CanOpenJobCard: 'TRUE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'TRUE', CanManageMachines: 'TRUE', CanManageAssets: 'TRUE', CanManageSpareParts: 'FALSE', CanManagePM: 'TRUE', CanManageTechnicians: 'FALSE', CanManageDepartments: 'FALSE', CanManageSections: 'FALSE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'TRUE', IsAdmin: 'FALSE' },
-    { UserID: 'USR004', EmployeeID: 'EMP-TEC', Name: 'Technician User', Email: 'tech@cmms.com', Password: 'tech123', Mobile: '9876543203', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'Maintenance Technician', Role: 'Technician', Status: 'Active', CanOpenJobCard: 'FALSE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'FALSE', CanManageMachines: 'FALSE', CanManageAssets: 'FALSE', CanManageSpareParts: 'FALSE', CanManagePM: 'FALSE', CanManageTechnicians: 'FALSE', CanManageDepartments: 'FALSE', CanManageSections: 'FALSE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'FALSE', IsAdmin: 'FALSE' },
-    { UserID: 'USR005', EmployeeID: 'EMP-OPR', Name: 'Operator User', Email: 'operator@cmms.com', Password: 'oper123', Mobile: '9876543204', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'Production Operator', Role: 'Operator', Status: 'Active', CanOpenJobCard: 'TRUE', CanStartJobCard: 'FALSE', CanCloseJobCard: 'FALSE', CanApproveJobCard: 'FALSE', CanManageMachines: 'FALSE', CanManageAssets: 'FALSE', CanManageSpareParts: 'FALSE', CanManagePM: 'FALSE', CanManageTechnicians: 'FALSE', CanManageDepartments: 'FALSE', CanManageSections: 'FALSE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'FALSE', IsAdmin: 'FALSE' },
-    { UserID: 'USR006', EmployeeID: 'EMP-VWR', Name: 'Viewer User', Email: 'viewer@cmms.com', Password: 'view123', Mobile: '9876543205', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'Viewer', Role: 'Viewer', Status: 'Active', CanOpenJobCard: 'FALSE', CanStartJobCard: 'FALSE', CanCloseJobCard: 'FALSE', CanApproveJobCard: 'FALSE', CanManageMachines: 'FALSE', CanManageAssets: 'FALSE', CanManageSpareParts: 'FALSE', CanManagePM: 'FALSE', CanManageTechnicians: 'FALSE', CanManageDepartments: 'FALSE', CanManageSections: 'FALSE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'TRUE', IsAdmin: 'FALSE' }
+    { UserID: 'USR001', EmployeeID: 'EMP-ADM', Name: 'Administrator', Email: 'admin@cmms.com', Password: 'admin123', Mobile: '9876543200', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'System Administrator', Role: 'Administrator', Status: 'Active', JoiningDate: '2024-01-01', CanOpenJobCard: 'TRUE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'TRUE', CanManageMachines: 'TRUE', CanManageAssets: 'TRUE', CanManageSpareParts: 'TRUE', CanManagePM: 'TRUE', CanManageTechnicians: 'TRUE', CanManageDepartments: 'TRUE', CanManageSections: 'TRUE', CanManageUsers: 'TRUE', CanViewDashboard: 'TRUE', CanViewReports: 'TRUE', CanManageInventory: 'TRUE', IsAdmin: 'TRUE' },
+    { UserID: 'USR002', EmployeeID: 'EMP-MGR', Name: 'Manager User', Email: 'manager@cmms.com', Password: 'mgr123', Mobile: '9876543201', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'Department Manager', Role: 'Manager', Status: 'Active', JoiningDate: '2024-01-15', CanOpenJobCard: 'TRUE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'TRUE', CanManageMachines: 'TRUE', CanManageAssets: 'TRUE', CanManageSpareParts: 'TRUE', CanManagePM: 'TRUE', CanManageTechnicians: 'TRUE', CanManageDepartments: 'TRUE', CanManageSections: 'TRUE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'TRUE', CanManageInventory: 'TRUE', IsAdmin: 'FALSE' },
+    { UserID: 'USR003', EmployeeID: 'EMP-SUP', Name: 'Supervisor User', Email: 'supervisor@cmms.com', Password: 'super123', Mobile: '9876543202', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'Maintenance Supervisor', Role: 'Supervisor', Status: 'Active', JoiningDate: '2024-02-01', CanOpenJobCard: 'TRUE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'TRUE', CanManageMachines: 'TRUE', CanManageAssets: 'TRUE', CanManageSpareParts: 'FALSE', CanManagePM: 'TRUE', CanManageTechnicians: 'FALSE', CanManageDepartments: 'FALSE', CanManageSections: 'FALSE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'TRUE', CanManageInventory: 'FALSE', IsAdmin: 'FALSE' },
+    { UserID: 'USR004', EmployeeID: 'EMP-ENG', Name: 'Engineer User', Email: 'engineer@cmms.com', Password: 'eng123', Mobile: '9876543203', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'Maintenance Engineer', Role: 'Engineer', Status: 'Active', JoiningDate: '2024-03-01', CanOpenJobCard: 'TRUE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'FALSE', CanManageMachines: 'TRUE', CanManageAssets: 'TRUE', CanManageSpareParts: 'FALSE', CanManagePM: 'TRUE', CanManageTechnicians: 'FALSE', CanManageDepartments: 'FALSE', CanManageSections: 'FALSE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'TRUE', CanManageInventory: 'FALSE', IsAdmin: 'FALSE' },
+    { UserID: 'USR005', EmployeeID: 'EMP-TEC', Name: 'Technician User', Email: 'tech@cmms.com', Password: 'tech123', Mobile: '9876543204', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'Maintenance Technician', Role: 'Technician', Status: 'Active', JoiningDate: '2024-03-15', CanOpenJobCard: 'FALSE', CanStartJobCard: 'TRUE', CanCloseJobCard: 'TRUE', CanApproveJobCard: 'FALSE', CanManageMachines: 'FALSE', CanManageAssets: 'FALSE', CanManageSpareParts: 'FALSE', CanManagePM: 'FALSE', CanManageTechnicians: 'FALSE', CanManageDepartments: 'FALSE', CanManageSections: 'FALSE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'FALSE', CanManageInventory: 'FALSE', IsAdmin: 'FALSE' },
+    { UserID: 'USR006', EmployeeID: 'EMP-OPR', Name: 'Operator User', Email: 'operator@cmms.com', Password: 'oper123', Mobile: '9876543205', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'Production Operator', Role: 'Operator', Status: 'Active', JoiningDate: '2024-04-01', CanOpenJobCard: 'TRUE', CanStartJobCard: 'FALSE', CanCloseJobCard: 'FALSE', CanApproveJobCard: 'FALSE', CanManageMachines: 'FALSE', CanManageAssets: 'FALSE', CanManageSpareParts: 'FALSE', CanManagePM: 'FALSE', CanManageTechnicians: 'FALSE', CanManageDepartments: 'FALSE', CanManageSections: 'FALSE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'FALSE', CanManageInventory: 'FALSE', IsAdmin: 'FALSE' },
+    { UserID: 'USR007', EmployeeID: 'EMP-VWR', Name: 'Viewer User', Email: 'viewer@cmms.com', Password: 'view123', Mobile: '9876543206', Department: 'Facility Maintenance', Section: 'Maintenance', Designation: 'Viewer', Role: 'Viewer', Status: 'Active', JoiningDate: '2024-04-15', CanOpenJobCard: 'FALSE', CanStartJobCard: 'FALSE', CanCloseJobCard: 'FALSE', CanApproveJobCard: 'FALSE', CanManageMachines: 'FALSE', CanManageAssets: 'FALSE', CanManageSpareParts: 'FALSE', CanManagePM: 'FALSE', CanManageTechnicians: 'FALSE', CanManageDepartments: 'FALSE', CanManageSections: 'FALSE', CanManageUsers: 'FALSE', CanViewDashboard: 'TRUE', CanViewReports: 'TRUE', CanManageInventory: 'FALSE', IsAdmin: 'FALSE' }
   ],
 
   DEFAULT_DEPARTMENTS: [
@@ -202,9 +230,7 @@ var CONFIG = {
   ],
 
   TECHNICIAN_FIELDS: [
-    'EmployeeID', 'EmployeeCode', 'TechnicianName', 'Designation',
-    'Department', 'Section', 'Skill', 'Shift', 'Mobile', 'Email',
-    'JoiningDate', 'Status', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
+    'EmployeeID', 'TechnicianName', 'Skill', 'Shift', 'Status'
   ],
 
   TECHNICIAN_SKILLS: [
@@ -352,6 +378,9 @@ var CONFIG = {
 
   ROLE_NOTIFICATION_MAP: {
     Admin: { viewAll: true },
+    Administrator: { viewAll: true },
+    Manager: { viewAll: true },
+    Engineer: { viewApproval: true, viewCritical: true },
     Operator: { moduleFilter: ['Job Card'], fieldCheck: 'CreatedBy' },
     Production: { moduleFilter: ['Job Card'], fieldCheck: 'CreatedBy' },
     Technician: { moduleFilter: null, fieldCheck: 'AssignedTo' },
@@ -365,7 +394,7 @@ var CONFIG = {
   AUDIT_TRAIL_FIELDS: [
     'AuditID', 'DateTime', 'UserEmail', 'UserName', 'Role', 'Department',
     'Module', 'Action', 'RecordID', 'RecordName', 'OldValue', 'NewValue',
-    'IPAddress', 'Device', 'Browser', 'Status', 'Remarks'
+    'Status', 'Remarks'
   ],
 
   AUDIT_MODULES: {
@@ -445,6 +474,7 @@ var CONFIG = {
     JC_STARTED: 'JobStarted',
     JC_CLOSED: 'JobClosed',
     JC_APPROVED: 'JobApproved',
+    JC_RETURNED: 'JobReturned',
     PM_DUE: 'PMDueReminder',
     PM_OVERDUE: 'PMOverdue',
     LOW_STOCK: 'LowStockAlert',

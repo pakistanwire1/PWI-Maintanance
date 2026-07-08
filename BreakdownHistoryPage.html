@@ -38,7 +38,7 @@
       </div>
       <div class="stat-card stat-warning">
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
-        <div class="stat-info"><h3 id="bdTotalDowntime">0</h3><p>Total Downtime (hrs)</p></div>
+        <div class="stat-info"><h3 id="bdTotalDowntime">0</h3><p>Total Downtime</p></div>
       </div>
     </div>
     <div id="breakdownTableContainer"></div>
@@ -88,7 +88,7 @@ function renderBreakdownTable() {
     { key: 'ComplaintDescription', label: 'Description' },
     { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Low': 'success', 'Medium': 'warning', 'High': 'danger', 'Critical': 'danger' } },
     { key: 'AssignedTechnician', label: 'Technician' },
-    { key: 'Downtime', label: 'Duration (hrs)' },
+      { key: 'Downtime', label: 'Duration', format: function(val) { return displayDuration(val); } },
     { key: 'Remarks', label: 'Remarks' }
   ], null, breakdownPage, PAGE_SIZE, 'breakdownTableContainer');
   registerPageState('breakdownTableContainer', function(p) { breakdownPage = p; renderBreakdownTable(); });
@@ -117,8 +117,9 @@ function filterBreakdowns() { breakdownPage = 1; renderBreakdownTable(); }
 
 function updateBreakdownStats(filtered) {
   var total = filtered.length;
-  var downtime = filtered.reduce(function(sum, r) { return sum + (parseFloat(r.TotalDuration || r.Downtime) || 0); }, 0);
-  document.getElementById('bdTotalCount').textContent = total;
-  document.getElementById('bdTotalDowntime').textContent = downtime.toFixed(2);
+    var downtime = filtered.reduce(function(sum, r) { return sum + (r.TotalDuration || r.Downtime || 0); }, 0);
+  var el;
+  el = document.getElementById('bdTotalCount'); if (el) el.textContent = total;
+    el = document.getElementById('bdTotalDowntime'); if (el) el.textContent = displayDuration(downtime);
 }
 </script>

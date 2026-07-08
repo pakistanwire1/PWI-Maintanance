@@ -451,8 +451,8 @@ function loadPMFilterSelects() {
     .withSuccessHandler(function(m) {
       pmMachinesCache = m || [];
       var sel = document.getElementById('pmFilterMachine');
-      sel.innerHTML = '<option value="">All Machines</option>';
-      m.forEach(function(item) { sel.innerHTML += '<option value="' + (item.MachineID || item.id) + '">' + (item.MachineName || item.name) + '</option>'; });
+      if (sel) sel.innerHTML = '<option value="">All Machines</option>';
+      if (sel) m.forEach(function(item) { sel.innerHTML += '<option value="' + (item.MachineID || item.id) + '">' + (item.MachineName || item.name) + '</option>'; });
     })
     .withFailureHandler(function() {})
     .getMachines();
@@ -460,8 +460,8 @@ function loadPMFilterSelects() {
     .withSuccessHandler(function(t) {
       pmTechsCache = t || [];
       var sel = document.getElementById('pmFilterTechnician');
-      sel.innerHTML = '<option value="">All Technicians</option>';
-      t.forEach(function(item) { sel.innerHTML += '<option value="' + (item.EmployeeID || item.id) + '">' + (item.TechnicianName || item.name) + '</option>'; });
+      if (sel) sel.innerHTML = '<option value="">All Technicians</option>';
+      if (sel) t.forEach(function(item) { sel.innerHTML += '<option value="' + (item.EmployeeID || item.id) + '">' + (item.TechnicianName || item.name) + '</option>'; });
     })
     .withFailureHandler(function() {})
     .getTechnicians();
@@ -481,17 +481,17 @@ function updatePMSummary() {
     return d && d >= monthStart && d <= monthEnd;
   }).length;
   var complianceRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-  document.getElementById('pmTotalCount').textContent = total;
-  document.getElementById('pmCompletedCount').textContent = completed;
-  document.getElementById('pmScheduledCount').textContent = scheduled;
-  document.getElementById('pmOverdueCount').textContent = overdue;
-  document.getElementById('pmDueThisMonth').textContent = dueThisMonth;
-  document.getElementById('pmComplianceRate').textContent = complianceRate + '%';
+  var el = document.getElementById('pmTotalCount'); if (el) el.textContent = total;
+  var el2 = document.getElementById('pmCompletedCount'); if (el2) el2.textContent = completed;
+  var el3 = document.getElementById('pmScheduledCount'); if (el3) el3.textContent = scheduled;
+  var el4 = document.getElementById('pmOverdueCount'); if (el4) el4.textContent = overdue;
+  var el5 = document.getElementById('pmDueThisMonth'); if (el5) el5.textContent = dueThisMonth;
+  var el6 = document.getElementById('pmComplianceRate'); if (el6) el6.textContent = complianceRate + '%';
   var complianceStat = document.getElementById('pmComplianceStat');
-  complianceStat.className = 'stat-card';
-  if (complianceRate > 80) complianceStat.classList.add('stat-success');
-  else if (complianceRate >= 50) complianceStat.classList.add('stat-warning');
-  else complianceStat.classList.add('stat-danger');
+  if (complianceStat) complianceStat.className = 'stat-card';
+  if (complianceStat && complianceRate > 80) complianceStat.classList.add('stat-success');
+  else if (complianceStat && complianceRate >= 50) complianceStat.classList.add('stat-warning');
+  else if (complianceStat) complianceStat.classList.add('stat-danger');
 }
 
 function renderPMTable() {
@@ -517,25 +517,25 @@ function switchPMTab(tab, btn) {
   pmActiveTab = tab;
   document.querySelectorAll('#pmPage .workflow-tab').forEach(function(b) { b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
-  document.getElementById('pmScheduleView').style.display = tab === 'schedule' ? '' : 'none';
-  document.getElementById('pmCalendarView').style.display = tab === 'calendar' ? '' : 'none';
-  document.getElementById('pmHistoryView').style.display = tab === 'history' ? '' : 'none';
-  document.getElementById('pmComplianceView').style.display = tab === 'compliance' ? '' : 'none';
+  var el = document.getElementById('pmScheduleView'); if (el) el.style.display = tab === 'schedule' ? '' : 'none';
+  var el2 = document.getElementById('pmCalendarView'); if (el2) el2.style.display = tab === 'calendar' ? '' : 'none';
+  var el3 = document.getElementById('pmHistoryView'); if (el3) el3.style.display = tab === 'history' ? '' : 'none';
+  var el4 = document.getElementById('pmComplianceView'); if (el4) el4.style.display = tab === 'compliance' ? '' : 'none';
   if (tab === 'calendar') renderCalendar(pmCalYear, pmCalMonth);
   else if (tab === 'history') loadPMHistory();
   else if (tab === 'compliance') loadPMCompliance();
 }
 
 function openPMForm() {
-  document.getElementById('editPmId').value = '';
-  document.getElementById('pmFormNumber').value = '';
+  var el = document.getElementById('editPmId'); if (el) el.value = '';
+  var el2 = document.getElementById('pmFormNumber'); if (el2) el2.value = '';
   resetForm('pmForm');
   loadMachinesForSelect('pmFormMachine');
   loadTechniciansForSelect('pmFormTechnician');
   var today = new Date().toISOString().split('T')[0];
-  document.getElementById('pmFormDueDate').value = today;
+  var el3 = document.getElementById('pmFormDueDate'); if (el3) el3.value = today;
   var nextDue = new Date(); nextDue.setDate(nextDue.getDate() + 30);
-  document.getElementById('pmFormNextDueDate').value = nextDue.toISOString().split('T')[0];
+  var el4 = document.getElementById('pmFormNextDueDate'); if (el4) el4.value = nextDue.toISOString().split('T')[0];
   openModalForm('pmForm', 'Add PM Record');
 }
 
@@ -544,9 +544,9 @@ function editPM(id) {
   if (!item) return;
   loadMachinesForSelect('pmFormMachine');
   loadTechniciansForSelect('pmFormTechnician');
-  document.getElementById('editPmId').value = id;
-  document.getElementById('pmFormNumber').value = item.PMNumber || '';
-  document.getElementById('pmFormNumber').readOnly = true;
+  var el = document.getElementById('editPmId'); if (el) el.value = id;
+  var el2 = document.getElementById('pmFormNumber'); if (el2) el2.value = item.PMNumber || '';
+    var el = document.getElementById('pmFormNumber'); if (el) el.readOnly = true;
   setFormData('pmForm', item);
   openModalForm('pmForm', 'Edit PM - ' + id);
 }
@@ -574,21 +574,24 @@ function loadTechniciansForSelect(id) {
 function onPMMachineChange() {
   var mid = document.getElementById('pmFormMachine').value;
   var machine = pmMachinesCache.find(function(m) { return (m.MachineID || m.id) === mid; });
+  var el1 = document.getElementById('pmFormMachineName');
+  var el2 = document.getElementById('pmFormDepartment');
+  var el3 = document.getElementById('pmFormSection');
   if (machine) {
-    document.getElementById('pmFormMachineName').value = machine.MachineName || machine.name || '';
-    document.getElementById('pmFormDepartment').value = machine.Department || '';
-    document.getElementById('pmFormSection').value = machine.Section || '';
+    if (el1) el1.value = machine.MachineName || machine.name || '';
+    if (el2) el2.value = machine.Department || '';
+    if (el3) el3.value = machine.Section || '';
   } else {
-    document.getElementById('pmFormMachineName').value = '';
-    document.getElementById('pmFormDepartment').value = '';
-    document.getElementById('pmFormSection').value = '';
+    if (el1) el1.value = '';
+    if (el2) el2.value = '';
+    if (el3) el3.value = '';
   }
 }
 
 function onPMTechChange() {
   var tid = document.getElementById('pmFormTechnician').value;
   var tech = pmTechsCache.find(function(t) { return (t.EmployeeID || t.id) === tid; });
-  document.getElementById('pmFormTechName').value = tech ? (tech.TechnicianName || tech.name || '') : '';
+  var el = document.getElementById('pmFormTechName'); if (el) el.value = tech ? (tech.TechnicianName || tech.name || '') : '';
 }
 
 function savePM(e) {
@@ -622,21 +625,21 @@ function deletePM(id) {
 function openCompleteForm(id) {
   var item = pmData.find(function(r) { return r.PMNumber === id; });
   if (!item) return;
-  document.getElementById('completePmId').value = id;
-  document.getElementById('completePmNumber').value = item.PMNumber || '';
-  document.getElementById('completePmTitle').value = item.Title || '';
-  document.getElementById('completePmMachine').value = item.MachineName || '';
-  document.getElementById('completePmStatus').value = 'Completed';
+  var el1 = document.getElementById('completePmId'); if (el1) el1.value = id;
+  var el2 = document.getElementById('completePmNumber'); if (el2) el2.value = item.PMNumber || '';
+  var el3 = document.getElementById('completePmTitle'); if (el3) el3.value = item.Title || '';
+  var el4 = document.getElementById('completePmMachine'); if (el4) el4.value = item.MachineName || '';
+  var el5 = document.getElementById('completePmStatus'); if (el5) el5.value = 'Completed';
   var today = new Date().toISOString().split('T')[0];
-  document.getElementById('completePmDate').value = today;
+  var el6 = document.getElementById('completePmDate'); if (el6) el6.value = today;
   var freq = parseInt(item.Frequency) || 30;
   var nextDue = new Date(); nextDue.setDate(nextDue.getDate() + freq);
-  document.getElementById('completePmNextDue').value = nextDue.toISOString().split('T')[0];
-  document.getElementById('completePmRemarks').value = '';
+  var el7 = document.getElementById('completePmNextDue'); if (el7) el7.value = nextDue.toISOString().split('T')[0];
+  var el8 = document.getElementById('completePmRemarks'); if (el8) el8.value = '';
   resetForm('pmCompleteForm');
-  document.getElementById('completePmId').value = id;
-  document.getElementById('completePmDate').value = today;
-  document.getElementById('completePmNextDue').value = nextDue.toISOString().split('T')[0];
+  if (el1) el1.value = id;
+  if (el6) el6.value = today;
+  if (el7) el7.value = nextDue.toISOString().split('T')[0];
   openModalForm('pmCompleteForm', 'Complete PM - ' + id);
 }
 
@@ -687,11 +690,11 @@ function applyPMFilter() {
 }
 
 function clearPMFilter() {
-  document.getElementById('pmFilterMachine').value = '';
-  document.getElementById('pmFilterTechnician').value = '';
-  document.getElementById('pmFilterStatus').value = '';
-  document.getElementById('pmFilterPriority').value = '';
-  document.getElementById('pmSearch').value = '';
+  var el = document.getElementById('pmFilterMachine'); if (el) el.value = '';
+  var el2 = document.getElementById('pmFilterTechnician'); if (el2) el2.value = '';
+  var el3 = document.getElementById('pmFilterStatus'); if (el3) el3.value = '';
+  var el4 = document.getElementById('pmFilterPriority'); if (el4) el4.value = '';
+  var el5 = document.getElementById('pmSearch'); if (el5) el5.value = '';
   pmFilter = { search: '', machine: '', technician: '', status: '', priority: '' };
   loadPMData();
 }
@@ -701,7 +704,7 @@ function openBulkGenerateForm() {
   loadMachinesForSelect('pmBulkMachine');
   loadTechniciansForSelect('pmBulkTechnician');
   var today = new Date().toISOString().split('T')[0];
-  document.getElementById('pmBulkForm').querySelector('[name="StartDate"]').value = today;
+  var bulkForm = document.getElementById('pmBulkForm'); var sd = bulkForm ? bulkForm.querySelector('[name="StartDate"]') : null; if (sd) sd.value = today;
   openModalForm('pmBulkForm', 'Bulk Generate PMs');
 }
 
@@ -743,7 +746,7 @@ function renderCalendar(year, month) {
   pmCalYear = year;
   pmCalMonth = month;
   var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('pmCalTitle').textContent = months[month] + ' ' + year;
+  var el = document.getElementById('pmCalTitle'); if (el) el.textContent = months[month] + ' ' + year;
   showLoading(true);
   google.script.run
     .withSuccessHandler(function(data) {
@@ -811,8 +814,8 @@ function buildCalendarGrid(year, month, calData) {
     html += '</tr>';
   }
   html += '</tbody></table>';
-  document.getElementById('pmCalendarGrid').innerHTML = html;
-  document.getElementById('pmCalendarDayDetail').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:8px">Click on a day to view PM details</div>';
+  var el = document.getElementById('pmCalendarGrid'); if (el) el.innerHTML = html;
+  var el2 = document.getElementById('pmCalendarDayDetail'); if (el2) el2.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:8px">Click on a day to view PM details</div>';
 }
 
 function showPMDayDetail(dateStr) {
@@ -822,7 +825,7 @@ function showPMDayDetail(dateStr) {
       showLoading(false);
       var pmList = data || [];
       if (pmList.length === 0) {
-        document.getElementById('pmCalendarDayDetail').innerHTML = '<div class="empty-state" style="padding:16px"><h3>No PMs for ' + dateStr + '</h3></div>';
+        var el = document.getElementById('pmCalendarDayDetail'); if (el) el.innerHTML = '<div class="empty-state" style="padding:16px"><h3>No PMs for ' + dateStr + '</h3></div>';
         return;
       }
       renderTable(pmList, [
@@ -916,8 +919,8 @@ function renderComplianceView(compliance) {
   var missed = compliance.missed || 0;
   var scheduled = total - completed - overdue - missed;
   if (scheduled < 0) scheduled = 0;
-  document.getElementById('pmComplianceLarge').textContent = rate + '%';
-  document.getElementById('pmComplianceLarge').style.color = rate > 80 ? 'var(--success)' : rate >= 50 ? 'var(--warning)' : 'var(--danger)';
+  var pcl = document.getElementById('pmComplianceLarge'); if (pcl) pcl.textContent = rate + '%';
+  if (pcl) pcl.style.color = rate > 80 ? 'var(--success)' : rate >= 50 ? 'var(--warning)' : 'var(--danger)';
   var breakdownHtml = '';
   var items = [
     { label: 'Completed', count: completed, color: 'var(--success)', pct: total > 0 ? Math.round((completed / total) * 100) : 0 },
@@ -937,7 +940,7 @@ function renderComplianceView(compliance) {
         '</div>' +
       '</div>';
   });
-  document.getElementById('pmComplianceBreakdown').innerHTML = breakdownHtml;
+  var el = document.getElementById('pmComplianceBreakdown'); if (el) el.innerHTML = breakdownHtml;
   loadMachineCompliance();
 }
 

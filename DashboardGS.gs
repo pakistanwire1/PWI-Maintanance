@@ -61,7 +61,7 @@ function getDashboardData(filter, userDepartment) {
 
     var totalAssets = assets.length;
     var totalJobCards = jobCards.length;
-    var openJobs = 0, runningJobs = 0, waitingJobs = 0, closedJobs = 0, criticalJobs = 0, approvedJobs = 0, pendingApprovalJobs = 0;
+    var openJobs = 0, runningJobs = 0, waitingJobs = 0, closedJobs = 0, pendingJobs = 0, criticalJobs = 0, approvedJobs = 0, pendingApprovalJobs = 0;
     var criticalPriority = 0, highPriority = 0, mediumPriority = 0, lowPriority = 0;
     var totalBreakdownHours = 0, totalWorkingHours = 0, totalWaitingHours = 0, breakdownCount = 0;
 
@@ -73,16 +73,14 @@ function getDashboardData(filter, userDepartment) {
 
     for (var i = 0; i < jobCards.length; i++) {
       var jc = jobCards[i];
-      var status = (jc.Status || '').toLowerCase();
-      if (status === 'open') { openJobs++; }
+      var status = (jc.CurrentStatus || jc.Status || '').toLowerCase();
+      var as = (jc.ApprovalStatus || '').toLowerCase();
+      if (as === 'approved') { approvedJobs++; }
+      else if (status === 'open') { openJobs++; }
       else if (status === 'running' || status === 'in progress') { runningJobs++; }
       else if (status === 'waiting' || status === 'waiting for parts') { waitingJobs++; }
-      else if (status === 'closed' || status === 'completed') {
-        closedJobs++;
-        var as = (jc.ApprovalStatus || '').toLowerCase();
-        if (as === 'approved') { approvedJobs++; }
-        else if (!as) { pendingApprovalJobs++; }
-      }
+      else if (status === 'pending') { pendingJobs++; pendingApprovalJobs++; }
+      else if (status === 'closed' || status === 'completed') { closedJobs++; }
       else if (status === 'approved') { approvedJobs++; }
 
       var priority = (jc.Priority || '').toLowerCase();
@@ -95,16 +93,16 @@ function getDashboardData(filter, userDepartment) {
         criticalJobs++;
       }
 
-      var totalDuration = parseFloat(jc.TotalDuration || jc.Downtime) || 0;
-      var waitingTime = parseFloat(jc.WaitingTime) || 0;
-      var workingTime = parseFloat(jc.ActualWorkingTime || jc.WorkingTime) || 0;
+      var totalDuration = parseDurationToHours(jc.TotalDuration || jc.Downtime || 0);
+      var waitingTime = parseDurationToHours(jc.WaitingTime || 0);
+      var workingTime = parseDurationToHours(jc.ActualWorkingTime || jc.WorkingTime || 0);
 
       totalBreakdownHours += totalDuration;
       totalWaitingHours += waitingTime;
       totalWorkingHours += workingTime;
       if (totalDuration > 0) breakdownCount++;
 
-      if (status === 'closed' || status === 'completed') {
+      if (status === 'pending' || status === 'closed' || status === 'completed') {
         completedJcs.push(jc);
       }
 
@@ -128,9 +126,9 @@ function getDashboardData(filter, userDepartment) {
       var wtSum = 0, wktSum = 0, bdtSum = 0;
       var bdtMax = 0, bdtMin = Infinity;
       completedJcs.forEach(function(jc) {
-        var wt = parseFloat(jc.WaitingTime) || 0;
-        var wkt = parseFloat(jc.ActualWorkingTime || jc.WorkingTime) || 0;
-        var bdt = parseFloat(jc.TotalDuration || jc.Downtime) || 0;
+        var wt = parseDurationToHours(jc.WaitingTime || 0);
+        var wkt = parseDurationToHours(jc.ActualWorkingTime || jc.WorkingTime || 0);
+        var bdt = parseDurationToHours(jc.TotalDuration || jc.Downtime || 0);
         wtSum += wt;
         wktSum += wkt;
         bdtSum += bdt;
@@ -201,6 +199,7 @@ function getDashboardData(filter, userDepartment) {
       runningJobs: runningJobs,
       waitingJobs: waitingJobs,
       closedJobs: closedJobs,
+      pendingJobs: pendingJobs,
       criticalJobs: criticalJobs,
       approvedJobs: approvedJobs,
       pendingApprovalJobs: pendingApprovalJobs,

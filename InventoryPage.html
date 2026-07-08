@@ -391,10 +391,11 @@ function loadInventoryData() {
 
 function updateInvDashboard(data) {
   if (!data) return;
-  document.getElementById('invTotalStockValue').textContent = parseFloat(data.totalStockValue || 0).toFixed(2);
-  document.getElementById('invLowStockCount').textContent = data.lowStockCount || 0;
-  document.getElementById('invOutOfStockCount').textContent = data.outOfStockCount || 0;
-  document.getElementById('invTotalTransactions').textContent = (invData && invData.length) || 0;
+  var el;
+  el = document.getElementById('invTotalStockValue'); if (el) el.textContent = parseFloat(data.totalStockValue || 0).toFixed(2);
+  el = document.getElementById('invLowStockCount'); if (el) el.textContent = data.lowStockCount || 0;
+  el = document.getElementById('invOutOfStockCount'); if (el) el.textContent = data.outOfStockCount || 0;
+  el = document.getElementById('invTotalTransactions'); if (el) el.textContent = (invData && invData.length) || 0;
 }
 
 function renderInventoryTable() {
@@ -481,8 +482,9 @@ function switchInvTab(tab, btn) {
   document.querySelectorAll('#inventoryPage .workflow-tab').forEach(function(b) { b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
   var titleMap = { all: 'All Transactions', grn: 'Goods Receipt (GRN)', issue: 'Issue', return: 'Return', transfer: 'Transfer', adjustment: 'Adjustment' };
-  document.getElementById('invCardTitle').textContent = titleMap[tab] || 'Transactions';
+  var cardTitle = document.getElementById('invCardTitle'); if (cardTitle) cardTitle.textContent = titleMap[tab] || 'Transactions';
   var actionsEl = document.getElementById('invCardActions');
+  if (!actionsEl) return;
   if (tab === 'all') {
     actionsEl.innerHTML = '<button class="btn btn-secondary" onclick="exportInvCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>';
   } else if (tab === 'grn') {
@@ -519,7 +521,7 @@ function onInvPartChange(prefix) {
   var partCode = document.getElementById(prefix + 'PartCode').value;
   var part = invPartsCache.find(function(p) { return p.PartCode === partCode; });
   if (part) {
-    document.getElementById(prefix + 'PartName').value = part.PartName || '';
+    var partNameEl = document.getElementById(prefix + 'PartName'); if (partNameEl) partNameEl.value = part.PartName || '';
     var stockEl = document.getElementById(prefix + 'CurrentStock');
     if (stockEl) stockEl.value = part.CurrentStock || 0;
     var costEl = document.getElementById(prefix + 'UnitCost');
@@ -528,7 +530,7 @@ function onInvPartChange(prefix) {
     if (fromLocEl) fromLocEl.value = part.StoreLocation || '';
     calcInvTotal(prefix);
   } else {
-    document.getElementById(prefix + 'PartName').value = '';
+    var partNameEl = document.getElementById(prefix + 'PartName'); if (partNameEl) partNameEl.value = '';
     var stockEl = document.getElementById(prefix + 'CurrentStock');
     if (stockEl) stockEl.value = '0';
     var fromLocEl = document.getElementById(prefix + 'FromLocation');
@@ -539,12 +541,12 @@ function onInvPartChange(prefix) {
 function calcInvTotal(prefix) {
   var qty = parseFloat(document.getElementById(prefix + 'Quantity').value) || 0;
   var cost = parseFloat(document.getElementById(prefix + 'UnitCost').value) || 0;
-  document.getElementById(prefix + 'TotalCost').value = (qty * cost).toFixed(2);
+  var totalCostEl = document.getElementById(prefix + 'TotalCost'); if (totalCostEl) totalCostEl.value = (qty * cost).toFixed(2);
 }
 
 function openGRNForm() {
   resetForm('grnForm');
-  document.getElementById('grnNo').value = 'Auto-generated';
+  var grnNoEl = document.getElementById('grnNo'); if (grnNoEl) grnNoEl.value = 'Auto-generated';
   if (invPartsCache.length === 0) { loadPartsForSelect('grnPartCode'); } else { populateSelect('grnPartCode', invPartsCache, 'PartCode', 'PartName', 'Select Part'); }
   autoFillDateTime('grnReceivedDate');
   openModalForm('grnForm', 'New Goods Receipt (GRN)');
@@ -711,11 +713,12 @@ function applyInvFilter() {
 }
 
 function clearInvFilter() {
-  document.getElementById('invFilterFromDate').value = '';
-  document.getElementById('invFilterToDate').value = '';
-  document.getElementById('invFilterPart').value = '';
-  document.getElementById('invFilterType').value = '';
-  document.getElementById('invSearch').value = '';
+  var el;
+  el = document.getElementById('invFilterFromDate'); if (el) el.value = '';
+  el = document.getElementById('invFilterToDate'); if (el) el.value = '';
+  el = document.getElementById('invFilterPart'); if (el) el.value = '';
+  el = document.getElementById('invFilterType'); if (el) el.value = '';
+  el = document.getElementById('invSearch'); if (el) el.value = '';
   showLoading(true);
   google.script.run
     .withSuccessHandler(function(data) { invData = data || []; showLoading(false); invPage = 1; renderInventoryTable(); })

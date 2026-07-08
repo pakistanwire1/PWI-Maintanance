@@ -109,9 +109,9 @@ function loadQRBarcodeData() {
 function loadQRStatistics() {
   google.script.run
     .withSuccessHandler(function(stats) {
-      document.getElementById('qrStatGenerated').textContent = stats.generated || 0;
-      document.getElementById('qrStatPending').textContent = stats.pending || 0;
-      document.getElementById('qrStatPrinted').textContent = stats.printed || 0;
+      var el = document.getElementById('qrStatGenerated'); if (el) el.textContent = stats.generated || 0;
+      var el2 = document.getElementById('qrStatPending'); if (el2) el2.textContent = stats.pending || 0;
+      var el3 = document.getElementById('qrStatPrinted'); if (el3) el3.textContent = stats.printed || 0;
     })
     .withFailureHandler(function() {})
     .getQRStatistics();
@@ -119,14 +119,14 @@ function loadQRStatistics() {
 
 function loadQRModuleData(module) {
   currentQRModule = module;
-  document.getElementById('qrTableBody').innerHTML = '<tr><td colspan="9" class="qr-empty">Loading...</td></tr>';
+  var el = document.getElementById('qrTableBody'); if (el) el.innerHTML = '<tr><td colspan="9" class="qr-empty">Loading...</td></tr>';
   google.script.run
     .withSuccessHandler(function(records) {
       qrModuleData = records || [];
       filterQRTable();
     })
     .withFailureHandler(function() {
-      document.getElementById('qrTableBody').innerHTML = '<tr><td colspan="9" class="qr-empty">Error loading data</td></tr>';
+      var el = document.getElementById('qrTableBody'); if (el) el.innerHTML = '<tr><td colspan="9" class="qr-empty">Error loading data</td></tr>';
     })
     .getQRModuleRecords(module);
 }
@@ -134,9 +134,9 @@ function loadQRModuleData(module) {
 function switchQRModule(module, btn) {
   document.querySelectorAll('.qr-tab').forEach(function(t) { t.classList.remove('active'); });
   if (btn) btn.classList.add('active');
-  document.getElementById('qrSearchInput').value = '';
-  document.getElementById('qrStatusFilter').value = '';
-  document.getElementById('qrQRFilter').value = '';
+  var el = document.getElementById('qrSearchInput'); if (el) el.value = '';
+  var el2 = document.getElementById('qrStatusFilter'); if (el2) el2.value = '';
+  var el3 = document.getElementById('qrQRFilter'); if (el3) el3.value = '';
   loadQRModuleData(module);
 }
 
@@ -157,8 +157,8 @@ function filterQRTable() {
 function renderQRTable() {
   var tbody = document.getElementById('qrTableBody');
   if (!qrFilteredData.length) {
-    tbody.innerHTML = '<tr><td colspan="9" class="qr-empty"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg><br>No records found</td></tr>';
-    document.getElementById('qrPageInfo').textContent = 'Showing 0 records';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="qr-empty"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg><br>No records found</td></tr>';
+    var pi = document.getElementById('qrPageInfo'); if (pi) pi.textContent = 'Showing 0 records';
     return;
   }
   var html = '';
@@ -182,8 +182,8 @@ function renderQRTable() {
     '</td>';
     html += '</tr>';
   }
-  tbody.innerHTML = html;
-  document.getElementById('qrPageInfo').textContent = 'Showing ' + qrFilteredData.length + ' records';
+  if (tbody) tbody.innerHTML = html;
+  var pi = document.getElementById('qrPageInfo'); if (pi) pi.textContent = 'Showing ' + qrFilteredData.length + ' records';
 }
 
 function generateSingleQR(id) {
@@ -247,13 +247,13 @@ function previewQRCode(id, qrContent) {
 
 function showQRLabelDialog(id) {
   qrLabelRecordId = id;
-  document.getElementById('qrLabelModal').style.display = 'flex';
-  document.getElementById('qrLabelPreview').innerHTML = '<span style="color:#999">Loading preview...</span>';
+  var el = document.getElementById('qrLabelModal'); if (el) el.style.display = 'flex';
+  var el2 = document.getElementById('qrLabelPreview'); if (el2) el2.innerHTML = '<span style="color:#999">Loading preview...</span>';
   updateLabelPreview();
 }
 
 function closeQRLabelDialog() {
-  document.getElementById('qrLabelModal').style.display = 'none';
+  var el = document.getElementById('qrLabelModal'); if (el) el.style.display = 'none';
   qrLabelRecordId = null;
 }
 
@@ -262,10 +262,10 @@ function updateLabelPreview() {
   if (!qrLabelRecordId) return;
   google.script.run
     .withSuccessHandler(function(data) {
-      if (!data) { document.getElementById('qrLabelPreview').innerHTML = '<span style="color:#999">No data</span>'; return; }
+      if (!data) { var lp = document.getElementById('qrLabelPreview'); if (lp) lp.innerHTML = '<span style="color:#999">No data</span>'; return; }
       var preview = document.getElementById('qrLabelPreview');
       var isMulti = (size === 'A4 Multiple');
-      preview.innerHTML = '';
+      if (preview) preview.innerHTML = '';
       var labelCount = isMulti ? 8 : 1;
       var container = document.createElement('div');
       container.style.cssText = isMulti ? 'display:flex;flex-wrap:wrap;gap:4px;justify-content:center' : 'display:flex;flex-direction:column;align-items:center';
@@ -285,11 +285,11 @@ function updateLabelPreview() {
       }
       preview.appendChild(container);
     })
-    .withFailureHandler(function() { document.getElementById('qrLabelPreview').innerHTML = '<span style="color:#999">Error loading preview</span>'; })
+    .withFailureHandler(function() { var lp = document.getElementById('qrLabelPreview'); if (lp) lp.innerHTML = '<span style="color:#999">Error loading preview</span>'; })
     .getPrintLabelData(currentQRModule, qrLabelRecordId, size);
 }
 
-document.getElementById('qrLabelSize').addEventListener('change', updateLabelPreview);
+var qrLabelSizeEl = document.getElementById('qrLabelSize'); if (qrLabelSizeEl) qrLabelSizeEl.addEventListener('change', updateLabelPreview);
 
 function printQRLabel() {
   var size = document.getElementById('qrLabelSize').value;
@@ -346,24 +346,24 @@ function printQRLabel() {
 }
 
 function showQRScanDialog() {
-  document.getElementById('qrScanModal').style.display = 'flex';
-  document.getElementById('qrScanInput').value = '';
-  document.getElementById('qrScanResult').innerHTML = '';
-  setTimeout(function() { document.getElementById('qrScanInput').focus(); }, 200);
+  var el = document.getElementById('qrScanModal'); if (el) el.style.display = 'flex';
+  var el2 = document.getElementById('qrScanInput'); if (el2) el2.value = '';
+  var el3 = document.getElementById('qrScanResult'); if (el3) el3.innerHTML = '';
+  setTimeout(function() {     var el = document.getElementById('qrScanInput'); if (el) el.focus(); }, 200);
 }
 
 function closeQRScanDialog() {
-  document.getElementById('qrScanModal').style.display = 'none';
+  var el = document.getElementById('qrScanModal'); if (el) el.style.display = 'none';
 }
 
 function processQRScan() {
   var input = document.getElementById('qrScanInput').value.trim();
   if (!input) { showToast('Please enter or scan a QR code / barcode', 'warning'); return; }
   var resultDiv = document.getElementById('qrScanResult');
-  resultDiv.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:10px">Searching...</div>';
+      if (resultDiv) resultDiv.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:10px">Searching...</div>';
   google.script.run
     .withSuccessHandler(function(result) { renderQRScanResult(result, input, resultDiv); })
-    .withFailureHandler(function() { resultDiv.innerHTML = '<div style="text-align:center;color:var(--danger)">Error searching record</div>'; })
+    .withFailureHandler(function() { if (resultDiv) resultDiv.innerHTML = '<div style="text-align:center;color:var(--danger)">Error searching record</div>'; })
     .scanQRCode(input);
 }
 
@@ -377,10 +377,10 @@ function renderQRScanResult(result, input, resultDiv) {
       if (barcodeResult) {
         buildQRScanResultUI(barcodeResult, resultDiv);
       } else {
-        resultDiv.innerHTML = '<div style="text-align:center;padding:16px;color:var(--danger)"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><br>No record found for this QR / barcode</div>';
+        if (resultDiv) resultDiv.innerHTML = '<div style="text-align:center;padding:16px;color:var(--danger)"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><br>No record found for this QR / barcode</div>';
       }
     })
-    .withFailureHandler(function() { resultDiv.innerHTML = '<div style="text-align:center;color:var(--danger)">Error searching record</div>'; })
+    .withFailureHandler(function() { if (resultDiv) resultDiv.innerHTML = '<div style="text-align:center;color:var(--danger)">Error searching record</div>'; })
     .scanBarcode(input);
 }
 

@@ -26,37 +26,31 @@
         <div class="stat-info"><h3 id="statBreakdownMachines">0</h3><p>Under Maintenance</p><div class="stat-subtitle"><span class="trend-down" id="statBdMachinesTrend">&#9660; 0%</span> of total</div></div>
       </div>
     </div>
-    <div class="stat-card stat-warning">
+    <div class="stat-card stat-open">
       <div class="stat-inner">
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
         <div class="stat-info"><h3 id="statOpenJobs">0</h3><p>Open Jobs</p><div class="stat-subtitle"><span class="trend-down" id="statOpenJobsTrend">&#9660; 0</span> vs last period</div></div>
       </div>
     </div>
-    <div class="stat-card stat-info">
+    <div class="stat-card stat-running">
       <div class="stat-inner">
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></div>
         <div class="stat-info"><h3 id="statRunningJobs">0</h3><p>Running Jobs</p><div class="stat-subtitle"><span class="trend-up" id="statRunningJobsTrend">&#9650; 0%</span> in progress</div></div>
       </div>
     </div>
-    <div class="stat-card stat-danger">
-      <div class="stat-inner">
-        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
-        <div class="stat-info"><h3 id="statCriticalJobs">0</h3><p>Critical Jobs</p><div class="stat-subtitle"><span class="trend-down" id="statCriticalJobsTrend">&#9660; 0</span> high priority</div></div>
-      </div>
-    </div>
-    <div class="stat-card stat-success">
+    <div class="stat-card stat-closed">
       <div class="stat-inner">
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
         <div class="stat-info"><h3 id="statClosedJobs">0</h3><p>Closed Jobs</p><div class="stat-subtitle"><span class="trend-up" id="statClosedJobsTrend">&#9650; 0%</span> completion rate</div></div>
       </div>
     </div>
-    <div class="stat-card stat-success">
+    <div class="stat-card stat-approved">
       <div class="stat-inner">
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
         <div class="stat-info"><h3 id="statApprovedJobs">0</h3><p>Approved Jobs</p><div class="stat-subtitle"><span class="trend-up" id="statApprovedTrend">&#9650; 0%</span> completion rate</div></div>
       </div>
     </div>
-    <div class="stat-card stat-warning">
+    <div class="stat-card stat-pending">
       <div class="stat-inner">
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
         <div class="stat-info"><h3 id="statPendingApproval">0</h3><p>Pending Approval</p><div class="stat-subtitle"><span class="trend-down" id="statPendingApprovalTrend">&#9660; 0</span> awaiting review</div></div>
@@ -77,7 +71,7 @@
     <div class="stat-card stat-danger">
       <div class="stat-inner">
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
-        <div class="stat-info"><h3 id="statBreakdownHours">0</h3><p>Downtime (hrs)</p><div class="stat-subtitle"><span class="trend-down" id="statDowntimeTrend">&#9660; 0%</span> vs last period</div></div>
+        <div class="stat-info"><h3 id="statBreakdownHours">0</h3><p>Downtime</p><div class="stat-subtitle"><span class="trend-down" id="statDowntimeTrend">&#9660; 0%</span> vs last period</div></div>
       </div>
     </div>
     <div class="stat-card stat-info">
@@ -219,26 +213,26 @@ function loadDashboardData() {
     .withSuccessHandler(function(data) {
       console.log('loadDashboardData() received:', data);
       document.querySelectorAll('#dashboardCards .stat-info').forEach(function(el) { el.classList.remove('loading'); });
-      document.getElementById('statMachines').textContent = data.totalMachines || 0;
-      document.getElementById('statRunningMachines').textContent = data.runningMachines || 0;
-      document.getElementById('statBreakdownMachines').textContent = data.breakdownMachines || 0;
-      document.getElementById('statOpenJobs').textContent = data.openJobs || 0;
-      document.getElementById('statRunningJobs').textContent = data.runningJobs || 0;
-      document.getElementById('statWaitingJobs').textContent = data.waitingJobs || 0;
-      document.getElementById('statClosedJobs').textContent = data.closedJobs || 0;
-      document.getElementById('statApprovedJobs').textContent = data.approvedJobs || 0;
-      document.getElementById('statPendingApproval').textContent = data.pendingApprovalJobs || 0;
-      document.getElementById('statCriticalJobs').textContent = data.criticalJobs || 0;
-      document.getElementById('statBreakdownHours').textContent = data.breakdownHours || 0;
-      document.getElementById('statMTTR').textContent = data.mttr || 0;
-      document.getElementById('statMTBF').textContent = data.mtbf || 0;
-      document.getElementById('statAvailability').textContent = (data.availability || 0) + '%';
-      document.getElementById('statPMDue').textContent = data.pmDue || 0;
-      document.getElementById('statPMOverdue').textContent = data.pmOverdue || 0;
-      document.getElementById('statLowStock').textContent = data.lowStockParts || 0;
-      document.getElementById('statStockValue').textContent = '$' + (data.totalStockValue || 0).toFixed(2);
-      document.getElementById('statOutOfStock').textContent = data.outOfStockParts || 0;
-      document.getElementById('statPMCompliance').textContent = (data.pmCompliance || 0) + '%';
+      var el = document.getElementById('statMachines'); if (el) el.textContent = data.totalMachines || 0;
+      var el = document.getElementById('statRunningMachines'); if (el) el.textContent = data.runningMachines || 0;
+      var el = document.getElementById('statBreakdownMachines'); if (el) el.textContent = data.breakdownMachines || 0;
+      var el = document.getElementById('statOpenJobs'); if (el) el.textContent = data.openJobs || 0;
+      var el = document.getElementById('statRunningJobs'); if (el) el.textContent = data.runningJobs || 0;
+      var el = document.getElementById('statWaitingJobs'); if (el) el.textContent = data.waitingJobs || 0;
+      var el = document.getElementById('statClosedJobs'); if (el) el.textContent = data.closedJobs || 0;
+      var el = document.getElementById('statApprovedJobs'); if (el) el.textContent = data.approvedJobs || 0;
+      var el = document.getElementById('statPendingApproval'); if (el) el.textContent = data.pendingApprovalJobs || 0;
+      var el = document.getElementById('statCriticalJobs'); if (el) el.textContent = data.criticalJobs || 0;
+      var el = document.getElementById('statBreakdownHours'); if (el) el.textContent = displayDuration(Math.round((data.breakdownHours || 0) * 60));
+      var el = document.getElementById('statMTTR'); if (el) el.textContent = data.mttr || 0;
+      var el = document.getElementById('statMTBF'); if (el) el.textContent = data.mtbf || 0;
+      var el = document.getElementById('statAvailability'); if (el) el.textContent = (data.availability || 0) + '%';
+      var el = document.getElementById('statPMDue'); if (el) el.textContent = data.pmDue || 0;
+      var el = document.getElementById('statPMOverdue'); if (el) el.textContent = data.pmOverdue || 0;
+      var el = document.getElementById('statLowStock'); if (el) el.textContent = data.lowStockParts || 0;
+      var el = document.getElementById('statStockValue'); if (el) el.textContent = '$' + (data.totalStockValue || 0).toFixed(2);
+      var el = document.getElementById('statOutOfStock'); if (el) el.textContent = data.outOfStockParts || 0;
+      var el = document.getElementById('statPMCompliance'); if (el) el.textContent = (data.pmCompliance || 0) + '%';
 
       drawDashboardCharts(data);
       loadDashboardNotifications();

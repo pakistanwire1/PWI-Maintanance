@@ -134,6 +134,7 @@ function loadDeptSectionsCache(callback) {
 
 function populateSectionDropdown(selectedVal) {
   var sel = document.getElementById('deptSection');
+  if (!sel) return;
   loadDeptSectionsCache(function(sections) {
     sel.innerHTML = '<option value="">Select Section</option>';
     sections.forEach(function(s) {
@@ -151,45 +152,49 @@ function populateSectionDropdown(selectedVal) {
 
 function onDeptSectionChange() {
   var sel = document.getElementById('deptSection');
+  if (!sel) return;
   var sectionId = sel.value;
   if (sectionId && deptSectionsCache) {
     var section = deptSectionsCache.find(function(s) { return s.SectionID === sectionId; });
     if (section) {
-      document.getElementById('deptSundayOff').value = section.SundayOff || 'No';
-      document.getElementById('deptHoursPerDay').value = section.HoursPerDay || '8';
+      var el;
+      el = document.getElementById('deptSundayOff'); if (el) el.value = section.SundayOff || 'No';
+      el = document.getElementById('deptHoursPerDay'); if (el) el.value = section.HoursPerDay || '8';
       return;
     }
   }
 }
 
 function openDeptForm() {
-  document.getElementById('editDeptId').value = '';
+  var el;
+  el = document.getElementById('editDeptId'); if (el) el.value = '';
   resetForm('deptForm');
-  document.getElementById('deptSundayOff').value = 'No';
-  document.getElementById('deptHoursPerDay').value = '8';
-  document.getElementById('deptStatus').value = 'Active';
+  el = document.getElementById('deptSundayOff'); if (el) el.value = 'No';
+  el = document.getElementById('deptHoursPerDay'); if (el) el.value = '8';
+  el = document.getElementById('deptStatus'); if (el) el.value = 'Active';
   populateSectionDropdown('');
   showModal('deptFormModal');
-  document.getElementById('deptFormTitle').textContent = 'Add Department';
+  el = document.getElementById('deptFormTitle'); if (el) el.textContent = 'Add Department';
 }
 
 function editDept(id) {
   var item = deptsData.find(function(d) { return d.DepartmentID === id || d.DeptID === id; });
   if (!item) return;
   setFormData('deptForm', item);
-  document.getElementById('editDeptId').value = id;
-  document.getElementById('deptFormTitle').textContent = 'Edit Department - ' + id;
+  var el;
+  el = document.getElementById('editDeptId'); if (el) el.value = id;
+  el = document.getElementById('deptFormTitle'); if (el) el.textContent = 'Edit Department - ' + id;
   populateSectionDropdown(item.SectionID || item.Section || '');
   showModal('deptFormModal');
 }
 
 function saveDept(event) {
   event.preventDefault();
-  var id = document.getElementById('editDeptId').value;
+  var idEl = document.getElementById('editDeptId'); var id = idEl ? idEl.value : '';
   var data = getFormData('deptForm');
   var sectionSel = document.getElementById('deptSection');
   var sectionText = '';
-  if (sectionSel.selectedIndex > 0) {
+  if (sectionSel && sectionSel.selectedIndex > 0) {
     sectionText = sectionSel.options[sectionSel.selectedIndex].textContent;
   }
   data.Section = sectionText;

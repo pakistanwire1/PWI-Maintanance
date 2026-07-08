@@ -19,7 +19,7 @@ function getMachineHistoryReport(filters) {
     return {
       JobCardNo: jc.JobCardNo, Date: jc.DateCreated || jc.Date || jc.OpenDateTime, Machine: jc.Machine,
       Complaint: jc.ComplaintDescription, Technician: jc.AssignedTechnician,
-      Status: jc.Status, Downtime: jc.TotalDuration || jc.Downtime, Priority: jc.Priority
+      Status: jc.CurrentStatus || jc.Status, Downtime: normalizeDuration(jc.TotalDuration || jc.Downtime), Priority: jc.Priority
     };
   });
 }
@@ -32,9 +32,9 @@ function getTechnicianPerformanceReport(filters) {
     if (filters.technician && tech !== filters.technician) return;
     if (!map[tech]) map[tech] = { technician: tech, totalJobs: 0, completed: 0, totalDowntime: 0 };
     map[tech].totalJobs++;
-    var s = (jc.Status || '').toLowerCase();
+    var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
     if (s === 'closed' || s === 'completed') map[tech].completed++;
-    map[tech].totalDowntime += parseFloat(jc.TotalDuration || jc.Downtime) || 0;
+    map[tech].totalDowntime += Math.round(parseDurationToHours(jc.TotalDuration || jc.Downtime || 0) * 60);
   });
   return Object.keys(map).map(function(k) { return map[k]; });
 }
@@ -47,10 +47,10 @@ function getDepartmentReport(filters) {
     if (filters.department && dept !== filters.department) return;
     if (!map[dept]) map[dept] = { department: dept, totalJobs: 0, openJobs: 0, closedJobs: 0, totalDowntime: 0 };
     map[dept].totalJobs++;
-    var s = (jc.Status || '').toLowerCase();
+    var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
     if (s === 'closed' || s === 'completed') map[dept].closedJobs++;
     else map[dept].openJobs++;
-    map[dept].totalDowntime += parseFloat(jc.TotalDuration || jc.Downtime) || 0;
+    map[dept].totalDowntime += Math.round(parseDurationToHours(jc.TotalDuration || jc.Downtime || 0) * 60);
   });
   return Object.keys(map).map(function(k) { return map[k]; });
 }
@@ -62,7 +62,7 @@ function getBreakdownReport(filters) {
 function getDowntimeReport(filters) {
   var all = getAllData(CONFIG.SHEET_NAMES.JOBCARDS);
   return all.filter(function(jc) {
-    var downtime = parseFloat(jc.TotalDuration || jc.Downtime) || 0;
+    var downtime = parseDurationToHours(jc.TotalDuration || jc.Downtime || 0);
     if (downtime <= 0) return false;
     if (filters.machine && jc.Machine !== filters.machine) return false;
     var jcDate = jc.DateCreated || jc.Date || jc.OpenDateTime;
@@ -78,7 +78,7 @@ function getDowntimeReport(filters) {
   }).map(function(jc) {
     return {
       JobCardNo: jc.JobCardNo, Date: jc.DateCreated || jc.Date || jc.OpenDateTime, Machine: jc.Machine,
-      Department: jc.Department, Downtime: jc.TotalDuration || jc.Downtime, Priority: jc.Priority,
+      Department: jc.Department, Downtime: normalizeDuration(jc.TotalDuration || jc.Downtime), Priority: jc.Priority,
       Technician: jc.AssignedTechnician
     };
   });
@@ -97,9 +97,9 @@ function getMonthlyReport(filters) {
     var mk = d.getMonth() + 1;
     if (!map[mk]) map[mk] = { month: monthNames[d.getMonth()], total: 0, closed: 0, downtime: 0 };
     map[mk].total++;
-    var s = (jc.Status || '').toLowerCase();
+    var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
     if (s === 'closed' || s === 'completed') map[mk].closed++;
-    map[mk].downtime += parseFloat(jc.TotalDuration || jc.Downtime) || 0;
+    map[mk].downtime += Math.round(parseDurationToHours(jc.TotalDuration || jc.Downtime || 0) * 60);
   });
   return Object.keys(map).sort(function(a,b) { return a - b; }).map(function(k) { return map[k]; });
 }

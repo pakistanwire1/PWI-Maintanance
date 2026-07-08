@@ -285,7 +285,7 @@ function loadDepartments() {
             '<button class="btn btn-sm btn-danger" onclick="deleteDept(\'' + (d.DepartmentID || '').replace(/'/g, "\\'") + '\')">Remove</button></div>';
         }
       });
-      document.getElementById('deptList').innerHTML = html || '<div style="color:var(--text-light);padding:6px 0">No departments</div>';
+      var el = document.getElementById('deptList'); if (el) el.innerHTML = html || '<div style="color:var(--text-light);padding:6px 0">No departments</div>';
     })
     .withFailureHandler(function() {})
     .getDepartmentList();
@@ -294,7 +294,7 @@ function loadDepartments() {
 function onUserDeptChange() {
   var dept = document.getElementById('userDepartmentSelect').value;
   var secSel = document.getElementById('userSectionSelect');
-  secSel.innerHTML = '<option value="">Select Section</option>';
+  if (secSel) secSel.innerHTML = '<option value="">Select Section</option>';
   if (!dept) return;
   google.script.run
     .withSuccessHandler(function(sections) {
@@ -311,7 +311,7 @@ function addDepartment() {
   if (!name) { showToast('Enter department name', 'warning'); return; }
   showLoading(true);
   google.script.run
-    .withSuccessHandler(function(data) { showLoading(false); document.getElementById('newDept').value = ''; showToast('Department added'); loadDepartments(); })
+    .withSuccessHandler(function(data) { showLoading(false);             var el = document.getElementById('newDept'); if (el) el.value = ''; showToast('Department added'); loadDepartments(); })
     .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to add department', 'error'); })
     .addDepartment(name);
 }
@@ -347,7 +347,7 @@ function renderSimpleList(containerId, settings, key) {
     return '<div class="list-item"><span>' + v + '</span>' +
       '<button class="btn btn-sm btn-danger" onclick="removeSimpleValue(\'' + key + '\',\'' + v.replace(/'/g, "\\'") + '\')">Remove</button></div>';
   }).join('');
-  container.innerHTML = html || '<div style="color:var(--text-light);padding:6px 0">No items</div>';
+  if (container) container.innerHTML = html || '<div style="color:var(--text-light);padding:6px 0">No items</div>';
 }
 
 function saveSimpleSetting(key, inputId) {
@@ -361,7 +361,7 @@ function saveSimpleSetting(key, inputId) {
       var values = existing ? existing.split(',').map(function(v) { return v.trim(); }) : [];
       if (values.indexOf(value) === -1) values.push(value);
       google.script.run
-        .withSuccessHandler(function() { showLoading(false); document.getElementById(inputId).value = ''; showToast('Saved'); loadSimpleSettings(); })
+        .withSuccessHandler(function() { showLoading(false);             var el = document.getElementById(inputId); if (el) el.value = ''; showToast('Saved'); loadSimpleSettings(); })
         .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to save setting', 'error'); })
         .saveSettingValue(key, values.join(','));
     })
@@ -434,7 +434,7 @@ function renderUsersTable() {
     html += '</div>';
   }
 
-  container.innerHTML = html;
+  if (container)   if (container) container.innerHTML = html;
 }
 
 function statusToggle(u) {
@@ -467,11 +467,11 @@ function toggleUserStatus(email, newStatus) {
 }
 
 function openUserForm() {
-  document.getElementById('editUserEmail').value = '';
-  document.getElementById('userEmail').disabled = false;
-  document.getElementById('userPassword').required = true;
+  var el = document.getElementById('editUserEmail'); if (el) el.value = '';
+  var el = document.getElementById('userEmail'); if (el) el.disabled = false;
+  var el = document.getElementById('userPassword'); if (el) el.required = true;
   resetForm('userForm');
-  document.getElementById('userSectionSelect').innerHTML = '<option value="">Select Section</option>';
+  var el2 = document.getElementById('userSectionSelect'); if (el2) el2.innerHTML = '<option value="">Select Section</option>';
   PERM_FIELDS.forEach(function(f) {
     var el = document.querySelector('input[name="' + f + '"]');
     if (el) el.checked = false;
@@ -483,9 +483,9 @@ function editUser(email) {
   var item = usersData.find(function(r) { return r.Email === email; });
   if (!item) return;
   setFormData('userForm', item);
-  document.getElementById('editUserEmail').value = email;
-  document.getElementById('userEmail').disabled = true;
-  document.getElementById('userPassword').required = false;
+  var el = document.getElementById('editUserEmail'); if (el) el.value = email;
+          var el = document.getElementById('userEmail'); if (el) el.disabled = true;
+  var el = document.getElementById('userPassword'); if (el) el.required = false;
   PERM_FIELDS.forEach(function(f) {
     var el = document.querySelector('input[name="' + f + '"]');
     if (el) {
@@ -497,7 +497,7 @@ function editUser(email) {
     onUserDeptChange();
     setTimeout(function() {
       if (item.Section) {
-        document.getElementById('userSectionSelect').value = item.Section;
+        var secSel = document.getElementById('userSectionSelect'); if (secSel) secSel.value = item.Section;
       }
     }, 300);
   }

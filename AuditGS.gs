@@ -10,27 +10,62 @@ function initAuditTrailSheet() {
 
 function createAuditLog(module, action, recordID, recordName, oldValue, newValue, status, remarks) {
   try {
-    var session = Session.getActiveUser();
-    var email = session.getEmail();
-    var user = getUserByEmail(email);
+    initAuditTrailSheet();
+    var username = '';
+    var userRole = '';
+    var userDept = '';
+    var userEmail = '';
+
+    // Try Google session email first, then fallback to scanning Users by name match
+    try {
+      var session = Session.getActiveUser();
+      if (session) {
+        userEmail = session.getEmail() || '';
+        var u = getUserByEmail(userEmail);
+        if (u) {
+          username = u.Name || '';
+          userRole = u.Role || '';
+          userDept = u.Department || '';
+        }
+      }
+    } catch (e) {
+      console.error('createAuditLog() session lookup: ' + e.message);
+    }
+
+    // If user not resolved via session email, try matching by recordName (many callers pass user.Name)
+    if (!username && recordName) {
+      try {
+        var allUsers = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
+        var nq = recordName.toLowerCase().trim();
+        for (var ui = 0; ui < allUsers.length; ui++) {
+          if ((allUsers[ui].Name || '').toLowerCase().trim() === nq) {
+            username = allUsers[ui].Name || '';
+            userRole = allUsers[ui].Role || '';
+            userDept = allUsers[ui].Department || '';
+            if (allUsers[ui].Email) userEmail = allUsers[ui].Email;
+            break;
+          }
+        }
+      } catch (e) {
+        console.error('createAuditLog() name fallback: ' + e.message);
+      }
+    }
+
     var auditId = generateId(CONFIG.SHEET_NAMES.AUDIT_TRAIL, 'AUD-');
     var now = formatDateTimeISO(new Date());
     var data = {
       AuditID: auditId,
       DateTime: now,
-      UserEmail: email || '',
-      UserName: (user ? user.Name : '') || '',
-      Role: (user ? user.Role : '') || '',
-      Department: (user ? user.Department : '') || '',
+      UserEmail: userEmail,
+      UserName: username,
+      Role: userRole,
+      Department: userDept,
       Module: module || '',
       Action: action || '',
       RecordID: recordID || '',
       RecordName: recordName || '',
       OldValue: oldValue || '',
       NewValue: newValue || '',
-      IPAddress: '',
-      Device: '',
-      Browser: '',
       Status: status || 'Success',
       Remarks: remarks || ''
     };
@@ -59,20 +94,30 @@ function getAuditLogs() {
 
 function getUserAuditLogs(email) {
   try {
-    if (!email) return getAuditLogs();
+    var all = getAuditLogs();
+    if (!email) return all;
+
     var user = getUserByEmail(email);
-    if (!user) return [];
+    if (!user) return all;
+
     var role = (user.Role || '').trim();
-    if (role === 'Admin') return getAuditLogs();
-    var roles = ['Department Manager', 'Maintenance Manager'];
-    if (roles.indexOf(role) > -1) {
-      var all = getAuditLogs();
+    var roleLower = role.toLowerCase();
+    var isAdmin = roleLower === 'admin' || roleLower === 'administrator' || (user.IsAdmin || '').toLowerCase() === 'true';
+
+    // Admin/Administrator/has IsAdmin permission — return all records
+    if (isAdmin) return all;
+
+    // Department Manager / Maintenance Manager — filter by their department
+    if (roleLower === 'department manager' || roleLower === 'maintenance manager') {
       var dept = (user.Department || '').toLowerCase();
+      if (!dept) return all;
       return all.filter(function(r) {
         return (r.Department || '').toLowerCase() === dept;
       });
     }
-    return [];
+
+    // Any other authenticated user — return all records (sidebar already controls page visibility)
+    return all;
   } catch (e) {
     console.error('getUserAuditLogs() ERROR: ' + e.message);
     return [];
@@ -163,6 +208,43 @@ function getRecentAuditLogs(count) {
     console.error('getRecentAuditLogs() ERROR: ' + e.message);
     return [];
   }
+}
+
+function testAuditPipeline(email) {
+  var steps = [];
+  try {
+    steps.push({ step: '1. Input email', detail: email || '(not provided)' });
+    var sheet = getSheet(CONFIG.SHEET_NAMES.AUDIT_TRAIL);
+    var range = sheet.getDataRange();
+    var raw = range.getValues();
+    steps.push({ step: '2. Sheet.getDataRange()', detail: range.getA1Notation() + ', rows=' + raw.length + ', cols=' + (raw.length > 0 ? raw[0].length : 0) });
+    if (raw.length > 0) {
+      steps.push({ step: '3. Raw row 0 (headers)', detail: '[' + raw[0].map(function(v) { return String(v).substring(0, 25); }).join(' | ') + ']' });
+    }
+    if (raw.length > 1) {
+      steps.push({ step: '4. Raw row 1 (first data)', detail: '[' + raw[1].map(function(v) { return String(v).substring(0, 25); }).join(' | ') + ']' });
+    }
+    if (raw.length > 2) {
+      var last = raw[raw.length - 1];
+      steps.push({ step: '5. Raw last row', detail: '[' + last.map(function(v) { return String(v).substring(0, 25); }).join(' | ') + ']' });
+    }
+    var allData = getAllData(CONFIG.SHEET_NAMES.AUDIT_TRAIL);
+    steps.push({ step: '6. getAllData() result', detail: 'Array=' + Array.isArray(allData) + ', length=' + allData.length });
+    if (allData && allData.length > 0) {
+      steps.push({ step: '7. First record keys', detail: Object.keys(allData[0]).join(', ') });
+      steps.push({ step: '8. First record JSON', detail: JSON.stringify(allData[0]).substring(0, 600) });
+    }
+    var auditLogs = getAuditLogs();
+    steps.push({ step: '9. getAuditLogs() result', detail: 'length=' + auditLogs.length });
+    var user = email ? getUserByEmail(email) : null;
+    steps.push({ step: '10. getUserByEmail(email)', detail: user ? 'FOUND: ' + user.Name + ', Role=' + user.Role + ', Dept=' + user.Department + ', IsAdmin=' + (user.IsAdmin || 'N/A') : 'NOT FOUND (will fallback to all data)' });
+    var userLogs = getUserAuditLogs(email || '');
+    steps.push({ step: '11. getUserAuditLogs() result', detail: 'length=' + userLogs.length + (userLogs.length > 0 ? ', first AuditID=' + (userLogs[0].AuditID || 'N/A') : '') });
+    steps.push({ step: '12. DIAGNOSIS', detail: (userLogs.length > 0) ? 'DATA FLOW OK — records will display' : 'NO DATA returned at step 11 — check steps 2-6 for sheet issues' });
+  } catch (e) {
+    steps.push({ step: 'ERROR', detail: e.message + ' | ' + e.stack });
+  }
+  return steps;
 }
 
 function getAuditLogStats(email) {

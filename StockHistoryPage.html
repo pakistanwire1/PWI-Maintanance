@@ -137,7 +137,7 @@ function loadSHFilterParts() {
     .withSuccessHandler(function(data) {
       var parts = data || [];
       var sel = document.getElementById('shFilterPart');
-      sel.innerHTML = '<option value="">All Parts</option>';
+      if (sel) sel.innerHTML = '<option value="">All Parts</option>';
       parts.forEach(function(item) { sel.innerHTML += '<option value="' + escHtml(item.PartCode || '') + '">' + escHtml(item.PartName || item.PartCode || '') + '</option>'; });
     })
     .withFailureHandler(function() {})
@@ -150,10 +150,10 @@ function updateSHSummary() {
   var issue = shData.filter(function(r) { return (r.TransactionType || '').toLowerCase() === 'issue'; }).length;
   var uniqueParts = {};
   shData.forEach(function(r) { if (r.PartCode) uniqueParts[r.PartCode] = true; });
-  document.getElementById('shTotalMovements').textContent = total;
-  document.getElementById('shGoodsReceipt').textContent = gr;
-  document.getElementById('shIssues').textContent = issue;
-  document.getElementById('shUniqueParts').textContent = Object.keys(uniqueParts).length;
+  var el = document.getElementById('shTotalMovements'); if (el) el.textContent = total;
+  var el2 = document.getElementById('shGoodsReceipt'); if (el2) el2.textContent = gr;
+  var el3 = document.getElementById('shIssues'); if (el3) el3.textContent = issue;
+  var el4 = document.getElementById('shUniqueParts'); if (el4) el4.textContent = Object.keys(uniqueParts).length;
 }
 
 function renderSHTable() {
@@ -178,15 +178,15 @@ function renderSHTable() {
 function viewSH(id) {
   var item = shData.find(function(r) { return r.PartCode === id && r.CreatedAt === document.getElementById('shViewCreatedAt').textContent; }) || shData[0];
   if (!item) { showToast('Record not found', 'error'); return; }
-  document.getElementById('shViewPartCode').textContent = item.PartCode || '-';
-  document.getElementById('shViewPartName').textContent = item.PartName || '-';
-  document.getElementById('shViewType').textContent = item.TransactionType || '-';
-  document.getElementById('shViewQty').textContent = item.Quantity || '0';
-  document.getElementById('shViewBalanceBefore').textContent = item.BalanceBefore || '0';
-  document.getElementById('shViewBalanceAfter').textContent = item.BalanceAfter || '0';
-  document.getElementById('shViewRefNo').textContent = item.ReferenceNo || '-';
-  document.getElementById('shViewCreatedAt').textContent = item.CreatedAt || '-';
-  document.getElementById('shViewRemarks').textContent = item.Remarks || '-';
+  var el = document.getElementById('shViewPartCode'); if (el) el.textContent = item.PartCode || '-';
+  var el2 = document.getElementById('shViewPartName'); if (el2) el2.textContent = item.PartName || '-';
+  var el3 = document.getElementById('shViewType'); if (el3) el3.textContent = item.TransactionType || '-';
+  var el4 = document.getElementById('shViewQty'); if (el4) el4.textContent = item.Quantity || '0';
+  var el5 = document.getElementById('shViewBalanceBefore'); if (el5) el5.textContent = item.BalanceBefore || '0';
+  var el6 = document.getElementById('shViewBalanceAfter'); if (el6) el6.textContent = item.BalanceAfter || '0';
+  var el7 = document.getElementById('shViewRefNo'); if (el7) el7.textContent = item.ReferenceNo || '-';
+  var el8 = document.getElementById('shViewCreatedAt'); if (el8) el8.textContent = item.CreatedAt || '-';
+  var el9 = document.getElementById('shViewRemarks'); if (el9) el9.textContent = item.Remarks || '-';
   openModalForm('shView', 'Stock Movement - ' + id);
 }
 
@@ -207,11 +207,11 @@ function applySHFilter() {
 }
 
 function clearSHFilter() {
-  document.getElementById('shFilterPart').value = '';
-  document.getElementById('shFilterType').value = '';
-  document.getElementById('shFilterFromDate').value = '';
-  document.getElementById('shFilterToDate').value = '';
-  document.getElementById('shSearch').value = '';
+  var el = document.getElementById('shFilterPart'); if (el) el.value = '';
+  var el2 = document.getElementById('shFilterType'); if (el2) el2.value = '';
+  var el3 = document.getElementById('shFilterFromDate'); if (el3) el3.value = '';
+  var el4 = document.getElementById('shFilterToDate'); if (el4) el4.value = '';
+  var el5 = document.getElementById('shSearch'); if (el5) el5.value = '';
   shFilter = { search: '', part: '', type: '', fromDate: '', toDate: '' };
   shPage = 1;
   renderSHTable();

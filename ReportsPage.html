@@ -56,10 +56,10 @@ function loadReportsData() {
 
 function onReportTypeChange() {
   var type = document.getElementById('rptType').value;
-  document.getElementById('rptMachineGroup').style.display = (type === 'machine_history' || type === 'downtime') ? 'block' : 'none';
-  document.getElementById('rptTechnicianGroup').style.display = type === 'technician_performance' ? 'block' : 'none';
-  document.getElementById('rptDeptGroup').style.display = type === 'department' ? 'block' : 'none';
-  document.getElementById('rptYearGroup').style.display = type === 'monthly' ? 'block' : 'none';
+  var mg = document.getElementById('rptMachineGroup'); if (mg) mg.style.display = (type === 'machine_history' || type === 'downtime') ? 'block' : 'none';
+  var tg = document.getElementById('rptTechnicianGroup'); if (tg) tg.style.display = type === 'technician_performance' ? 'block' : 'none';
+  var dg = document.getElementById('rptDeptGroup'); if (dg) dg.style.display = type === 'department' ? 'block' : 'none';
+  var yg = document.getElementById('rptYearGroup'); if (yg) yg.style.display = type === 'monthly' ? 'block' : 'none';
 }
 
 function generateReport() {
@@ -93,33 +93,33 @@ function renderReportTable(type, data) {
       { key: 'JobCardNo', label: 'Job Card' }, { key: 'Date', label: 'Date', datetime: true },
       { key: 'Machine', label: 'Machine' }, { key: 'Complaint', label: 'Complaint' },
       { key: 'Technician', label: 'Technician' }, { key: 'Status', label: 'Status', badge: true,
-        badgeMap: { 'Open': 'primary', 'In Progress': 'warning', 'Running': 'warning', 'Completed': 'success', 'Closed': 'success' } },
-      { key: 'Priority', label: 'Priority' }, { key: 'Downtime', label: 'Duration (hrs)' }
+        badgeMap: { 'Open': 'open', 'In Progress': 'running', 'Running': 'running', 'Completed': 'closed', 'Closed': 'closed' } },
+      { key: 'Priority', label: 'Priority' }, { key: 'Downtime', label: 'Duration', format: function(val) { return displayDuration(val); } }
     ],
     technician_performance: [
       { key: 'technician', label: 'Technician' }, { key: 'totalJobs', label: 'Total Jobs' },
-      { key: 'completed', label: 'Completed' }, { key: 'totalDowntime', label: 'Total Downtime' }
+      { key: 'completed', label: 'Completed' }, { key: 'totalDowntime', label: 'Total Downtime', format: function(val) { return displayDuration(val); } }
     ],
     department: [
       { key: 'department', label: 'Department' }, { key: 'totalJobs', label: 'Total Jobs' },
       { key: 'openJobs', label: 'Open' }, { key: 'closedJobs', label: 'Closed' },
-      { key: 'totalDowntime', label: 'Downtime (hrs)' }
+      { key: 'totalDowntime', label: 'Downtime', format: function(val) { return displayDuration(val); } }
     ],
     breakdown: [
       { key: 'JobCardNo', label: 'Job Card' }, { key: 'Date', label: 'Date', datetime: true },
       { key: 'Machine', label: 'Machine' }, { key: 'Department', label: 'Dept' },
       { key: 'ComplaintDescription', label: 'Description' }, { key: 'Priority', label: 'Priority' },
-      { key: 'AssignedTechnician', label: 'Technician' }, { key: 'Downtime', label: 'Duration' }
+      { key: 'AssignedTechnician', label: 'Technician' }, { key: 'Downtime', label: 'Duration', format: function(val) { return displayDuration(val); } }
     ],
     downtime: [
       { key: 'JobCardNo', label: 'Job Card' }, { key: 'Date', label: 'Date', datetime: true },
       { key: 'Machine', label: 'Machine' }, { key: 'Department', label: 'Dept' },
-      { key: 'Downtime', label: 'Duration (hrs)' }, { key: 'Priority', label: 'Priority' },
+      { key: 'Downtime', label: 'Duration', format: function(val) { return displayDuration(val); } }, { key: 'Priority', label: 'Priority' },
       { key: 'Technician', label: 'Technician' }
     ],
     monthly: [
       { key: 'month', label: 'Month' }, { key: 'total', label: 'Total Jobs' },
-      { key: 'closed', label: 'Closed' }, { key: 'downtime', label: 'Downtime (hrs)' }
+      { key: 'closed', label: 'Closed' }, { key: 'downtime', label: 'Downtime', format: function(val) { return displayDuration(val); } }
     ],
     pm_compliance: [
       { key: 'PMNumber', label: 'PM No' }, { key: 'Machine', label: 'Machine' },

@@ -222,6 +222,7 @@ function loadAssetMachineCache(callback) {
 function populateAssetFilterDropdowns(selectedDeptId, selectedSectionId) {
   loadAssetDeptCache(function(depts) {
     var deptSel = document.getElementById('asFilterDept');
+    if (!deptSel) return;
     deptSel.innerHTML = '<option value="">All Departments</option>';
     var seen = {};
     depts.forEach(function(d) {
@@ -240,6 +241,7 @@ function populateAssetFilterDropdowns(selectedDeptId, selectedSectionId) {
 function onAsFilterDeptChange(preselectSectionId) {
   var deptId = document.getElementById('asFilterDept').value;
   var secSel = document.getElementById('asFilterSection');
+  if (!secSel) return;
   secSel.innerHTML = '<option value="">All Sections</option>';
   if (deptId && assetDeptCache) {
     var dept = assetDeptCache.find(function(d) { return d.DeptID === deptId; });
@@ -258,6 +260,7 @@ function onAsFilterSectionChange() {
   var deptId = document.getElementById('asFilterDept').value;
   var sectionId = document.getElementById('asFilterSection').value;
   var machineSel = document.getElementById('asMachine');
+  if (!machineSel) return;
   var currentMachineId = machineSel.dataset.selectedId || '';
   machineSel.innerHTML = '<option value="">None</option>';
   if (assetMachineCache) {
@@ -275,6 +278,7 @@ function onAsFilterSectionChange() {
 
 function populateAssetMachineDropdown(selectedMachineId) {
   var sel = document.getElementById('asMachine');
+  if (!sel) return;
   loadAssetMachineCache(function(machines) {
     sel.innerHTML = '<option value="">None</option>';
     machines.forEach(function(m) {
@@ -290,36 +294,36 @@ function populateAssetMachineDropdown(selectedMachineId) {
 
 function onAssetMachineChange() {
   var machineId = document.getElementById('asMachine').value;
-  document.getElementById('asMachine').dataset.selectedId = machineId || '';
+    var el = document.getElementById('asMachine'); if (el) el.dataset.selectedId = machineId || '';
   var machineNameEl = document.getElementById('asMachineName');
   var deptEl = document.getElementById('asDepartmentText');
   var deptIdEl = document.getElementById('asDept');
   var secEl = document.getElementById('asSectionText');
   var secIdEl = document.getElementById('asSection');
   if (!machineId) {
-    machineNameEl.value = '';
-    deptEl.value = '';
-    deptIdEl.value = '';
-    secEl.value = '';
-    secIdEl.value = '';
+    if (machineNameEl) machineNameEl.value = '';
+    if (deptEl) deptEl.value = '';
+    if (deptIdEl) deptIdEl.value = '';
+    if (secEl) secEl.value = '';
+    if (secIdEl) secIdEl.value = '';
     return;
   }
   var machine = assetMachineCache ? assetMachineCache.find(function(m) { return m.MachineID === machineId; }) : null;
   if (machine) {
-    machineNameEl.value = machine.MachineName || '';
-    deptEl.value = machine.Department || '';
-    deptIdEl.value = machine.DeptID || '';
-    secEl.value = machine.Section || '';
-    secIdEl.value = machine.SectionID || '';
+    if (machineNameEl) machineNameEl.value = machine.MachineName || '';
+    if (deptEl) deptEl.value = machine.Department || '';
+    if (deptIdEl) deptIdEl.value = machine.DeptID || '';
+    if (secEl) secEl.value = machine.Section || '';
+    if (secIdEl) secIdEl.value = machine.SectionID || '';
   } else {
     google.script.run
       .withSuccessHandler(function(m) {
         if (m) {
-          machineNameEl.value = m.MachineName || '';
-          deptEl.value = m.Department || '';
-          deptIdEl.value = m.DeptID || '';
-          secEl.value = m.Section || '';
-          secIdEl.value = m.SectionID || '';
+          if (machineNameEl) machineNameEl.value = m.MachineName || '';
+          if (deptEl) deptEl.value = m.Department || '';
+          if (deptIdEl) deptIdEl.value = m.DeptID || '';
+          if (secEl) secEl.value = m.Section || '';
+          if (secIdEl) secIdEl.value = m.SectionID || '';
         }
       })
       .withFailureHandler(function() {})
@@ -328,9 +332,9 @@ function onAssetMachineChange() {
 }
 
 function openAssetForm() {
-  document.getElementById('editAssetId').value = '';
+  var eai = document.getElementById('editAssetId'); if (eai) eai.value = '';
   resetForm('assetForm');
-  document.getElementById('asCriticality').value = 'Low';
+  var asc = document.getElementById('asCriticality'); if (asc) asc.value = 'Low';
   populateSelectFromList('asType', CONSTANTS.ASSET_TYPES || [], 'Select Type');
   populateSelectFromList('asCategory', CONSTANTS.ASSET_CATEGORIES || [], 'Select Category');
   loadAssetMachineCache(function() {
@@ -345,7 +349,7 @@ function editAsset(id) {
   populateSelectFromList('asType', CONSTANTS.ASSET_TYPES || [], 'Select Type');
   populateSelectFromList('asCategory', CONSTANTS.ASSET_CATEGORIES || [], 'Select Category');
   setFormData('assetForm', item);
-  document.getElementById('editAssetId').value = id;
+  var eai = document.getElementById('editAssetId'); if (eai) eai.value = id;
   loadAssetMachineCache(function() {
     populateAssetFilterDropdowns(item.DeptID || '', item.SectionID || '');
     populateAssetMachineDropdown(item.MachineID || '');

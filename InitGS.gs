@@ -38,6 +38,11 @@ function onOpen() {
   toolsMenu.addItem('Initialize Notifications', 'initializeNotifications');
   toolsMenu.addItem('Initialize Audit Trail', 'initAuditTrailSheet');
   toolsMenu.addSeparator();
+  toolsMenu.addItem('Initialize Maintenance Teams', 'initMaintenanceTeamsSheet');
+  toolsMenu.addItem('Initialize Breakdown Types', 'initBreakdownTypesSheet');
+  toolsMenu.addSeparator();
+  toolsMenu.addItem('Refresh Job Card Dropdowns', 'refreshDropdownValidation');
+  toolsMenu.addSeparator();
   toolsMenu.addItem('Initialize QR / Barcode Data', 'initQRBarcodeData');
   toolsMenu.addToUi();
 }
@@ -50,6 +55,8 @@ function initializeSystem() {
   results.push(initAssetSheet());
   results.push(initTechnicianSheet());
   results.push(initializeUserMaster());
+  results.push(initMaintenanceTeamsSheet());
+  results.push(initBreakdownTypesSheet());
   initJobCardsSheet();
   initChecklistSheets();
   initPMSheet();
@@ -80,6 +87,7 @@ function reinitializeDatabase() {
     results.push(initMachineSheet());
     results.push(initAssetSheet());
     results.push(initTechnicianSheet());
+    results.push(initMaintenanceTeamsSheet());
     initJobCardsSheet();
     initChecklistSheets();
     initPMSheet();
@@ -214,8 +222,7 @@ function setupTestData() {
     var openDate = new Date(now.getTime() - s.DaysAgo * 86400000);
     openDate.setHours(s.OpenHour, s.OpenMin, 0, 0);
     var jc = {
-      DateTime: formatDateTimeISO(openDate),
-      OpenTime: formatDateTimeISO(openDate),
+      OpenDateTime: formatDateTimeISO(openDate),
       Section: s.Section,
       Department: s.Dept,
       Machine: testMachines[s.MachineIdx].MachineName,
@@ -224,27 +231,29 @@ function setupTestData() {
       Priority: s.Priority,
       ComplaintBy: 'Operator ' + ((idx % 5) + 1),
       AssignedTechnician: s.Status === 'OPEN' ? '' : testTechs[s.TechIdx].TechnicianName,
-      Status: s.Status,
-      WaitingTime: '0',
-      WorkingTime: '0',
-      BreakdownTime: '0'
+      CurrentStatus: s.Status,
+      WaitingTime: 0,
+      WorkingTime: 0,
+      Downtime: 0,
+      TotalDuration: 0
     };
 
     if (s.Status === 'RUNNING') {
       var startDate = new Date(openDate.getTime() + (s.WaitHrs || 0.5) * 3600000);
-      jc.StartTime = formatDateTimeISO(startDate);
-      jc.WaitingTime = String(s.WaitHrs || 0.5);
+      jc.StartDateTime = formatDateTimeISO(startDate);
+      jc.WaitingTime = Math.round((s.WaitHrs || 0.5) * 60);
     }
 
     if (s.Status === 'CLOSED') {
       var startDate = new Date(openDate.getTime() + (s.WaitHrs || 0.5) * 3600000);
       var closeDate = new Date(startDate.getTime() + (s.WorkHrs || 2) * 3600000);
-      jc.StartTime = formatDateTimeISO(startDate);
-      jc.CloseTime = formatDateTimeISO(closeDate);
-      jc.WaitingTime = String(s.WaitHrs || 0.5);
-      jc.WorkingTime = String(s.WorkHrs || 2);
-      jc.BreakdownTime = String((s.WaitHrs || 0.5) + (s.WorkHrs || 2));
-      jc.Remarks = 'Completed successfully. ' + s.Corrective;
+      jc.StartDateTime = formatDateTimeISO(startDate);
+      jc.CloseDateTime = formatDateTimeISO(closeDate);
+      jc.WaitingTime = Math.round((s.WaitHrs || 0.5) * 60);
+      jc.WorkingTime = Math.round((s.WorkHrs || 2) * 60);
+      jc.Downtime = Math.round(((s.WaitHrs || 0.5) + (s.WorkHrs || 2)) * 60);
+      jc.TotalDuration = Math.round(((s.WaitHrs || 0.5) + (s.WorkHrs || 2)) * 60);
+      jc.FinalRemarks = 'Completed successfully. ' + s.Corrective;
       if (s.RootCause) jc.RootCause = s.RootCause;
       if (s.Corrective) jc.CorrectiveAction = s.Corrective;
       if (s.Parts) jc.SpareParts = s.Parts;

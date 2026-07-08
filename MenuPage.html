@@ -15,111 +15,185 @@
     </div>
   </div>
   <div class="sidebar-menu" id="sidebarMenu">
-    <div class="sidebar-section">Main</div>
     <div class="sidebar-item active" onclick="navigateTo('dashboard')" data-page="dashboard" data-tooltip="Dashboard">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span class="sidebar-item-label">Dashboard</span>
     </div>
-    <div class="sidebar-section">Masters</div>
-    <div class="sidebar-item" onclick="navigateTo('assets')" data-page="assets" data-tooltip="Asset Master">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-      <span class="sidebar-item-label">Asset Master</span>
+
+    <div class="sidebar-group" data-group="masterData">
+      <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+        <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span>
+        <span class="sidebar-group-title">Master Data</span>
+        <span class="sidebar-group-arrow">&#9654;</span>
+      </div>
+      <div class="sidebar-group-content">
+        <div class="sidebar-item" onclick="navigateTo('sections')" data-page="sections" data-tooltip="Sections">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <span class="sidebar-item-label">Sections</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('departments')" data-page="departments" data-tooltip="Departments">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span class="sidebar-item-label">Departments</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('machines')" data-page="machines" data-tooltip="Machines">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          <span class="sidebar-item-label">Machines</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('assets')" data-page="assets" data-tooltip="Assets">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <span class="sidebar-item-label">Assets</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('technicians')" data-page="technicians" data-tooltip="Technicians">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span class="sidebar-item-label">Technicians</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('users')" data-page="users" data-tooltip="Users">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          <span class="sidebar-item-label">Users</span>
+        </div>
+      </div>
     </div>
-    <div class="sidebar-item" onclick="navigateTo('machines')" data-page="machines" data-tooltip="Machine Master">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-      <span class="sidebar-item-label">Machine Master</span>
+
+    <div class="sidebar-group" data-group="maintenance">
+      <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+        <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></span>
+        <span class="sidebar-group-title">Maintenance</span>
+        <span class="sidebar-group-arrow">&#9654;</span>
+      </div>
+      <div class="sidebar-group-content">
+        <div class="sidebar-item" onclick="navigateTo('openjobcard')" data-page="openjobcard" data-tooltip="Open Job Card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          <span class="sidebar-item-label">Open Job Cards</span>
+          <span class="sidebar-badge" id="badge-openjobcard" data-status="open">0</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('startjobcard')" data-page="startjobcard" data-tooltip="Start Job Card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          <span class="sidebar-item-label">Started Job Cards</span>
+          <span class="sidebar-badge" id="badge-startjobcard" data-status="running">0</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('closejobcard')" data-page="closejobcard" data-tooltip="Close Job Card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span class="sidebar-item-label">Closed Job Cards</span>
+          <span class="sidebar-badge" id="badge-closejobcard" data-status="closed">0</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('pendingjobcard')" data-page="pendingjobcard" data-tooltip="Pending Review">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span class="sidebar-item-label">Pending Review</span>
+          <span class="sidebar-badge" id="badge-pendingjobcard" data-status="pending">0</span>
+        </div>
+        <div class="sidebar-item" onclick="openApproveJobCard()" data-page="approvejobcard" data-tooltip="Approve Job Card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+          <span class="sidebar-item-label">Approved Job Cards</span>
+          <span class="sidebar-badge" id="badge-approvejobcard" data-status="approved">0</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('jobcards')" data-page="jobcards" data-tooltip="All Job Cards" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span class="sidebar-item-label">All Job Cards</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('pm')" data-page="pm" data-tooltip="PM Schedule">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span class="sidebar-item-label">PM Schedule</span>
+          <span class="sidebar-badge" id="badge-pm" data-status="all">0</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('spareparts')" data-page="spareparts" data-tooltip="Spare Parts">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          <span class="sidebar-item-label">Spare Parts</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('inventory')" data-page="inventory" data-tooltip="Inventory">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <span class="sidebar-item-label">Inventory</span>
+          <span class="sidebar-badge" id="badge-inventory">0</span>
+        </div>
+      </div>
     </div>
-    <div class="sidebar-item" onclick="navigateTo('technicians')" data-page="technicians" data-tooltip="Technician Master">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <span class="sidebar-item-label">Technician Master</span>
+
+    <div class="sidebar-group" data-group="history">
+      <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+        <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+        <span class="sidebar-group-title">History</span>
+        <span class="sidebar-group-arrow">&#9654;</span>
+      </div>
+      <div class="sidebar-group-content">
+        <div class="sidebar-item" onclick="navigateTo('breakdown')" data-page="breakdown" data-tooltip="Breakdown History">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+          <span class="sidebar-item-label">Breakdown History</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('pmhistory')" data-page="pmhistory" data-tooltip="PM History">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span class="sidebar-item-label">PM History</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('stockhistory')" data-page="stockhistory" data-tooltip="Stock History">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span class="sidebar-item-label">Stock History</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('inventorytransactions')" data-page="inventorytransactions" data-tooltip="Inventory Transactions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <span class="sidebar-item-label">Inventory Transactions</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('goodsreceipt')" data-page="goodsreceipt" data-tooltip="Goods Receipt">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span class="sidebar-item-label">Goods Receipt</span>
+          <span class="sidebar-badge" id="badge-goodsreceipt" data-status="all">0</span>
+        </div>
+      </div>
     </div>
-    <div class="sidebar-item" onclick="navigateTo('departments')" data-page="departments" data-tooltip="Department Master">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <span class="sidebar-item-label">Department Master</span>
+
+    <div class="sidebar-group" data-group="reports">
+      <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+        <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+        <span class="sidebar-group-title">Reports</span>
+        <span class="sidebar-group-arrow">&#9654;</span>
+      </div>
+      <div class="sidebar-group-content">
+        <div class="sidebar-item" onclick="navigateTo('reports')" data-page="reports" data-tooltip="Reports">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span class="sidebar-item-label">Reports</span>
+        </div>
+      </div>
     </div>
-    <div class="sidebar-item" onclick="navigateTo('sections')" data-page="sections" data-tooltip="Section Master">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-      <span class="sidebar-item-label">Section Master</span>
+
+    <div class="sidebar-group" data-group="communication">
+      <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+        <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+        <span class="sidebar-group-title">Communication</span>
+        <span class="sidebar-group-arrow">&#9654;</span>
+      </div>
+      <div class="sidebar-group-content">
+        <div class="sidebar-item" onclick="navigateTo('notifications')" data-page="notifications" data-tooltip="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span class="sidebar-item-label">Notifications</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('email')" data-page="email" data-tooltip="Email Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span class="sidebar-item-label">Email Notifications</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('whatsapp')" data-page="whatsapp" data-tooltip="WhatsApp Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          <span class="sidebar-item-label">WhatsApp Notifications</span>
+        </div>
+      </div>
     </div>
-    <div class="sidebar-section">Operations</div>
-    <div class="sidebar-item" onclick="navigateTo('openjobcard')" data-page="openjobcard" data-tooltip="Open Job Card">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-      <span class="sidebar-item-label">Open Job Card</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('startjobcard')" data-page="startjobcard" data-tooltip="Start Job Card">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-      <span class="sidebar-item-label">Start Job Card</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('closejobcard')" data-page="closejobcard" data-tooltip="Close Job Card">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      <span class="sidebar-item-label">Close Job Card</span>
-    </div>
-    <div class="sidebar-item" onclick="openApproveJobCard()" data-page="approvejobcard" data-tooltip="Approve Job Card">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
-      <span class="sidebar-item-label">Approve Job Card</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('jobcards')" data-page="jobcards" data-tooltip="All Job Cards" style="display:none">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      <span class="sidebar-item-label">All Job Cards</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('checklists')" data-page="checklists" data-tooltip="Checklists">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-      <span class="sidebar-item-label">Checklists</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('pm')" data-page="pm" data-tooltip="Preventive Maintenance">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      <span class="sidebar-item-label">PM Schedule</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('spareparts')" data-page="spareparts" data-tooltip="Spare Parts">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-      <span class="sidebar-item-label">Spare Parts</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('inventory')" data-page="inventory" data-tooltip="Inventory Management">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-      <span class="sidebar-item-label">Inventory</span>
-    </div>
-    <div class="sidebar-section">Transactions</div>
-    <div class="sidebar-item" onclick="navigateTo('inventorytransactions')" data-page="inventorytransactions" data-tooltip="Inventory Transactions">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-      <span class="sidebar-item-label">Inv. Transactions</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('stockhistory')" data-page="stockhistory" data-tooltip="Stock History">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      <span class="sidebar-item-label">Stock History</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('goodsreceipt')" data-page="goodsreceipt" data-tooltip="Goods Receipt">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-      <span class="sidebar-item-label">Goods Receipt</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('pmhistory')" data-page="pmhistory" data-tooltip="PM History">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      <span class="sidebar-item-label">PM History</span>
-    </div>
-    <div class="sidebar-section">Analysis</div>
-    <div class="sidebar-item" onclick="navigateTo('breakdown')" data-page="breakdown" data-tooltip="Breakdown History">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
-      <span class="sidebar-item-label">Breakdown History</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('reports')" data-page="reports" data-tooltip="Reports">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      <span class="sidebar-item-label">Reports</span>
-    </div>
-    <div class="sidebar-section">System</div>
-    <div class="sidebar-item" onclick="navigateTo('audit')" data-page="audit" data-tooltip="Audit Trail">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
-      <span class="sidebar-item-label">Audit Trail</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('qr')" data-page="qr" data-tooltip="QR &amp; Barcode Center">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
-      <span class="sidebar-item-label">QR &amp; Barcode</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('email')" data-page="email" data-tooltip="Email Settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-      <span class="sidebar-item-label">Email</span>
-    </div>
-    <div class="sidebar-item" onclick="navigateTo('settings')" data-page="settings" data-tooltip="Settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-      <span class="sidebar-item-label">Settings</span>
+
+    <div class="sidebar-group" data-group="administration">
+      <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+        <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+        <span class="sidebar-group-title">Administration</span>
+        <span class="sidebar-group-arrow">&#9654;</span>
+      </div>
+      <div class="sidebar-group-content">
+        <div class="sidebar-item" onclick="navigateTo('settings')" data-page="settings" data-tooltip="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          <span class="sidebar-item-label">Settings</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('audit')" data-page="audit" data-tooltip="Audit Trail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+          <span class="sidebar-item-label">Audit Trail</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('backuprestore')" data-page="backuprestore" data-tooltip="Backup &amp; Restore">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span class="sidebar-item-label">Backup &amp; Restore</span>
+        </div>
+      </div>
     </div>
   </div>
   <div class="sidebar-footer">
