@@ -246,6 +246,7 @@ function addJobCard(data) {
 
   var result = addRow(CONFIG.SHEET_NAMES.JOBCARDS, data);
   logActivity('Add Job Card', data.JobCardNo);
+  try { generateQRBarcodeForNewRecord('Job Card', data.JobCardNo, data); } catch(e) { console.error('JobCard QR generation failed: ' + e.message); }
   try { createNotification('Job Card Opened: ' + (data.JobCardNo || ''), 'Job card ' + (data.JobCardNo || '') + ' opened for ' + (data.Machine || '') + ' - ' + (data.ComplaintDescription || '').substring(0, 100), CONFIG.NOTIFICATION_MODULES.JOBCARD, data.Priority || CONFIG.PRIORITY.MEDIUM, data.CreatedBy, data.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
   try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.OPEN, data.JobCardNo, data.Machine || '', '', 'Priority: ' + (data.Priority || '') + ', Machine: ' + (data.Machine || ''), 'Success', 'Job card opened'); } catch(e) {}
   try { emailJobCardStatusChange(data.JobCardNo, 'OPEN'); } catch(e) { console.error(e); }

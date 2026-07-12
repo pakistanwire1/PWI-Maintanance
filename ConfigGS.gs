@@ -153,7 +153,9 @@ var CONFIG = {
     // SUPPLEMENTARY FIELDS (2)
     'ComplaintByCode', 'ComplaintByEmail',
     // INTERNAL FIELDS
-    'AssignedTechnicianIDs'
+    'AssignedTechnicianIDs',
+    // QR/BARCODE FIELDS (3)
+    'QRCode', 'Barcode', 'QRGeneratedDate'
   ],
 
   PERMISSION_FIELDS: [
@@ -439,7 +441,7 @@ var CONFIG = {
     LABEL_PRINTED: 'Label Printed'
   },
 
-  QR_MODULES: ['Machine', 'Asset', 'Spare Part'],
+  QR_MODULES: ['Machine', 'Asset', 'Spare Part', 'Job Card'],
 
   QR_LABEL_SIZES: {
     SMALL: '50x25mm',

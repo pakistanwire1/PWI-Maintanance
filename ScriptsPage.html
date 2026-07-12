@@ -94,6 +94,7 @@ function showApp() {
   initLiveTimers();
   navigateTo('dashboard');
   setTimeout(function() { runFrontendDiagnostic('showApp'); }, 500);
+  checkQRUrlParameter();
 }
 
 function updateUserInfo() {
@@ -684,7 +685,413 @@ function getUserDept() {
 
 function getFormData(formId) {
   var form = document.getElementById(formId);
-  if (!form) { console.warn('Form not found:', formId); return {}; }
+  if (!form) { console.warn('Form not found:', formId); return {  };
+}
+
+/* ========================================================
+   PART-3: PWA INSTALL
+   ======================================================== */
+var deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  var banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'block';
+});
+
+function installPWA() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(function(choice) {
+    if (choice.outcome === 'accepted') {
+      console.log('PWA installed');
+    }
+    deferredInstallPrompt = null;
+    var banner = document.getElementById('installBanner');
+    if (banner) banner.style.display = 'none';
+  });
+}
+
+function dismissInstall() {
+  var banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+}
+
+window.addEventListener('appinstalled', function() {
+  deferredInstallPrompt = null;
+  var banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+  console.log('CMMS PWA installed');
+});
+
+/* ========================================================
+   PART-4: CAMERA QR SCANNER
+   ======================================================== */
+var qrScannerActive = false;
+
+function openQRScanner() {
+  if (qrScannerActive) return;
+  qrScannerActive = true;
+
+  var overlay = document.createElement('div');
+  overlay.className = 'qr-scanner-overlay';
+  overlay.id = 'qrScannerOverlay';
+  overlay.innerHTML =
+    '<div class="qr-scanner-header">Scan Machine / Asset / Job Card QR</div>' +
+    '<div class="qr-scanner-viewfinder" id="qrReader"></div>' +
+    '<div style="color:rgba(255,255,255,0.6);font-size:12px;margin-top:12px;text-align:center">Position QR code within the frame</div>' +
+    '<button class="qr-scanner-close" onclick="closeQRScanner()">Close Scanner</button>';
+  document.body.appendChild(overlay);
+
+  if (typeof Html5Qrcode === 'undefined') {
+    var script = document.createElement('script');
+    script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+    script.onload = function() { startQRScanning(); };
+    script.onerror = function() {
+      closeQRScanner();
+      showToast('Failed to load QR scanner library', 'error');
+    };
+    document.head.appendChild(script);
+  } else {
+    startQRScanning();
+  }
+}
+
+function startQRScanning() {
+  try {
+    var html5QrCode = new Html5Qrcode('qrReader');
+    html5QrCode.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
+      function onScanSuccess(decodedText) {
+        html5QrCode.stop().then(function() {
+          closeQRScanner();
+          processQRScanResult(decodedText);
+        }).catch(function() {});
+      },
+      function onScanFailure() {}
+    ).catch(function(err) {
+      closeQRScanner();
+      if (err && err.toString().indexOf('NotAllowedError') !== -1) {
+        showToast('Camera permission denied. Please allow camera access.', 'error');
+      } else {
+        showToast('Could not access camera: ' + (err.message || err), 'error');
+      }
+    });
+  } catch(e) {
+    closeQRScanner();
+    showToast('QR scanner error: ' + e.message, 'error');
+  }
+}
+
+function closeQRScanner() {
+  qrScannerActive = false;
+  var overlay = document.getElementById('qrScannerOverlay');
+  if (overlay) overlay.remove();
+}
+
+function processQRScanResult(decodedText) {
+  if (!currentUser) {
+    showToast('Please login to scan QR codes', 'warning');
+    return;
+  }
+
+  showToast('QR scanned: processing...', 'info');
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (!result || result.error) {
+        showToast(result ? result.error : 'QR code not recognized', 'error');
+        return;
+      }
+      showQRDetail(result);
+    })
+    .withFailureHandler(function(err) {
+      showToast('Failed to process QR code', 'error');
+    })
+    .getQRDetail(decodedText);
+}
+
+function showQRDetail(result) {
+  var existing = document.getElementById('qrDetailOverlay');
+  if (existing) existing.remove();
+
+  var moduleColors = { 'Machine': '#6366f1', 'Asset': '#06b6d4', 'Job Card': '#f59e0b', 'Spare Part': '#22c55e' };
+  var moduleIcons = {
+    'Machine': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
+    'Asset': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+    'Job Card': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+    'Spare Part': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>'
+  };
+
+  var color = moduleColors[result.module] || '#6366f1';
+  var icon = moduleIcons[result.module] || '';
+
+  var rows = '';
+  rows += '<div class="qr-detail-row"><span class="qr-detail-label">' + (result.module === 'Job Card' ? 'Job Card No' : 'ID') + '</span><span class="qr-detail-value">' + escapeHtml(result.id || '') + '</span></div>';
+  rows += '<div class="qr-detail-row"><span class="qr-detail-label">' + (result.module === 'Job Card' ? 'Machine' : 'Name') + '</span><span class="qr-detail-value">' + escapeHtml(result.name || '') + '</span></div>';
+  if (result.code && result.code !== result.id) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Code</span><span class="qr-detail-value">' + escapeHtml(result.code || '') + '</span></div>';
+  if (result.department) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Department</span><span class="qr-detail-value">' + escapeHtml(result.department || '') + '</span></div>';
+  if (result.location) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Location</span><span class="qr-detail-value">' + escapeHtml(result.location || '') + '</span></div>';
+  if (result.section) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Section</span><span class="qr-detail-value">' + escapeHtml(result.section || '') + '</span></div>';
+  if (result.status) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Status</span><span class="qr-detail-value"><span class="badge badge-' + (result.status === 'Active' ? 'success' : 'warning') + '">' + escapeHtml(result.status) + '</span></span></div>';
+  if (result.type) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Type</span><span class="qr-detail-value">' + escapeHtml(result.type || '') + '</span></div>';
+  if (result.manufacturer) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Manufacturer</span><span class="qr-detail-value">' + escapeHtml(result.manufacturer || '') + '</span></div>';
+  if (result.model) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Model</span><span class="qr-detail-value">' + escapeHtml(result.model || '') + '</span></div>';
+  if (result.criticality) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Criticality</span><span class="qr-detail-value">' + escapeHtml(result.criticality || '') + '</span></div>';
+  if (result.lastBreakdown) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Last Breakdown</span><span class="qr-detail-value">' + escapeHtml(result.lastBreakdown || '') + '</span></div>';
+  if (result.lastPM) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Last PM</span><span class="qr-detail-value">' + escapeHtml(result.lastPM || '') + '</span></div>';
+  if (result.openJobCards !== undefined) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Open Job Cards</span><span class="qr-detail-value" style="color:' + (result.openJobCards > 0 ? 'var(--danger)' : 'var(--success)') + ';font-weight:700">' + result.openJobCards + '</span></div>';
+  if (result.priority) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Priority</span><span class="qr-detail-value"><span class="badge badge-' + (result.priority === 'Critical' ? 'danger' : result.priority === 'High' ? 'warning' : 'info') + '">' + escapeHtml(result.priority || '') + '</span></span></div>';
+  if (result.complaintDescription) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Description</span><span class="qr-detail-value" style="max-width:70%;text-align:right;font-size:12px">' + escapeHtml((result.complaintDescription || '').substring(0, 100)) + '</span></div>';
+  if (result.technician) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Technician</span><span class="qr-detail-value">' + escapeHtml(result.technician || '') + '</span></div>';
+  if (result.category) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Category</span><span class="qr-detail-value">' + escapeHtml(result.category || '') + '</span></div>';
+  if (result.cost) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Cost</span><span class="qr-detail-value">$' + escapeHtml(String(result.cost || '0')) + '</span></div>';
+
+  var actions = '';
+  if (result.module === 'Machine') {
+    actions += '<button class="btn btn-primary" onclick="navigateTo(\'machines\');closeQRDetail()">View Machine</button>';
+    actions += '<button class="btn btn-success" onclick="createJobCardFromQR(\'' + escapeHtml(result.id) + '\',\'' + escapeHtml(result.name) + '\')">Create Job Card</button>';
+  } else if (result.module === 'Asset') {
+    actions += '<button class="btn btn-primary" onclick="navigateTo(\'assets\');closeQRDetail()">View Asset</button>';
+  } else if (result.module === 'Job Card') {
+    actions += '<button class="btn btn-primary" onclick="navigateTo(\'jobcards\');closeQRDetail()">View Job Cards</button>';
+  } else if (result.module === 'Spare Part') {
+    actions += '<button class="btn btn-primary" onclick="navigateTo(\'spareparts\');closeQRDetail()">View Spare Parts</button>';
+  }
+  actions += '<button class="btn btn-secondary" onclick="closeQRDetail()">Close</button>';
+
+  var historyHtml = '';
+  if (result.history && result.history.length > 0) {
+    historyHtml = '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">';
+    historyHtml += '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px">Recent History</div>';
+    result.history.forEach(function(h) {
+      var statusClass = (h.status || '').toUpperCase() === 'CLOSED' ? 'success' : (h.status || '').toUpperCase() === 'RUNNING' ? 'running' : 'info';
+      historyHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:11px;border-bottom:1px solid var(--border)">';
+      historyHtml += '<span style="color:var(--text);font-weight:500">' + escapeHtml(h.jobCardNo || '') + '</span>';
+      historyHtml += '<span class="badge badge-' + statusClass + '" style="font-size:9px">' + escapeHtml(h.status || '') + '</span>';
+      historyHtml += '</div>';
+    });
+    historyHtml += '</div>';
+  }
+
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'qrDetailOverlay';
+  overlay.innerHTML =
+    '<div class="qr-detail-card" onclick="event.stopPropagation()">' +
+      '<div class="qr-detail-header">' +
+        '<div class="qr-detail-icon" style="background:' + color + '22;color:' + color + '">' + icon + '</div>' +
+        '<div>' +
+          '<div class="qr-detail-title">' + escapeHtml(result.name || result.id) + '</div>' +
+          '<div class="qr-detail-subtitle">' + escapeHtml(result.module) + ' &middot; ' + escapeHtml(result.id || '') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="qr-detail-rows">' + rows + '</div>' +
+      historyHtml +
+      '<div class="qr-detail-actions">' + actions + '</div>' +
+    '</div>';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.onclick = function() { closeQRDetail(); };
+  document.body.appendChild(overlay);
+}
+
+function closeQRDetail() {
+  var overlay = document.getElementById('qrDetailOverlay');
+  if (overlay) overlay.remove();
+}
+
+function createJobCardFromQR(machineId, machineName) {
+  closeQRDetail();
+  navigateTo('openjobcard');
+  var attempts = 0;
+  var maxAttempts = 20;
+  var checkInterval = setInterval(function() {
+    attempts++;
+    var machineSelect = document.getElementById('jcMachine');
+    if (machineSelect && machineSelect.options.length > 1) {
+      clearInterval(checkInterval);
+      for (var i = 0; i < machineSelect.options.length; i++) {
+        if (machineSelect.options[i].value === machineName || machineSelect.options[i].text === machineName) {
+          machineSelect.selectedIndex = i;
+          if (typeof onJcMachineChange === 'function') onJcMachineChange();
+          break;
+        }
+      }
+      showToast('Machine pre-selected from QR: ' + machineName, 'success');
+    }
+    if (attempts >= maxAttempts) {
+      clearInterval(checkInterval);
+      showToast('Machine list still loading. Please select manually.', 'warning');
+    }
+  }, 300);
+}
+
+/* ========================================================
+   PART-6: BROWSER NOTIFICATIONS
+   ======================================================== */
+var lastNotifCount = 0;
+var notifPermissionGranted = false;
+
+function requestNotificationPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') {
+    notifPermissionGranted = true;
+    return;
+  }
+  if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then(function(perm) {
+      notifPermissionGranted = (perm === 'granted');
+    });
+  }
+}
+
+function sendBrowserNotification(title, body, tag) {
+  if (!notifPermissionGranted || !('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    var n = new Notification(title, {
+      body: body,
+      icon: LOGO_URL,
+      badge: LOGO_URL,
+      tag: tag || 'cmms-' + Date.now(),
+      requireInteraction: false,
+      silent: false
+    });
+    n.onclick = function() { window.focus(); n.close(); };
+    setTimeout(function() { n.close(); }, 8000);
+  } catch(e) {}
+}
+
+var _lastNotifIds = [];
+function checkForNewNotifications(data) {
+  if (!data || !data.data) return;
+  var newIds = data.data.map(function(n) { return n.NotificationID; });
+  if (_lastNotifIds.length > 0) {
+    var newOnes = data.data.filter(function(n) {
+      return _lastNotifIds.indexOf(n.NotificationID) === -1 && (n.Priority === 'Critical' || n.Priority === 'High');
+    });
+    newOnes.forEach(function(n) {
+      sendBrowserNotification(n.Title, n.Message, n.NotificationID);
+    });
+  }
+  _lastNotifIds = newIds;
+}
+
+/* ========================================================
+   PART-7: OFFLINE MODE
+   ======================================================== */
+var isOffline = !navigator.onLine;
+var offlineQueue = [];
+
+function setupOfflineMode() {
+  window.addEventListener('online', function() {
+    isOffline = false;
+    var banner = document.getElementById('offlineBanner');
+    if (banner) banner.style.display = 'none';
+    showToast('Connection restored. Syncing...', 'success');
+    syncOfflineActions();
+  });
+
+  window.addEventListener('offline', function() {
+    isOffline = true;
+    var banner = document.getElementById('offlineBanner');
+    if (banner) banner.style.display = 'flex';
+    showToast('You are offline. Changes will be saved locally.', 'warning');
+  });
+
+  try {
+    var saved = localStorage.getItem('cmms_offline_queue');
+    if (saved) offlineQueue = JSON.parse(saved);
+    if (offlineQueue.length > 0 && navigator.onLine) syncOfflineActions();
+  } catch(e) {}
+
+  if (!navigator.onLine) {
+    var banner = document.getElementById('offlineBanner');
+    if (banner) banner.style.display = 'flex';
+  }
+}
+
+function queueOfflineAction(type, data) {
+  var action = { type: type, data: data, timestamp: Date.now(), id: 'offline_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5) };
+  offlineQueue.push(action);
+  try { localStorage.setItem('cmms_offline_queue', JSON.stringify(offlineQueue)); } catch(e) {}
+  return action.id;
+}
+
+function syncOfflineActions() {
+  if (offlineQueue.length === 0) return;
+  var toProcess = offlineQueue.slice();
+  var processed = 0;
+  var failed = 0;
+
+  function processNext() {
+    if (processed + failed >= toProcess.length) {
+      offlineQueue = [];
+      try { localStorage.removeItem('cmms_offline_queue'); } catch(e) {}
+      if (processed > 0) showToast('Synced ' + processed + ' offline action(s)' + (failed > 0 ? ', ' + failed + ' failed' : ''), failed > 0 ? 'warning' : 'success');
+      return;
+    }
+    var action = toProcess[processed + failed];
+    var fnMap = {
+      'addJobCard': 'addJobCard',
+      'updateJobCard': 'updateJobCard',
+      'updateJobCardStatus': 'updateJobCardStatus',
+      'createNotification': 'createNotification'
+    };
+    var fnName = fnMap[action.type];
+    if (!fnName) { failed++; processNext(); return; }
+    google.script.run
+      .withSuccessHandler(function() { processed++; processNext(); })
+      .withFailureHandler(function() { failed++; processNext(); })
+      [fnName](action.data);
+  }
+  processNext();
+}
+
+/* ========================================================
+   PART-9: QR CACHE
+   ======================================================== */
+var qrCache = {};
+var QR_CACHE_TTL = 300000;
+
+function cacheQRScan(qrContent, result) {
+  qrCache[qrContent] = { result: result, timestamp: Date.now() };
+}
+
+function getCachedQR(qrContent) {
+  var cached = qrCache[qrContent];
+  if (cached && (Date.now() - cached.timestamp) < QR_CACHE_TTL) return cached.result;
+  delete qrCache[qrContent];
+  return null;
+}
+
+/* ========================================================
+   INIT: SETUP PWA + OFFLINE + NOTIFICATIONS
+   ======================================================== */
+(function initEnterpriseFeatures() {
+  requestNotificationPermission();
+  setupOfflineMode();
+})();
+
+/* ========================================================
+   QR URL PARAMETER HANDLER
+   ======================================================== */
+function checkQRUrlParameter() {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var qrParam = params.get('qr');
+    if (qrParam) {
+      var decoded = decodeURIComponent(qrParam);
+      processQRScanResult(decoded);
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  } catch(e) {}
+}
   var data = {};
   form.querySelectorAll('[name]').forEach(function(el) {
     data[el.name] = el.value;
@@ -1371,6 +1778,10 @@ function startNotificationRefresh() {
         .withSuccessHandler(function(count) {
           if (count !== unreadCount) {
             loadNotifications();
+            google.script.run
+              .withSuccessHandler(function(result) { checkForNewNotifications(result); })
+              .withFailureHandler(function() {})
+              .getDashboardNotifications(5, email);
           }
         })
         .withFailureHandler(function() {})

@@ -39,6 +39,11 @@ function getDashboardData(filter, userDepartment) {
   Logger.log('getDashboardData() called, filter=' + filter + ', userDepartment=' + userDepartment);
   console.log('getDashboardData() called, filter=' + filter + ', userDepartment=' + userDepartment);
   try {
+    var cacheKey = 'dashboard_' + (filter || 'all') + '_' + (userDepartment || '');
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
     var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
     var assets = getAllData(CONFIG.SHEET_NAMES.ASSETS) || [];
     var allJobCards = getAllData(CONFIG.SHEET_NAMES.JOBCARDS) || [];
@@ -189,7 +194,7 @@ function getDashboardData(filter, userDepartment) {
     }
     var pmCompliance = (pms.length > 0) ? Math.round((pmCompleted / pms.length) * 100) : 0;
 
-    return {
+    var dashboardResult = {
       totalMachines: totalMachines,
       runningMachines: runningMachines,
       breakdownMachines: breakdownMachines,
@@ -231,6 +236,8 @@ function getDashboardData(filter, userDepartment) {
       pmInProgress: pmInProgress,
       pmCompliance: pmCompliance
     };
+    try { cache.put(cacheKey, JSON.stringify(dashboardResult), 60); } catch(e) {}
+    return dashboardResult;
   } catch (e) {
     return handleError('getDashboardData', e);
   }
