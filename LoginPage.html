@@ -14,7 +14,7 @@
   </div>
   <div class="login-glow-lines"></div>
   <div class="login-overlay"></div>
-  <div class="login-watermark">Pakistan Wire Industries (Pvt.) Ltd.</div>
+  <div class="login-watermark">Pakistan Wires Industries (Pvt.) Ltd.</div>
   <button class="login-theme-toggle" onclick="loginToggleTheme()" title="Toggle theme">
     <svg id="loginThemeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
   </button>
@@ -23,7 +23,7 @@
       <div class="login-card-glow"></div>
       <div class="login-header">
         <div class="login-logo-area">
-          <img class="login-logo-img" id="loginLogoImg" alt="Pakistan Wire Industries" src="?img=logo" style="display:none" onload="this.style.display='block';var el=document.getElementById('loginLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('loginLogoFallback');el&&(el.style.display='flex')">
+          <img class="login-logo-img" id="loginLogoImg" alt="Pakistan Wires Industries" src="?img=logo" style="display:none" onload="this.style.display='block';var el=document.getElementById('loginLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('loginLogoFallback');el&&(el.style.display='flex')">
           <div class="login-logo-fallback" id="loginLogoFallback">
             <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="50" height="50">
               <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
@@ -33,7 +33,7 @@
             </svg>
           </div>
         </div>
-        <h1 class="login-title">Pakistan Wire Industries (Pvt.) Ltd.</h1>
+        <h1 class="login-title">Pakistan Wires Industries (Pvt.) Ltd.</h1>
         <p class="login-subtitle">Computerized Maintenance Management System</p>
       </div>
       <form id="loginForm" onsubmit="return handleLogin(event)">
@@ -73,7 +73,7 @@
             <span class="login-checkmark"></span>
             <span class="login-checkbox-label">Remember Me</span>
           </label>
-          <a href="#" class="login-forgot" onclick="alert('Please contact your system administrator to reset your password.');return false">Forgot Password?</a>
+          <a href="#" class="login-forgot" onclick="showForgotPassword();return false">Forgot Password?</a>
         </div>
         <button type="submit" class="login-btn" id="loginBtn">
           <span class="login-btn-text">Sign In</span>
@@ -85,7 +85,39 @@
         <p>Demo Credentials: <strong>admin@cmms.com</strong> / <strong>admin123</strong></p>
       </div>
       <div class="login-version">Maintenance Management System v2.0</div>
-      <div class="login-footer">&copy; Pakistan Wire Industries (Pvt.) Ltd.</div>
+      <div class="login-footer">&copy; Pakistan Wires Industries (Pvt.) Ltd.</div>
+    </div>
+  </div>
+</div>
+
+<div class="login-forgot-modal" id="forgotPasswordModal" style="display:none">
+  <div class="login-forgot-overlay" onclick="closeForgotPassword()"></div>
+  <div class="login-forgot-dialog">
+    <div class="login-forgot-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color:var(--lw-accent)">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0110 0v4"/>
+      </svg>
+      <h3>Reset Password</h3>
+      <button class="login-forgot-close" onclick="closeForgotPassword()">&times;</button>
+    </div>
+    <div class="login-forgot-body">
+      <p>Enter your registered email address. If the email exists in our system, a password reset request will be submitted.</p>
+      <div class="login-form-group" style="margin-top:16px">
+        <label for="forgotEmail">Email Address</label>
+        <div class="login-input-wrap">
+          <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          <input type="email" id="forgotEmail" class="login-input" placeholder="Enter your registered email">
+        </div>
+      </div>
+      <div id="forgotResult" class="login-forgot-result" style="display:none"></div>
+    </div>
+    <div class="login-forgot-footer">
+      <button class="login-forgot-cancel" onclick="closeForgotPassword()">Cancel</button>
+      <button class="login-forgot-submit" id="forgotSubmitBtn" onclick="submitForgotPassword()">Submit</button>
     </div>
   </div>
 </div>
@@ -757,6 +789,132 @@
   .login-options { flex-direction: column; align-items: flex-start; gap: 10px; }
   .login-theme-toggle { top: 12px; right: 12px; width: 36px; height: 36px; }
 }
+
+.login-forgot-modal {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.login-forgot-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.login-forgot-dialog {
+  position: relative;
+  background: var(--lw-card);
+  border: 1px solid var(--lw-card-border);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 420px; width: 90%;
+  backdrop-filter: blur(32px) saturate(1.6);
+  -webkit-backdrop-filter: blur(32px) saturate(1.6);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px rgba(59,130,246,0.08);
+  animation: lwCardIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.login-forgot-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px;
+}
+
+.login-forgot-header h3 {
+  color: var(--lw-text);
+  font-size: 17px; font-weight: 700;
+  flex: 1;
+}
+
+.login-forgot-close {
+  background: none; border: none;
+  color: var(--lw-text-muted);
+  font-size: 24px; cursor: pointer;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.login-forgot-close:hover {
+  background: var(--lw-thm-bg);
+  color: var(--lw-text);
+}
+
+.login-forgot-body p {
+  color: var(--lw-text-sec);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.login-forgot-result {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.login-forgot-result.success {
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.18);
+  color: #22c55e;
+}
+
+.login-forgot-result.error {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.18);
+  color: #ef4444;
+}
+
+.login-forgot-footer {
+  display: flex; gap: 10px; justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.login-forgot-cancel {
+  padding: 10px 22px;
+  background: var(--lw-input-bg);
+  border: 1px solid var(--lw-border);
+  border-radius: 10px;
+  color: var(--lw-text-sec);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.login-forgot-cancel:hover {
+  background: var(--lw-thm-hover-bg);
+  color: var(--lw-text);
+}
+
+.login-forgot-submit {
+  padding: 10px 26px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+[data-theme="light"] .login-forgot-submit {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+}
+
+.login-forgot-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(59,130,246,0.25);
+}
+
+.login-forgot-submit:disabled {
+  opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none;
+}
 </style>
 
 <script>
@@ -812,6 +970,77 @@ function togglePasswordVisibility() {
   }
 }
 
+function showForgotPassword() {
+  var modal = document.getElementById('forgotPasswordModal');
+  if (modal) modal.style.display = 'flex';
+  var emailInput = document.getElementById('forgotEmail');
+  if (emailInput) {
+    var loginEmail = document.getElementById('loginEmail');
+    emailInput.value = loginEmail ? loginEmail.value.trim() : '';
+    emailInput.focus();
+  }
+  var result = document.getElementById('forgotResult');
+  if (result) { result.style.display = 'none'; result.textContent = ''; }
+}
+
+function closeForgotPassword() {
+  var modal = document.getElementById('forgotPasswordModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function submitForgotPassword() {
+  var emailInput = document.getElementById('forgotEmail');
+  var resultDiv = document.getElementById('forgotResult');
+  var submitBtn = document.getElementById('forgotSubmitBtn');
+  var email = emailInput ? emailInput.value.trim() : '';
+
+  if (!email) {
+    if (resultDiv) {
+      resultDiv.textContent = 'Please enter your email address.';
+      resultDiv.className = 'login-forgot-result error';
+      resultDiv.style.display = 'block';
+    }
+    if (emailInput) emailInput.focus();
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (resultDiv) {
+      resultDiv.textContent = 'Please enter a valid email address.';
+      resultDiv.className = 'login-forgot-result error';
+      resultDiv.style.display = 'block';
+    }
+    if (emailInput) emailInput.focus();
+    return;
+  }
+
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Checking...'; }
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit'; }
+      if (resultDiv) {
+        if (result && result.exists) {
+          resultDiv.textContent = 'Password reset request submitted. Please contact your System Administrator.';
+          resultDiv.className = 'login-forgot-result success';
+        } else {
+          resultDiv.textContent = 'Email not registered.';
+          resultDiv.className = 'login-forgot-result error';
+        }
+        resultDiv.style.display = 'block';
+      }
+    })
+    .withFailureHandler(function(err) {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit'; }
+      if (resultDiv) {
+        resultDiv.textContent = 'Password reset request submitted. Please contact your System Administrator.';
+        resultDiv.className = 'login-forgot-result success';
+        resultDiv.style.display = 'block';
+      }
+    })
+    .checkEmailExists(email);
+}
+
 function handleLogin(e) {
   e.preventDefault();
   var emailEl = document.getElementById('loginEmail');
@@ -831,6 +1060,13 @@ function handleLogin(e) {
       errorDiv.style.display = 'block';
     }
     if (emailEl) emailEl.focus();
+    if (btn) {
+      btn.disabled = false;
+      var btnText = btn.querySelector('.login-btn-text');
+      if (btnText) btnText.textContent = 'Sign In';
+      var spnr = btn.querySelector('.spinner');
+      if (spnr) spnr.style.display = 'none';
+    }
     return false;
   }
 
@@ -840,6 +1076,29 @@ function handleLogin(e) {
       errorDiv.style.display = 'block';
     }
     if (passEl) passEl.focus();
+    if (btn) {
+      btn.disabled = false;
+      var btnText = btn.querySelector('.login-btn-text');
+      if (btnText) btnText.textContent = 'Sign In';
+      var spnr = btn.querySelector('.spinner');
+      if (spnr) spnr.style.display = 'none';
+    }
+    return false;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (errorDiv) {
+      errorDiv.textContent = 'Please enter a valid email address.';
+      errorDiv.style.display = 'block';
+    }
+    if (emailEl) emailEl.focus();
+    if (btn) {
+      btn.disabled = false;
+      var btnText = btn.querySelector('.login-btn-text');
+      if (btnText) btnText.textContent = 'Sign In';
+      var spnr = btn.querySelector('.spinner');
+      if (spnr) spnr.style.display = 'none';
+    }
     return false;
   }
 
@@ -886,7 +1145,7 @@ function handleLogin(e) {
         if (spnr) spnr.style.display = 'none';
       }
       if (errorDiv) {
-        errorDiv.textContent = 'Connection error. Please try again.';
+        errorDiv.textContent = 'Invalid Email or Password.';
         errorDiv.style.display = 'block';
       }
     })

@@ -194,6 +194,20 @@ function loginUser(email, password) {
   }
 }
 
+function checkEmailExists(email) {
+  try {
+    var users = getAllData(CONFIG.SHEET_NAMES.USERS);
+    for (var i = 0; i < users.length; i++) {
+      if (users[i].Email === email) {
+        return { exists: true };
+      }
+    }
+    return { exists: false };
+  } catch (e) {
+    return { exists: false };
+  }
+}
+
 function checkSession() {
   Logger.log('checkSession() called');
   console.log('checkSession() called');

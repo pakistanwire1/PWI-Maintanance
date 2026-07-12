@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/png" href="?img=logo">
   <link rel="apple-touch-icon" href="?img=logo">
-  <title>Pakistan Wire Industries</title>
+  <title>Pakistan Wires Industries</title>
   <style>
     :root, [data-theme="dark"] {
       --ws-bg: #03050a;
@@ -123,6 +123,71 @@
       50% { transform: translate(3%, -2%) rotate(-0.3deg); }
       75% { transform: translate(-2%, 4%) rotate(0.4deg); }
       100% { transform: translate(3%, -3%) rotate(-0.2deg); }
+    }
+
+    .ws-slideshow {
+      position: fixed; top: 0; left: 0; width: 300%; height: 100%; z-index: 0;
+      pointer-events: none;
+      will-change: transform;
+      animation: wsSlideScroll 45s linear infinite;
+    }
+
+    .ws-scene {
+      position: absolute; top: 0; width: 33.333%; height: 100%;
+    }
+
+    .ws-scene:nth-child(1) { left: 0; }
+    .ws-scene:nth-child(2) { left: 33.333%; }
+    .ws-scene:nth-child(3) { left: 66.666%; }
+
+    .ws-scene-1 {
+      background:
+        radial-gradient(ellipse at 30% 40%, rgba(25,55,109,0.55) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 60%, rgba(59,130,246,0.25) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 30%, rgba(6,182,212,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 20% 70%, rgba(99,102,241,0.08) 0%, transparent 40%);
+    }
+
+    .ws-scene-2 {
+      background:
+        radial-gradient(ellipse at 40% 50%, rgba(249,115,22,0.15) 0%, transparent 45%),
+        radial-gradient(ellipse at 60% 35%, rgba(255,193,7,0.08) 0%, transparent 40%),
+        radial-gradient(ellipse at 30% 70%, rgba(59,130,246,0.18) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 40%, rgba(99,102,241,0.10) 0%, transparent 45%);
+    }
+
+    .ws-scene-3 {
+      background:
+        radial-gradient(ellipse at 50% 30%, rgba(99,102,241,0.25) 0%, transparent 50%),
+        radial-gradient(ellipse at 30% 60%, rgba(6,182,212,0.15) 0%, transparent 45%),
+        radial-gradient(ellipse at 70% 40%, rgba(59,130,246,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 60% 80%, rgba(25,55,109,0.10) 0%, transparent 40%);
+    }
+
+    [data-theme="light"] .ws-scene-1 {
+      background:
+        radial-gradient(ellipse at 30% 40%, rgba(59,130,246,0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 60%, rgba(59,130,246,0.03) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 30%, rgba(6,182,212,0.02) 0%, transparent 50%);
+    }
+
+    [data-theme="light"] .ws-scene-2 {
+      background:
+        radial-gradient(ellipse at 40% 50%, rgba(249,115,22,0.03) 0%, transparent 45%),
+        radial-gradient(ellipse at 60% 35%, rgba(59,130,246,0.03) 0%, transparent 40%),
+        radial-gradient(ellipse at 30% 70%, rgba(59,130,246,0.02) 0%, transparent 50%);
+    }
+
+    [data-theme="light"] .ws-scene-3 {
+      background:
+        radial-gradient(ellipse at 50% 30%, rgba(99,102,241,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 30% 60%, rgba(6,182,212,0.02) 0%, transparent 45%),
+        radial-gradient(ellipse at 70% 40%, rgba(59,130,246,0.02) 0%, transparent 50%);
+    }
+
+    @keyframes wsSlideScroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-33.333%); }
     }
 
     .ws-bg-grid {
@@ -702,6 +767,11 @@
 <body>
   <div class="ws-bg-base"></div>
   <div class="ws-bg-drift"></div>
+  <div class="ws-slideshow">
+    <div class="ws-scene ws-scene-1"></div>
+    <div class="ws-scene ws-scene-2"></div>
+    <div class="ws-scene ws-scene-3"></div>
+  </div>
   <div class="ws-bg-grid"></div>
   <div class="ws-bg-factory"></div>
   <div class="ws-particles">
@@ -715,7 +785,7 @@
   </div>
   <div class="ws-glow-lines"></div>
   <div class="ws-overlay"></div>
-  <div class="ws-watermark">Pakistan Wire Industries (Pvt.) Ltd.</div>
+  <div class="ws-watermark">Pakistan Wires Industries (Pvt.) Ltd.</div>
   <button class="ws-theme-toggle" onclick="toggleTheme()" id="wsThemeBtn" title="Toggle theme">
     <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
   </button>
@@ -723,7 +793,7 @@
     <div class="ws-card">
       <div class="ws-logo-area" id="wsLogoArea">
         <div class="ws-glow-ring"></div>
-        <img class="logo-img" id="wsLogoImg" alt="Pakistan Wire Industries" src="?img=logo" style="display:none" onload="this.style.display='block';var el=document.getElementById('wsLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('wsLogoFallback');el&&(el.style.display='flex')">
+        <img class="logo-img" id="wsLogoImg" alt="Pakistan Wires Industries" src="?img=logo" style="display:none" onload="this.style.display='block';var el=document.getElementById('wsLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('wsLogoFallback');el&&(el.style.display='flex')">
         <div class="logo-fallback" id="wsLogoFallback">
           <svg class="logo-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
@@ -758,7 +828,7 @@
           <div class="ws-div-desc">Cable &amp; Wire Production</div>
         </div>
       </div>
-      <div class="ws-company">Pakistan Wire Industries (Pvt.) Ltd.</div>
+      <div class="ws-company">Pakistan Wires Industries (Pvt.) Ltd.</div>
       <div class="ws-sep"></div>
       <div class="ws-loading-text" id="wsLoadingText">Initializing system...</div>
       <div class="ws-progress">
