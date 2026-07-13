@@ -342,6 +342,7 @@ function submitPendingJc(decision) {
         if (window.updateSidebarCounters) {
           google.script.run.withSuccessHandler(function(d) { window.updateSidebarCounters(d); }).getDashboardData();
         }
+        if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters();
       })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to return job card', 'error'); })
       .returnJobCard(id, { ReturnReason: reason, ApprovalRemarks: remarks });
@@ -357,6 +358,7 @@ function submitPendingJc(decision) {
         if (window.updateSidebarCounters) {
           google.script.run.withSuccessHandler(function(d) { window.updateSidebarCounters(d); }).getDashboardData();
         }
+        if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters();
       })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to approve job card', 'error'); })
       .approveJobCard(id, { ApprovalRemarks: remarks });

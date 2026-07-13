@@ -259,12 +259,12 @@ function saveMachine(e) {
   showLoading(true);
   if (id) {
     google.script.run
-      .withSuccessHandler(function(result) { machinesData = result; showLoading(false); hideModal('machineFormModal'); showToast('Machine updated successfully'); renderMachinesTable(); })
+      .withSuccessHandler(function(result) { machinesData = result; showLoading(false); hideModal('machineFormModal'); showToast('Machine updated successfully'); renderMachinesTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); if (typeof notifyQRDataChanged === 'function') notifyQRDataChanged(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to update machine', 'error'); })
       .updateMachine(id, data);
   } else {
     google.script.run
-      .withSuccessHandler(function(result) { machinesData = result; showLoading(false); hideModal('machineFormModal'); showToast('Machine added successfully'); renderMachinesTable(); })
+      .withSuccessHandler(function(result) { machinesData = result; showLoading(false); hideModal('machineFormModal'); showToast('Machine added successfully'); renderMachinesTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); if (typeof notifyQRDataChanged === 'function') notifyQRDataChanged(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to add machine', 'error'); })
       .addMachine(data);
   }
@@ -274,7 +274,7 @@ function deleteMachine(id) {
   showConfirm('Delete Machine', 'Are you sure you want to delete this machine?', function() {
     showLoading(true);
     google.script.run
-      .withSuccessHandler(function(result) { machinesData = result; showLoading(false); showToast('Machine deleted successfully'); renderMachinesTable(); })
+      .withSuccessHandler(function(result) { machinesData = result; showLoading(false); showToast('Machine deleted successfully'); renderMachinesTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); if (typeof notifyQRDataChanged === 'function') notifyQRDataChanged(); })
       .withFailureHandler(function(err) { showLoading(false); showToast('Failed to delete machine', 'error'); })
       .deleteMachine(id);
   });

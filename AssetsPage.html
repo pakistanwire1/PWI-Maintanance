@@ -369,12 +369,12 @@ function saveAsset(e) {
   showLoading(true);
   if (id) {
     google.script.run
-      .withSuccessHandler(function(result) { assetsData = result; showLoading(false); hideModal('assetFormModal'); showToast('Asset updated successfully'); renderAssetsTable(); })
+      .withSuccessHandler(function(result) { assetsData = result; showLoading(false); hideModal('assetFormModal'); showToast('Asset updated successfully'); renderAssetsTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); if (typeof notifyQRDataChanged === 'function') notifyQRDataChanged(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to update asset', 'error'); })
       .updateAsset(id, data);
   } else {
     google.script.run
-      .withSuccessHandler(function(result) { assetsData = result; showLoading(false); hideModal('assetFormModal'); showToast('Asset added successfully'); renderAssetsTable(); })
+      .withSuccessHandler(function(result) { assetsData = result; showLoading(false); hideModal('assetFormModal'); showToast('Asset added successfully'); renderAssetsTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); if (typeof notifyQRDataChanged === 'function') notifyQRDataChanged(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to add asset', 'error'); })
       .addAsset(data);
   }
@@ -384,7 +384,7 @@ function deleteAsset(id) {
   showConfirm('Delete Asset', 'Are you sure you want to delete this asset?', function() {
     showLoading(true);
     google.script.run
-      .withSuccessHandler(function(result) { assetsData = result; showLoading(false); showToast('Asset deleted successfully'); renderAssetsTable(); })
+      .withSuccessHandler(function(result) { assetsData = result; showLoading(false); showToast('Asset deleted successfully'); renderAssetsTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); if (typeof notifyQRDataChanged === 'function') notifyQRDataChanged(); })
       .withFailureHandler(function(err) { showLoading(false); showToast('Failed to delete asset', 'error'); })
       .deleteAsset(id);
   });

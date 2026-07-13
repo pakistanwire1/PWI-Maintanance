@@ -25,7 +25,30 @@ function normalizeJobCard(jc) {
   jc.AssignedTechnician = jc.AssignedTechnician || '';
   jc.StartedBy = jc.StartedBy || '';
   jc.StartDateTime = jc.StartDateTime || '';
-  jc.WaitingTime = normalizeDuration(jc.WaitingTime);
+  // dynamic WaitingTime: compute live for OPEN/RUNNING/returned jobs
+  if (jc.StartDateTime && jc.StartDateTime !== '') {
+    // Frozen at time of start
+    var wt = normalizeDuration(jc.WaitingTime);
+    jc.WaitingTime = wt;
+  } else if (jc.OpenDateTime && jc.OpenDateTime !== '') {
+    // OPEN or not started: compute against current/relevant datetime
+    var waitTarget = jc.OpenDateTime;
+    var status = (jc.CurrentStatus || jc.Status || '').toUpperCase();
+    if ((status === 'RETURNED' || status === 'RETURN') && jc.ReturnedDateTime) {
+      waitTarget = jc.ReturnedDateTime;
+    }
+    var startTime = new Date(waitTarget);
+    var nowTime = new Date();
+    if (!isNaN(startTime.getTime()) && nowTime > startTime) {
+      var diffMs = nowTime.getTime() - startTime.getTime();
+      var total = Math.floor(diffMs / 60000);
+      jc.WaitingTime = total > 0 ? total : 0;
+    } else {
+      jc.WaitingTime = 0;
+    }
+  } else {
+    jc.WaitingTime = 0;
+  }
   jc.InitialRemarks = jc.InitialRemarks || '';
   jc.MaintenanceTeam = jc.MaintenanceTeam || '';
   // SECTION 3 - JOB CLOSE INFORMATION

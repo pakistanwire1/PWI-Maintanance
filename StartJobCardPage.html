@@ -244,6 +244,7 @@ function saveStartJc(e) {
       hideModal('startJcModal');
       showToast('Job started — Status: Running');
       renderStartJc();
+      if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters();
     })
     .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to start job', 'error'); })
     .updateJobCard(id, data);

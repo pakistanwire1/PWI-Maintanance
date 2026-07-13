@@ -271,12 +271,12 @@ function saveSP(e) {
   showLoading(true);
   if (id) {
     google.script.run
-      .withSuccessHandler(function(result) { spData = result; showLoading(false); hideModal('spFormModal'); showToast('Part updated successfully', 'success'); renderSPTable(); })
+      .withSuccessHandler(function(result) { spData = result; showLoading(false); hideModal('spFormModal'); showToast('Part updated successfully', 'success'); renderSPTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); if (typeof notifyQRDataChanged === 'function') notifyQRDataChanged(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to update part', 'error'); })
       .updateSparePart(id, data);
   } else {
     google.script.run
-      .withSuccessHandler(function(result) { spData = result; showLoading(false); hideModal('spFormModal'); showToast('Part added successfully', 'success'); renderSPTable(); })
+      .withSuccessHandler(function(result) { spData = result; showLoading(false); hideModal('spFormModal'); showToast('Part added successfully', 'success'); renderSPTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); if (typeof notifyQRDataChanged === 'function') notifyQRDataChanged(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to add part', 'error'); })
       .addSparePart(data);
   }
@@ -286,7 +286,7 @@ function deleteSP(id) {
   showConfirm('Delete Part', 'Are you sure you want to delete this spare part?', function() {
     showLoading(true);
     google.script.run
-      .withSuccessHandler(function(result) { spData = result; showLoading(false); showToast('Part deleted successfully', 'success'); renderSPTable(); })
+      .withSuccessHandler(function(result) { spData = result; showLoading(false); showToast('Part deleted successfully', 'success'); renderSPTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); if (typeof notifyQRDataChanged === 'function') notifyQRDataChanged(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to delete part', 'error'); })
       .deleteSparePart(id);
   });

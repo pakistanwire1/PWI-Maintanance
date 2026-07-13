@@ -87,54 +87,64 @@ function bulkGenerateBarcode(module) {
 }
 
 function getQRModuleRecords(module) {
-  var cfg = getQRModuleSheet(module);
-  if (!cfg) return [];
-  var records = getAllData(cfg.sheet) || [];
-  return records.map(function(r) {
-    var base = {
-      id: r[cfg.idField] || '',
-      name: r[cfg.nameField] || '',
-      code: r[cfg.codeField] || '',
-      qrCode: r.QRCode || '',
-      barcode: r.Barcode || '',
-      qrGeneratedDate: r.QRGeneratedDate || '',
-      status: r.Status || '',
-      department: r.Department || '',
-      section: r.Section || '',
-      location: r.Location || r.StoreLocation || ''
-    };
-    if (module === 'Machine') {
-      base.assetNo = r.MachineNumber || r.MachineID || '';
-      base.machineCode = r.MachineCode || '';
-      base.type = r.MachineType || '';
-      base.manufacturer = r.Manufacturer || '';
-      base.model = r.Model || '';
-      base.criticality = r.Criticality || '';
-    } else if (module === 'Asset') {
-      base.assetCode = r.AssetCode || '';
-      base.category = r.Category || '';
-      base.machineName = r.MachineName || '';
-      base.criticality = r.Criticality || '';
-    } else if (module === 'Spare Part') {
-      base.category = r.Category || '';
-      base.currentStock = r.CurrentStock || '';
-      base.minimumStock = r.MinimumStock || '';
-      base.maximumStock = r.MaximumStock || '';
-      base.supplier = r.Supplier || '';
-      base.binNumber = r.BinNumber || '';
-      base.unit = r.Unit || '';
-    } else if (module === 'Job Card') {
-      base.openDate = r.OpenDateTime || '';
-      base.priority = r.Priority || '';
-      base.complaintCategory = r.ComplaintCategory || '';
-      base.complaintDescription = r.ComplaintDescription || '';
-      base.assignedTechnician = r.AssignedTechnician || '';
-      base.approvalStatus = r.ApprovalStatus || '';
-      base.breakdownType = r.BreakdownType || '';
-      base.currentStatus = r.CurrentStatus || r.Status || '';
-    }
-    return base;
-  });
+  try {
+    var cfg = getQRModuleSheet(module);
+    if (!cfg) { Logger.log('getQRModuleRecords(' + module + '): no config found'); return []; }
+    var records = getAllData(cfg.sheet) || [];
+    Logger.log('getQRModuleRecords(' + module + '): sheet=' + cfg.sheet + ', records=' + records.length);
+    if (records.length === 0) return [];
+    var mapped = records.map(function(r) {
+      var base = {
+        id: r[cfg.idField] || '',
+        name: r[cfg.nameField] || '',
+        code: r[cfg.codeField] || '',
+        qrCode: r.QRCode || '',
+        barcode: r.Barcode || '',
+        qrGeneratedDate: r.QRGeneratedDate || '',
+        status: r.Status || '',
+        department: r.Department || '',
+        section: r.Section || '',
+        location: r.Location || r.StoreLocation || ''
+      };
+      if (module === 'Machine') {
+        base.assetNo = r.MachineNumber || r.MachineID || '';
+        base.machineCode = r.MachineCode || '';
+        base.type = r.MachineType || '';
+        base.manufacturer = r.Manufacturer || '';
+        base.model = r.Model || '';
+        base.criticality = r.Criticality || '';
+      } else if (module === 'Asset') {
+        base.assetCode = r.AssetCode || '';
+        base.category = r.Category || '';
+        base.machineName = r.MachineName || '';
+        base.criticality = r.Criticality || '';
+      } else if (module === 'Spare Part') {
+        base.category = r.Category || '';
+        base.currentStock = r.CurrentStock || '';
+        base.minimumStock = r.MinimumStock || '';
+        base.maximumStock = r.MaximumStock || '';
+        base.supplier = r.Supplier || '';
+        base.binNumber = r.BinNumber || '';
+        base.unit = r.Unit || '';
+      } else if (module === 'Job Card') {
+        base.openDate = r.OpenDateTime || '';
+        base.priority = r.Priority || '';
+        base.complaintCategory = r.ComplaintCategory || '';
+        base.complaintDescription = r.ComplaintDescription || '';
+        base.assignedTechnician = r.AssignedTechnician || '';
+        base.approvalStatus = r.ApprovalStatus || '';
+        base.breakdownType = r.BreakdownType || '';
+        base.currentStatus = r.CurrentStatus || r.Status || '';
+      }
+      return base;
+    });
+    Logger.log('getQRModuleRecords(' + module + '): returning ' + mapped.length + ' records');
+    if (mapped.length > 0) Logger.log('getQRModuleRecords(' + module + '): first record=' + JSON.stringify(mapped[0]));
+    return mapped;
+  } catch (e) {
+    Logger.log('getQRModuleRecords(' + module + ') ERROR: ' + e.message + ' stack=' + e.stack);
+    return [];
+  }
 }
 
 function getQRStatistics() {
@@ -495,6 +505,14 @@ function buildMachineDetail(detail, machineId) {
   });
   detail.totalDowntimeHours = Math.round(totalDowntimeMin / 60 * 10) / 10;
   detail.avgRepairTime = closedJobs.length > 0 ? Math.round(totalDowntimeMin / closedJobs.length) : 0;
+  detail.mtbf = 0;
+  if (closedJobs.length > 0 && m.InstallDate) {
+    var installDt = new Date(m.InstallDate);
+    var nowDt = new Date();
+    var daysSinceInstall = Math.max(1, Math.round((nowDt - installDt) / (1000 * 60 * 60 * 24)));
+    detail.mtbf = Math.round(daysSinceInstall / closedJobs.length);
+  }
+  detail.mttr = detail.avgRepairTime;
   var lastClosed = closedJobs.filter(function(j) { return j.CloseDateTime; }).sort(function(a, b) {
     return (b.CloseDateTime || '').localeCompare(a.CloseDateTime || '');
   });
@@ -675,6 +693,38 @@ function buildSparePartDetail(detail, partCode) {
     detail.totalPurchased = partReceipts.reduce(function(sum, r) { return sum + (parseInt(r.Quantity) || 0); }, 0);
   } catch(e) {}
   return detail;
+}
+
+function getModuleRecordDetail(module, recordId) {
+  try {
+    var cfg = getQRModuleSheet(module);
+    if (!cfg) return { error: 'Module not found: ' + module };
+    var record = getRecordById(cfg.sheet, cfg.idField, recordId);
+    if (!record) return { error: 'Record not found: ' + recordId };
+    var detail = {
+      module: module,
+      id: recordId,
+      name: record[cfg.nameField] || '',
+      code: record[cfg.codeField] || '',
+      department: record.Department || '',
+      section: record.Section || '',
+      location: record.Location || '',
+      status: record.Status || ''
+    };
+    if (module === 'Machine') {
+      detail = buildMachineDetail(detail, recordId);
+    } else if (module === 'Asset') {
+      detail = buildAssetDetail(detail, recordId);
+    } else if (module === 'Job Card') {
+      detail = buildJobCardDetail(detail, recordId);
+    } else if (module === 'Spare Part') {
+      detail = buildSparePartDetail(detail, recordId);
+    }
+    return detail;
+  } catch (e) {
+    Logger.log('getModuleRecordDetail ERROR: ' + e.message + ' stack=' + e.stack);
+    return { error: e.message };
+  }
 }
 
 function checkQRScanPermission() {

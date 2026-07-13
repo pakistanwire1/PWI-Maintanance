@@ -10,7 +10,7 @@
   </div>
   <div class="login-sparks">
     <span></span><span></span><span></span><span></span><span></span>
-    <span></span><span></span><span></span>
+    <span></span><span></span>
   </div>
   <div class="login-glow-lines"></div>
   <div class="login-overlay"></div>
@@ -18,106 +18,200 @@
   <button class="login-theme-toggle" onclick="loginToggleTheme()" title="Toggle theme">
     <svg id="loginThemeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
   </button>
-  <div class="login-container">
-    <div class="login-card">
-      <div class="login-card-glow"></div>
-      <div class="login-header">
-        <div class="login-logo-area">
-          <img class="login-logo-img" id="loginLogoImg" alt="Pakistan Wires Industries" src="?img=logo" style="display:none" onload="this.style.display='block';var el=document.getElementById('loginLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('loginLogoFallback');el&&(el.style.display='flex')">
-          <div class="login-logo-fallback" id="loginLogoFallback">
-            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="50" height="50">
-              <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
-              <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
-              <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
-              <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+
+  <div class="lw-scroll-banner">
+    <div class="lw-scroll-track">
+      <span class="lw-scroll-item">Pakistan Wire Industries Pvt. Ltd.</span>
+      <span class="lw-scroll-sep">&#9679;</span>
+      <span class="lw-scroll-item">Engineering Excellence</span>
+      <span class="lw-scroll-sep">&#9679;</span>
+      <span class="lw-scroll-item">Quality Manufacturing</span>
+      <span class="lw-scroll-sep">&#9679;</span>
+      <span class="lw-scroll-item">Hydraulic &amp; Mechanical Maintenance</span>
+      <span class="lw-scroll-sep">&#9679;</span>
+      <span class="lw-scroll-item">Pakistan Wire Industries Pvt. Ltd.</span>
+      <span class="lw-scroll-sep">&#9679;</span>
+      <span class="lw-scroll-item">Engineering Excellence</span>
+      <span class="lw-scroll-sep">&#9679;</span>
+      <span class="lw-scroll-item">Quality Manufacturing</span>
+      <span class="lw-scroll-sep">&#9679;</span>
+      <span class="lw-scroll-item">Hydraulic &amp; Mechanical Maintenance</span>
+    </div>
+  </div>
+
+  <div class="lw-main-container">
+    <div class="lw-hero">
+      <div class="lw-hero-content">
+        <div class="lw-greeting fade-in-up">Welcome</div>
+        <h1 class="lw-company fade-in-up" style="animation-delay:0.15s">Pakistan Wire Industries Pvt. Ltd.</h1>
+        <p class="lw-subtitle fade-in-up" style="animation-delay:0.3s">Computerized Maintenance Management System</p>
+      </div>
+      <div class="lw-division-cards fade-in-up" style="animation-delay:0.45s">
+        <div class="lw-dcard lw-dcard-spoke">
+          <div class="lw-dcard-shine"></div>
+          <div class="lw-dcard-icon">
+            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="32" cy="32" r="14"/>
+              <circle cx="32" cy="32" r="22" stroke-dasharray="8 6"/>
+              <circle cx="32" cy="32" r="5"/>
+              <line x1="32" y1="10" x2="32" y2="6"/>
+              <line x1="32" y1="54" x2="32" y2="58"/>
+              <line x1="10" y1="32" x2="6" y2="32"/>
+              <line x1="54" y1="32" x2="58" y2="32"/>
+              <line x1="16.4" y1="16.4" x2="13.2" y2="13.2"/>
+              <line x1="47.6" y1="47.6" x2="50.8" y2="50.8"/>
+              <line x1="47.6" y1="16.4" x2="50.8" y2="13.2"/>
+              <line x1="16.4" y1="47.6" x2="13.2" y2="50.8"/>
             </svg>
           </div>
+          <h3>Spoke Division</h3>
+          <p>Industrial Manufacturing</p>
         </div>
-        <h1 class="login-title">Pakistan Wires Industries (Pvt.) Ltd.</h1>
-        <p class="login-subtitle">Computerized Maintenance Management System</p>
+        <div class="lw-dcard lw-dcard-cable">
+          <div class="lw-dcard-shine"></div>
+          <div class="lw-dcard-icon">
+            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 52 L12 12 Q12 6 18 6 L46 6 Q52 6 52 12 L52 52" stroke-linejoin="round"/>
+              <line x1="20" y1="6" x2="20" y2="52"/>
+              <line x1="28" y1="6" x2="28" y2="52"/>
+              <line x1="36" y1="6" x2="36" y2="52"/>
+              <line x1="44" y1="6" x2="44" y2="52"/>
+              <path d="M16 20 L48 20" opacity="0.4"/>
+              <path d="M16 28 L48 28" opacity="0.4"/>
+              <path d="M16 36 L48 36" opacity="0.4"/>
+              <path d="M16 44 L48 44" opacity="0.4"/>
+              <circle cx="20" cy="52" r="2.5" fill="currentColor" opacity="0.6"/>
+              <circle cx="28" cy="52" r="2.5" fill="currentColor" opacity="0.6"/>
+              <circle cx="36" cy="52" r="2.5" fill="currentColor" opacity="0.6"/>
+              <circle cx="44" cy="52" r="2.5" fill="currentColor" opacity="0.6"/>
+            </svg>
+          </div>
+          <h3>Control Cable Division</h3>
+          <p>Cable Manufacturing</p>
+        </div>
       </div>
-      <form id="loginForm" onsubmit="return handleLogin(event)">
-        <div class="login-form-group">
-          <label for="loginEmail">Email</label>
+    </div>
+
+    <div class="lw-login-section">
+      <div class="login-card">
+        <div class="login-card-glow"></div>
+        <div class="login-header">
+          <div class="login-logo-area">
+            <img class="login-logo-img" id="loginLogoImg" alt="Pakistan Wires Industries" src="?img=logo" style="display:none" onload="this.style.display='block';var el=document.getElementById('loginLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('loginLogoFallback');el&&(el.style.display='flex')">
+            <div class="login-logo-fallback" id="loginLogoFallback">
+              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="50" height="50">
+                <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
+                <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
+                <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
+                <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+              </svg>
+            </div>
+          </div>
+          <h1 class="login-title">Pakistan Wires Industries (Pvt.) Ltd.</h1>
+          <p class="login-subtitle">Computerized Maintenance Management System</p>
+        </div>
+        <form id="loginForm" onsubmit="return handleLogin(event)">
+          <div class="login-form-group">
+            <label for="loginEmail">Email</label>
+            <div class="login-input-wrap">
+              <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              <input type="email" id="loginEmail" class="login-input" placeholder="Enter your email" required>
+            </div>
+          </div>
+          <div class="login-form-group">
+            <label for="loginPassword">Password</label>
+            <div class="login-input-wrap">
+              <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+              <input type="password" id="loginPassword" class="login-input login-input-pass" placeholder="Enter your password" required>
+              <button type="button" class="login-eye-btn" id="loginEyeBtn" onclick="togglePasswordVisibility()" title="Show/Hide password" tabindex="-1">
+                <svg id="eyeIconOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg id="eyeIconClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="login-options">
+            <label class="login-checkbox">
+              <input type="checkbox" id="loginRemember" checked>
+              <span class="login-checkmark"></span>
+              <span class="login-checkbox-label">Remember Me</span>
+            </label>
+            <a href="#" class="login-forgot" onclick="showForgotPassword();return false">Forgot Password?</a>
+          </div>
+          <button type="submit" class="login-btn" id="loginBtn">
+            <span class="login-btn-text">Sign In</span>
+            <span class="spinner" style="display:none"></span>
+          </button>
+          <div id="loginError" class="login-error" style="display:none"></div>
+        </form>
+        <div class="login-version">Maintenance Management System v2.0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-forgot-modal" id="forgotPasswordModal" style="display:none">
+    <div class="login-forgot-overlay" onclick="closeForgotPassword()"></div>
+    <div class="login-forgot-dialog">
+      <div class="login-forgot-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color:var(--lw-accent)">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0110 0v4"/>
+        </svg>
+        <h3>Reset Password</h3>
+        <button class="login-forgot-close" onclick="closeForgotPassword()">&times;</button>
+      </div>
+      <div class="login-forgot-body">
+        <p id="forgotStep1">Enter your registered email address. If the email exists, a password reset token will be sent.</p>
+        <div class="login-form-group" style="margin-top:16px">
+          <label for="forgotEmail">Email Address</label>
           <div class="login-input-wrap">
             <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
               <polyline points="22,6 12,13 2,6"/>
             </svg>
-            <input type="email" id="loginEmail" class="login-input" placeholder="Enter your email" required>
+            <input type="email" id="forgotEmail" class="login-input" placeholder="Enter your registered email">
           </div>
         </div>
-        <div class="login-form-group">
-          <label for="loginPassword">Password</label>
-          <div class="login-input-wrap">
-            <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0110 0v4"/>
-            </svg>
-            <input type="password" id="loginPassword" class="login-input login-input-pass" placeholder="Enter your password" required>
-            <button type="button" class="login-eye-btn" id="loginEyeBtn" onclick="togglePasswordVisibility()" title="Show/Hide password" tabindex="-1">
-              <svg id="eyeIconOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-              <svg id="eyeIconClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="display:none">
-                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
-              </svg>
-            </button>
+        <div id="forgotStep2" style="display:none;margin-top:16px">
+          <p style="color:var(--lw-text-sec);font-size:13px;margin-bottom:12px">A reset token has been sent to your email. Enter the token and your new password below.</p>
+          <div class="login-form-group">
+            <label for="resetToken">Reset Token</label>
+            <input type="text" id="resetToken" class="login-input" placeholder="Enter reset token from email">
+          </div>
+          <div class="login-form-group">
+            <label for="resetNewPassword">New Password</label>
+            <div class="login-input-wrap">
+              <input type="password" id="resetNewPassword" class="login-input login-input-pass" placeholder="Enter new password">
+              <button type="button" class="login-eye-btn" onclick="toggleResetPasswordVisibility()" title="Show/Hide" tabindex="-1">
+                <svg id="resetEyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg id="resetEyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
-        <div class="login-options">
-          <label class="login-checkbox">
-            <input type="checkbox" id="loginRemember" checked>
-            <span class="login-checkmark"></span>
-            <span class="login-checkbox-label">Remember Me</span>
-          </label>
-          <a href="#" class="login-forgot" onclick="showForgotPassword();return false">Forgot Password?</a>
-        </div>
-        <button type="submit" class="login-btn" id="loginBtn">
-          <span class="login-btn-text">Sign In</span>
-          <span class="spinner" style="display:none"></span>
-        </button>
-        <div id="loginError" class="login-error" style="display:none"></div>
-      </form>
-      <div class="login-demo">
-        <p>Demo Credentials: <strong>admin@cmms.com</strong> / <strong>admin123</strong></p>
+        <div id="forgotResult" class="login-forgot-result" style="display:none"></div>
       </div>
-      <div class="login-version">Maintenance Management System v2.0</div>
-      <div class="login-footer">&copy; Pakistan Wires Industries (Pvt.) Ltd.</div>
-    </div>
-  </div>
-</div>
-
-<div class="login-forgot-modal" id="forgotPasswordModal" style="display:none">
-  <div class="login-forgot-overlay" onclick="closeForgotPassword()"></div>
-  <div class="login-forgot-dialog">
-    <div class="login-forgot-header">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color:var(--lw-accent)">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-        <path d="M7 11V7a5 5 0 0110 0v4"/>
-      </svg>
-      <h3>Reset Password</h3>
-      <button class="login-forgot-close" onclick="closeForgotPassword()">&times;</button>
-    </div>
-    <div class="login-forgot-body">
-      <p>Enter your registered email address. If the email exists in our system, a password reset request will be submitted.</p>
-      <div class="login-form-group" style="margin-top:16px">
-        <label for="forgotEmail">Email Address</label>
-        <div class="login-input-wrap">
-          <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-            <polyline points="22,6 12,13 2,6"/>
-          </svg>
-          <input type="email" id="forgotEmail" class="login-input" placeholder="Enter your registered email">
-        </div>
+      <div class="login-forgot-footer">
+        <button class="login-forgot-cancel" onclick="closeForgotPassword()">Cancel</button>
+        <button class="login-forgot-submit" id="forgotSubmitBtn" onclick="submitForgotPassword()">Send Token</button>
+        <button class="login-forgot-submit" id="resetPasswordBtn" style="display:none" onclick="submitResetPassword()">Reset Password</button>
       </div>
-      <div id="forgotResult" class="login-forgot-result" style="display:none"></div>
-    </div>
-    <div class="login-forgot-footer">
-      <button class="login-forgot-cancel" onclick="closeForgotPassword()">Cancel</button>
-      <button class="login-forgot-submit" id="forgotSubmitBtn" onclick="submitForgotPassword()">Submit</button>
     </div>
   </div>
 </div>
@@ -150,6 +244,8 @@
   --lw-thm-hover-bg: rgba(255,255,255,0.10);
   --lw-thm-hover: #eef0f6;
   --lw-check-grad: linear-gradient(135deg, #3b82f6, #6366f1);
+  --lw-spoke: #3b82f6;
+  --lw-cable: #22c55e;
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -180,6 +276,8 @@
   --lw-thm-hover-bg: rgba(0,0,0,0.08);
   --lw-thm-hover: #1a1d2e;
   --lw-check-grad: linear-gradient(135deg, #2563eb, #4f46e5);
+  --lw-spoke: #2563eb;
+  --lw-cable: #16a34a;
 }
 
 .login-bg-base {
@@ -204,9 +302,7 @@
     radial-gradient(ellipse at 50% 20%, rgba(6,182,212,0.02) 0%, transparent 40%);
 }
 
-@keyframes lwBgPulse {
-  0% { opacity: 0.6; } 100% { opacity: 1; }
-}
+@keyframes lwBgPulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
 
 .login-bg-drift {
   position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; z-index: 0;
@@ -391,17 +487,205 @@
   transform: scale(1.05);
 }
 
-.login-theme-toggle svg {
-  width: 18px; height: 18px;
+.login-theme-toggle svg { width: 18px; height: 18px; }
+
+.lw-scroll-banner {
+  position: absolute; top: 0; left: 0; width: 100%; height: 48px; z-index: 10;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(3,5,10,0.6) 0%, transparent 100%);
 }
 
-.login-container {
+.lw-scroll-track {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  white-space: nowrap;
+  animation: lwMarquee 35s linear infinite;
+  height: 48px;
+  padding: 0 20px;
+}
+
+.lw-scroll-item {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  text-shadow: 0 0 20px rgba(59,130,246,0.10);
+}
+
+[data-theme="light"] .lw-scroll-item { color: rgba(0,0,0,0.25); }
+
+.lw-scroll-sep {
+  font-size: 6px;
+  color: rgba(59,130,246,0.30);
+}
+
+@keyframes lwMarquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.lw-main-container {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  overflow-y: auto;
+  gap: 60px;
+}
+
+.lw-hero {
+  flex: 1;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  padding: 20px 0;
+}
+
+.lw-hero-content {
+  margin-bottom: 40px;
+}
+
+.lw-greeting {
+  font-size: clamp(14px, 1.8vw, 20px);
+  font-weight: 500;
+  color: var(--lw-accent);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 8px;
+  opacity: 0.7;
+}
+
+.lw-company {
+  font-size: clamp(20px, 2.8vw, 34px);
+  font-weight: 800;
+  color: var(--lw-text);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 10px 0;
+}
+
+.lw-subtitle {
+  font-size: clamp(12px, 1.2vw, 15px);
+  color: var(--lw-text-muted);
+  letter-spacing: 0.04em;
+  font-weight: 500;
+  margin: 0;
+}
+
+.lw-division-cards {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
+.lw-dcard {
+  position: relative;
+  width: 180px;
+  padding: 24px 20px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: default;
+  transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
+  overflow: hidden;
+  text-align: center;
+}
+
+[data-theme="light"] .lw-dcard {
+  background: rgba(255,255,255,0.60);
+  border-color: rgba(0,0,0,0.06);
+}
+
+.lw-dcard-shine {
+  position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.04), transparent 50%);
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.lw-dcard:hover {
+  transform: translateY(-6px);
+}
+
+.lw-dcard:hover .lw-dcard-shine {
+  opacity: 0.6;
+}
+
+.lw-dcard-spoke {
+  border-color: rgba(59,130,246,0.15);
+  box-shadow: 0 4px 24px rgba(59,130,246,0.06), inset 0 1px 0 rgba(59,130,246,0.08);
+}
+
+.lw-dcard-spoke:hover {
+  border-color: rgba(59,130,246,0.30);
+  box-shadow: 0 12px 40px rgba(59,130,246,0.15), 0 0 60px rgba(59,130,246,0.04), inset 0 1px 0 rgba(59,130,246,0.12);
+}
+
+.lw-dcard-cable {
+  border-color: rgba(34,197,94,0.15);
+  box-shadow: 0 4px 24px rgba(34,197,94,0.06), inset 0 1px 0 rgba(34,197,94,0.08);
+}
+
+.lw-dcard-cable:hover {
+  border-color: rgba(34,197,94,0.30);
+  box-shadow: 0 12px 40px rgba(34,197,94,0.15), 0 0 60px rgba(34,197,94,0.04), inset 0 1px 0 rgba(34,197,94,0.12);
+}
+
+.lw-dcard-icon {
+  width: 52px; height: 52px;
+  margin: 0 auto 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.lw-dcard-spoke .lw-dcard-icon { color: var(--lw-spoke); }
+.lw-dcard-cable .lw-dcard-icon { color: var(--lw-cable); }
+
+.lw-dcard-icon svg {
+  width: 48px; height: 48px;
+  filter: drop-shadow(0 0 12px currentColor);
+}
+
+.lw-dcard h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--lw-text);
+  margin: 0 0 4px 0;
+  letter-spacing: 0.02em;
+}
+
+.lw-dcard p {
+  font-size: 11px;
+  color: var(--lw-text-muted);
+  margin: 0;
+  font-weight: 500;
+}
+
+.lw-dcard-spoke h3 { color: var(--lw-spoke); }
+.lw-dcard-cable h3 { color: var(--lw-cable); }
+
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: lwFadeInUp 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+@keyframes lwFadeInUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.lw-login-section {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 420px;
 }
 
 .login-card {
@@ -412,7 +696,6 @@
   border-radius: 28px;
   padding: 40px 44px;
   width: 100%;
-  max-width: 420px;
   position: relative;
   overflow: hidden;
   box-shadow: var(--lw-card-shadow);
@@ -495,9 +778,7 @@
   font-weight: 500;
 }
 
-.login-form-group {
-  margin-bottom: 18px;
-}
+.login-form-group { margin-bottom: 18px; }
 
 .login-form-group label {
   display: block;
@@ -534,11 +815,10 @@
   color: var(--lw-text);
   transition: all 0.3s ease;
   outline: none;
+  box-sizing: border-box;
 }
 
-.login-input-pass {
-  padding-right: 44px;
-}
+.login-input-pass { padding-right: 44px; }
 
 .login-input::placeholder {
   color: var(--lw-text-muted);
@@ -639,9 +919,7 @@
   transform: rotate(45deg);
 }
 
-.login-checkbox input:checked ~ .login-checkmark::after {
-  display: block;
-}
+.login-checkbox input:checked ~ .login-checkmark::after { display: block; }
 
 .login-checkbox-label {
   font-size: 13px;
@@ -663,9 +941,7 @@
   color: #60a5fa;
 }
 
-[data-theme="light"] .login-forgot:hover {
-  color: #1d4ed8;
-}
+[data-theme="light"] .login-forgot:hover { color: #1d4ed8; }
 
 .login-btn {
   width: 100%;
@@ -688,9 +964,7 @@
   gap: 8px;
 }
 
-[data-theme="light"] .login-btn {
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-}
+[data-theme="light"] .login-btn { background: linear-gradient(135deg, #2563eb, #4f46e5); }
 
 .login-btn::before {
   content: '';
@@ -707,9 +981,7 @@
   box-shadow: 0 12px 40px rgba(59,130,246,0.25), 0 0 30px rgba(59,130,246,0.10);
 }
 
-.login-btn:active {
-  transform: translateY(0);
-}
+.login-btn:active { transform: translateY(0); }
 
 .login-btn:disabled {
   opacity: 0.6;
@@ -740,27 +1012,6 @@
   text-align: center;
 }
 
-.login-demo {
-  text-align: center;
-  margin-top: 20px;
-  padding: 10px 14px;
-  background: var(--lw-input-bg);
-  border-radius: 10px;
-  border: 1px solid var(--lw-border);
-}
-
-.login-demo p {
-  font-size: 11px;
-  color: var(--lw-text-muted);
-  letter-spacing: 0.02em;
-}
-
-.login-demo strong {
-  color: var(--lw-accent);
-  font-weight: 600;
-  opacity: 0.8;
-}
-
 .login-version {
   text-align: center;
   margin-top: 18px;
@@ -770,25 +1021,7 @@
   font-weight: 500;
 }
 
-[data-theme="light"] .login-version {
-  color: rgba(37,99,235,0.45);
-}
-
-.login-footer {
-  text-align: center;
-  margin-top: 6px;
-  font-size: 10px;
-  color: var(--lw-text-muted);
-  letter-spacing: 0.04em;
-}
-
-@media (max-width: 520px) {
-  .login-card { padding: 30px 24px; border-radius: 22px; max-width: 100%; }
-  .login-title { font-size: 15px; }
-  .login-logo-area { width: 72px; height: 72px; }
-  .login-options { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .login-theme-toggle { top: 12px; right: 12px; width: 36px; height: 36px; }
-}
+[data-theme="light"] .login-version { color: rgba(37,99,235,0.45); }
 
 .login-forgot-modal {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -903,9 +1136,7 @@
   transition: all 0.3s ease;
 }
 
-[data-theme="light"] .login-forgot-submit {
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-}
+[data-theme="light"] .login-forgot-submit { background: linear-gradient(135deg, #2563eb, #4f46e5); }
 
 .login-forgot-submit:hover {
   transform: translateY(-1px);
@@ -914,6 +1145,44 @@
 
 .login-forgot-submit:disabled {
   opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none;
+}
+
+@media (max-width: 820px) {
+  .lw-main-container {
+    flex-direction: column;
+    gap: 24px;
+    padding: 70px 16px 20px;
+    overflow-y: auto;
+    align-items: center;
+  }
+  .lw-hero {
+    max-width: 100%;
+    align-items: center;
+    text-align: center;
+    padding: 0;
+    flex: none;
+  }
+  .lw-hero-content { margin-bottom: 24px; }
+  .lw-division-cards { justify-content: center; }
+  .lw-dcard { width: 150px; padding: 20px 16px; }
+  .lw-login-section { max-width: 380px; }
+  .login-card { padding: 30px 24px; border-radius: 22px; }
+  .login-title { font-size: 15px; }
+  .login-logo-area { width: 72px; height: 72px; }
+  .login-options { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .login-theme-toggle { top: 56px; right: 12px; width: 36px; height: 36px; }
+  .lw-scroll-banner { height: 40px; }
+  .lw-scroll-track { height: 40px; }
+  .lw-scroll-item { font-size: 11px; }
+}
+
+@media (max-width: 480px) {
+  .lw-dcard { width: 130px; padding: 16px 12px; }
+  .lw-dcard-icon { width: 40px; height: 40px; }
+  .lw-dcard-icon svg { width: 36px; height: 36px; }
+  .lw-dcard h3 { font-size: 12px; }
+  .login-card { padding: 24px 18px; }
+  .lw-division-cards { gap: 10px; }
 }
 </style>
 
@@ -970,6 +1239,22 @@ function togglePasswordVisibility() {
   }
 }
 
+function toggleResetPasswordVisibility() {
+  var passInput = document.getElementById('resetNewPassword');
+  var openIcon = document.getElementById('resetEyeOpen');
+  var closedIcon = document.getElementById('resetEyeClosed');
+  if (!passInput) return;
+  if (passInput.type === 'password') {
+    passInput.type = 'text';
+    if (openIcon) openIcon.style.display = 'none';
+    if (closedIcon) closedIcon.style.display = 'block';
+  } else {
+    passInput.type = 'password';
+    if (openIcon) openIcon.style.display = 'block';
+    if (closedIcon) closedIcon.style.display = 'none';
+  }
+}
+
 function showForgotPassword() {
   var modal = document.getElementById('forgotPasswordModal');
   if (modal) modal.style.display = 'flex';
@@ -977,10 +1262,13 @@ function showForgotPassword() {
   if (emailInput) {
     var loginEmail = document.getElementById('loginEmail');
     emailInput.value = loginEmail ? loginEmail.value.trim() : '';
-    emailInput.focus();
   }
   var result = document.getElementById('forgotResult');
   if (result) { result.style.display = 'none'; result.textContent = ''; }
+  document.getElementById('forgotStep1').style.display = 'block';
+  document.getElementById('forgotStep2').style.display = 'none';
+  document.getElementById('forgotSubmitBtn').style.display = 'inline-block';
+  document.getElementById('resetPasswordBtn').style.display = 'none';
 }
 
 function closeForgotPassword() {
@@ -1014,31 +1302,101 @@ function submitForgotPassword() {
     return;
   }
 
-  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Checking...'; }
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending...'; }
 
   google.script.run
     .withSuccessHandler(function(result) {
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit'; }
-      if (resultDiv) {
-        if (result && result.exists) {
-          resultDiv.textContent = 'Password reset request submitted. Please contact your System Administrator.';
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Send Token'; }
+      if (result && result.success) {
+        if (resultDiv) {
+          resultDiv.textContent = result.message;
           resultDiv.className = 'login-forgot-result success';
-        } else {
-          resultDiv.textContent = 'Email not registered.';
-          resultDiv.className = 'login-forgot-result error';
+          resultDiv.style.display = 'block';
         }
-        resultDiv.style.display = 'block';
+        document.getElementById('forgotStep1').style.display = 'none';
+        document.getElementById('forgotStep2').style.display = 'block';
+        document.getElementById('forgotSubmitBtn').style.display = 'none';
+        document.getElementById('resetPasswordBtn').style.display = 'inline-block';
+      } else {
+        if (resultDiv) {
+          resultDiv.textContent = result && result.message ? result.message : 'Email not registered.';
+          resultDiv.className = 'login-forgot-result error';
+          resultDiv.style.display = 'block';
+        }
       }
     })
     .withFailureHandler(function(err) {
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit'; }
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Send Token'; }
       if (resultDiv) {
-        resultDiv.textContent = 'Password reset request submitted. Please contact your System Administrator.';
-        resultDiv.className = 'login-forgot-result success';
+        resultDiv.textContent = 'An error occurred. Please try again.';
+        resultDiv.className = 'login-forgot-result error';
         resultDiv.style.display = 'block';
       }
     })
-    .checkEmailExists(email);
+    .generateResetToken(email);
+}
+
+function submitResetPassword() {
+  var emailInput = document.getElementById('forgotEmail');
+  var tokenInput = document.getElementById('resetToken');
+  var passInput = document.getElementById('resetNewPassword');
+  var resultDiv = document.getElementById('forgotResult');
+  var resetBtn = document.getElementById('resetPasswordBtn');
+  var email = emailInput ? emailInput.value.trim() : '';
+  var token = tokenInput ? tokenInput.value.trim() : '';
+  var newPass = passInput ? passInput.value : '';
+
+  if (!token) {
+    if (resultDiv) {
+      resultDiv.textContent = 'Please enter the reset token from your email.';
+      resultDiv.className = 'login-forgot-result error';
+      resultDiv.style.display = 'block';
+    }
+    if (tokenInput) tokenInput.focus();
+    return;
+  }
+
+  if (!newPass || newPass.length < 4) {
+    if (resultDiv) {
+      resultDiv.textContent = 'Please enter a new password (minimum 4 characters).';
+      resultDiv.className = 'login-forgot-result error';
+      resultDiv.style.display = 'block';
+    }
+    if (passInput) passInput.focus();
+    return;
+  }
+
+  if (resetBtn) { resetBtn.disabled = true; resetBtn.textContent = 'Resetting...'; }
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (resetBtn) { resetBtn.disabled = false; resetBtn.textContent = 'Reset Password'; }
+      if (result && result.success) {
+        if (resultDiv) {
+          resultDiv.textContent = 'Password reset successfully! You can now login with your new password.';
+          resultDiv.className = 'login-forgot-result success';
+          resultDiv.style.display = 'block';
+        }
+        document.getElementById('forgotStep2').style.display = 'none';
+        document.getElementById('resetPasswordBtn').style.display = 'none';
+        setTimeout(function() { closeForgotPassword(); }, 2500);
+      } else {
+        if (resultDiv) {
+          resultDiv.textContent = result && result.message ? result.message : 'Invalid or expired token.';
+          resultDiv.className = 'login-forgot-result error';
+          resultDiv.style.display = 'block';
+        }
+      }
+    })
+    .withFailureHandler(function(err) {
+      if (resetBtn) { resetBtn.disabled = false; resetBtn.textContent = 'Reset Password'; }
+      if (resultDiv) {
+        resultDiv.textContent = 'An error occurred. Please try again.';
+        resultDiv.className = 'login-forgot-result error';
+        resultDiv.style.display = 'block';
+      }
+    })
+    .resetPasswordWithToken(email, token, newPass);
 }
 
 function handleLogin(e) {
@@ -1153,3 +1511,4 @@ function handleLogin(e) {
   return false;
 }
 </script>
+</div>

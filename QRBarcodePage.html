@@ -83,7 +83,14 @@ var qrAllData = [];
 var qrFilteredData = [];
 var qrLabelRecordId = null;
 
+window.qrDataChanged = false;
+
+function notifyQRDataChanged() {
+  window.qrDataChanged = true;
+}
+
 function loadQRBarcodeData() {
+  window.qrDataChanged = false;
   loadQRStatistics();
   loadAllQRModules();
 }
@@ -93,7 +100,7 @@ function loadQRStatistics() {
     var el = document.getElementById('qrStatGenerated'); if (el) el.textContent = s.generated || 0;
     var el2 = document.getElementById('qrStatPending'); if (el2) el2.textContent = s.pending || 0;
     var el3 = document.getElementById('qrStatScanned'); if (el3) el3.textContent = s.scanned || 0;
-  }).withFailureHandler(function(){}).getQRStatistics();
+  }).withFailureHandler(function(err) { console.warn('loadQRStatistics failed', err); }).getQRStatistics();
 }
 
 function loadAllQRModules() {
@@ -103,65 +110,85 @@ function loadAllQRModules() {
   var loaded = 0;
   modules.forEach(function(mod) {
     google.script.run.withSuccessHandler(function(records) {
-      (records || []).forEach(function(r) { r.module = mod; qrAllData.push(r); });
-      loaded++;
-      if (loaded === modules.length) filterQRTable();
-    }).withFailureHandler(function() { loaded++; if (loaded === modules.length) filterQRTable(); }).getQRModuleRecords(mod);
+      try {
+        (records || []).forEach(function(r) { r.module = mod; qrAllData.push(r); });
+        loaded++;
+        if (loaded === modules.length) filterQRTable();
+      } catch(e) { console.error('loadAllQRModules handler error:', e); loaded++; if (loaded === modules.length) filterQRTable(); }
+    }).withFailureHandler(function(err) { console.warn('loadAllQRModules failed for', mod, err); loaded++; if (loaded === modules.length) filterQRTable(); }).getQRModuleRecords(mod);
   });
 }
 
 function filterQRTable() {
-  var search = (document.getElementById('qrSearchInput').value || '').toLowerCase();
-  var status = document.getElementById('qrStatusFilter').value;
-  var qrFilter = document.getElementById('qrQRFilter').value;
-  qrFilteredData = qrAllData.filter(function(r) {
-    if (search && (r.name || '').toLowerCase().indexOf(search) === -1 && (r.id || '').toLowerCase().indexOf(search) === -1 && (r.code || '').toLowerCase().indexOf(search) === -1) return false;
-    if (status && r.status !== status) return false;
-    if (qrFilter === 'generated' && !r.qrCode) return false;
-    if (qrFilter === 'pending' && r.qrCode) return false;
-    return true;
-  });
-  renderQRTable();
+  try {
+    var search = (document.getElementById('qrSearchInput').value || '').toLowerCase();
+    var status = document.getElementById('qrStatusFilter').value;
+    var qrFilter = document.getElementById('qrQRFilter').value;
+    qrFilteredData = (qrAllData || []).filter(function(r) {
+      if (!r) return false;
+      if (search && (r.name || '').toLowerCase().indexOf(search) === -1 && (r.id || '').toLowerCase().indexOf(search) === -1 && (r.code || '').toLowerCase().indexOf(search) === -1) return false;
+      if (status && r.status !== status) return false;
+      if (qrFilter === 'generated' && !r.qrCode) return false;
+      if (qrFilter === 'pending' && r.qrCode) return false;
+      return true;
+    });
+    renderQRTable();
+  } catch(e) { console.error('filterQRTable error:', e); }
 }
 
 function renderQRTable() {
-  var tbody = document.getElementById('qrTableBody');
-  if (!qrFilteredData.length) {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="qr-empty"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg><br>No records found</td></tr>';
-    var pi = document.getElementById('qrPageInfo'); if (pi) pi.textContent = 'Showing 0 records';
-    return;
-  }
-  var html = '';
-  var modColors = { 'Machine': '#6366f1', 'Asset': '#06b6d4', 'Spare Part': '#22c55e', 'Job Card': '#f59e0b' };
-  for (var i = 0; i < qrFilteredData.length; i++) {
-    var r = qrFilteredData[i];
-    var modTag = '<span style="background:' + (modColors[r.module] || '#999') + '22;color:' + (modColors[r.module] || '#999') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.module) + '</span>';
-    html += '<tr>';
-    html += '<td>' + (i + 1) + '</td>';
-    html += '<td><span class="mono">' + escapeHtml(r.code) + '</span></td>';
-    html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
-    html += '<td>' + modTag + '</td>';
-    html += '<td class="qr-cell">' + (r.qrCode ? '<span class="qr-check" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')">&#10003;</span>' : '<button class="btn-xs btn-primary" onclick="generateSingleQR(\'' + escapeHtml(r.module) + '\',\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
-    html += '<td class="qr-cell">' + (r.barcode ? '<span class="mono-sm">' + escapeHtml(r.barcode) + '</span>' : '<button class="btn-xs btn-success" onclick="generateSingleBarcode(\'' + escapeHtml(r.module) + '\',\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
-    html += '<td class="muted">' + (r.qrGeneratedDate || '-') + '</td>';
-    html += '<td class="qr-actions-cell">' +
-      (r.qrCode ? '<button class="btn-xs btn-info" onclick="showQRLabelDialog(\'' + escapeHtml(r.module) + '\',\'' + escapeHtml(r.id) + '\')" title="Print Label">&#128424;</button> ' : '') +
-      (r.qrCode ? '<button class="btn-xs btn-secondary" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')" title="View QR">&#128065;</button>' : '') +
-    '</td></tr>';
-  }
-  if (tbody) tbody.innerHTML = html;
-  var pi = document.getElementById('qrPageInfo'); if (pi) pi.textContent = 'Showing ' + qrFilteredData.length + ' records';
+  try {
+    var tbody = document.getElementById('qrTableBody');
+    if (!qrFilteredData || !qrFilteredData.length) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="qr-empty"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg><br>No records found</td></tr>';
+      var pi = document.getElementById('qrPageInfo'); if (pi) pi.textContent = 'Showing 0 records';
+      return;
+    }
+    var html = '';
+    var modColors = { 'Machine': '#6366f1', 'Asset': '#06b6d4', 'Spare Part': '#22c55e', 'Job Card': '#f59e0b' };
+    for (var i = 0; i < qrFilteredData.length; i++) {
+      var r = qrFilteredData[i];
+      if (!r) continue;
+      var modTag = '<span style="background:' + (modColors[r.module] || '#999') + '22;color:' + (modColors[r.module] || '#999') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.module) + '</span>';
+      html += '<tr>';
+      html += '<td>' + (i + 1) + '</td>';
+      html += '<td><span class="mono">' + escapeHtml(r.code) + '</span></td>';
+      html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
+      html += '<td>' + modTag + '</td>';
+      html += '<td class="qr-cell">' + (r.qrCode ? '<span class="qr-check" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')">&#10003;</span>' : '<button class="btn-xs btn-primary" onclick="generateSingleQR(\'' + escapeHtml(r.module) + '\',\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
+      html += '<td class="qr-cell">' + (r.barcode ? '<span class="mono-sm">' + escapeHtml(r.barcode) + '</span>' : '<button class="btn-xs btn-success" onclick="generateSingleBarcode(\'' + escapeHtml(r.module) + '\',\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
+      html += '<td class="muted">' + (r.qrGeneratedDate || '-') + '</td>';
+      html += '<td class="qr-actions-cell">' +
+        (r.qrCode ? '<button class="btn-xs btn-info" onclick="showQRLabelDialog(\'' + escapeHtml(r.module) + '\',\'' + escapeHtml(r.id) + '\')" title="Print Label">&#128424;</button> ' : '') +
+        (r.qrCode ? '<button class="btn-xs btn-secondary" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')" title="View QR">&#128065;</button>' : '') +
+      '</td></tr>';
+    }
+    if (tbody) tbody.innerHTML = html;
+    var pi = document.getElementById('qrPageInfo'); if (pi) pi.textContent = 'Showing ' + qrFilteredData.length + ' records';
+  } catch(e) { console.error('renderQRTable error:', e); }
 }
 
 function generateSingleQR(mod, id) {
   google.script.run.withSuccessHandler(function(res) {
-    if (res) { loadQRBarcodeData(); showToast('QR code generated for ' + (res.name || id)); }
+    if (res) {
+      loadQRBarcodeData();
+      if (currentPage && currentPage !== 'qr' && currentPage.indexOf('qr') === 0 && typeof loadModPageData === 'function') {
+        loadModPageData(currentModPage || mod);
+      }
+      showToast('QR code generated for ' + (res.name || id));
+    }
   }).withFailureHandler(function(err) { showToast('Error: ' + err.message, 'error'); }).generateQRCodeForRecord(mod, id);
 }
 
 function generateSingleBarcode(mod, id) {
   google.script.run.withSuccessHandler(function(res) {
-    if (res) { loadQRBarcodeData(); showToast('Barcode generated for ' + (res.name || id)); }
+    if (res) {
+      loadQRBarcodeData();
+      if (currentPage && currentPage !== 'qr' && currentPage.indexOf('qr') === 0 && typeof loadModPageData === 'function') {
+        loadModPageData(currentModPage || mod);
+      }
+      showToast('Barcode generated for ' + (res.name || id));
+    }
   }).withFailureHandler(function(err) { showToast('Error: ' + err.message, 'error'); }).generateBarcodeForRecord(mod, id);
 }
 
@@ -200,7 +227,7 @@ function previewQRCode(id, qrContent) {
   overlay.onclick = function(e) { if (e.target === overlay) document.body.removeChild(overlay); };
   var box = document.createElement('div');
   box.style.cssText = 'background:#fff;padding:24px;border-radius:8px;text-align:center;max-width:340px';
-  box.innerHTML = '<div style="font-size:11px;color:#999;margin-bottom:8px">PAKISTAN WIRE INDUSTRIES (PVT.) LTD.</div><div id="qrPreviewCanvas" style="margin:0 auto 12px;width:200px;height:200px"></div><div style="color:#333;font-size:13px;margin-bottom:8px;word-break:break-all">' + escapeHtml(qrContent) + '</div><button style="padding:6px 16px;border:none;border-radius:4px;background:#6366f1;color:#fff;cursor:pointer;font-size:12px" onclick="document.body.removeChild(this.parentNode.parentNode)">Close</button>';
+  box.innerHTML = '<div style="font-size:11px;color:#999;margin-bottom:8px">PAKISTAN WIRE INDUSTRIES (PVT.) LTD.</div><div id="qrPreviewCanvas" style="margin:0 auto 12px;width:200px;height:200px"></div><div style="color:#333;font-size:13px;margin-bottom:8px;word-break:break-all">' + escapeHtml(qrContent) + '</div><div style="display:flex;gap:8px;justify-content:center"><button style="padding:6px 16px;border:none;border-radius:4px;background:#6366f1;color:#fff;cursor:pointer;font-size:12px" onclick="document.body.removeChild(this.parentNode.parentNode)">Close</button><button id="btnDownloadQR" style="padding:6px 16px;border:none;border-radius:4px;background:#22c55e;color:#fff;cursor:pointer;font-size:12px" onclick="downloadQRImage()">Download</button></div>';
   overlay.appendChild(box);
   document.body.appendChild(overlay);
   setTimeout(function() {
@@ -208,6 +235,16 @@ function previewQRCode(id, qrContent) {
       new QRCode(document.getElementById('qrPreviewCanvas'), { text: qrContent, width: 200, height: 200, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
     }
   }, 100);
+}
+
+function downloadQRImage() {
+  var canvas = document.querySelector('#qrPreviewCanvas canvas');
+  if (!canvas) { showToast('QR code not yet rendered', 'error'); return; }
+  var link = document.createElement('a');
+  link.download = 'QR_' + Date.now() + '.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('QR code downloaded');
 }
 
 function showQRLabelDialog(mod, id) {
@@ -597,10 +634,78 @@ var currentModPage = 'Machine';
 var printDataCache = [];
 var qrHistPage = 1;
 
-function loadQRMachines() { currentModPage = 'Machine'; loadModPageData('Machine'); }
-function loadQRAssets() { currentModPage = 'Asset'; loadModPageData('Asset'); }
-function loadQRSpareParts() { currentModPage = 'Spare Part'; loadModPageData('Spare Part'); }
-function loadQRJobCards() { currentModPage = 'Job Card'; loadModPageData('Job Card'); }
+function loadQRMachines() { if (window.qrDataChanged) loadQRBarcodeData(); currentModPage = 'Machine'; loadModPageData('Machine'); }
+function loadQRAssets() { if (window.qrDataChanged) loadQRBarcodeData(); currentModPage = 'Asset'; loadModPageData('Asset'); }
+function loadQRSpareParts() { if (window.qrDataChanged) loadQRBarcodeData(); currentModPage = 'Spare Part'; loadModPageData('Spare Part'); }
+function loadQRJobCards() { if (window.qrDataChanged) loadQRBarcodeData(); currentModPage = 'Job Card'; loadModPageData('Job Card'); }
+
+function showModRecordDetail(mod, id) {
+  console.log('[QR-DEBUG] showModRecordDetail called: module=' + mod + ', id=' + id);
+  if (!mod || !id) {
+    console.warn('[QR-DEBUG] showModRecordDetail: missing mod or id');
+    showToast('Record Not Found - missing identifier', 'error');
+    return;
+  }
+  google.script.run
+  .withSuccessHandler(function(result) {
+    console.log('[QR-DEBUG] getModuleRecordDetail response:', result ? JSON.stringify(result).substring(0, 200) : 'null');
+    if (!result) {
+      console.warn('[QR-DEBUG] getModuleRecordDetail returned null');
+      showToast('Record Not Found', 'error');
+      return;
+    }
+    if (result.error) {
+      console.warn('[QR-DEBUG] getModuleRecordDetail error:', result.error);
+      showToast('Record Not Found', 'error');
+      return;
+    }
+    try {
+      if (typeof showQRDetail === 'function') {
+        showQRDetail(result);
+      } else {
+        console.warn('[QR-DEBUG] showQRDetail is not a function, using inline fallback');
+        renderInlineDetail(result);
+      }
+    } catch(e) {
+      console.error('[QR-DEBUG] showQRDetail threw:', e.message);
+      try { renderInlineDetail(result); } catch(e2) {
+        console.error('[QR-DEBUG] renderInlineDetail also failed:', e2.message);
+        showToast('Record Loaded - Detail view error', 'error');
+      }
+    }
+  })
+  .withFailureHandler(function(err) {
+    console.error('[QR-DEBUG] showModRecordDetail server error:', err.message);
+    showToast('Record Not Found', 'error');
+  })
+  .getModuleRecordDetail(mod, id);
+}
+
+function renderInlineDetail(result) {
+  if (!result) { showToast('Record Not Found', 'error'); return; }
+  console.log('[QR-DEBUG] renderInlineDetail for module=' + result.module + ' id=' + result.id);
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'qrDetailOverlay';
+  overlay.style.cssText = 'display:flex;align-items:center;justify-content:center';
+  overlay.onclick = function() { var el = document.getElementById('qrDetailOverlay'); if(el) el.remove(); };
+  var html = '<div class="qr-detail-card" onclick="event.stopPropagation()" style="max-width:520px;width:95vw;max-height:80vh;overflow-y:auto">';
+  html += '<div class="qr-detail-header"><div class="qr-detail-icon" style="background:#6366f122;color:#6366f1">&#9432;</div>';
+  html += '<div style="flex:1"><div class="qr-detail-title">' + escapeHtml(result.name || result.id) + '</div>';
+  html += '<div class="qr-detail-subtitle">' + escapeHtml(result.module) + ' &middot; ' + escapeHtml(result.id || '') + '</div></div></div>';
+  html += '<div class="qr-detail-rows">';
+  for (var k in result) {
+    if (k === 'module' || k === 'name' || k === 'error' || k === 'history' || k === 'timeline' || k === 'sparePartsUsed' || k === 'usedInJobs' || k === 'purchaseHistory' || typeof result[k] === 'object') continue;
+    if (result[k] && result[k] !== '') {
+      html += '<div class="qr-detail-row"><span class="qr-detail-label">' + k.replace(/([A-Z])/g, ' $1').replace(/^./, function(s){return s.toUpperCase();}) + '</span><span class="qr-detail-value">' + escapeHtml(String(result[k])) + '</span></div>';
+    }
+  }
+  html += '</div>';
+  html += '<div class="qr-detail-actions" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">Close</button></div>';
+  html += '</div>';
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+}
 
 function getModPageIds(mod) {
   var map = { 'Machine': { search: 'qrMachineSearch', table: 'qrMachineTableBody', info: 'qrMachinePageInfo', deptFilter: 'qrMachineDeptFilter', sectionFilter: 'qrMachineSectionFilter', statusFilter: 'qrMachineStatusFilter' },
@@ -610,152 +715,175 @@ function getModPageIds(mod) {
   return map[mod] || map['Machine'];
 }
 
-function loadModPageData(mod) {
+function loadModPageData(mod, retryCount) {
+  if (retryCount === undefined) retryCount = 0;
+  window.qrDataChanged = false;
   currentModPage = mod;
   var ids = getModPageIds(mod);
-  var el = document.getElementById(ids.table); if (el) el.innerHTML = '<tr><td colspan="9" class="qr-empty">Loading...</td></tr>';
+  var el = document.getElementById(ids.table);
+  if (el) el.innerHTML = '<tr><td colspan="9" class="qr-empty">' + (retryCount > 0 ? 'Retrying (' + retryCount + '/2)...' : 'Loading...') + '</td></tr>';
+  console.log('loadModPageData(' + mod + ') calling getQRModuleRecords');
   google.script.run.withSuccessHandler(function(records) {
+    console.log('loadModPageData(' + mod + ') got ' + (records ? records.length : 0) + ' records' + (records && records.length > 0 ? ' first=' + JSON.stringify(records[0]) : ''));
     modDataCache = records || [];
-    populateModFilters(mod, modDataCache);
-    filterModTable();
-  }).withFailureHandler(function() {
-    var el = document.getElementById(ids.table); if (el) el.innerHTML = '<tr><td colspan="9" class="qr-empty">Error loading data</td></tr>';
+    try {
+      populateModFilters(mod, modDataCache);
+      filterModTable();
+    } catch(e) { console.error('loadModPageData render error:', e); }
+  }).withFailureHandler(function(err) {
+    console.error('loadModPageData(' + mod + ') FAILED:', err);
+    if (retryCount < 2) {
+      console.log('loadModPageData retrying (' + (retryCount + 1) + '/2)...');
+      setTimeout(function() { loadModPageData(mod, retryCount + 1); }, 1500);
+    } else {
+      var el = document.getElementById(ids.table);
+      if (el) el.innerHTML = '<tr><td colspan="9" class="qr-empty">Error loading data. <button onclick="loadModPageData(\'' + mod + '\')" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px">Retry</button></td></tr>';
+    }
   }).getQRModuleRecords(mod);
 }
 
 function populateModFilters(mod, records) {
-  var ids = getModPageIds(mod);
-  if (!records || !records.length) return;
-  if (mod === 'Machine' || mod === 'Asset') {
-    var depts = {}; var secs = {}; var stats = {};
-    records.forEach(function(r) { if (r.department) depts[r.department] = true; if (r.section) secs[r.section] = true; if (r.status) stats[r.status] = true; });
-    var deptKeys = Object.keys(depts).sort();
-    var secKeys = Object.keys(secs).sort();
-    var statKeys = Object.keys(stats).sort();
-    var deptSel = document.getElementById(ids.deptFilter);
-    if (deptSel && deptSel.options.length <= 1) {
-      deptSel.innerHTML = '<option value="">All Departments</option>';
-      deptKeys.forEach(function(k) { deptSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+  try {
+    var ids = getModPageIds(mod);
+    if (!records || !records.length) return;
+    if (mod === 'Machine' || mod === 'Asset') {
+      var depts = {}; var secs = {}; var stats = {};
+      records.forEach(function(r) { if (r && r.department) depts[r.department] = true; if (r && r.section) secs[r.section] = true; if (r && r.status) stats[r.status] = true; });
+      var deptKeys = Object.keys(depts).sort();
+      var secKeys = Object.keys(secs).sort();
+      var statKeys = Object.keys(stats).sort();
+      var deptSel = document.getElementById(ids.deptFilter);
+      if (deptSel && deptSel.options.length <= 1) {
+        deptSel.innerHTML = '<option value="">All Departments</option>';
+        deptKeys.forEach(function(k) { deptSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+      }
+      var secSel = document.getElementById(ids.sectionFilter);
+      if (secSel && secSel.options.length <= 1) {
+        secSel.innerHTML = '<option value="">All Sections</option>';
+        secKeys.forEach(function(k) { secSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+      }
+      var statSel = document.getElementById(ids.statusFilter);
+      if (statSel && statSel.options.length <= 1) {
+        statSel.innerHTML = '<option value="">All Status</option>';
+        statKeys.forEach(function(k) { statSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+      }
+    } else if (mod === 'Spare Part') {
+      var cats = {}; var stat2s = {};
+      records.forEach(function(r) { if (r && r.category) cats[r.category] = true; if (r && r.status) stat2s[r.status] = true; });
+      var catKeys = Object.keys(cats).sort();
+      var statKeys2 = Object.keys(stat2s).sort();
+      var catSel = document.getElementById(ids.deptFilter);
+      if (catSel && catSel.options.length <= 1) {
+        catSel.innerHTML = '<option value="">All Categories</option>';
+        catKeys.forEach(function(k) { catSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+      }
+      var statSel2 = document.getElementById(ids.statusFilter);
+      if (statSel2 && statSel2.options.length <= 1) {
+        statSel2.innerHTML = '<option value="">All Status</option>';
+        statKeys2.forEach(function(k) { statSel2.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+      }
+    } else if (mod === 'Job Card') {
+      var jcstats = {}; var priss = {};
+      records.forEach(function(r) { if (r) { var s = r.status || r.currentStatus || ''; if (s) jcstats[s] = true; if (r.priority) priss[r.priority] = true; } });
+      var jcStatKeys = Object.keys(jcstats).sort();
+      var priKeys = Object.keys(priss).sort();
+      var jcStatSel = document.getElementById(ids.statusFilter);
+      if (jcStatSel && jcStatSel.options.length <= 1) {
+        jcStatSel.innerHTML = '<option value="">All Status</option>';
+        jcStatKeys.forEach(function(k) { jcStatSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+      }
+      var priSel = document.getElementById(ids.priorityFilter);
+      if (priSel && priSel.options.length <= 1) {
+        priSel.innerHTML = '<option value="">All Priority</option>';
+        priKeys.forEach(function(k) { priSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+      }
     }
-    var secSel = document.getElementById(ids.sectionFilter);
-    if (secSel && secSel.options.length <= 1) {
-      secSel.innerHTML = '<option value="">All Sections</option>';
-      secKeys.forEach(function(k) { secSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
-    }
-    var statSel = document.getElementById(ids.statusFilter);
-    if (statSel && statSel.options.length <= 1) {
-      statSel.innerHTML = '<option value="">All Status</option>';
-      statKeys.forEach(function(k) { statSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
-    }
-  } else if (mod === 'Spare Part') {
-    var cats = {}; var stat2s = {};
-    records.forEach(function(r) { if (r.category) cats[r.category] = true; if (r.status) stat2s[r.status] = true; });
-    var catKeys = Object.keys(cats).sort();
-    var statKeys2 = Object.keys(stat2s).sort();
-    var catSel = document.getElementById(ids.deptFilter);
-    if (catSel && catSel.options.length <= 1) {
-      catSel.innerHTML = '<option value="">All Categories</option>';
-      catKeys.forEach(function(k) { catSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
-    }
-    var statSel2 = document.getElementById(ids.statusFilter);
-    if (statSel2 && statSel2.options.length <= 1) {
-      statSel2.innerHTML = '<option value="">All Status</option>';
-      statKeys2.forEach(function(k) { statSel2.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
-    }
-  } else if (mod === 'Job Card') {
-    var jcstats = {}; var priss = {};
-    records.forEach(function(r) { var s = r.status || r.currentStatus || ''; if (s) jcstats[s] = true; if (r.priority) priss[r.priority] = true; });
-    var jcStatKeys = Object.keys(jcstats).sort();
-    var priKeys = Object.keys(priss).sort();
-    var jcStatSel = document.getElementById(ids.statusFilter);
-    if (jcStatSel && jcStatSel.options.length <= 1) {
-      jcStatSel.innerHTML = '<option value="">All Status</option>';
-      jcStatKeys.forEach(function(k) { jcStatSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
-    }
-    var priSel = document.getElementById(ids.priorityFilter);
-    if (priSel && priSel.options.length <= 1) {
-      priSel.innerHTML = '<option value="">All Priority</option>';
-      priKeys.forEach(function(k) { priSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
-    }
-  }
+  } catch(e) { console.error('populateModFilters error:', e); }
 }
 
 function filterModTable() {
-  var ids = getModPageIds(currentModPage);
-  var searchEl = document.getElementById(ids.search);
-  var search = searchEl ? searchEl.value.toLowerCase() : '';
-  var deptFilter = ids.deptFilter ? document.getElementById(ids.deptFilter) : null;
-  var secFilter = ids.sectionFilter ? document.getElementById(ids.sectionFilter) : null;
-  var statFilter = ids.statusFilter ? document.getElementById(ids.statusFilter) : null;
-  var priFilter = ids.priorityFilter ? document.getElementById(ids.priorityFilter) : null;
-  var selDept = deptFilter ? deptFilter.value : '';
-  var selSec = secFilter ? secFilter.value : '';
-  var selStat = statFilter ? statFilter.value : '';
-  var selPri = priFilter ? priFilter.value : '';
-  modFilteredCache = modDataCache.filter(function(r) {
-    if (search && (r.name || '').toLowerCase().indexOf(search) === -1 && (r.id || '').toLowerCase().indexOf(search) === -1 && (r.code || '').toLowerCase().indexOf(search) === -1) return false;
-    if (selDept && r.department !== selDept) return false;
-    if (selSec && r.section !== selSec) return false;
-    if (selStat && (r.status || r.currentStatus) !== selStat) return false;
-    if (selPri && r.priority !== selPri) return false;
-    return true;
-  });
-  renderModTable();
+  try {
+    var ids = getModPageIds(currentModPage);
+    var searchEl = document.getElementById(ids.search);
+    var search = searchEl ? searchEl.value.toLowerCase() : '';
+    var deptFilter = ids.deptFilter ? document.getElementById(ids.deptFilter) : null;
+    var secFilter = ids.sectionFilter ? document.getElementById(ids.sectionFilter) : null;
+    var statFilter = ids.statusFilter ? document.getElementById(ids.statusFilter) : null;
+    var priFilter = ids.priorityFilter ? document.getElementById(ids.priorityFilter) : null;
+    var selDept = deptFilter ? deptFilter.value : '';
+    var selSec = secFilter ? secFilter.value : '';
+    var selStat = statFilter ? statFilter.value : '';
+    var selPri = priFilter ? priFilter.value : '';
+    modFilteredCache = (modDataCache || []).filter(function(r) {
+      if (!r) return false;
+      if (search && (r.name || '').toLowerCase().indexOf(search) === -1 && (r.id || '').toLowerCase().indexOf(search) === -1 && (r.code || '').toLowerCase().indexOf(search) === -1) return false;
+      if (selDept && r.department !== selDept) return false;
+      if (selSec && r.section !== selSec) return false;
+      if (selStat && (r.status || r.currentStatus) !== selStat) return false;
+      if (selPri && r.priority !== selPri) return false;
+      return true;
+    });
+    renderModTable();
+  } catch(e) { console.error('filterModTable error:', e); }
 }
 
 function renderModTable() {
-  var ids = getModPageIds(currentModPage);
-  var tbody = document.getElementById(ids.table);
-  if (!modFilteredCache.length) {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="qr-empty">No records found</td></tr>';
-    var pi = document.getElementById(ids.info); if (pi) pi.textContent = 'Showing 0 records';
-    return;
-  }
-  var html = '';
-  var mod = currentModPage;
-  for (var i = 0; i < modFilteredCache.length; i++) {
-    var r = modFilteredCache[i];
-    html += '<tr>';
-    html += '<td>' + (i + 1) + '</td>';
-    if (mod === 'Machine') {
-      html += '<td><span class="mono">' + escapeHtml(r.code || r.id) + '</span></td>';
-      html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
-      html += '<td>' + escapeHtml(r.department || '-') + '</td>';
-      html += '<td>' + escapeHtml(r.section || '-') + '</td>';
-      html += '<td>' + statusBadge(r.status || '') + '</td>';
-    } else if (mod === 'Asset') {
-      html += '<td><span class="mono">' + escapeHtml(r.code || r.id) + '</span></td>';
-      html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
-      html += '<td>' + escapeHtml(r.department || '-') + '</td>';
-      html += '<td>' + escapeHtml(r.section || '-') + '</td>';
-      html += '<td>' + statusBadge(r.status || '') + '</td>';
-    } else if (mod === 'Spare Part') {
-      html += '<td><span class="mono">' + escapeHtml(r.code || r.id) + '</span></td>';
-      html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
-      html += '<td>' + escapeHtml(r.category || '-') + '</td>';
-      html += '<td>' + escapeHtml(r.currentStock || '0') + ' / ' + escapeHtml(r.minimumStock || '0') + '</td>';
-      html += '<td>' + escapeHtml(r.location || r.binNumber || '-') + '</td>';
-    } else if (mod === 'Job Card') {
-      html += '<td><span class="mono">' + escapeHtml(r.id) + '</span></td>';
-      html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
-      html += '<td>' + statusBadge(r.status || r.currentStatus || '') + '</td>';
-      html += '<td class="muted">' + escapeHtml(r.openDate || '-') + '</td>';
-      html += '<td><span class="priority-badge badge badge-' + (r.priority === 'Critical' || r.priority === 'High' ? 'danger' : r.priority === 'Medium' ? 'warning' : 'success') + '">' + escapeHtml(r.priority || '-') + '</span></td>';
-    } else {
-      html += '<td><span class="mono">' + escapeHtml(r.code || r.id) + '</span></td>';
-      html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
-      html += '<td>' + escapeHtml(r.department || '-') + '</td>';
-      html += '<td>' + escapeHtml(r.status || '-') + '</td>';
+  try {
+    var ids = getModPageIds(currentModPage);
+    var tbody = document.getElementById(ids.table);
+    if (!modFilteredCache || !modFilteredCache.length) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="qr-empty">No records found</td></tr>';
+      var pi = document.getElementById(ids.info); if (pi) pi.textContent = 'Showing 0 records';
+      return;
     }
-    html += '<td class="qr-cell">' + (r.qrCode ? '<span class="qr-check" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')">&#10003;</span>' : '<button class="btn-xs btn-primary" onclick="generateSingleQR(\'' + escapeHtml(currentModPage) + '\',\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
-    html += '<td class="qr-cell">' + (r.barcode ? '<span class="mono-sm">' + escapeHtml(r.barcode) + '</span>' : '<button class="btn-xs btn-success" onclick="generateSingleBarcode(\'' + escapeHtml(currentModPage) + '\',\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
-    html += '<td class="qr-actions-cell">';
-    if (r.qrCode) html += '<button class="btn-xs btn-info" onclick="showQRLabelDialog(\'' + escapeHtml(currentModPage) + '\',\'' + escapeHtml(r.id) + '\')" title="Print Label">&#128424;</button> ';
-    if (r.qrCode) html += '<button class="btn-xs btn-secondary" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')" title="View QR">&#128065;</button>';
-    html += '</td></tr>';
-  }
-  if (tbody) tbody.innerHTML = html;
-  var pi = document.getElementById(ids.info); if (pi) pi.textContent = 'Showing ' + modFilteredCache.length + ' records';
+    var html = '';
+    var mod = currentModPage;
+    for (var i = 0; i < modFilteredCache.length; i++) {
+      var r = modFilteredCache[i];
+      if (!r) continue;
+      html += '<tr>';
+      html += '<td>' + (i + 1) + '</td>';
+      if (mod === 'Machine') {
+        html += '<td><span class="mono">' + escapeHtml(r.code || r.id) + '</span></td>';
+        html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
+        html += '<td>' + escapeHtml(r.department || '-') + '</td>';
+        html += '<td>' + escapeHtml(r.section || '-') + '</td>';
+        html += '<td>' + statusBadge(r.status || '') + '</td>';
+      } else if (mod === 'Asset') {
+        html += '<td><span class="mono">' + escapeHtml(r.code || r.id) + '</span></td>';
+        html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
+        html += '<td>' + escapeHtml(r.department || '-') + '</td>';
+        html += '<td>' + escapeHtml(r.section || '-') + '</td>';
+        html += '<td>' + statusBadge(r.status || '') + '</td>';
+      } else if (mod === 'Spare Part') {
+        html += '<td><span class="mono">' + escapeHtml(r.code || r.id) + '</span></td>';
+        html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
+        html += '<td>' + escapeHtml(r.category || '-') + '</td>';
+        html += '<td>' + escapeHtml(r.currentStock || '0') + ' / ' + escapeHtml(r.minimumStock || '0') + '</td>';
+        html += '<td>' + escapeHtml(r.location || r.binNumber || '-') + '</td>';
+      } else if (mod === 'Job Card') {
+        html += '<td><span class="mono">' + escapeHtml(r.id) + '</span></td>';
+        html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
+        html += '<td>' + statusBadge(r.status || r.currentStatus || '') + '</td>';
+        html += '<td class="muted">' + escapeHtml(r.openDate || '-') + '</td>';
+        html += '<td><span class="priority-badge badge badge-' + (r.priority === 'Critical' || r.priority === 'High' ? 'danger' : r.priority === 'Medium' ? 'warning' : 'success') + '">' + escapeHtml(r.priority || '-') + '</span></td>';
+      } else {
+        html += '<td><span class="mono">' + escapeHtml(r.code || r.id) + '</span></td>';
+        html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
+        html += '<td>' + escapeHtml(r.department || '-') + '</td>';
+        html += '<td>' + escapeHtml(r.status || '-') + '</td>';
+      }
+      html += '<td class="qr-cell">' + (r.qrCode ? '<span class="qr-check" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')">&#10003;</span>' : '<button class="btn-xs btn-primary" onclick="generateSingleQR(\'' + escapeHtml(currentModPage) + '\',\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
+      html += '<td class="qr-cell">' + (r.barcode ? '<span class="mono-sm">' + escapeHtml(r.barcode) + '</span>' : '<button class="btn-xs btn-success" onclick="generateSingleBarcode(\'' + escapeHtml(currentModPage) + '\',\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
+      html += '<td class="qr-actions-cell">';
+      html += '<button class="btn-xs btn-primary" onclick="showModRecordDetail(\'' + escapeHtml(currentModPage) + '\',\'' + escapeHtml(r.id) + '\')" title="View Details">&#128196;</button> ';
+      if (r.qrCode) html += '<button class="btn-xs btn-info" onclick="showQRLabelDialog(\'' + escapeHtml(currentModPage) + '\',\'' + escapeHtml(r.id) + '\')" title="Print Label">&#128424;</button> ';
+      if (r.qrCode) html += '<button class="btn-xs btn-secondary" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')" title="View QR">&#128065;</button>';
+      html += '</td></tr>';
+    }
+    if (tbody) tbody.innerHTML = html;
+    var pi = document.getElementById(ids.info); if (pi) pi.textContent = 'Showing ' + modFilteredCache.length + ' records';
+  } catch(e) { console.error('renderModTable error:', e); }
 }
 
 function statusBadge(s) {
@@ -771,7 +899,10 @@ function bulkGenForModule(mod, type) {
   if (!confirm('Generate ' + action + ' for all ' + mod + ' records without ' + action + '?')) return;
   var fn = type === 'QR' ? 'bulkGenerateQRCode' : 'bulkGenerateBarcode';
   google.script.run.withSuccessHandler(function(results) {
-    loadModPageData(currentModPage);
+    loadQRBarcodeData();
+    if (currentPage && currentPage !== 'qr' && currentPage.indexOf('qr') === 0 && typeof loadModPageData === 'function') {
+      loadModPageData(currentModPage || mod);
+    }
     showToast('Generated ' + (results || []).length + ' ' + action);
   }).withFailureHandler(function(err) { showToast('Error: ' + err.message, 'error'); })[fn](mod);
 }
@@ -780,42 +911,50 @@ function loadQRPrint() {
   printDataCache = [];
   var modules = ['Machine', 'Asset', 'Spare Part', 'Job Card'];
   var loaded = 0;
+  var tb = document.getElementById('qrPrintTableBody');
+  if (tb) tb.innerHTML = '<tr><td colspan="7" class="qr-empty">Loading...</td></tr>';
   modules.forEach(function(mod) {
     google.script.run.withSuccessHandler(function(records) {
-      (records || []).forEach(function(r) { if (r.qrCode) { r.module = mod; printDataCache.push(r); } });
-      loaded++;
-      if (loaded === modules.length) filterPrintTable();
-    }).withFailureHandler(function() { loaded++; if (loaded === modules.length) filterPrintTable(); }).getQRModuleRecords(mod);
+      try {
+        (records || []).forEach(function(r) { if (r && r.qrCode) { r.module = mod; printDataCache.push(r); } });
+        loaded++;
+        if (loaded === modules.length) filterPrintTable();
+      } catch(e) { console.error('loadQRPrint handler error:', e); loaded++; if (loaded === modules.length) filterPrintTable(); }
+    }).withFailureHandler(function(err) { console.warn('loadQRPrint failed for', mod, err); loaded++; if (loaded === modules.length) filterPrintTable(); }).getQRModuleRecords(mod);
   });
 }
 
 function loadPrintRecords() { filterPrintTable(); }
 
 function filterPrintTable() {
-  var search = (document.getElementById('qrPrintSearch').value || '').toLowerCase();
-  var modFilter = document.getElementById('qrPrintModule').value;
-  var filtered = printDataCache.filter(function(r) {
-    if (modFilter && r.module !== modFilter) return false;
-    if (search && (r.name || '').toLowerCase().indexOf(search) === -1 && (r.id || '').toLowerCase().indexOf(search) === -1) return false;
-    return true;
-  });
-  var tbody = document.getElementById('qrPrintTableBody');
-  if (!filtered.length) {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="qr-empty">No printable records found</td></tr>';
-    return;
-  }
-  var html = '';
-  var modColors = { 'Machine': '#6366f1', 'Asset': '#06b6d4', 'Spare Part': '#22c55e', 'Job Card': '#f59e0b' };
-  for (var i = 0; i < filtered.length; i++) {
-    var r = filtered[i];
-    html += '<tr><td>' + (i + 1) + '</td><td><span class="mono">' + escapeHtml(r.id) + '</span></td><td><strong>' + escapeHtml(r.name) + '</strong></td>';
-    html += '<td><span style="background:' + (modColors[r.module] || '#999') + '22;color:' + (modColors[r.module] || '#999') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.module) + '</span></td>';
-    html += '<td class="qr-cell"><span class="qr-check" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')">&#10003;</span></td>';
-    html += '<td class="mono-sm">' + escapeHtml(r.barcode || '') + '</td>';
-    html += '<td><button class="btn-xs btn-info" onclick="showQRLabelDialog(\'' + escapeHtml(r.module) + '\',\'' + escapeHtml(r.id) + '\')">Print Label</button></td></tr>';
-  }
-  if (tbody) tbody.innerHTML = html;
-  var pi = document.getElementById('qrPrintPageInfo'); if (pi) pi.textContent = 'Showing ' + filtered.length + ' records';
+  try {
+    var search = (document.getElementById('qrPrintSearch').value || '').toLowerCase();
+    var modFilter = document.getElementById('qrPrintModule').value;
+    var filtered = (printDataCache || []).filter(function(r) {
+      if (!r) return false;
+      if (modFilter && r.module !== modFilter) return false;
+      if (search && (r.name || '').toLowerCase().indexOf(search) === -1 && (r.id || '').toLowerCase().indexOf(search) === -1) return false;
+      return true;
+    });
+    var tbody = document.getElementById('qrPrintTableBody');
+    if (!filtered.length) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="qr-empty">No printable records found</td></tr>';
+      return;
+    }
+    var html = '';
+    var modColors = { 'Machine': '#6366f1', 'Asset': '#06b6d4', 'Spare Part': '#22c55e', 'Job Card': '#f59e0b' };
+    for (var i = 0; i < filtered.length; i++) {
+      var r = filtered[i];
+      if (!r) continue;
+      html += '<tr><td>' + (i + 1) + '</td><td><span class="mono">' + escapeHtml(r.id) + '</span></td><td><strong>' + escapeHtml(r.name) + '</strong></td>';
+      html += '<td><span style="background:' + (modColors[r.module] || '#999') + '22;color:' + (modColors[r.module] || '#999') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.module) + '</span></td>';
+      html += '<td class="qr-cell"><span class="qr-check" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')">&#10003;</span></td>';
+      html += '<td class="mono-sm">' + escapeHtml(r.barcode || '') + '</td>';
+      html += '<td><button class="btn-xs btn-info" onclick="showQRLabelDialog(\'' + escapeHtml(r.module) + '\',\'' + escapeHtml(r.id) + '\')">Print Label</button></td></tr>';
+    }
+    if (tbody) tbody.innerHTML = html;
+    var pi = document.getElementById('qrPrintPageInfo'); if (pi) pi.textContent = 'Showing ' + filtered.length + ' records';
+  } catch(e) { console.error('filterPrintTable error:', e); }
 }
 
 function loadQRHistory() {
@@ -826,31 +965,35 @@ function loadQRHistory() {
 function loadQRHistoryData() {
   var mod = document.getElementById('qrHistModule').value;
   var search = document.getElementById('qrHistSearch').value;
+  var tb = document.getElementById('qrHistTableBody');
+  if (tb) tb.innerHTML = '<tr><td colspan="7" class="qr-empty">Loading history...</td></tr>';
   google.script.run.withSuccessHandler(function(result) {
-    if (!result) return;
-    var tbody = document.getElementById('qrHistTableBody');
-    var records = result.records || [];
-    if (!records.length) {
-      if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="qr-empty">No scan history found</td></tr>';
-      return;
-    }
-    var html = '';
-    var modColors = { 'Machine': '#6366f1', 'Asset': '#06b6d4', 'Spare Part': '#22c55e', 'Job Card': '#f59e0b' };
-    for (var i = 0; i < records.length; i++) {
-      var r = records[i];
-      html += '<tr><td>' + ((result.page - 1) * result.pageSize + i + 1) + '</td>';
-      html += '<td class="muted">' + escapeHtml(r.ScanDateTime || '') + '</td>';
-      html += '<td>' + escapeHtml(r.UserName || r.UserEmail || '') + '</td>';
-      html += '<td><span style="background:' + (modColors[r.QRModule] || '#999') + '22;color:' + (modColors[r.QRModule] || '#999') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.QRModule || '') + '</span></td>';
-      html += '<td><strong>' + escapeHtml(r.RecordID || '') + '</strong> <span class="muted">' + escapeHtml(r.RecordName || '') + '</span></td>';
-      html += '<td>' + escapeHtml(r.Action || '') + '</td>';
-      html += '<td class="muted">' + escapeHtml(r.DeviceType || '') + '</td></tr>';
-    }
-    if (tbody) tbody.innerHTML = html;
-    var pi = document.getElementById('qrHistPageInfo'); if (pi) pi.textContent = 'Page ' + result.page + ' of ' + result.totalPages + ' (' + result.total + ' total)';
-    document.getElementById('qrHistPrevBtn').disabled = result.page <= 1;
-    document.getElementById('qrHistNextBtn').disabled = result.page >= result.totalPages;
-  }).withFailureHandler(function(){}).getQRScanHistory({ module: mod, search: search, page: qrHistPage, pageSize: 25 });
+    try {
+      if (!result) { if (tb) tb.innerHTML = '<tr><td colspan="7" class="qr-empty">No response from server</td></tr>'; return; }
+      var records = result.records || [];
+      var html = '';
+      var modColors = { 'Machine': '#6366f1', 'Asset': '#06b6d4', 'Spare Part': '#22c55e', 'Job Card': '#f59e0b' };
+      for (var i = 0; i < records.length; i++) {
+        var r = records[i];
+        if (!r) continue;
+        html += '<tr><td>' + ((result.page - 1) * result.pageSize + i + 1) + '</td>';
+        html += '<td class="muted">' + escapeHtml(r.ScanDateTime || '') + '</td>';
+        html += '<td>' + escapeHtml(r.UserName || r.UserEmail || '') + '</td>';
+        html += '<td><span style="background:' + (modColors[r.QRModule] || '#999') + '22;color:' + (modColors[r.QRModule] || '#999') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.QRModule || '') + '</span></td>';
+        html += '<td><strong>' + escapeHtml(r.RecordID || '') + '</strong> <span class="muted">' + escapeHtml(r.RecordName || '') + '</span></td>';
+        html += '<td>' + escapeHtml(r.Action || '') + '</td>';
+        html += '<td class="muted">' + escapeHtml(r.DeviceType || '') + '</td></tr>';
+      }
+      if (!html) html = '<tr><td colspan="7" class="qr-empty">No scan history found</td></tr>';
+      if (tb) tb.innerHTML = html;
+      var pi = document.getElementById('qrHistPageInfo'); if (pi) pi.textContent = 'Page ' + (result.page || 1) + ' of ' + (result.totalPages || 1) + ' (' + (result.total || 0) + ' total)';
+      var prevBtn = document.getElementById('qrHistPrevBtn'); if (prevBtn) prevBtn.disabled = !result.page || result.page <= 1;
+      var nextBtn = document.getElementById('qrHistNextBtn'); if (nextBtn) nextBtn.disabled = !result.totalPages || result.page >= result.totalPages;
+    } catch(e) { console.error('loadQRHistoryData render error:', e); if (tb) tb.innerHTML = '<tr><td colspan="7" class="qr-empty">Error rendering history</td></tr>'; }
+  }).withFailureHandler(function(err) {
+    console.error('loadQRHistoryData failed:', err);
+    if (tb) tb.innerHTML = '<tr><td colspan="7" class="qr-empty">Error loading history</td></tr>';
+  }).getQRScanHistory({ module: mod, search: search, page: qrHistPage, pageSize: 25 });
 }
 
 function qrHistPageNav(dir) {

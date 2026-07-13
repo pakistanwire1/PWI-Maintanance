@@ -345,6 +345,7 @@ function saveCloseJc(e) {
       hideModal('closeJcModal');
       showToast('Job card closed successfully');
       renderCloseJc();
+      if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters();
     })
     .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to close job card', 'error'); })
     .updateJobCard(id, data);

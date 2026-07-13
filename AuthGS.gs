@@ -208,6 +208,110 @@ function checkEmailExists(email) {
   }
 }
 
+function generateResetToken(email) {
+  Logger.log('generateResetToken() called: ' + email);
+  console.log('generateResetToken() called: ' + email);
+  try {
+    if (!email) return { success: false, message: 'Email is required.' };
+    var users = getAllData(CONFIG.SHEET_NAMES.USERS);
+    var user = null;
+    for (var i = 0; i < users.length; i++) {
+      if (users[i].Email === email) {
+        user = users[i];
+        break;
+      }
+    }
+    if (!user) return { success: false, message: 'Email not registered.' };
+    var token = '';
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (var j = 0; j < 20; j++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    var expiry = new Date(Date.now() + 30 * 60 * 1000);
+    var props = PropertiesService.getScriptProperties();
+    props.setProperty('reset_token_' + email, token);
+    props.setProperty('reset_token_expiry_' + email, expiry.toISOString());
+    props.setProperty('reset_token_used_' + email, 'false');
+    Logger.log('generateResetToken() token generated for: ' + email);
+    console.log('generateResetToken() token generated for: ' + email);
+    try {
+      emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.PASSWORD_RESET, {
+        userId: user.UserID || '',
+        name: user.Name || '',
+        email: email,
+        tempPassword: token
+      }, email);
+      Logger.log('generateResetToken() email sent to: ' + email);
+      console.log('generateResetToken() email sent to: ' + email);
+    } catch (emailErr) {
+      Logger.log('generateResetToken() email send failed (storing token anyway): ' + emailErr.message);
+      console.log('generateResetToken() email send failed: ' + emailErr.message);
+    }
+    return { success: true, message: 'A reset token has been sent to your email.' };
+  } catch (e) {
+    Logger.log('generateResetToken() ERROR: ' + e.message + ' stack=' + e.stack);
+    console.log('generateResetToken() ERROR: ' + e.message);
+    return { success: false, message: 'An error occurred. Please try again.' };
+  }
+}
+
+function resetPasswordWithToken(email, token, newPassword) {
+  Logger.log('resetPasswordWithToken() called: ' + email);
+  console.log('resetPasswordWithToken() called: ' + email);
+  try {
+    if (!email || !token || !newPassword) {
+      return { success: false, message: 'Email, token, and new password are required.' };
+    }
+    if (newPassword.length < 4) {
+      return { success: false, message: 'Password must be at least 4 characters.' };
+    }
+    var props = PropertiesService.getScriptProperties();
+    var storedToken = props.getProperty('reset_token_' + email);
+    var expiryStr = props.getProperty('reset_token_expiry_' + email);
+    var used = props.getProperty('reset_token_used_' + email);
+    if (!storedToken || storedToken !== token) {
+      return { success: false, message: 'Invalid reset token.' };
+    }
+    if (used === 'true') {
+      return { success: false, message: 'Token has already been used.' };
+    }
+    if (expiryStr) {
+      var expiry = new Date(expiryStr);
+      if (Date.now() > expiry.getTime()) {
+        props.deleteProperty('reset_token_' + email);
+        props.deleteProperty('reset_token_expiry_' + email);
+        props.deleteProperty('reset_token_used_' + email);
+        return { success: false, message: 'Reset token has expired. Please request a new one.' };
+      }
+    }
+    var users = getAllData(CONFIG.SHEET_NAMES.USERS);
+    var user = null;
+    for (var i = 0; i < users.length; i++) {
+      if (users[i].Email === email) {
+        user = users[i];
+        break;
+      }
+    }
+    if (!user) return { success: false, message: 'User not found.' };
+    updateRow(CONFIG.SHEET_NAMES.USERS, 'Email', email, {
+      Password: newPassword,
+      UpdatedBy: email,
+      UpdatedAt: getCurrentTimestamp()
+    });
+    props.setProperty('reset_token_used_' + email, 'true');
+    try {
+      createAuditLog(CONFIG.AUDIT_MODULES.LOGIN, 'Password Reset', '', user.Name || email, '', '', 'Success', 'Password reset via email token');
+    } catch(e) {}
+    Logger.log('resetPasswordWithToken() SUCCESS for: ' + email);
+    console.log('resetPasswordWithToken() SUCCESS for: ' + email);
+    return { success: true, message: 'Password reset successfully.' };
+  } catch (e) {
+    Logger.log('resetPasswordWithToken() ERROR: ' + e.message + ' stack=' + e.stack);
+    console.log('resetPasswordWithToken() ERROR: ' + e.message);
+    return { success: false, message: 'An error occurred. Please try again.' };
+  }
+}
+
 function checkSession() {
   Logger.log('checkSession() called');
   console.log('checkSession() called');
@@ -222,6 +326,30 @@ function checkSession() {
   Logger.log('checkSession() returning loggedIn: false');
   console.log('checkSession() returning loggedIn: false');
   return { loggedIn: false };
+}
+
+function validateAppSession(sessionEmail) {
+  Logger.log('validateAppSession() called: ' + sessionEmail);
+  console.log('validateAppSession() called: ' + sessionEmail);
+  try {
+    var googleEmail = Session.getActiveUser().getEmail();
+    if (!googleEmail) {
+      return { valid: false, message: 'Google session expired' };
+    }
+    if (sessionEmail && sessionEmail !== googleEmail) {
+      return { valid: false, message: 'Session email mismatch' };
+    }
+    var users = getAllData(CONFIG.SHEET_NAMES.USERS);
+    for (var i = 0; i < users.length; i++) {
+      if (users[i].Email === googleEmail && users[i].Status === CONFIG.STATUS.ACTIVE) {
+        return { valid: true, message: 'Session valid' };
+      }
+    }
+    return { valid: false, message: 'User not found or inactive' };
+  } catch (e) {
+    Logger.log('validateAppSession() ERROR: ' + e.message);
+    return { valid: false, message: 'Session validation error' };
+  }
 }
 
 function getUsers() {

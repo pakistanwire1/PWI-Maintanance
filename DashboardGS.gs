@@ -1,200 +1,164 @@
-function diagnoseAllData() {
-  Logger.log('=== DIAGNOSE ALL DATA ===');
-  console.log('=== DIAGNOSE ALL DATA ===');
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var allSheets = ss.getSheets();
-  Logger.log('diagnoseAllData(): Spreadsheet has ' + allSheets.length + ' sheets');
-  console.log('diagnoseAllData(): Spreadsheet has ' + allSheets.length + ' sheets');
-  allSheets.forEach(function(s) {
-    Logger.log('diagnoseAllData():   Actual sheet: "' + s.getName() + '"');
-    console.log('diagnoseAllData():   Actual sheet: "' + s.getName() + '"');
-  });
-  var result = {};
-  var names = [CONFIG.SHEET_NAMES.USERS, CONFIG.SHEET_NAMES.MACHINES, CONFIG.SHEET_NAMES.ASSETS,
-               CONFIG.SHEET_NAMES.DEPARTMENTS, CONFIG.SHEET_NAMES.TECHNICIANS, CONFIG.SHEET_NAMES.JOBCARDS,
-               CONFIG.SHEET_NAMES.CHECKLISTS, CONFIG.SHEET_NAMES.CHECKLIST_TEMPLATES,
-               CONFIG.SHEET_NAMES.PREVENTIVE_MAINTENANCE, CONFIG.SHEET_NAMES.SPARE_PARTS,
-               CONFIG.SHEET_NAMES.REPORTS, CONFIG.SHEET_NAMES.SETTINGS, CONFIG.SHEET_NAMES.LOGS, CONFIG.SHEET_NAMES.DASHBOARD];
-  names.forEach(function(name) {
-    var found = ss.getSheetByName(name) !== null;
-    Logger.log('diagnoseAllData():   Expected "' + name + '" -> found=' + found);
-    console.log('diagnoseAllData():   Expected "' + name + '" -> found=' + found);
-    try {
-      var data = getAllData(name);
-      result[name] = { count: data.length, found: found };
-      Logger.log('diagnoseAllData(): "' + name + '" = ' + data.length + ' records');
-      console.log('diagnoseAllData(): "' + name + '" = ' + data.length + ' records');
-    } catch (e) {
-      result[name] = { count: -1, found: found, error: e.message };
-      Logger.log('diagnoseAllData(): "' + name + '" ERROR: ' + e.message);
-      console.log('diagnoseAllData(): "' + name + '" ERROR: ' + e.message);
-    }
-  });
-  Logger.log('=== END DIAGNOSE ALL DATA ===');
-  console.log('=== END DIAGNOSE ALL DATA ===');
-  return result;
+function getDateRange(filter) {
+  var now = new Date();
+  switch (filter) {
+    case 'today':
+      var s = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return { start: s, end: new Date(s.getTime() + 86400000) };
+    case 'week':
+      var day = now.getDay();
+      var s = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (day === 0 ? 6 : day - 1));
+      return { start: s, end: new Date(s.getTime() + 7 * 86400000) };
+    case 'month':
+      return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: new Date(now.getFullYear(), now.getMonth() + 1, 1) };
+    case 'lastmonth':
+      return { start: new Date(now.getFullYear(), now.getMonth() - 1, 1), end: new Date(now.getFullYear(), now.getMonth(), 1) };
+    default:
+      return { start: new Date(0), end: new Date(8640000000000000) };
+  }
+}
+
+function inRange(dt, range) {
+  if (!dt) return false;
+  var d = new Date(dt);
+  return d >= range.start && d < range.end;
 }
 
 function getDashboardData(filter, userDepartment) {
-  Logger.log('getDashboardData() called, filter=' + filter + ', userDepartment=' + userDepartment);
-  console.log('getDashboardData() called, filter=' + filter + ', userDepartment=' + userDepartment);
   try {
-    var cacheKey = 'dashboard_' + (filter || 'all') + '_' + (userDepartment || '');
-    var cache = CacheService.getScriptCache();
-    var cached = cache.get(cacheKey);
-    if (cached) return JSON.parse(cached);
+    var range = getDateRange(filter || 'all');
 
     var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
     var assets = getAllData(CONFIG.SHEET_NAMES.ASSETS) || [];
     var allJobCards = getAllData(CONFIG.SHEET_NAMES.JOBCARDS) || [];
-    var jobCards = allJobCards;
-    if (userDepartment) {
-      jobCards = allJobCards.filter(function(jc) { return jc.Department === userDepartment; });
-    }
     var pms = getAllData(CONFIG.SHEET_NAMES.PREVENTIVE_MAINTENANCE) || [];
     var parts = getAllData(CONFIG.SHEET_NAMES.SPARE_PARTS) || [];
-    var techs = getAllData(CONFIG.SHEET_NAMES.TECHNICIANS) || [];
 
     var totalMachines = machines.length;
-    var runningMachines = 0;
-    var breakdownMachines = 0;
-    for (var mi = 0; mi < machines.length; mi++) {
-      var ms = (machines[mi].Status || '').toLowerCase();
-      if (ms === 'running' || ms === 'active') runningMachines++;
-      if (ms === 'under maintenance') breakdownMachines++;
-    }
+    var runningMachines = 0, breakdownMachines = 0;
+    machines.forEach(function(m) {
+      var s = (m.Status || '').toLowerCase();
+      if (s === 'running' || s === 'active') runningMachines++;
+      if (s === 'maintenance' || s === 'under maintenance' || s === 'breakdown') breakdownMachines++;
+    });
 
     var totalAssets = assets.length;
-    var totalJobCards = jobCards.length;
-    var openJobs = 0, runningJobs = 0, waitingJobs = 0, closedJobs = 0, pendingJobs = 0, criticalJobs = 0, approvedJobs = 0, pendingApprovalJobs = 0;
-    var criticalPriority = 0, highPriority = 0, mediumPriority = 0, lowPriority = 0;
-    var totalBreakdownHours = 0, totalWorkingHours = 0, totalWaitingHours = 0, breakdownCount = 0;
+    var openJobs = 0, runningJobs = 0, waitingJobs = 0, closedJobs = 0;
+    var pendingJobs = 0, approvedJobs = 0;
+    var criticalJobs = 0, highJobs = 0, mediumJobs = 0, lowJobs = 0;
+    var totalBreakdownHours = 0, totalWorkingHours = 0, breakdownCount = 0;
+    var totalJobCards = allJobCards.length;
 
-    var today = new Date();
-    var todayJobs = 0, weekJobs = 0, monthJobs = 0;
-    var monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    var completedJcs = [];
-
-    for (var i = 0; i < jobCards.length; i++) {
-      var jc = jobCards[i];
+    allJobCards.forEach(function(jc) {
       var status = (jc.CurrentStatus || jc.Status || '').toLowerCase();
       var as = (jc.ApprovalStatus || '').toLowerCase();
+      var priority = (jc.Priority || '').toLowerCase();
+
       if (as === 'approved') { approvedJobs++; }
       else if (status === 'open') { openJobs++; }
       else if (status === 'running' || status === 'in progress') { runningJobs++; }
       else if (status === 'waiting' || status === 'waiting for parts') { waitingJobs++; }
-      else if (status === 'pending') { pendingJobs++; pendingApprovalJobs++; }
+      else if (status === 'pending') { pendingJobs++; }
       else if (status === 'closed' || status === 'completed') { closedJobs++; }
-      else if (status === 'approved') { approvedJobs++; }
 
-      var priority = (jc.Priority || '').toLowerCase();
-      if (priority === 'critical') { criticalPriority++; }
-      else if (priority === 'high') { highPriority++; }
-      else if (priority === 'medium') { mediumPriority++; }
-      else if (priority === 'low') { lowPriority++; }
+      if (priority === 'critical') criticalJobs++;
+      else if (priority === 'high') highJobs++;
+      else if (priority === 'medium') mediumJobs++;
+      else if (priority === 'low') lowJobs++;
 
-      if (priority === 'critical' && status !== 'closed' && status !== 'completed') {
-        criticalJobs++;
+      if (status === 'closed' || status === 'completed') {
+        var dur = parseDurationToHours(jc.TotalDuration || jc.Downtime || 0);
+        var wt = parseDurationToHours(jc.ActualWorkingTime || jc.WorkingTime || 0);
+        totalBreakdownHours += dur;
+        totalWorkingHours += wt;
+        if (dur > 0) breakdownCount++;
       }
+    });
 
-      var totalDuration = parseDurationToHours(jc.TotalDuration || jc.Downtime || 0);
-      var waitingTime = parseDurationToHours(jc.WaitingTime || 0);
-      var workingTime = parseDurationToHours(jc.ActualWorkingTime || jc.WorkingTime || 0);
-
-      totalBreakdownHours += totalDuration;
-      totalWaitingHours += waitingTime;
-      totalWorkingHours += workingTime;
-      if (totalDuration > 0) breakdownCount++;
-
-      if (status === 'pending' || status === 'closed' || status === 'completed') {
-        completedJcs.push(jc);
-      }
-
-      var jcDateStr = jc.DateCreated || jc.Date || jc.OpenDateTime;
-      if (jcDateStr) {
-        var jcDate = new Date(jcDateStr);
-        if (jcDate.toDateString() === today.toDateString()) todayJobs++;
-        var weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
-        if (jcDate >= weekAgo) weekJobs++;
-        if (jcDate >= monthStart) monthJobs++;
-      }
-    }
-
-    var mttr = breakdownCount > 0 ? Math.round((totalWorkingHours / breakdownCount) * 100) / 100 : 0;
-    var mtbf = breakdownCount > 0 ? Math.round((totalJobCards / breakdownCount) * 100) / 100 : 0;
+    var mttr = breakdownCount > 0 ? Math.round((totalWorkingHours / breakdownCount) * 100) / 100 : null;
+    var mtbf = breakdownCount > 0 ? Math.round((totalJobCards / breakdownCount) * 100) / 100 : null;
     var availability = totalMachines > 0 ? Math.round(((totalMachines - breakdownMachines) / totalMachines) * 100) : 0;
 
-    var avgWaitingTime = 0, avgWorkingTime = 0, avgBreakdownTime = 0;
-    var maxBreakdownTime = 0, minBreakdownTime = 0;
-    if (completedJcs.length > 0) {
-      var wtSum = 0, wktSum = 0, bdtSum = 0;
-      var bdtMax = 0, bdtMin = Infinity;
-      completedJcs.forEach(function(jc) {
-        var wt = parseDurationToHours(jc.WaitingTime || 0);
-        var wkt = parseDurationToHours(jc.ActualWorkingTime || jc.WorkingTime || 0);
-        var bdt = parseDurationToHours(jc.TotalDuration || jc.Downtime || 0);
-        wtSum += wt;
-        wktSum += wkt;
-        bdtSum += bdt;
-        if (bdt > bdtMax) bdtMax = bdt;
-        if (bdt > 0 && bdt < bdtMin) bdtMin = bdt;
-      });
-      avgWaitingTime = Math.round((wtSum / completedJcs.length) * 100) / 100;
-      avgWorkingTime = Math.round((wktSum / completedJcs.length) * 100) / 100;
-      avgBreakdownTime = Math.round((bdtSum / completedJcs.length) * 100) / 100;
-      maxBreakdownTime = Math.round(bdtMax * 100) / 100;
-      minBreakdownTime = bdtMin === Infinity ? 0 : Math.round(bdtMin * 100) / 100;
-    }
-
-    var pmDue = 0, pmOverdue = 0;
-    for (var pi = 0; pi < pms.length; pi++) {
-      if (pms[pi].Status === 'Completed') continue;
-      var due = pms[pi].NextDueDate ? new Date(pms[pi].NextDueDate) : null;
+    var pmDue = 0, pmOverdue = 0, pmCompleted = 0, pmScheduled = 0, pmInProgress = 0;
+    var today = new Date();
+    pms.forEach(function(pm) {
+      var ps = (pm.Status || '').toLowerCase();
+      if (ps === 'completed') { pmCompleted++; return; }
+      if (ps === 'in progress') pmInProgress++;
+      else if (ps === 'scheduled') pmScheduled++;
+      var due = pm.NextDueDate ? new Date(pm.NextDueDate) : null;
       if (due) {
         if (due < today) pmOverdue++;
-        else pmDue++;
+        else if (filter === 'all' || inRange(pm.NextDueDate, range)) pmDue++;
       }
-    }
+    });
 
-    var lowStockParts = 0;
-    for (var si = 0; si < parts.length; si++) {
-      var stock = parseFloat(parts[si].Stock) || 0;
-      var min = parseFloat(parts[si].MinimumStock) || 0;
-      if (min > 0 && stock <= min) lowStockParts++;
-    }
-
-    var activeTechs = 0;
-    for (var ti = 0; ti < techs.length; ti++) {
-      if ((techs[ti].Status || '').toLowerCase() === 'active') activeTechs++;
-    }
-
+    var lowStockParts = 0, outOfStockParts = 0;
     var totalStockValue = 0;
-    for (var si = 0; si < parts.length; si++) {
-      var stock = parseFloat(parts[si].CurrentStock || parts[si].Stock) || 0;
-      var cost = parseFloat(parts[si].UnitCost || parts[si].Cost) || 0;
-      totalStockValue += stock * cost;
-    }
-
-    var outOfStockParts = 0;
-    var lowStockCount = 0;
-    for (var si = 0; si < parts.length; si++) {
-      var stock = parseFloat(parts[si].CurrentStock || parts[si].Stock) || 0;
-      var min = parseFloat(parts[si].MinimumStock) || 0;
+    parts.forEach(function(p) {
+      var stock = parseFloat(p.CurrentStock || p.Stock) || 0;
+      var min = parseFloat(p.MinimumStock) || 0;
+      var cost = parseFloat(p.UnitCost || p.Cost) || 0;
+      if (min > 0 && stock <= min) lowStockParts++;
       if (stock <= 0) outOfStockParts++;
-      if (min > 0 && stock <= min) lowStockCount++;
+      totalStockValue += stock * cost;
+    });
+
+    var pmCompliance = pms.length > 0 ? Math.round((pmCompleted / pms.length) * 100) : 0;
+
+    var qrGenerated = 0, qrPending = 0;
+    try {
+      var qrRecords = getAllData(CONFIG.SHEET_NAMES.QR_HISTORY) || [];
+      qrGenerated = qrRecords.length;
+      qrPending = totalJobCards + totalMachines + parts.length - qrGenerated;
+    } catch(e) {}
+
+    var chartMonths = [];
+    var chartOpen = [], chartRunning = [], chartClosed = [], chartPending = [], chartApproved = [], chartBreakdowns = [];
+    var chartMttr = [], chartMtbf = [];
+    for (var m = 5; m >= 0; m--) {
+      var cm = new Date(today.getFullYear(), today.getMonth() - m, 1);
+      var cme = new Date(today.getFullYear(), today.getMonth() - m + 1, 1);
+      chartMonths.push(Utilities.formatDate(cm, Session.getScriptTimeZone(), 'MMM'));
+      var co = 0, cr = 0, cc = 0, cp = 0, ca = 0, cb = 0;
+      var monthWorkHours = 0, monthDurationHours = 0, monthBreakdownCount = 0;
+      allJobCards.forEach(function(jc) {
+        var jd = jc.OpenDateTime || jc.DateCreated || jc.Date;
+        if (!jd) return;
+        var jdt = new Date(jd);
+        if (jdt >= cm && jdt < cme) {
+          var js = (jc.CurrentStatus || jc.Status || '').toLowerCase();
+          if (js === 'open') co++;
+          else if (js === 'running' || js === 'in progress') cr++;
+          else if (js === 'closed' || js === 'completed') cc++;
+          else if (js === 'pending') cp++;
+          else if ((jc.ApprovalStatus || '').toLowerCase() === 'approved') ca++;
+          var dur = parseDurationToHours(jc.TotalDuration || jc.Downtime || 0);
+          var wh = parseDurationToHours(jc.ActualWorkingTime || jc.WorkingTime || 0);
+          if (dur > 0 || js === 'closed' || js === 'completed') {
+            monthDurationHours += dur;
+            monthWorkHours += wh;
+            if (dur > 0) { cb++; monthBreakdownCount++; }
+          }
+        }
+      });
+      chartOpen.push(co);
+      chartRunning.push(cr);
+      chartClosed.push(cc);
+      chartPending.push(cp);
+      chartApproved.push(ca);
+      chartBreakdowns.push(cb);
+      chartMttr.push(monthBreakdownCount > 0 ? Math.round((monthWorkHours / monthBreakdownCount) * 100) / 100 : null);
+      var prevMonthStart = new Date(cm.getTime() - 30 * 86400000);
+      var prevMonthEnd = new Date(cm.getTime());
+      var prevBdCount = 0;
+      if (m < 5) {
+        var pmIdx = 5 - m - 1;
+        prevBdCount = chartBreakdowns[pmIdx] || 0;
+      }
+      chartMtbf.push(prevBdCount > 0 ? Math.round((30 / prevBdCount) * 100) / 100 : null);
     }
 
-    var pmCompleted = 0, pmScheduled = 0, pmInProgress = 0;
-    for (var pi = 0; pi < pms.length; pi++) {
-      var ps = (pms[pi].Status || '').toLowerCase();
-      if (ps === 'completed') pmCompleted++;
-      else if (ps === 'in progress') pmInProgress++;
-      else if (ps === 'scheduled') pmScheduled++;
-    }
-    var pmCompliance = (pms.length > 0) ? Math.round((pmCompleted / pms.length) * 100) : 0;
-
-    var dashboardResult = {
+    return {
       totalMachines: totalMachines,
       runningMachines: runningMachines,
       breakdownMachines: breakdownMachines,
@@ -205,13 +169,12 @@ function getDashboardData(filter, userDepartment) {
       waitingJobs: waitingJobs,
       closedJobs: closedJobs,
       pendingJobs: pendingJobs,
-      criticalJobs: criticalJobs,
       approvedJobs: approvedJobs,
-      pendingApprovalJobs: pendingApprovalJobs,
-      criticalPriority: criticalPriority,
-      highPriority: highPriority,
-      mediumPriority: mediumPriority,
-      lowPriority: lowPriority,
+      criticalPriority: criticalJobs,
+      highPriority: highJobs,
+      mediumPriority: mediumJobs,
+      lowPriority: lowJobs,
+      hasPriorityData: (criticalJobs + highJobs + mediumJobs + lowJobs) > 0,
       breakdownHours: Math.round(totalBreakdownHours * 100) / 100,
       mttr: mttr,
       mtbf: mtbf,
@@ -219,25 +182,26 @@ function getDashboardData(filter, userDepartment) {
       pmDue: pmDue,
       pmOverdue: pmOverdue,
       lowStockParts: lowStockParts,
-      activeTechnicians: activeTechs,
-      todayJobs: todayJobs,
-      weekJobs: weekJobs,
-      monthJobs: monthJobs,
-      avgWaitingTime: avgWaitingTime,
-      avgWorkingTime: avgWorkingTime,
-      avgBreakdownTime: avgBreakdownTime,
-      maxBreakdownTime: maxBreakdownTime,
-      minBreakdownTime: minBreakdownTime,
-      totalStockValue: Math.round(totalStockValue * 100) / 100,
       outOfStockParts: outOfStockParts,
-      lowStockCount: lowStockCount,
+      totalStockValue: Math.round(totalStockValue * 100) / 100,
       pmCompleted: pmCompleted,
       pmScheduled: pmScheduled,
       pmInProgress: pmInProgress,
-      pmCompliance: pmCompliance
+      pmCompliance: pmCompliance,
+      qrGenerated: qrGenerated,
+      qrPending: Math.max(0, qrPending),
+      charts: {
+        months: chartMonths,
+        openJobs: chartOpen,
+        runningJobs: chartRunning,
+        closedJobs: chartClosed,
+        pendingJobs: chartPending,
+        approvedJobs: chartApproved,
+        breakdowns: chartBreakdowns,
+        mttr: chartMttr,
+        mtbf: chartMtbf
+      }
     };
-    try { cache.put(cacheKey, JSON.stringify(dashboardResult), 60); } catch(e) {}
-    return dashboardResult;
   } catch (e) {
     return handleError('getDashboardData', e);
   }

@@ -601,12 +601,12 @@ function savePM(e) {
   showLoading(true);
   if (id) {
     google.script.run
-      .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmFormModal'); showToast('PM updated successfully', 'success'); updatePMSummary(); renderPMTable(); })
+      .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmFormModal'); showToast('PM updated successfully', 'success'); updatePMSummary(); renderPMTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to update PM', 'error'); })
       .updatePMRecord(id, data);
   } else {
     google.script.run
-      .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmFormModal'); showToast('PM record added successfully', 'success'); updatePMSummary(); renderPMTable(); })
+      .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmFormModal'); showToast('PM record added successfully', 'success'); updatePMSummary(); renderPMTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to add PM', 'error'); })
       .addPMRecord(data);
   }
@@ -616,7 +616,7 @@ function deletePM(id) {
   showConfirm('Delete PM Record', 'Are you sure you want to delete this PM record?', function() {
     showLoading(true);
     google.script.run
-      .withSuccessHandler(function(result) { pmData = result; showLoading(false); showToast('PM record deleted', 'success'); updatePMSummary(); renderPMTable(); })
+      .withSuccessHandler(function(result) { pmData = result; showLoading(false); showToast('PM record deleted', 'success'); updatePMSummary(); renderPMTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); })
       .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to delete PM', 'error'); })
       .deletePMRecord(id);
   });
@@ -650,7 +650,7 @@ function saveComplete(e) {
   data.Status = 'Completed';
   showLoading(true);
   google.script.run
-    .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmCompleteModal'); showToast('PM completed successfully', 'success'); updatePMSummary(); renderPMTable(); })
+    .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmCompleteModal'); showToast('PM completed successfully', 'success'); updatePMSummary(); renderPMTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); })
     .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to complete PM', 'error'); })
     .completePM(id, data);
 }
@@ -714,7 +714,7 @@ function saveBulkGenerate(e) {
   data.Cycles = parseInt(data.Cycles) || 12;
   showLoading(true);
   google.script.run
-    .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmBulkModal'); showToast('PMs generated successfully', 'success'); updatePMSummary(); renderPMTable(); })
+    .withSuccessHandler(function(result) { pmData = result; showLoading(false); hideModal('pmBulkModal'); showToast('PMs generated successfully', 'success'); updatePMSummary(); renderPMTable(); if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters(); })
     .withFailureHandler(function(err) { showLoading(false); showToast(err.message || 'Failed to generate PMs', 'error'); })
     .bulkGeneratePMs(data);
 }

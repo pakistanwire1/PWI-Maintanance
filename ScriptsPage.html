@@ -92,6 +92,7 @@ function showApp() {
   startBadgeRefresh();
   startClock();
   initLiveTimers();
+  startSessionMonitor();
   navigateTo('dashboard');
   setTimeout(function() { runFrontendDiagnostic('showApp'); }, 500);
   checkQRUrlParameter();
@@ -242,6 +243,35 @@ function setTextContent(id, val) {
   if (el) el.textContent = val; else console.warn('Element not found:', id);
 }
 
+var __sessionMonitorTimer = null;
+
+function startSessionMonitor() {
+  if (__sessionMonitorTimer) return;
+  __sessionMonitorTimer = setInterval(function() {
+    if (!currentUser) { stopSessionMonitor(); return; }
+    var email = currentUser.email || '';
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (!result || !result.valid) {
+          console.warn('Session monitor: session invalid, logging out');
+          stopSessionMonitor();
+          currentUser = null;
+          localStorage.removeItem('cmms_user');
+          var appContainer = document.getElementById('appContainer');
+          if (appContainer) appContainer.style.display = 'none';
+          var loginPage = document.getElementById('loginPage');
+          if (loginPage) loginPage.style.display = 'block';
+        }
+      })
+      .withFailureHandler(function() {})
+      .validateAppSession(email);
+  }, 300000);
+}
+
+function stopSessionMonitor() {
+  if (__sessionMonitorTimer) { clearInterval(__sessionMonitorTimer); __sessionMonitorTimer = null; }
+}
+
 function handleLogout() {
   showConfirm('Sign Out', 'Are you sure you want to sign out?', function() {
     var email = (currentUser && currentUser.email) || '';
@@ -250,6 +280,7 @@ function handleLogout() {
     }
     stopAutoRefresh();
     stopNotificationRefresh();
+    stopSessionMonitor();
     currentUser = null;
     localStorage.removeItem('cmms_user');
     var appContainer = document.getElementById('appContainer'); if (appContainer) appContainer.style.display = 'none';
@@ -263,6 +294,12 @@ function handleLogout() {
 
 function navigateTo(page) {
   console.log('navigateTo() called: ' + page);
+  if (!currentUser) {
+    console.warn('navigateTo(): no session, redirecting to login');
+    var lp = document.getElementById('loginPage'); if (lp) lp.style.display = 'block';
+    var ac = document.getElementById('appContainer'); if (ac) ac.style.display = 'none';
+    return;
+  }
   currentPage = page;
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
   document.querySelectorAll('.sidebar-item').forEach(function(i) { i.classList.remove('active'); });
@@ -862,11 +899,17 @@ function showQRDetail(result) {
     rows += buildDetailRow('Install Date', result.installDate);
     rows += buildDetailRow('Warranty Expiry', result.warrantyExpiry);
     rows += buildDetailRow('Status', result.status);
+    if (result.lastPM) rows += buildDetailRow('Last PM', result.lastPM);
+    if (result.nextPM) rows += buildDetailRow('Next PM Due', result.nextPM);
     statsHtml = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">' +
       '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:var(--danger)">' + (result.openJobCards || 0) + '</div><div style="font-size:10px;color:var(--text-secondary)">Open Jobs</div></div>' +
       '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:var(--primary)">' + (result.totalBreakdowns || 0) + '</div><div style="font-size:10px;color:var(--text-secondary)">Total Breakdowns</div></div>' +
       '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:var(--warning)">' + (result.totalDowntimeHours || 0) + 'h</div><div style="font-size:10px;color:var(--text-secondary)">Downtime Hours</div></div>' +
       '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:var(--success)">' + (result.pmStatus || '-') + '</div><div style="font-size:10px;color:var(--text-secondary)">PM Status</div></div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px">' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:16px;font-weight:700;color:var(--primary)">' + (result.mttr || '0') + ' min</div><div style="font-size:10px;color:var(--text-secondary)">MTTR</div></div>' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:16px;font-weight:700;color:var(--success)">' + (result.mtbf || '0') + ' days</div><div style="font-size:10px;color:var(--text-secondary)">MTBF</div></div>' +
       '</div>';
     if (result.history && result.history.length > 0) {
       historyHtml = '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">';
@@ -878,6 +921,17 @@ function showQRDetail(result) {
         historyHtml += '<div><span style="font-weight:600">' + escapeHtml(h.jobCardNo) + '</span>';
         historyHtml += '<span style="color:var(--text-muted);margin-left:6px">' + escapeHtml(h.description || '').substring(0, 40) + '</span></div>';
         historyHtml += '<span class="badge badge-' + stClass + '" style="font-size:9px;white-space:nowrap">' + escapeHtml(h.status) + '</span>';
+        historyHtml += '</div>';
+      });
+      historyHtml += '</div>';
+    }
+    if (result.sparePartsUsed && result.sparePartsUsed.length > 0) {
+      historyHtml += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">';
+      historyHtml += '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px">Parts Used (' + result.sparePartsUsed.length + ')</div>';
+      result.sparePartsUsed.forEach(function(p) {
+        historyHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font-size:11px;border-bottom:1px solid var(--border);border-radius:4px;margin-bottom:2px">';
+        historyHtml += '<span style="font-weight:600">' + escapeHtml(p.name) + '</span>';
+        historyHtml += '<span class="badge badge-info" style="font-size:9px">Used ' + (p.count || 1) + 'x</span>';
         historyHtml += '</div>';
       });
       historyHtml += '</div>';
@@ -952,6 +1006,32 @@ function showQRDetail(result) {
     rows += buildDetailRow('Approved By', result.approvedBy);
     rows += buildDetailRow('QR Generated', result.qrGeneratedDate);
     rows += buildDetailRow('Created By', result.createdBy);
+    var jcStatus = (result.currentStatus || result.status || '').toUpperCase();
+    statsHtml = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:18px;font-weight:700;' + (jcStatus === 'OPEN' ? 'color:var(--warning)' : 'color:var(--text-muted)') + '">' + (jcStatus === 'OPEN' ? '&#9679;' : '&#9675;') + '</div><div style="font-size:10px;color:var(--text-secondary)">Open</div></div>' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:18px;font-weight:700;' + (jcStatus === 'RUNNING' || jcStatus === 'IN PROGRESS' ? 'color:var(--primary)' : 'color:var(--text-muted)') + '">' + (jcStatus === 'RUNNING' || jcStatus === 'IN PROGRESS' ? '&#9679;' : '&#9675;') + '</div><div style="font-size:10px;color:var(--text-secondary)">Running</div></div>' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:18px;font-weight:700;' + (jcStatus === 'CLOSED' ? 'color:var(--success)' : 'color:var(--text-muted)') + '">' + (jcStatus === 'CLOSED' ? '&#9679;' : '&#9675;') + '</div><div style="font-size:10px;color:var(--text-secondary)">Closed</div></div>' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:18px;font-weight:700;' + (jcStatus === 'PENDING' ? 'color:var(--danger)' : 'color:var(--text-muted)') + '">' + (jcStatus === 'PENDING' ? '&#9679;' : '&#9675;') + '</div><div style="font-size:10px;color:var(--text-secondary)">Pending</div></div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px">' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:16px;font-weight:700;color:' + ((result.approvalStatus || '').toUpperCase() === 'APPROVED' ? 'var(--success)' : 'var(--warning)') + '">' + escapeHtml(result.approvalStatus || 'Pending') + '</div><div style="font-size:10px;color:var(--text-secondary)">Approval Status</div></div>' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:16px;font-weight:700;color:var(--text)">' + escapeHtml(result.downtime || result.totalDuration || '-') + '</div><div style="font-size:10px;color:var(--text-secondary)">Total Duration</div></div>' +
+      '</div>';
+    if (result.timeline && result.timeline.length > 0) {
+      historyHtml = '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">';
+      historyHtml += '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px">Timeline</div>';
+      result.timeline.forEach(function(t, idx) {
+        var evClass = (t.event || '').toLowerCase() === 'opened' ? 'info' : (t.event || '').toLowerCase() === 'started' ? 'primary' : (t.event || '').toLowerCase() === 'closed' ? 'success' : (t.event || '').toLowerCase() === 'approved' ? 'success' : (t.event || '').toLowerCase() === 'pending' ? 'warning' : 'secondary';
+        historyHtml += '<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;font-size:11px;border-left:2px solid var(--' + evClass + ');margin-bottom:4px;background:var(--bg-input);border-radius:0 var(--radius-sm) var(--radius-sm) 0">';
+        historyHtml += '<div style="min-width:70px;font-weight:600;color:var(--' + evClass + ')">' + escapeHtml(t.event) + '</div>';
+        historyHtml += '<div style="flex:1"><span class="muted">' + escapeHtml(t.date || '') + '</span>';
+        if (t.by) historyHtml += ' <span style="color:var(--text-secondary)">by ' + escapeHtml(t.by) + '</span>';
+        if (t.reason) historyHtml += '<br><span style="color:var(--text-muted);font-style:italic">' + escapeHtml(t.reason) + '</span>';
+        historyHtml += '</div></div>';
+        if (idx < result.timeline.length - 1) historyHtml += '<div style="width:2px;height:8px;background:var(--border);margin-left:10px"></div>';
+      });
+      historyHtml += '</div>';
+    }
   } else if (result.module === 'Spare Part') {
     rows += buildDetailRow('Part Code', result.id);
     rows += buildDetailRow('Part Name', result.name);
@@ -2517,12 +2597,13 @@ function diagnoseDataPipeline() {
   console.log('IIFE startup: checking localStorage for cmms_user');
   var stored = localStorage.getItem('cmms_user');
   if (stored) {
-    console.log('IIFE: found stored user, parsing and checking session');
+    console.log('IIFE: found stored user, parsing and validating session');
     currentUser = JSON.parse(stored);
+    var email = currentUser && currentUser.email ? currentUser.email : '';
     google.script.run
       .withSuccessHandler(function(result) {
-        console.log('IIFE: checkSession returned:', result);
-        if (result && result.loggedIn) {
+        console.log('IIFE: validateAppSession returned:', result);
+        if (result && result.valid) {
           console.log('IIFE: session valid, showing app');
           var loginPage = document.getElementById('loginPage'); if (loginPage) loginPage.style.display = 'none';
           var appContainer = document.getElementById('appContainer'); if (appContainer) appContainer.style.display = 'flex';
@@ -2536,20 +2617,23 @@ function diagnoseDataPipeline() {
           startClock();
           initLiveTimers();
           startAutoRefresh();
+          startSessionMonitor();
           navigateTo('dashboard');
           setTimeout(function() { runFrontendDiagnostic('post-navigate'); }, 500);
         } else {
           console.log('IIFE: session invalid, clearing stored user');
           localStorage.removeItem('cmms_user');
+          currentUser = null;
           var loginPage = document.getElementById('loginPage'); if (loginPage) loginPage.style.display = 'block';
         }
       })
       .withFailureHandler(function(err) {
-        console.error('IIFE: checkSession FAILED:', err);
+        console.error('IIFE: validateAppSession FAILED:', err);
         localStorage.removeItem('cmms_user');
+        currentUser = null;
         var loginPage = document.getElementById('loginPage'); if (loginPage) loginPage.style.display = 'block';
       })
-      .checkSession();
+      .validateAppSession(email);
   } else {
     console.log('IIFE: no stored user found, showing login page');
   }
