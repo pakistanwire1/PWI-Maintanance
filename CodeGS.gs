@@ -1,6 +1,14 @@
 function doGet(e) {
   Logger.log('doGet() called');
 
+  if (e && e.parameter && e.parameter.voice === '1') {
+    var voiceHtml = HtmlService.createHtmlOutputFromFile('VoiceInput')
+      .setTitle('Voice Input')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    return voiceHtml;
+  }
+
   if (e && e.parameter && e.parameter.img === 'logo') {
     return serveLogo();
   }
