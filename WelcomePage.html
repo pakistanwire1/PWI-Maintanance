@@ -126,68 +126,35 @@
     }
 
     .ws-slideshow {
-      position: fixed; top: 0; left: 0; width: 300%; height: 100%; z-index: 0;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
       pointer-events: none;
-      will-change: transform;
-      animation: wsSlideScroll 45s linear infinite;
     }
 
-    .ws-scene {
-      position: absolute; top: 0; width: 33.333%; height: 100%;
+    .ws-slide {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+      animation: wsFadeSlide 30s linear infinite;
     }
 
-    .ws-scene:nth-child(1) { left: 0; }
-    .ws-scene:nth-child(2) { left: 33.333%; }
-    .ws-scene:nth-child(3) { left: 66.666%; }
+    .ws-slide:nth-child(1) { animation-delay: 0s; }
+    .ws-slide:nth-child(2) { animation-delay: 5s; }
+    .ws-slide:nth-child(3) { animation-delay: 10s; }
+    .ws-slide:nth-child(4) { animation-delay: 15s; }
+    .ws-slide:nth-child(5) { animation-delay: 20s; }
+    .ws-slide:nth-child(6) { animation-delay: 25s; }
 
-    .ws-scene-1 {
-      background:
-        radial-gradient(ellipse at 30% 40%, rgba(25,55,109,0.55) 0%, transparent 50%),
-        radial-gradient(ellipse at 70% 60%, rgba(59,130,246,0.25) 0%, transparent 45%),
-        radial-gradient(ellipse at 50% 30%, rgba(6,182,212,0.12) 0%, transparent 50%),
-        radial-gradient(ellipse at 20% 70%, rgba(99,102,241,0.08) 0%, transparent 40%);
+    .ws-slide::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(3,5,10,0.82) 0%, rgba(10,14,26,0.72) 50%, rgba(3,5,10,0.85) 100%);
     }
 
-    .ws-scene-2 {
-      background:
-        radial-gradient(ellipse at 40% 50%, rgba(249,115,22,0.15) 0%, transparent 45%),
-        radial-gradient(ellipse at 60% 35%, rgba(255,193,7,0.08) 0%, transparent 40%),
-        radial-gradient(ellipse at 30% 70%, rgba(59,130,246,0.18) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 40%, rgba(99,102,241,0.10) 0%, transparent 45%);
-    }
-
-    .ws-scene-3 {
-      background:
-        radial-gradient(ellipse at 50% 30%, rgba(99,102,241,0.25) 0%, transparent 50%),
-        radial-gradient(ellipse at 30% 60%, rgba(6,182,212,0.15) 0%, transparent 45%),
-        radial-gradient(ellipse at 70% 40%, rgba(59,130,246,0.12) 0%, transparent 50%),
-        radial-gradient(ellipse at 60% 80%, rgba(25,55,109,0.10) 0%, transparent 40%);
-    }
-
-    [data-theme="light"] .ws-scene-1 {
-      background:
-        radial-gradient(ellipse at 30% 40%, rgba(59,130,246,0.06) 0%, transparent 50%),
-        radial-gradient(ellipse at 70% 60%, rgba(59,130,246,0.03) 0%, transparent 45%),
-        radial-gradient(ellipse at 50% 30%, rgba(6,182,212,0.02) 0%, transparent 50%);
-    }
-
-    [data-theme="light"] .ws-scene-2 {
-      background:
-        radial-gradient(ellipse at 40% 50%, rgba(249,115,22,0.03) 0%, transparent 45%),
-        radial-gradient(ellipse at 60% 35%, rgba(59,130,246,0.03) 0%, transparent 40%),
-        radial-gradient(ellipse at 30% 70%, rgba(59,130,246,0.02) 0%, transparent 50%);
-    }
-
-    [data-theme="light"] .ws-scene-3 {
-      background:
-        radial-gradient(ellipse at 50% 30%, rgba(99,102,241,0.04) 0%, transparent 50%),
-        radial-gradient(ellipse at 30% 60%, rgba(6,182,212,0.02) 0%, transparent 45%),
-        radial-gradient(ellipse at 70% 40%, rgba(59,130,246,0.02) 0%, transparent 50%);
-    }
-
-    @keyframes wsSlideScroll {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-33.333%); }
+    @keyframes wsFadeSlide {
+      0%, 3% { opacity: 0; }
+      5%, 18% { opacity: 1; }
+      20%, 100% { opacity: 0; }
     }
 
     .ws-bg-grid {
@@ -481,6 +448,7 @@
       letter-spacing: -0.02em;
       line-height: 1.1;
       opacity: 0; animation: ws-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.15s forwards;
+      display: none;
     }
 
     .ws-subtitle {
@@ -753,9 +721,71 @@
       background: rgba(239,68,68,0.18);
     }
 
+    .ws-welcome-label {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(59,130,246,0.70);
+      margin-bottom: 10px;
+      opacity: 0;
+      animation: ws-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.12s forwards;
+    }
+
+    [data-theme="light"] .ws-welcome-label {
+      color: rgba(37,99,235,0.60);
+    }
+
+    .ws-company-name {
+      margin-bottom: 6px;
+      opacity: 0;
+      animation: ws-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.18s forwards;
+      line-height: 1.15;
+    }
+
+    .ws-co-primary {
+      display: block;
+      font-size: 30px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa 0%, #818cf8 35%, #c084fc 65%, #60a5fa 100%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: wsGradShift 4s ease-in-out infinite;
+      filter: drop-shadow(0 0 20px rgba(96,165,250,0.30)) drop-shadow(0 2px 8px rgba(99,102,241,0.15));
+      letter-spacing: -0.01em;
+    }
+
+    [data-theme="light"] .ws-co-primary {
+      background: linear-gradient(135deg, #2563eb 0%, #4f46e5 35%, #7c3aed 65%, #2563eb 100%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: wsGradShift 4s ease-in-out infinite;
+      filter: drop-shadow(0 1px 3px rgba(37,99,235,0.15));
+    }
+
+    .ws-co-bracket {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ws-text-sec);
+      letter-spacing: 0.06em;
+      margin-top: 2px;
+    }
+
+    @keyframes wsGradShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
     @media (max-width: 520px) {
       .ws-card { padding: 36px 28px; border-radius: 22px; }
       .ws-welcome { font-size: 32px; }
+      .ws-co-primary { font-size: 22px; }
+      .ws-co-bracket { font-size: 12px; }
       .ws-logo-area { width: 90px; height: 90px; }
       .ws-logo-area .logo-fallback .logo-icon { width: 38px; height: 38px; }
       .ws-btn { padding: 14px 32px; font-size: 13px; }
@@ -768,9 +798,12 @@
   <div class="ws-bg-base"></div>
   <div class="ws-bg-drift"></div>
   <div class="ws-slideshow">
-    <div class="ws-scene ws-scene-1"></div>
-    <div class="ws-scene ws-scene-2"></div>
-    <div class="ws-scene ws-scene-3"></div>
+    <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=1920&q=80')"></div>
+    <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1513828583688-c52646db42da?w=1920&q=80')"></div>
+    <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1565043666747-69f6646db940?w=1920&q=80')"></div>
+    <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&q=80')"></div>
+    <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1920&q=80')"></div>
+    <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1920&q=80')"></div>
   </div>
   <div class="ws-bg-grid"></div>
   <div class="ws-bg-factory"></div>
@@ -804,8 +837,12 @@
           <span class="logo-letter">PWI</span>
         </div>
       </div>
-      <div class="ws-welcome">WELCOME</div>
-      <div class="ws-subtitle">Maintenance Management System</div>
+      <div class="ws-welcome-label">WELCOME TO</div>
+      <div class="ws-company-name">
+        <span class="ws-co-primary">Pakistan Wires Industries</span>
+        <span class="ws-co-bracket">(Private) Limited</span>
+      </div>
+      <div class="ws-subtitle">CMMS Maintenance Management System</div>
       <div class="ws-divisions">
         <div class="ws-div-card ws-div-blue">
           <div class="ws-div-icon">
@@ -828,7 +865,7 @@
           <div class="ws-div-desc">Cable &amp; Wire Production</div>
         </div>
       </div>
-      <div class="ws-company">Pakistan Wires Industries (Pvt.) Ltd.</div>
+      <div class="ws-company">Maintenance &amp; Engineering Excellence</div>
       <div class="ws-sep"></div>
       <div class="ws-loading-text" id="wsLoadingText">Initializing system...</div>
       <div class="ws-progress">

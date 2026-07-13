@@ -2869,114 +2869,287 @@ function removeCapturedPhoto(targetId) {
 }
 
 /* ===== PART 10: VOICE-TO-TEXT INPUT ===== */
+var micIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+var micOffIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2"/></svg>';
+
 function startVoiceInput(textareaId) {
-  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    showToast('Voice input is not supported in this browser. Try Chrome or Edge.', 'warning');
+  if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+    showVoiceNotSupportedDialog();
     return;
   }
   var textarea = document.getElementById(textareaId);
   if (!textarea) return;
   if (textarea._voiceActive) {
-    textarea._voiceRecognition.stop();
+    try { textarea._voiceRecognition.stop(); } catch(e) {}
     textarea._voiceActive = false;
-    setVoiceBtnState(textareaId, false);
+    setVoiceBtnState(textareaId, 'idle');
     return;
   }
-  function doStartRecognition() {
-    var recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-    textarea._voiceRecognition = recognition;
-    textarea._voiceActive = true;
-    setVoiceBtnState(textareaId, true);
-    var finalTranscript = textarea.value || '';
-    var interimDiv = document.getElementById(textareaId + '_interim');
-    if (!interimDiv) {
-      interimDiv = document.createElement('div');
-      interimDiv.id = textareaId + '_interim';
-      interimDiv.style.cssText = 'font-size:11px;color:var(--primary);padding:4px 0;min-height:16px;font-style:italic';
-      textarea.parentNode.insertBefore(interimDiv, textarea.nextSibling);
-    }
-    recognition.onresult = function(event) {
-      var interim = '';
-      for (var i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          finalTranscript += (finalTranscript && !finalTranscript.endsWith(' ') ? ' ' : '') + event.results[i][0].transcript;
-        } else {
-          interim += event.results[i][0].transcript;
-        }
-      }
-      textarea.value = finalTranscript;
-      interimDiv.textContent = interim ? 'Hearing: ' + interim : '';
-    };
-    recognition.onerror = function(event) {
-      if (event.error === 'no-speech') {
-        return;
-      }
-      textarea._voiceActive = false;
-      setVoiceBtnState(textareaId, false);
-      if (interimDiv) interimDiv.textContent = '';
-      if (event.error === 'not-allowed') {
-        showToast('Microphone access denied. Please allow microphone permission in your browser settings.', 'error');
-      } else if (event.error === 'aborted') {
-        showToast('Voice input was cancelled.', 'warning');
-      } else if (event.error === 'not-found') {
-        showToast('No microphone found. Please connect a microphone and try again.', 'warning');
-      } else if (event.error === 'service-not-allowed') {
-        showToast('Voice recognition service is not available on this page (HTTP vs HTTPS).', 'warning');
-      } else {
-        showToast('Voice input error: ' + event.error, 'warning');
-      }
-    };
-    recognition.onend = function() {
-      textarea._voiceActive = false;
-      setVoiceBtnState(textareaId, false);
-      if (interimDiv) interimDiv.textContent = '';
-    };
-    try {
-      recognition.start();
-      showToast('Listening... Tap the mic again to stop', 'info');
-    } catch(e) {
-      textarea._voiceActive = false;
-      setVoiceBtnState(textareaId, false);
-      showToast('Failed to start voice input. Please check microphone permissions.', 'error');
-    }
+  var inIframe = false;
+  try { inIframe = window.self !== window.top; } catch(e) { inIframe = true; }
+  if (inIframe) {
+    openVoicePopup(textareaId);
+    return;
   }
-
-  doStartRecognition();
+  doStartRecognition(textareaId);
 }
 
-function setVoiceBtnState(textareaId, active) {
+function doStartRecognition(textareaId) {
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var textarea = document.getElementById(textareaId);
+  if (!textarea || !SpeechRecognition) return;
+  var recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+  textarea._voiceRecognition = recognition;
+  textarea._voiceActive = true;
+  setVoiceBtnState(textareaId, 'listening');
+  var finalTranscript = textarea.value || '';
+  var interimDiv = document.getElementById(textareaId + '_interim');
+  if (!interimDiv) {
+    interimDiv = document.createElement('div');
+    interimDiv.id = textareaId + '_interim';
+    interimDiv.style.cssText = 'font-size:11px;color:var(--primary);padding:4px 0;min-height:16px;font-style:italic';
+    textarea.parentNode.insertBefore(interimDiv, textarea.nextSibling);
+  }
+  recognition.onresult = function(event) {
+    setVoiceBtnState(textareaId, 'recording');
+    var interim = '';
+    for (var i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        finalTranscript += (finalTranscript && !finalTranscript.endsWith(' ') ? ' ' : '') + event.results[i][0].transcript;
+      } else {
+        interim += event.results[i][0].transcript;
+      }
+    }
+    textarea.value = finalTranscript;
+    interimDiv.textContent = interim ? 'Hearing: ' + interim : '';
+  };
+  recognition.onerror = function(event) {
+    textarea._voiceActive = false;
+    if (interimDiv) interimDiv.textContent = '';
+    if (event.error === 'no-speech') {
+      setVoiceBtnState(textareaId, 'idle');
+      return;
+    }
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      setVoiceBtnState(textareaId, 'denied');
+      openVoicePopup(textareaId);
+      return;
+    }
+    if (event.error === 'aborted') {
+      setVoiceBtnState(textareaId, 'idle');
+      return;
+    }
+    if (event.error === 'not-found') {
+      setVoiceBtnState(textareaId, 'idle');
+      showMicPermissionDialog(textareaId, 'No microphone found. Please connect a microphone and try again.');
+      return;
+    }
+    setVoiceBtnState(textareaId, 'idle');
+  };
+  recognition.onend = function() {
+    textarea._voiceActive = false;
+    setVoiceBtnState(textareaId, 'idle');
+    if (interimDiv) interimDiv.textContent = '';
+  };
+  try {
+    recognition.start();
+  } catch(e) {
+    textarea._voiceActive = false;
+    setVoiceBtnState(textareaId, 'idle');
+    openVoicePopup(textareaId);
+  }
+}
+
+function openVoicePopup(textareaId) {
+  setVoiceBtnState(textareaId, 'listening');
+  var popup = window.open('about:blank', 'cmms_voice_input', 'width=420,height=400,menubar=no,toolbar=no,status=no,scrollbars=no,resizable=yes');
+  if (!popup || popup.closed || typeof popup.document === 'undefined') {
+    setVoiceBtnState(textareaId, 'idle');
+    showMicPermissionDialog(textareaId, 'Popup was blocked by your browser. Please allow popups for this site and try again.');
+    return;
+  }
+  var popupHtml = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Voice Input</title><style>' +
+    'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f172a;color:#e2e8f0;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;box-sizing:border-box}' +
+    '.mic-btn{width:80px;height:80px;border-radius:50%;border:none;background:#3b82f6;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s;box-shadow:0 4px 20px rgba(59,130,246,0.3)}' +
+    '.mic-btn:hover{background:#2563eb;transform:scale(1.05)}' +
+    '.mic-btn.recording{background:#22c55e;animation:pulse 1s ease-in-out infinite;box-shadow:0 4px 20px rgba(34,197,94,0.3)}' +
+    '.mic-btn.denied{background:#ef4444;cursor:default;animation:none}' +
+    '@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 15px rgba(34,197,94,0)}}' +
+    '.status{margin-top:20px;font-size:14px;color:#94a3b8;text-align:center;max-width:320px}' +
+    '.transcript{margin-top:16px;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;border:1px solid rgba(255,255,255,0.1);max-height:120px;overflow-y:auto;font-size:14px;width:100%;box-sizing:border-box;min-height:40px}' +
+    '.close-btn{margin-top:16px;padding:8px 20px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#94a3b8;font-size:12px;cursor:pointer;transition:all 0.2s}' +
+    '.close-btn:hover{background:rgba(255,255,255,0.05);color:#e2e8f0}' +
+    '</style></head><body>' +
+    '<button class="mic-btn" id="micBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="36" height="36"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>' +
+    '<div class="status" id="status">Click the microphone to start speaking</div>' +
+    '<div class="transcript" id="transcript"></div>' +
+    '<button class="close-btn" id="closeBtn">Close</button>' +
+    '<script>' +
+    'var targetId="' + textareaId + '";' +
+    'var SR=window.SpeechRecognition||window.webkitSpeechRecognition;' +
+    'var rec=null,isOn=false,finalText="";' +
+    'var micBtn=document.getElementById("micBtn"),statusEl=document.getElementById("status"),transcriptEl=document.getElementById("transcript"),closeBtn=document.getElementById("closeBtn");' +
+    'function toggle(){if(isOn){rec.stop();return}if(!SR){statusEl.textContent="Speech recognition is not supported. Please use Chrome or Edge.";micBtn.classList.add("denied");return}' +
+    'rec=new SR();rec.lang="en-US";rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;' +
+    'rec.onstart=function(){isOn=true;micBtn.classList.add("recording");statusEl.textContent="Listening... Speak now. Click mic to stop."};' +
+    'rec.onresult=function(e){var interim="";for(var i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal){finalText+=(finalText&&!finalText.endsWith(" ")?" ":"")+e.results[i][0].transcript}else{interim+=e.results[i][0].transcript}}' +
+    'transcriptEl.innerHTML=finalText+(interim?"<em style=\\"color:#94a3b8\\"> "+interim+"</em>":"");};' +
+    'rec.onerror=function(e){isOn=false;micBtn.classList.remove("recording");' +
+    'if(e.error==="not-allowed"){micBtn.classList.add("denied");statusEl.textContent="Microphone permission denied. Please allow microphone access in your browser settings and try again."}' +
+    'else if(e.error==="no-speech"){statusEl.textContent="No speech detected. Click the microphone to try again."}' +
+    'else{statusEl.textContent="Error: "+e.error+". Click the microphone to try again."}};' +
+    'rec.onend=function(){isOn=false;micBtn.classList.remove("recording");' +
+    'if(finalText){try{localStorage.setItem("cmms_voice_"+targetId,finalText)}catch(ex){}' +
+    'statusEl.textContent="Done! Text inserted. Closing...";transcriptEl.textContent=finalText;setTimeout(function(){window.close()},1200)}' +
+    'else{statusEl.textContent="Click the microphone to try again."}};' +
+    'try{rec.start()}catch(ex){statusEl.textContent="Failed to start: "+ex.message}}' +
+    'micBtn.onclick=toggle;' +
+    'closeBtn.onclick=function(){if(isOn){try{rec.stop()}catch(ex){}}window.close()};' +
+    'window.onbeforeunload=function(){if(isOn&&finalText){try{localStorage.setItem("cmms_voice_"+targetId,finalText)}catch(ex){}}};' +
+    '<\/script></body></html>';
+  popup.document.write(popupHtml);
+  popup.document.close();
+  var pollKey = 'cmms_voice_' + textareaId;
+  var pollCount = 0;
+  var pollInterval = setInterval(function() {
+    pollCount++;
+    try {
+      var result = localStorage.getItem(pollKey);
+      if (result !== null) {
+        localStorage.removeItem(pollKey);
+        clearInterval(pollInterval);
+        var ta = document.getElementById(textareaId);
+        if (ta) { ta.value = ta.value ? ta.value + ' ' + result : result; }
+        setVoiceBtnState(textareaId, 'idle');
+      }
+    } catch(ex) {}
+    if (pollCount > 600) { clearInterval(pollInterval); }
+  }, 500);
+  try {
+    var checkClosed = setInterval(function() {
+      if (popup.closed) {
+        clearInterval(checkClosed);
+        clearInterval(pollInterval);
+        setVoiceBtnState(textareaId, 'idle');
+      }
+    }, 1000);
+  } catch(ex) {}
+}
+
+function setVoiceBtnState(textareaId, state) {
   var btn = document.querySelector('[data-voice="' + textareaId + '"]');
   if (!btn) return;
-  if (active) {
-    btn.style.background = 'var(--danger)';
-    btn.style.color = '#fff';
-    btn.title = 'Stop listening';
-    btn.classList.add('voice-recording');
-  } else {
-    btn.style.background = '';
-    btn.style.color = '';
-    btn.title = 'Voice input';
-    btn.classList.remove('voice-recording');
+  btn.classList.remove('voice-idle', 'voice-listening', 'voice-recording', 'voice-denied');
+  switch (state) {
+    case 'listening':
+      btn.style.background = '#3b82f6';
+      btn.style.color = '#fff';
+      btn.title = 'Listening... Tap to stop';
+      btn.classList.add('voice-listening');
+      btn.innerHTML = micIcon;
+      break;
+    case 'recording':
+      btn.style.background = '#22c55e';
+      btn.style.color = '#fff';
+      btn.title = 'Recording... Tap to stop';
+      btn.classList.add('voice-recording');
+      btn.innerHTML = micIcon;
+      break;
+    case 'denied':
+      btn.style.background = '#ef4444';
+      btn.style.color = '#fff';
+      btn.title = 'Microphone permission denied';
+      btn.classList.add('voice-denied');
+      btn.innerHTML = micOffIcon;
+      break;
+    default:
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.title = 'Voice input';
+      btn.innerHTML = micIcon;
   }
 }
 
-function addVoiceButton(textareaId, container) {
+function showMicPermissionDialog(textareaId, customMessage) {
+  var existing = document.getElementById('micPermDialog');
+  if (existing) existing.remove();
+  var msg = customMessage || 'Voice Input requires microphone access to convert your speech to text. Please allow microphone permission in your browser settings and try again.';
+  var overlay = document.createElement('div');
+  overlay.id = 'micPermDialog';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:micFadeIn 0.2s ease';
+  var d = document.createElement('div');
+  d.style.cssText = 'background:var(--bg-card,#080c1c);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:16px;padding:32px;max-width:400px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:micSlideUp 0.3s cubic-bezier(0.22,1,0.36,1)';
+  d.innerHTML = '' +
+    '<div style="width:64px;height:64px;border-radius:50%;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" width="32" height="32"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/><line x1="1" y1="1" x2="23" y2="23" stroke="#ef4444" stroke-width="2"/></svg>' +
+    '</div>' +
+    '<h3 style="font-size:18px;font-weight:700;color:var(--text-primary,#e2e8f0);margin:0 0 8px">Microphone Permission Required</h3>' +
+    '<p style="font-size:13px;color:var(--text-secondary,#94a3b8);margin:0 0 24px;line-height:1.6">' + msg + '</p>' +
+    '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
+      '<button id="micPermRetry" style="padding:10px 24px;border-radius:10px;border:none;background:var(--primary,#6366f1);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s">Retry</button>' +
+      '<button id="micPermSettings" style="padding:10px 24px;border-radius:10px;border:1px solid var(--border,rgba(255,255,255,0.08));background:var(--bg-input,rgba(255,255,255,0.05));color:var(--text-primary,#e2e8f0);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s">Open Browser Settings</button>' +
+      '<button id="micPermClose" style="padding:10px 24px;border-radius:10px;border:1px solid var(--border,rgba(255,255,255,0.08));background:transparent;color:var(--text-secondary,#94a3b8);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s">Cancel</button>' +
+    '</div>';
+  overlay.appendChild(d);
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) { overlay.remove(); setVoiceBtnState(textareaId, 'idle'); }
+  });
+  document.getElementById('micPermRetry').addEventListener('click', function() {
+    overlay.remove();
+    startVoiceInput(textareaId);
+  });
+  document.getElementById('micPermSettings').addEventListener('click', function() {
+    var ua = navigator.userAgent;
+    if (ua.indexOf('Edg/') !== -1) {
+      try { window.open('edge://settings/content/microphone', '_blank'); } catch(ex) { showToast('Go to Edge Settings > Cookies and site permissions > Microphone.', 'info'); }
+    } else if (ua.indexOf('Chrome') !== -1) {
+      try { window.open('chrome://settings/content/microphone', '_blank'); } catch(ex) { showToast('Go to Chrome Settings > Privacy and security > Site settings > Microphone.', 'info'); }
+    } else {
+      showToast('Please go to your browser settings and allow microphone access for this site.', 'info');
+    }
+  });
+  document.getElementById('micPermClose').addEventListener('click', function() {
+    overlay.remove();
+    setVoiceBtnState(textareaId, 'idle');
+  });
+}
+
+function showVoiceNotSupportedDialog() {
+  var existing = document.getElementById('voiceNotSupDialog');
+  if (existing) existing.remove();
+  var overlay = document.createElement('div');
+  overlay.id = 'voiceNotSupDialog';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:micFadeIn 0.2s ease';
+  var d = document.createElement('div');
+  d.style.cssText = 'background:var(--bg-card,#080c1c);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:16px;padding:32px;max-width:400px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:micSlideUp 0.3s cubic-bezier(0.22,1,0.36,1)';
+  d.innerHTML = '' +
+    '<div style="width:64px;height:64px;border-radius:50%;background:rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" width="32" height="32"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>' +
+    '</div>' +
+    '<h3 style="font-size:18px;font-weight:700;color:var(--text-primary,#e2e8f0);margin:0 0 8px">Voice Input Not Supported</h3>' +
+    '<p style="font-size:13px;color:var(--text-secondary,#94a3b8);margin:0 0 24px;line-height:1.6">Voice Input is not supported in this browser. Please use the latest version of <strong style="color:var(--text-primary,#e2e8f0)">Google Chrome</strong> or <strong style="color:var(--text-primary,#e2e8f0)">Microsoft Edge</strong> for the best experience.</p>' +
+    '<button id="voiceNotSupClose" style="padding:10px 24px;border-radius:10px;border:none;background:var(--primary,#6366f1);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s">Got it</button>';
+  overlay.appendChild(d);
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+  document.getElementById('voiceNotSupClose').addEventListener('click', function() { overlay.remove(); });
+}
+
+function addVoiceButton(textareaId) {
   var textarea = document.getElementById(textareaId);
   if (!textarea) return;
   if (textarea.parentNode.querySelector('[data-voice="' + textareaId + '"]')) return;
-  var wrapper = document.createElement('div');
-  wrapper.style.cssText = 'position:relative;display:inline-block;width:100%';
   var btn = document.createElement('button');
   btn.type = 'button';
   btn.setAttribute('data-voice', textareaId);
   btn.title = 'Voice input';
   btn.style.cssText = 'position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg-input);color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;transition:all 0.2s ease';
-  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+  btn.innerHTML = micIcon;
   btn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); startVoiceInput(textareaId); };
   textarea.style.paddingRight = '44px';
   textarea.parentNode.insertBefore(btn, textarea.nextSibling);

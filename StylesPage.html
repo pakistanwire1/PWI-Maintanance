@@ -2062,11 +2062,26 @@
     to { transform: translateY(0); }
   }
 
-  /* ===== VOICE RECORDING ANIMATION ===== */
-  .voice-recording { animation: voicePulse 1s ease-in-out infinite; }
-  @keyframes voicePulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
-    50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+  /* ===== VOICE MIC STATES ===== */
+  .voice-idle { box-shadow: none; }
+  .voice-listening { animation: voicePulseBlue 1.5s ease-in-out infinite; }
+  .voice-recording { animation: voicePulseGreen 1s ease-in-out infinite; }
+  .voice-denied { animation: none; }
+  @keyframes voicePulseBlue {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(59,130,246,0); }
+  }
+  @keyframes voicePulseGreen {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+  }
+  @keyframes micFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes micSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   /* ===== MOBILE BOTTOM NAV ===== */

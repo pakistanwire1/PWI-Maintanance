@@ -1,6 +1,14 @@
 <div class="login-wrapper">
   <div class="login-bg-base"></div>
   <div class="login-bg-drift"></div>
+  <div class="login-slideshow">
+    <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=1920&q=80')"></div>
+    <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1513828583688-c52646db42da?w=1920&q=80')"></div>
+    <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1565043666747-69f6646db940?w=1920&q=80')"></div>
+    <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&q=80')"></div>
+    <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1920&q=80')"></div>
+    <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1920&q=80')"></div>
+  </div>
   <div class="login-bg-grid"></div>
   <div class="login-bg-factory"></div>
   <div class="login-particles">
@@ -43,7 +51,10 @@
     <div class="lw-hero">
       <div class="lw-hero-content">
         <div class="lw-greeting fade-in-up">Welcome</div>
-        <h1 class="lw-company fade-in-up" style="animation-delay:0.15s">Pakistan Wire Industries Pvt. Ltd.</h1>
+        <h1 class="lw-company fade-in-up" style="animation-delay:0.15s">
+          <span class="lw-co-primary">Pakistan Wires Industries</span>
+          <span class="lw-co-bracket">(Private) Limited</span>
+        </h1>
         <p class="lw-subtitle fade-in-up" style="animation-delay:0.3s">Computerized Maintenance Management System</p>
       </div>
       <div class="lw-division-cards fade-in-up" style="animation-delay:0.45s">
@@ -107,7 +118,10 @@
               </svg>
             </div>
           </div>
-          <h1 class="login-title">Pakistan Wires Industries (Pvt.) Ltd.</h1>
+          <h1 class="login-title">
+            <span class="lt-primary">Pakistan Wires Industries</span>
+            <span class="lt-bracket">(Private) Limited</span>
+          </h1>
           <p class="login-subtitle">Computerized Maintenance Management System</p>
         </div>
         <form id="loginForm" onsubmit="return handleLogin(event)">
@@ -689,16 +703,16 @@
 }
 
 .login-card {
-  background: var(--lw-card);
-  backdrop-filter: blur(32px) saturate(1.6);
-  -webkit-backdrop-filter: blur(32px) saturate(1.6);
-  border: 1px solid var(--lw-card-border);
-  border-radius: 28px;
+  background: rgba(8,12,28,0.55);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
   padding: 40px 44px;
   width: 100%;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--lw-card-shadow);
+  box-shadow: 0 8px 60px rgba(0,0,0,0.4), 0 0 80px rgba(59,130,246,0.06);
   animation: lwCardIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
@@ -1184,6 +1198,106 @@
   .login-card { padding: 24px 18px; }
   .lw-division-cards { gap: 10px; }
 }
+    .login-slideshow {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+      pointer-events: none;
+    }
+
+    .login-slide {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+      animation: loginFadeSlide 30s linear infinite;
+    }
+
+    .login-slide:nth-child(1) { animation-delay: 0s; }
+    .login-slide:nth-child(2) { animation-delay: 5s; }
+    .login-slide:nth-child(3) { animation-delay: 10s; }
+    .login-slide:nth-child(4) { animation-delay: 15s; }
+    .login-slide:nth-child(5) { animation-delay: 20s; }
+    .login-slide:nth-child(6) { animation-delay: 25s; }
+
+    .login-slide::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(3,5,10,0.82) 0%, rgba(10,14,26,0.72) 50%, rgba(3,5,10,0.85) 100%);
+    }
+
+    @keyframes loginFadeSlide {
+      0%, 3% { opacity: 0; }
+      5%, 18% { opacity: 1; }
+      20%, 100% { opacity: 0; }
+    }
+
+    .lw-co-primary {
+      display: block;
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa 0%, #818cf8 35%, #c084fc 65%, #60a5fa 100%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: lwGradShift 4s ease-in-out infinite;
+      filter: drop-shadow(0 0 20px rgba(96,165,250,0.30)) drop-shadow(0 2px 8px rgba(99,102,241,0.15));
+      line-height: 1.15;
+    }
+
+    [data-theme="light"] .lw-co-primary {
+      background: linear-gradient(135deg, #2563eb 0%, #4f46e5 35%, #7c3aed 65%, #2563eb 100%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 1px 3px rgba(37,99,235,0.15));
+    }
+
+    .lw-co-bracket {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(148,152,184,0.80);
+      letter-spacing: 0.06em;
+      margin-top: 2px;
+    }
+
+    @keyframes lwGradShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .lt-primary {
+      display: block;
+      font-size: 18px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #60a5fa 0%, #818cf8 40%, #c084fc 70%, #60a5fa 100%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: lwGradShift 4s ease-in-out infinite;
+      filter: drop-shadow(0 0 12px rgba(96,165,250,0.20));
+      line-height: 1.2;
+    }
+
+    [data-theme="light"] .lt-primary {
+      background: linear-gradient(135deg, #2563eb 0%, #4f46e5 40%, #7c3aed 70%, #2563eb 100%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 1px 2px rgba(37,99,235,0.12));
+    }
+
+    .lt-bracket {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(148,152,184,0.70);
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
 </style>
 
 <script>
