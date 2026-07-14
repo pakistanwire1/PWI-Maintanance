@@ -22,9 +22,12 @@ var App = (function() {
     });
     var currentHash = location.hash ? location.hash.replace('#', '') : '';
     if (!Auth.isLoggedIn()) {
+      _currentPage = '';
       navigate('login');
     } else {
-      navigateTo(currentHash || 'dashboard');
+      _currentPage = '';
+      var target = currentHash || 'dashboard';
+      navigateTo(target);
       if (!currentHash) location.hash = '#dashboard';
     }
   }

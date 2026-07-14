@@ -5,10 +5,10 @@
 var API = (function() {
 
   /* ==========================================================
-     CONFIGURATION — Change this URL to your GAS deployment
+     CONFIGURATION
      ========================================================== */
   var API_BASE_URL =
-'https://script.google.com/macros/s/AKfycbzOxMqGhzoSHtGhLc67myv31HqXAq9y05g92KchSXN9Q-WCVbsGiYXf8mp-AHHU3doX/exec';
+    'https://script.google.com/macros/s/AKfycbyl0fdHKRwU-KBw09d6Xkh6rfw_FKZ2GwQisos70tXhhR6ja5HmQMvuuPFsXQ2fUR7W/exec';
 
   /* ==========================================================
      INTERNAL STATE
@@ -22,36 +22,27 @@ var API = (function() {
   var RETRY_DELAY_MS = 1500;
 
   /* ==========================================================
-     LOGGING HELPERS
+     LOGGING
      ========================================================== */
   function log(tag, msg, data) {
     var ts = new Date().toISOString().slice(11, 23);
-    var prefix = '[' + ts + '][API:' + tag + ']';
-    if (data !== undefined) {
-      console.log(prefix, msg, data);
-    } else {
-      console.log(prefix, msg);
-    }
+    var p = '[' + ts + '][API:' + tag + ']';
+    if (data !== undefined) console.log(p, msg, data);
+    else console.log(p, msg);
   }
 
   function logWarn(tag, msg, data) {
     var ts = new Date().toISOString().slice(11, 23);
-    var prefix = '[' + ts + '][API:' + tag + ']';
-    if (data !== undefined) {
-      console.warn(prefix, msg, data);
-    } else {
-      console.warn(prefix, msg);
-    }
+    var p = '[' + ts + '][API:' + tag + ']';
+    if (data !== undefined) console.warn(p, msg, data);
+    else console.warn(p, msg);
   }
 
   function logError(tag, msg, data) {
     var ts = new Date().toISOString().slice(11, 23);
-    var prefix = '[' + ts + '][API:' + tag + ']';
-    if (data !== undefined) {
-      console.error(prefix, msg, data);
-    } else {
-      console.error(prefix, msg);
-    }
+    var p = '[' + ts + '][API:' + tag + ']';
+    if (data !== undefined) console.error(p, msg, data);
+    else console.error(p, msg);
   }
 
   /* ==========================================================
@@ -84,7 +75,7 @@ var API = (function() {
   }
 
   /* ==========================================================
-     DIAGNOSTICS — stored for UI display
+     DIAGNOSTICS
      ========================================================== */
   function setDiagnostics(info) {
     _lastDiagnostics = info;
@@ -94,36 +85,41 @@ var API = (function() {
   function getDiagnostics() { return _lastDiagnostics; }
 
   /* ==========================================================
+     HTML ERROR EXTRACTION
+     ========================================================== */
+  function extractHtmlError(html) {
+    if (!html) return '';
+    var m = html.match(/>([^<]*Error[^<]*)</i) ||
+            html.match(/>([^<]*not found[^<]*)</i) ||
+            html.match(/>([^<]*function[^<]*not[^<]*found[^<]*)/i);
+    if (m && m[1]) return m[1].trim();
+    var m2 = html.match(/<div[^>]*>([^<]{10,200})<\/div>/);
+    if (m2 && m2[1]) return m2[1].trim();
+    return 'Server returned an HTML error page instead of JSON.';
+  }
+
+  /* ==========================================================
      ERROR CLASSIFICATION
      ========================================================== */
   function classifyError(err, tag) {
     var msg = err.message || '';
 
     if (msg.indexOf('Failed to fetch') > -1 || msg.indexOf('NetworkError') > -1 || msg === 'NetworkError') {
-      logWarn(tag, 'fetch() failed — likely CORS blocked or server unreachable');
-      logWarn(tag, 'URL requested: ' + API_BASE_URL);
+      logWarn(tag, 'fetch() failed — likely CORS or server unreachable. URL: ' + API_BASE_URL);
       return {
         type: 'network',
-        message: 'Cannot reach the API server. The backend may need to be redeployed. Check the browser console (F12) for details.',
-        detail: 'fetch() failed. This usually means: (1) The GAS web app has not been deployed with doPost(), or (2) CORS headers are missing from the response.',
+        message: 'Cannot reach the API server. Redeploy the GAS web app with doPost() enabled.',
+        detail: 'fetch() failed. GAS may not have doPost() deployed. Open browser console (F12) for details.',
         retryable: false
       };
     }
 
     if (msg.indexOf('timeout') > -1 || msg.indexOf('AbortError') > -1) {
-      return {
-        type: 'timeout',
-        message: 'Request timed out after ' + (DEFAULT_TIMEOUT / 1000) + 's. The server may be overloaded.',
-        retryable: true
-      };
+      return { type: 'timeout', message: 'Request timed out. Server may be overloaded.', retryable: true };
     }
 
     if (msg.indexOf('401') > -1 || msg.indexOf('Unauthorized') > -1 || msg.indexOf('Session expired') > -1) {
       return { type: 'auth', message: 'Session expired. Please login again.', retryable: false };
-    }
-
-    if (msg.indexOf('403') > -1 || msg.indexOf('Forbidden') > -1) {
-      return { type: 'forbidden', message: 'Access denied. You do not have permission.', retryable: false };
     }
 
     if (msg.indexOf('500') > -1 || msg.indexOf('Internal') > -1) {
@@ -131,12 +127,7 @@ var API = (function() {
     }
 
     if (msg.indexOf('Script function not found') > -1 || msg.indexOf('HTML instead of JSON') > -1 || msg.indexOf('error page') > -1) {
-      return {
-        type: 'deploy',
-        message: msg,
-        detail: 'The GAS web app is not properly deployed. Redeploy with doPost() available.',
-        retryable: false
-      };
+      return { type: 'deploy', message: msg, detail: 'Redeploy GAS web app with doPost().', retryable: false };
     }
 
     return { type: 'unknown', message: msg || 'An unknown error occurred.', retryable: false };
@@ -163,8 +154,6 @@ var API = (function() {
     var bodyStr = JSON.stringify(payload);
 
     log(tag, 'POST ' + action + ' (attempt ' + (attempt + 1) + '/' + (maxRetries + 1) + ')');
-    log(tag, 'URL: ' + API_BASE_URL);
-    log(tag, 'Payload: ' + bodyStr.slice(0, 200) + (bodyStr.length > 200 ? '...' : ''));
 
     setDiagnostics({ step: 'request', status: 'sending ' + action, detail: API_BASE_URL });
 
@@ -179,7 +168,8 @@ var API = (function() {
 
       var fetchOpts = {
         method: 'POST',
-        cache: 'no-cache',
+        mode: 'cors',
+        cache: 'no-store',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         redirect: 'follow',
         body: bodyStr
@@ -194,14 +184,15 @@ var API = (function() {
           var elapsed = Date.now() - fetchStart;
           if (timeoutId) clearTimeout(timeoutId);
 
-          log(tag, 'Response: HTTP ' + resp.status + ' ' + resp.statusText + ' (' + elapsed + 'ms)');
-          log(tag, 'Content-Type: ' + resp.headers.get('content-type'));
-          log(tag, 'CORS-Allow-Origin: ' + (resp.headers.get('access-control-allow-origin') || '(none)'));
+          var ct = resp.headers.get('content-type') || '';
+          var cors = resp.headers.get('access-control-allow-origin') || '(none)';
+
+          log(tag, 'HTTP ' + resp.status + ' (' + elapsed + 'ms) CT:' + ct + ' CORS:' + cors);
 
           setDiagnostics({
             step: 'response',
             status: 'HTTP ' + resp.status,
-            detail: 'Content-Type: ' + resp.headers.get('content-type') + ' | CORS: ' + (resp.headers.get('access-control-allow-origin') || 'MISSING')
+            detail: 'CT: ' + ct + ' | CORS: ' + cors
           });
 
           if (!resp.ok) {
@@ -212,10 +203,10 @@ var API = (function() {
               return;
             }
             return resp.text().then(function(body) {
-              logWarn(tag, 'Error response body (first 500 chars): ' + (body || '').slice(0, 500));
               var isHtml = body && (body.indexOf('<!DOCTYPE') > -1 || body.indexOf('<html') > -1);
               if (isHtml) {
                 var errMsg = extractHtmlError(body);
+                logError(tag, 'HTML error response: ' + errMsg);
                 reject(new Error(errMsg || 'Server returned an error page (HTTP ' + resp.status + ')'));
               } else {
                 reject(new Error('HTTP ' + resp.status + ': ' + (body || resp.statusText)));
@@ -229,8 +220,7 @@ var API = (function() {
           if (typeof text !== 'string') return;
 
           var elapsed = Date.now() - fetchStart;
-          log(tag, 'Body length: ' + text.length + ' chars (' + elapsed + 'ms total)');
-          log(tag, 'Body preview: ' + text.slice(0, 300));
+          log(tag, 'Body (' + text.length + ' chars, ' + elapsed + 'ms total): ' + text.slice(0, 300));
 
           var result;
           try {
@@ -241,9 +231,9 @@ var API = (function() {
               var errMsg = extractHtmlError(text);
               logError(tag, 'Server returned HTML: ' + errMsg);
               setDiagnostics({ step: 'parse', status: 'HTML response', detail: errMsg });
-              reject(new Error(errMsg || 'Server returned HTML instead of JSON. The GAS web app needs to be redeployed.'));
+              reject(new Error(errMsg || 'Server returned HTML instead of JSON. Redeploy GAS web app.'));
             } else {
-              logError(tag, 'JSON parse failed. Raw text: ' + text.slice(0, 500));
+              logError(tag, 'JSON parse failed. Raw: ' + text.slice(0, 500));
               reject(new Error('Invalid JSON response from server.'));
             }
             return;
@@ -262,7 +252,7 @@ var API = (function() {
             return;
           }
 
-          log(tag, 'SUCCESS: ' + action + ' completed');
+          log(tag, 'SUCCESS: ' + action);
           setDiagnostics({ step: 'done', status: 'success' });
           resolve(result.data);
         })
@@ -282,7 +272,7 @@ var API = (function() {
 
           if (classified.retryable && attempt < maxRetries) {
             var delay = RETRY_DELAY_MS * Math.pow(2, attempt);
-            log(tag, 'Retrying in ' + delay + 'ms (attempt ' + (attempt + 1) + '/' + maxRetries + ')');
+            log(tag, 'Retrying in ' + delay + 'ms');
             setTimeout(function() {
               call(action, data, {
                 timeout: timeout,
@@ -300,25 +290,13 @@ var API = (function() {
   }
 
   /* ==========================================================
-     HTML ERROR EXTRACTION
-     ========================================================== */
-  function extractHtmlError(html) {
-    if (!html) return '';
-    var m = html.match(/>([^<]*Error[^<]*)</i) || html.match(/>([^<]*not found[^<]*)</i) || html.match(/>([^<]*function[^<]*not[^<]*found[^<]*)/i);
-    if (m && m[1]) return m[1].trim();
-    var m2 = html.match(/<div[^>]*>([^<]{10,200})<\/div>/);
-    if (m2 && m2[1]) return m2[1].trim();
-    return '';
-  }
-
-  /* ==========================================================
-     CONNECTION TEST — POST + GET fallback
+     CONNECTION TEST
      ========================================================== */
   function ping() {
-    log('PING', 'Testing POST to ' + API_BASE_URL);
+    log('PING', 'POST to ' + API_BASE_URL);
     return call('getServerTimestamp', {}, { retry: false, timeout: 15000 })
       .catch(function(postErr) {
-        logWarn('PING', 'POST failed: ' + postErr.message + '. Trying GET fallback...');
+        logWarn('PING', 'POST failed: ' + postErr.message + '. Trying GET...');
         return pingGet();
       });
   }
@@ -341,6 +319,7 @@ var API = (function() {
 
       fetch(API_BASE_URL + '?ping=1&t=' + Date.now(), {
         method: 'GET',
+        mode: 'cors',
         cache: 'no-store',
         redirect: 'follow'
       })
@@ -348,10 +327,7 @@ var API = (function() {
           var elapsed = Date.now() - fetchStart;
           if (timeoutId) clearTimeout(timeoutId);
 
-          log(tag, 'Response: HTTP ' + resp.status + ' (' + elapsed + 'ms)');
-          log(tag, 'Content-Type: ' + resp.headers.get('content-type'));
-          log(tag, 'CORS-Allow-Origin: ' + (resp.headers.get('access-control-allow-origin') || '(none)'));
-
+          log(tag, 'HTTP ' + resp.status + ' (' + elapsed + 'ms)');
           setDiagnostics({
             step: 'ping-get',
             status: 'HTTP ' + resp.status,
@@ -364,10 +340,10 @@ var API = (function() {
           var isHtml = text && (text.indexOf('<!DOCTYPE') > -1 || text.indexOf('<html') > -1);
           if (isHtml) {
             var errMsg = extractHtmlError(text);
-            log(tag, 'Got HTML response: ' + (errMsg || text.slice(0, 200)));
-            resolve({ reachable: true, html: true, error: errMsg || 'GAS web app returns HTML (doGet serves the HTML app, doPost not deployed)' });
+            log(tag, 'HTML response: ' + (errMsg || text.slice(0, 200)));
+            resolve({ reachable: true, html: true, error: errMsg || 'GAS returns HTML (doPost not deployed)' });
           } else {
-            log(tag, 'Got non-HTML response: ' + text.slice(0, 200));
+            log(tag, 'Non-HTML response: ' + text.slice(0, 200));
             resolve({ reachable: true, html: false, body: text.slice(0, 200) });
           }
         })
@@ -382,18 +358,14 @@ var API = (function() {
   }
 
   /* ==========================================================
-     UPLOAD (Base64 file to Google Drive via GAS)
+     UPLOAD
      ========================================================== */
   function upload(base64Data, fileName, folderName) {
-    return call('uploadFile', {
-      base64: base64Data,
-      fileName: fileName,
-      folder: folderName
-    }, { timeout: 60000 });
+    return call('uploadFile', { base64: base64Data, fileName: fileName, folder: folderName }, { timeout: 60000 });
   }
 
   /* ==========================================================
-     BATCH CALLS (Multiple API calls in sequence)
+     BATCH CALLS
      ========================================================== */
   function batch(calls) {
     var results = [];

@@ -1,6 +1,5 @@
 /* ============================================================
    auth.js — Authentication Module for Cloudflare Pages
-   Standard-021: Enterprise Architecture Migration
    ============================================================ */
 
 var Auth = (function() {
@@ -22,16 +21,27 @@ var Auth = (function() {
   function login(email, password) {
     return API.call('login', { email: email, password: password }, { retry: false })
       .then(function(result) {
-        if (!result || result.success === false) {
-          throw new Error((result && result.message) || 'Login failed');
+        /* result = { success: true, user: {...}, token: '...', expires: '...' }
+           because API.call() resolves with the inner 'data' field from the API response */
+
+        if (!result) {
+          throw new Error('Empty response from server');
         }
+
+        if (result.success === false) {
+          throw new Error(result.message || 'Login failed');
+        }
+
         if (!result.token) {
-          throw new Error('No authentication token received');
+          throw new Error('No authentication token received. Server response: ' + JSON.stringify(result).slice(0, 200));
         }
+
         API.setToken(result.token);
+
         _user = result.user || {};
         _user.email = _user.email || email;
         _user.expires = result.expires || '';
+
         localStorage.setItem('cmms_user', JSON.stringify(_user));
         return _user;
       });

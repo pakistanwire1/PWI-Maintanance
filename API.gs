@@ -2,28 +2,27 @@
    API.gs — REST API Router for Cloudflare Pages Frontend
    
    doPost() handles all API requests from Cloudflare Pages.
-   doOptions() handles CORS preflight requests.
-   Existing doGet() and HTML app remain untouched.
+   doGet() is in CodeGS.gs (handles legacy HTML app + CORS ping).
    ============================================================ */
 
 /* ---- CORS ---- */
 
 function getCorsOrigin(e) {
   try {
-    var origin = e ? (e.headers && e.headers.origin) || '' : '';
-    if (origin) return origin;
+    if (e && e.headers && e.headers.origin) return e.headers.origin;
+    if (e && e.commonHeaders && e.commonHeaders.origin) return e.commonHeaders.origin;
   } catch(ex) {}
   return '*';
 }
 
-/* ---- Response Helpers ---- */
-
 function apiSetCors(resp, origin) {
-  resp = resp.setHeader('Access-Control-Allow-Origin', origin || '*')
-    .setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
-    .setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    .setHeader('Access-Control-Max-Age', '86400');
-  if (origin && origin !== '*') {
+  var o = origin || '*';
+  resp = resp.setHeader('Access-Control-Allow-Origin', o)
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+    .setHeader('Access-Control-Max-Age', '86400')
+    .setHeader('Access-Control-Expose-Headers', 'Content-Type');
+  if (o && o !== '*') {
     resp = resp.setHeader('Access-Control-Allow-Credentials', 'true');
   }
   return resp;
@@ -41,10 +40,10 @@ function apiSuccess(data, e) {
 }
 
 function apiError(message, code, e) {
-  return apiJson({ success: false, error: message, code: code || 400 }, e);
+  return apiJson({ success: false, error: message || 'Unknown error', code: code || 400 }, e);
 }
 
-/* ---- Preflight ---- */
+/* ---- Preflight (GAS may or may not call this) ---- */
 
 function doOptions(e) {
   var origin = getCorsOrigin(e);
@@ -53,45 +52,49 @@ function doOptions(e) {
   return apiSetCors(output, origin);
 }
 
-/* ---- Main Router ---- */
+/* ---- POST Handler (main API entry) ---- */
 
 function doPost(e) {
+  var origin = getCorsOrigin(e);
+
+  /* Guard: no POST data */
+  if (!e || !e.postData || !e.postData.contents) {
+    return apiError('Invalid request: no POST data', 400, e);
+  }
+
+  var body;
   try {
-    if (!e || !e.postData || !e.postData.contents) {
-      return apiError('Invalid request: no POST data received', 400, e);
-    }
+    body = JSON.parse(e.postData.contents);
+  } catch(parseErr) {
+    return apiError('Invalid JSON: ' + (e.postData.contents || '').slice(0, 100), 400, e);
+  }
 
-    var body;
-    try {
-      body = JSON.parse(e.postData.contents);
-    } catch(parseErr) {
-      return apiError('Invalid JSON in request body', 400, e);
-    }
+  var action = body.action || '';
+  var token = body.token || '';
+  var data = body.data || {};
 
-    var action = body.action || '';
-    var token = body.token || '';
-    var data = body.data || {};
+  if (!action) return apiError('Missing action', 400, e);
 
-    if (!action) return apiError('Missing action', 400, e);
+  /* Special: login does not require auth */
+  var route = API_ROUTES[action];
+  if (!route) return apiError('Unknown action: ' + action, 404, e);
 
-    var route = API_ROUTES[action];
-    if (!route) return apiError('Unknown action: ' + action, 404, e);
+  /* Auth check */
+  if (route.auth) {
+    if (!token) return apiError('Unauthorized. Please login again.', 401, e);
+    var user = validateApiToken(token);
+    if (!user) return apiError('Session expired. Please login again.', 401, e);
+    data._userEmail = user.email;
+    data._userRole = user.role;
+    data._userName = user.name || '';
+    data._token = token;
+  }
 
-    if (route.auth) {
-      if (!token) return apiError('Unauthorized. Please login again.', 401, e);
-      var user = validateApiToken(token);
-      if (!user) return apiError('Unauthorized. Please login again.', 401, e);
-      data._userEmail = user.email;
-      data._userRole = user.role;
-      data._userName = user.name;
-      data._token = token;
-    }
-
+  try {
     var result = route.handler(data);
     return apiSuccess(result, e);
-
   } catch(err) {
-    Logger.log('API Error: ' + err.message + ' | Stack: ' + err.stack);
+    Logger.log('API Route Error [' + action + ']: ' + err.message);
     return apiError(err.message || 'Internal server error', 500, e);
   }
 }
@@ -307,7 +310,6 @@ var API_ROUTES = {
 
 /* ============================================================
    API Handler Wrappers
-   Functions that need parameter injection or data transform
    ============================================================ */
 
 function apiGetUsers(d) {
@@ -444,3 +446,4 @@ function apiGetNotifications(d) {
     unreadCount: all.filter(function(n) { return (n.ReadStatus || '').toLowerCase() !== 'read'; }).length
   };
 }
+
