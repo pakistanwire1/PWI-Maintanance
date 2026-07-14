@@ -129,7 +129,7 @@ function getTodayDateString() {
 
 function getTodayTimeString() {
   var now = new Date();
-  return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  return pad(now.getHours()) + ':' + pad(now.getMinutes());
 }
 
 function getDateNDaysFromNow(n) {
@@ -154,6 +154,11 @@ function formatDate(date) {
   var m = ('0' + (date.getMonth() + 1)).slice(-2);
   var d = ('0' + date.getDate()).slice(-2);
   return y + '-' + m + '-' + d;
+}
+
+function formatDateTime(date) {
+  var now = date || new Date();
+  return formatDate(now) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
 }
 
 function generateId(sheetName, prefix) {

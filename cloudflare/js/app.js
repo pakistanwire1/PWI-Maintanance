@@ -20,10 +20,12 @@ var App = (function() {
       var page = (location.hash || '#dashboard').replace('#', '');
       navigateTo(page);
     });
+    var currentHash = location.hash ? location.hash.replace('#', '') : '';
     if (!Auth.isLoggedIn()) {
       navigate('login');
     } else {
-      navigate('dashboard');
+      navigateTo(currentHash || 'dashboard');
+      if (!currentHash) location.hash = '#dashboard';
     }
   }
 
@@ -36,6 +38,7 @@ var App = (function() {
   function navigateTo(page) {
     if (page && page.indexOf('(') > -1) page = page.replace(/['"]/g, '').replace('navigateTo(', '').replace(')', '');
     if (!page) page = 'dashboard';
+    if (page === _currentPage) return;
     if (page === 'login') {
       _currentPage = page;
       document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });

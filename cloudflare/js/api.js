@@ -8,7 +8,7 @@ var API = (function() {
      CONFIGURATION — Change this URL to your GAS deployment
      ========================================================== */
   var API_BASE_URL =
-'https://script.google.com/macros/s/AKfycbxybYmXVqVopILlyGzQUdBY_qAShuUi7uB5Tn21Scy_Bl_NmgrXb3wcaYUS3tbwcVDM/exec';
+'https://script.google.com/macros/s/AKfycbzOxMqGhzoSHtGhLc67myv31HqXAq9y05g92KchSXN9Q-WCVbsGiYXf8mp-AHHU3doX/exec';
 
   /* ==========================================================
      INTERNAL STATE
