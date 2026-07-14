@@ -22,13 +22,16 @@ var Auth = (function() {
   function login(email, password) {
     return API.call('login', { email: email, password: password }, { retry: false })
       .then(function(result) {
-        if (result.success === false) {
-          throw new Error(result.message || 'Login failed');
+        if (!result || result.success === false) {
+          throw new Error((result && result.message) || 'Login failed');
+        }
+        if (!result.token) {
+          throw new Error('No authentication token received');
         }
         API.setToken(result.token);
-        _user = result.user;
-        _user.email = result.user.email;
-        _user.expires = result.expires;
+        _user = result.user || {};
+        _user.email = _user.email || email;
+        _user.expires = result.expires || '';
         localStorage.setItem('cmms_user', JSON.stringify(_user));
         return _user;
       });

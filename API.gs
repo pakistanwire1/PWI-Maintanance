@@ -7,46 +7,52 @@
    Existing doGet() and HTML app remain untouched.
    ============================================================ */
 
-var CORS_ORIGIN = 'https://pwi-cmms.pages.dev';
+var CORS_ORIGINS = [
+  'https://pwi-maintenance-2026.pakistanwire1.workers.dev',
+  'https://pwi-cmms.pages.dev'
+];
+
+function getCorsOrigin(e) {
+  try {
+    var origin = e ? (e.headers && e.headers.origin) || '' : '';
+    if (origin && CORS_ORIGINS.indexOf(origin) > -1) return origin;
+  } catch(ex) {}
+  return CORS_ORIGINS[0];
+}
 
 /* ---- CORS & Response Helpers ---- */
 
-function apiCorsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': CORS_ORIGIN,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Max-Age': '86400',
-    'Content-Type': 'application/json; charset=utf-8'
-  };
-}
-
-function apiJson(data, statusCode) {
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeader('Access-Control-Allow-Origin', CORS_ORIGIN)
+function apiSetCors(resp, origin) {
+  return resp
+    .setHeader('Access-Control-Allow-Origin', origin)
     .setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
     .setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    .setHeader('Access-Control-Allow-Credentials', 'true')
     .setHeader('Access-Control-Max-Age', '86400');
 }
 
-function apiSuccess(data) {
-  return apiJson({ success: true, data: data, ts: new Date().toISOString() });
+function apiJson(data, e) {
+  var origin = getCorsOrigin(e);
+  var output = ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+  return apiSetCors(output, origin);
 }
 
-function apiError(message, code) {
-  return apiJson({ success: false, error: message, code: code || 400 }, code || 400);
+function apiSuccess(data, e) {
+  return apiJson({ success: true, data: data, ts: new Date().toISOString() }, e);
+}
+
+function apiError(message, code, e) {
+  return apiJson({ success: false, error: message, code: code || 400 }, e);
 }
 
 /* ---- Preflight ---- */
 
 function doOptions(e) {
-  return ContentService.createTextOutput('')
-    .setMimeType(ContentService.MimeType.TEXT)
-    .setHeader('Access-Control-Allow-Origin', CORS_ORIGIN)
-    .setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    .setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    .setHeader('Access-Control-Max-Age', '86400');
+  var origin = getCorsOrigin(e);
+  var output = ContentService.createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT);
+  return apiSetCors(output, origin);
 }
 
 /* ---- Main Router ---- */
@@ -58,25 +64,25 @@ function doPost(e) {
     var token = body.token || '';
     var data = body.data || {};
 
-    if (!action) return apiError('Missing action', 400);
+    if (!action) return apiError('Missing action', 400, e);
 
     var route = API_ROUTES[action];
-    if (!route) return apiError('Unknown action: ' + action, 404);
+    if (!route) return apiError('Unknown action: ' + action, 404, e);
 
     if (route.auth) {
       var user = validateApiToken(token);
-      if (!user) return apiError('Unauthorized. Please login again.', 401);
+      if (!user) return apiError('Unauthorized. Please login again.', 401, e);
       data._userEmail = user.email;
       data._userRole = user.role;
       data._userName = user.name;
     }
 
     var result = route.handler(data);
-    return apiSuccess(result);
+    return apiSuccess(result, e);
 
   } catch(err) {
     Logger.log('API Error: ' + err.message + ' | Stack: ' + err.stack);
-    return apiError(err.message || 'Internal server error', 500);
+    return apiError(err.message || 'Internal server error', 500, e);
   }
 }
 
@@ -105,6 +111,7 @@ var API_ROUTES = {
 
   /* ---- Job Cards ---- */
   'getJobCards':           { auth: true,  handler: function(d) { return apiGetJobCards(d); } },
+  'getJobCardsByStatus':   { auth: true,  handler: function(d) { return apiGetJobCards(d); } },
   'getJobCard':            { auth: true,  handler: function(d) { return getJobCard(d.id); } },
   'addJobCard':            { auth: true,  handler: function(d) { return addJobCard(d); } },
   'updateJobCard':         { auth: true,  handler: function(d) { return updateJobCard(d.id, d); } },
@@ -114,11 +121,15 @@ var API_ROUTES = {
   'approveJobCard':        { auth: true,  handler: function(d) { return approveJobCard(d.id, d); } },
   'returnJobCard':         { auth: true,  handler: function(d) { return returnJobCard(d.id, d); } },
   'pendingJobCard':        { auth: true,  handler: function(d) { return apiPendingJobCard(d); } },
+  'unlockJobCard':         { auth: true,  handler: function(d) { return unlockJobCard(d.id); } },
   'searchJobCards':        { auth: true,  handler: function(d) { return searchJobCards(d.query); } },
+  'canApproveJobCard':     { auth: true,  handler: function(d) { return canApproveJobCard(); } },
 
   /* ---- Machines ---- */
   'getMachines':           { auth: true,  handler: function(d) { return getMachines(); } },
+  'getMachineList':        { auth: true,  handler: function(d) { return getMachineList(); } },
   'getMachine':            { auth: true,  handler: function(d) { return getMachine(d.id); } },
+  'getMachineDetails':     { auth: true,  handler: function(d) { return getMachineDetails(d.id); } },
   'addMachine':            { auth: true,  handler: function(d) { return addMachine(d); } },
   'updateMachine':         { auth: true,  handler: function(d) { return updateMachine(d.id, d); } },
   'deleteMachine':         { auth: true,  handler: function(d) { return deleteMachine(d.id); } },
@@ -126,7 +137,9 @@ var API_ROUTES = {
 
   /* ---- Assets ---- */
   'getAssets':             { auth: true,  handler: function(d) { return getAssets(); } },
+  'getAssetList':          { auth: true,  handler: function(d) { return getAssetList(); } },
   'getAsset':              { auth: true,  handler: function(d) { return getAsset(d.id); } },
+  'getAssetDetails':       { auth: true,  handler: function(d) { return getAssetDetails(d.id); } },
   'addAsset':              { auth: true,  handler: function(d) { return addAsset(d); } },
   'updateAsset':           { auth: true,  handler: function(d) { return updateAsset(d.id, d); } },
   'deleteAsset':           { auth: true,  handler: function(d) { return deleteAsset(d.id); } },
@@ -139,8 +152,12 @@ var API_ROUTES = {
   'updateSparePart':       { auth: true,  handler: function(d) { return updateSparePart(d.id, d); } },
   'deleteSparePart':       { auth: true,  handler: function(d) { return deleteSparePart(d.id); } },
   'searchSpareParts':      { auth: true,  handler: function(d) { return searchSpareParts(d.query); } },
+  'filterSpareParts':      { auth: true,  handler: function(d) { return filterSpareParts(d); } },
   'getStockHistory':       { auth: true,  handler: function(d) { return getStockHistory(d.partCode); } },
   'getLowStockParts':      { auth: true,  handler: function(d) { return getLowStockParts(); } },
+  'getOutOfStockParts':    { auth: true,  handler: function(d) { return getOutOfStockParts(); } },
+  'getStockValue':         { auth: true,  handler: function(d) { return getStockValue(); } },
+  'exportSparePartsCSV':   { auth: true,  handler: function(d) { return exportSparePartsCSV(); } },
 
   /* ---- Inventory ---- */
   'getAllTransactions':     { auth: true,  handler: function(d) { return getAllTransactions(); } },
@@ -194,6 +211,9 @@ var API_ROUTES = {
   'getPMCalendarData':     { auth: true,  handler: function(d) { return getPMCalendarData(d.year, d.month); } },
   'getPMCompliance':       { auth: true,  handler: function(d) { return getPMCompliance(); } },
   'getPMSummary':          { auth: true,  handler: function(d) { return getPMSummary(); } },
+  'getDuePMs':             { auth: true,  handler: function(d) { return getDuePMs(); } },
+  'getOverduePMs':         { auth: true,  handler: function(d) { return getOverduePMs(); } },
+  'getPMByMachine':        { auth: true,  handler: function(d) { return getPMByMachine(d.machineId); } },
 
   /* ---- PM History ---- */
   'getPMHistory':          { auth: true,  handler: function(d) { return getPMHistory(); } },
