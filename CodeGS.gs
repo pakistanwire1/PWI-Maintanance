@@ -1,25 +1,10 @@
 function doGet(e) {
   Logger.log('doGet() called');
 
-  /* ---- CORS / Ping endpoints for Cloudflare Pages ---- */
-  if (e && e.parameter && e.parameter.ping === '1') {
-    var origin = '*';
-    try { if (e.headers && e.headers.origin) origin = e.headers.origin; } catch(ex) {}
-    var output = ContentService.createTextOutput(JSON.stringify({ alive: true, ts: new Date().toISOString() }))
+  /* ---- Ping endpoints for Cloudflare Pages ---- */
+  if (e && e.parameter && (e.parameter.ping === '1' || e.parameter.cors === '1')) {
+    return ContentService.createTextOutput(JSON.stringify({ alive: true, ts: new Date().toISOString() }))
       .setMimeType(ContentService.MimeType.JSON);
-    return output.setHeader('Access-Control-Allow-Origin', origin)
-      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-      .setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  }
-
-  if (e && e.parameter && e.parameter.cors === '1') {
-    var origin2 = '*';
-    try { if (e.headers && e.headers.origin) origin2 = e.headers.origin; } catch(ex) {}
-    var output2 = ContentService.createTextOutput(JSON.stringify({ alive: true }))
-      .setMimeType(ContentService.MimeType.JSON);
-    return output2.setHeader('Access-Control-Allow-Origin', origin2)
-      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-      .setHeader('Access-Control-Allow-Headers', 'Content-Type');
   }
 
   /* ---- Legacy HTML App routes ---- */

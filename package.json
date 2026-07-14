@@ -1,0 +1,10 @@
+{
+  "name": "pwi-cmms",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pakistan Wire Industries CMMS - Maintenance Management System",
+  "scripts": {
+    "build": "echo 'Static site - no build step'",
+    "dev": "echo 'Static site - serve from cloudflare/'"
+  }
+}

@@ -5,34 +5,11 @@
    doGet() is in CodeGS.gs (handles legacy HTML app + CORS ping).
    ============================================================ */
 
-/* ---- CORS ---- */
-
-function getCorsOrigin(e) {
-  try {
-    if (e && e.headers && e.headers.origin) return e.headers.origin;
-    if (e && e.commonHeaders && e.commonHeaders.origin) return e.commonHeaders.origin;
-  } catch(ex) {}
-  return '*';
-}
-
-function apiSetCors(resp, origin) {
-  var o = origin || '*';
-  resp = resp.setHeader('Access-Control-Allow-Origin', o)
-    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-    .setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
-    .setHeader('Access-Control-Max-Age', '86400')
-    .setHeader('Access-Control-Expose-Headers', 'Content-Type');
-  if (o && o !== '*') {
-    resp = resp.setHeader('Access-Control-Allow-Credentials', 'true');
-  }
-  return resp;
-}
+/* ---- CORS (handled by Cloudflare Functions proxy) ---- */
 
 function apiJson(data, e) {
-  var origin = getCorsOrigin(e);
-  var output = ContentService.createTextOutput(JSON.stringify(data))
+  return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
-  return apiSetCors(output, origin);
 }
 
 function apiSuccess(data, e) {
@@ -43,19 +20,11 @@ function apiError(message, code, e) {
   return apiJson({ success: false, error: message || 'Unknown error', code: code || 400 }, e);
 }
 
-/* ---- Preflight (GAS may or may not call this) ---- */
-
-function doOptions(e) {
-  var origin = getCorsOrigin(e);
-  var output = ContentService.createTextOutput('')
-    .setMimeType(ContentService.MimeType.TEXT);
-  return apiSetCors(output, origin);
-}
+/* ---- Preflight handled by Cloudflare Functions proxy ---- */
 
 /* ---- POST Handler (main API entry) ---- */
 
 function doPost(e) {
-  var origin = getCorsOrigin(e);
 
   /* Guard: no POST data */
   if (!e || !e.postData || !e.postData.contents) {

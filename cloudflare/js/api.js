@@ -7,8 +7,7 @@ var API = (function() {
   /* ==========================================================
      CONFIGURATION
      ========================================================== */
-  var API_BASE_URL =
-    'https://script.google.com/macros/s/AKfycbyl0fdHKRwU-KBw09d6Xkh6rfw_FKZ2GwQisos70tXhhR6ja5HmQMvuuPFsXQ2fUR7W/exec';
+  var API_BASE_URL = '/api/exec';
 
   /* ==========================================================
      INTERNAL STATE

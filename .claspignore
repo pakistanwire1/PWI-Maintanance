@@ -1,0 +1,10 @@
+cloudflare/**
+.wrangler/**
+node_modules/**
+.git/**
+.gitattributes
+assets/**
+functions/**
+package-lock.json
+*.md
+.DS_Store

@@ -5,17 +5,21 @@
 var Auth = (function() {
   var _user = null;
 
+  var _inited = false;
   function init() {
     var stored = localStorage.getItem('cmms_user');
     if (stored) {
       try { _user = JSON.parse(stored); } catch(e) { _user = null; }
     }
-    API.on('auth:expired', function() {
-      _user = null;
-      localStorage.removeItem('cmms_user');
-      localStorage.removeItem('cmms_token');
-      App.navigate('login');
-    });
+    if (!_inited) {
+      _inited = true;
+      API.on('auth:expired', function() {
+        _user = null;
+        localStorage.removeItem('cmms_user');
+        localStorage.removeItem('cmms_token');
+        App.navigate('login');
+      });
+    }
   }
 
   function login(email, password) {
