@@ -85,7 +85,47 @@
     if (tab === 'general') loadGeneral();
     else if (tab === 'users') loadUsers();
     else if (tab === 'profile') loadProfile();
+    else if (tab === 'departments') loadDepartments();
+    else if (tab === 'sections') loadSections();
   };
+
+  function loadDepartments() {
+    var el = document.getElementById('settings-content');
+    if (!el) return;
+    el.innerHTML = '<div class="card" style="padding:24px"><div class="spinner" style="margin:40px auto"></div></div>';
+    API.call('getDepartmentList')
+      .then(function(depts) {
+        var html = '<div class="card"><div class="table-container"><table><thead><tr><th>ID</th><th>Name</th><th>Code</th><th>Head</th><th>Status</th></tr></thead><tbody>';
+        (depts || []).forEach(function(d) {
+          var sc = (d.Status || '').toLowerCase() === 'active' ? 'badge-success' : 'badge-secondary';
+          html += '<tr><td>' + App.escHtml(d.DepartmentID || '') + '</td><td>' + App.escHtml(d.Department || d.DepartmentName || '') + '</td><td>' + App.escHtml(d.DepartmentCode || '') + '</td><td>' + App.escHtml(d.DepartmentHead || '') + '</td><td><span class="badge ' + sc + '">' + App.escHtml(d.Status || '') + '</span></td></tr>';
+        });
+        html += '</tbody></table></div></div>';
+        el.innerHTML = html;
+      })
+      .catch(function(err) {
+        el.innerHTML = '<div class="card" style="padding:24px"><p style="color:var(--danger)">' + App.escHtml(err.message) + '</p></div>';
+      });
+  }
+
+  function loadSections() {
+    var el = document.getElementById('settings-content');
+    if (!el) return;
+    el.innerHTML = '<div class="card" style="padding:24px"><div class="spinner" style="margin:40px auto"></div></div>';
+    API.call('getSectionList')
+      .then(function(sections) {
+        var html = '<div class="card"><div class="table-container"><table><thead><tr><th>ID</th><th>Name</th><th>Code</th><th>Sunday Off</th><th>Hours/Day</th><th>Status</th></tr></thead><tbody>';
+        (sections || []).forEach(function(s) {
+          var sc = (s.Status || '').toLowerCase() === 'active' ? 'badge-success' : 'badge-secondary';
+          html += '<tr><td>' + App.escHtml(s.SectionID || '') + '</td><td>' + App.escHtml(s.Section || s.SectionName || '') + '</td><td>' + App.escHtml(s.SectionCode || '') + '</td><td>' + App.escHtml(s.SundayOff || '') + '</td><td>' + App.escHtml(s.HoursPerDay || '') + '</td><td><span class="badge ' + sc + '">' + App.escHtml(s.Status || '') + '</span></td></tr>';
+        });
+        html += '</tbody></table></div></div>';
+        el.innerHTML = html;
+      })
+      .catch(function(err) {
+        el.innerHTML = '<div class="card" style="padding:24px"><p style="color:var(--danger)">' + App.escHtml(err.message) + '</p></div>';
+      });
+  }
 
   window.SettingSave = function(key, value) {
     API.call('saveSetting', { key: key, value: value })

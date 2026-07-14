@@ -31,15 +31,27 @@ var App = (function() {
     location.hash = '#' + page;
   }
 
+  var _builtinPages = { login: true };
+
   function navigateTo(page) {
     if (page && page.indexOf('(') > -1) page = page.replace(/['"]/g, '').replace('navigateTo(', '').replace(')', '');
     if (!page) page = 'dashboard';
-    if (page !== 'login' && !Auth.isLoggedIn()) { navigate('login'); return; }
+    if (page === 'login') {
+      _currentPage = page;
+      document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+      var loginEl = document.getElementById('page-login');
+      if (loginEl) loginEl.classList.add('active');
+      document.getElementById('app-container').style.display = 'none';
+      return;
+    }
+    if (!Auth.isLoggedIn()) { navigate('login'); return; }
+    document.getElementById('app-container').style.display = '';
     _currentPage = page;
     document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.page-content').forEach(function(p) { p.style.display = 'none'; });
     document.querySelectorAll('.sidebar-item').forEach(function(i) { i.classList.remove('active'); });
     var pageEl = document.getElementById('page-' + page);
-    if (pageEl) pageEl.classList.add('active');
+    if (pageEl) { pageEl.style.display = ''; pageEl.classList.add('active'); }
     var sidebarItem = document.querySelector('.sidebar-item[data-page="' + page + '"]');
     if (sidebarItem) sidebarItem.classList.add('active');
     document.getElementById('main-content').scrollTop = 0;

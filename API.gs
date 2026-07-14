@@ -7,28 +7,25 @@
    Existing doGet() and HTML app remain untouched.
    ============================================================ */
 
-var CORS_ORIGINS = [
-  'https://pwi-maintenance-2026.pakistanwire1.workers.dev',
-  'https://pwi-cmms.pages.dev'
-];
-
 function getCorsOrigin(e) {
   try {
     var origin = e ? (e.headers && e.headers.origin) || '' : '';
-    if (origin && CORS_ORIGINS.indexOf(origin) > -1) return origin;
+    if (origin) return origin;
   } catch(ex) {}
-  return CORS_ORIGINS[0];
+  return '*';
 }
 
 /* ---- CORS & Response Helpers ---- */
 
 function apiSetCors(resp, origin) {
-  return resp
-    .setHeader('Access-Control-Allow-Origin', origin)
-    .setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  resp = resp.setHeader('Access-Control-Allow-Origin', origin || '*')
+    .setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
     .setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    .setHeader('Access-Control-Allow-Credentials', 'true')
     .setHeader('Access-Control-Max-Age', '86400');
+  if (origin && origin !== '*') {
+    resp = resp.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  return resp;
 }
 
 function apiJson(data, e) {
@@ -258,6 +255,15 @@ var API_ROUTES = {
   'scanBarcode':           { auth: true,  handler: function(d) { return scanBarcode(d.barcode); } },
   'getQRDetail':           { auth: true,  handler: function(d) { return getQRDetail(d.qrContent); } },
   'getQRStatistics':       { auth: true,  handler: function(d) { return getQRStatistics(); } },
+  'logQRScan':             { auth: true,  handler: function(d) { return logQRScan(d); } },
+  'getQRScanHistory':      { auth: true,  handler: function(d) { return getQRScanHistory(d); } },
+  'getQRScanStats':        { auth: true,  handler: function(d) { return getQRScanStats(); } },
+  'getModuleRecordDetail': { auth: true,  handler: function(d) { return getModuleRecordDetail(d.module, d.recordId); } },
+  'getPrintLabelData':     { auth: true,  handler: function(d) { return getPrintLabelData(d.module, d.recordId, d.labelSize); } },
+  'searchQRRecords':       { auth: true,  handler: function(d) { return apiSearchQRRecords(d.query); } },
+  'bulkGenerateQRCode':    { auth: true,  handler: function(d) { return bulkGenerateQRCode(d.module); } },
+  'bulkGenerateBarcode':   { auth: true,  handler: function(d) { return bulkGenerateBarcode(d.module); } },
+  'getQRModuleRecords':    { auth: true,  handler: function(d) { return getQRModuleRecords(d.module); } },
 
   /* ---- Email ---- */
   'emailGetSettings':      { auth: true,  handler: function(d) { return emailGetSettings(); } },
@@ -269,6 +275,7 @@ var API_ROUTES = {
   'whatsappGetSettings':   { auth: true,  handler: function(d) { return whatsappGetSettings(); } },
   'whatsappSaveSettings':  { auth: true,  handler: function(d) { return whatsappSaveSettings(d); } },
   'whatsappGetTemplates':  { auth: true,  handler: function(d) { return whatsappGetTemplates(); } },
+  'whatsappSaveTemplate':  { auth: true,  handler: function(d) { return whatsappSaveTemplate(d); } },
   'whatsappGetLogs':       { auth: true,  handler: function(d) { return whatsappGetLogs(d.filters); } },
   'whatsappGetPanelData':  { auth: true,  handler: function(d) { return whatsappGetPanelData(); } },
 
@@ -363,6 +370,43 @@ function apiPendingJobCard(d) {
     CurrentStatus: 'Pending'
   };
   return updateJobCard(d.id, data);
+}
+
+function apiSearchQRRecords(query) {
+  if (!query) return { results: [] };
+  var q = String(query).toLowerCase();
+  var results = [];
+  var modules = [
+    { name: 'Machine', sheet: CONFIG.SHEET_NAMES.MACHINES, idField: 'MachineID', nameField: 'MachineName', codeField: 'MachineCode' },
+    { name: 'Asset', sheet: CONFIG.SHEET_NAMES.ASSETS, idField: 'AssetID', nameField: 'AssetName', codeField: 'AssetCode' },
+    { name: 'Spare Part', sheet: CONFIG.SHEET_NAMES.SPARE_PARTS, idField: 'PartCode', nameField: 'PartName', codeField: 'PartCode' },
+    { name: 'Job Card', sheet: CONFIG.SHEET_NAMES.JOBCARDS, idField: 'JobCardNo', nameField: 'Machine', codeField: 'JobCardNo' }
+  ];
+  modules.forEach(function(mod) {
+    var records = getAllData(mod.sheet) || [];
+    records.forEach(function(r) {
+      var matchFields = [
+        r[mod.idField], r[mod.nameField], r[mod.codeField],
+        r.QRCode, r.Barcode, r.Department, r.Section, r.Status
+      ];
+      var matched = matchFields.some(function(f) {
+        return f && String(f).toLowerCase().indexOf(q) !== -1;
+      });
+      if (matched) {
+        results.push({
+          module: mod.name,
+          id: r[mod.idField] || '',
+          name: r[mod.nameField] || '',
+          code: r[mod.codeField] || '',
+          status: r.Status || '',
+          department: r.Department || '',
+          qrCode: r.QRCode || '',
+          barcode: r.Barcode || ''
+        });
+      }
+    });
+  });
+  return results;
 }
 
 function apiGetNotifications(d) {

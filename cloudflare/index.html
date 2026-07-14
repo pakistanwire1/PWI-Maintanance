@@ -12,6 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
 </head>
 <body>
   <!-- Loading Overlay -->
@@ -41,7 +42,7 @@
           <button type="submit" id="login-btn" class="btn btn-primary" style="width:100%;margin-top:8px;padding:12px">
             Sign In
           </button>
-          <p id="login-error" style="color:var(--danger);text-align:center;margin-top:12px;font-size:13px;display:none"></p>
+          <p id="login-error" style="color:var(--danger);text-align:center;margin-top:12px;font-size:13px;display:none;line-height:1.6"></p>
         </form>
       </div>
     </div>
@@ -118,14 +119,26 @@
           <a class="sidebar-item" data-page="technicians" href="#technicians" onclick="App.navigateTo('technicians')">
             <span class="sidebar-icon">&#128119;</span> Technicians
           </a>
+          <a class="sidebar-item" data-page="departments" href="#departments" onclick="App.navigateTo('departments')">
+            <span class="sidebar-icon">&#128193;</span> Departments
+          </a>
+          <a class="sidebar-item" data-page="sections" href="#sections" onclick="App.navigateTo('sections')">
+            <span class="sidebar-icon">&#128194;</span> Sections
+          </a>
         </div>
         <div class="sidebar-group">
           <div class="sidebar-group-header">Maintenance</div>
           <a class="sidebar-item" data-page="pm" href="#pm" onclick="App.navigateTo('pm')">
             <span class="sidebar-icon">&#128197;</span> Preventive Maintenance
           </a>
+          <a class="sidebar-item" data-page="pmhistory" href="#pmhistory" onclick="App.navigateTo('pmhistory')">
+            <span class="sidebar-icon">&#128203;</span> PM History
+          </a>
           <a class="sidebar-item" data-page="checklists" href="#checklists" onclick="App.navigateTo('checklists')">
             <span class="sidebar-icon">&#9745;</span> Checklists
+          </a>
+          <a class="sidebar-item" data-page="breakdownhistory" href="#breakdownhistory" onclick="App.navigateTo('breakdownhistory')">
+            <span class="sidebar-icon">&#9888;</span> Breakdown History
           </a>
         </div>
         <div class="sidebar-group">
@@ -139,8 +152,29 @@
         </div>
         <div class="sidebar-group">
           <div class="sidebar-group-header">System</div>
+          <a class="sidebar-item" data-page="qr" href="#qr" onclick="App.navigateTo('qr')">
+            <span class="sidebar-icon">&#128247;</span> QR Scanner
+          </a>
           <a class="sidebar-item" data-page="reports" href="#reports" onclick="App.navigateTo('reports')">
             <span class="sidebar-icon">&#128202;</span> Reports
+          </a>
+          <a class="sidebar-item" data-page="notifications" href="#notifications" onclick="App.navigateTo('notifications')">
+            <span class="sidebar-icon">&#128276;</span> Notifications
+          </a>
+          <a class="sidebar-item" data-page="users" href="#users" onclick="App.navigateTo('users')">
+            <span class="sidebar-icon">&#128100;</span> Users
+          </a>
+          <a class="sidebar-item" data-page="email" href="#email" onclick="App.navigateTo('email')">
+            <span class="sidebar-icon">&#128231;</span> Email
+          </a>
+          <a class="sidebar-item" data-page="whatsapp" href="#whatsapp" onclick="App.navigateTo('whatsapp')">
+            <span class="sidebar-icon">&#128172;</span> WhatsApp
+          </a>
+          <a class="sidebar-item" data-page="backup" href="#backup" onclick="App.navigateTo('backup')">
+            <span class="sidebar-icon">&#128190;</span> Backup
+          </a>
+          <a class="sidebar-item" data-page="audit" href="#audit" onclick="App.navigateTo('audit')">
+            <span class="sidebar-icon">&#128220;</span> Audit Trail
           </a>
           <a class="sidebar-item" data-page="settings" href="#settings" onclick="App.navigateTo('settings')">
             <span class="sidebar-icon">&#9881;</span> Settings
@@ -167,6 +201,17 @@
       <div id="page-goodsreceipt" class="page-content" style="display:none"></div>
       <div id="page-reports" class="page-content" style="display:none"></div>
       <div id="page-settings" class="page-content" style="display:none"></div>
+      <div id="page-qr" class="page-content" style="display:none"></div>
+      <div id="page-users" class="page-content" style="display:none"></div>
+      <div id="page-departments" class="page-content" style="display:none"></div>
+      <div id="page-sections" class="page-content" style="display:none"></div>
+      <div id="page-notifications" class="page-content" style="display:none"></div>
+      <div id="page-email" class="page-content" style="display:none"></div>
+      <div id="page-whatsapp" class="page-content" style="display:none"></div>
+      <div id="page-backup" class="page-content" style="display:none"></div>
+      <div id="page-audit" class="page-content" style="display:none"></div>
+      <div id="page-breakdownhistory" class="page-content" style="display:none"></div>
+      <div id="page-pmhistory" class="page-content" style="display:none"></div>
     </main>
   </div>
 
@@ -184,14 +229,25 @@
       btn.textContent = 'Signing in...';
       btn.disabled = true;
       err.style.display = 'none';
+      err.innerHTML = '';
       Auth.login(email, password)
         .then(function(user) {
           document.getElementById('page-login').style.display = 'none';
           document.getElementById('app-container').style.display = '';
           App.navigateTo('dashboard');
         })
-        .catch(function(e) {
-          err.textContent = e.message;
+        .catch(function(loginErr) {
+          var diag = API.getDiagnostics();
+          var html = '<strong>' + loginErr.message + '</strong>';
+          if (diag) {
+            html += '<br><span style="font-size:11px;opacity:0.8">';
+            html += 'Step: ' + diag.step + ' | Status: ' + diag.status;
+            if (diag.detail) html += '<br>' + diag.detail;
+            html += '</span>';
+          }
+          html += '<br><span style="font-size:11px;opacity:0.6">API: ' + API.getGasUrl().slice(0, 60) + '...</span>';
+          html += '<br><span style="font-size:11px;opacity:0.6">Open browser console (F12) for full request log.</span>';
+          err.innerHTML = html;
           err.style.display = 'block';
         })
         .finally(function() {
