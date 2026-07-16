@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "install": "true",
-    "build": "echo 'static site'",
-    "start": "echo 'static site'"
+    "build": "echo static site",
+    "start": "echo static site"
   }
 }
