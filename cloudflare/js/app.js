@@ -77,7 +77,6 @@ var App = (function() {
     if (entry) {
       try { if (entry.render) entry.render(); } catch(e) { console.error('Render error:', page, e); showLoading(false); clearTimeout(safetyTimer); return; }
       try { if (entry.load) entry.load(); } catch(e) { console.error('Load error:', page, e); showLoading(false); clearTimeout(safetyTimer); return; }
-      clearTimeout(safetyTimer);
       return;
     }
     var scriptName = _scriptMap[page] || page;
@@ -87,7 +86,6 @@ var App = (function() {
       if (entry2) {
         try { if (entry2.render) entry2.render(); } catch(e) { console.error('Render error:', page, e); showLoading(false); clearTimeout(safetyTimer); return; }
         try { if (entry2.load) entry2.load(); } catch(e) { console.error('Load error:', page, e); showLoading(false); clearTimeout(safetyTimer); return; }
-        clearTimeout(safetyTimer);
       } else {
         showPagePlaceholder(page);
         showLoading(false);
@@ -304,57 +302,6 @@ var App = (function() {
 /* ============================================================
    Shared Utilities (Global) — matching GAS ScriptsPage.html
    ============================================================ */
-
-var PAGE_SIZE = 10;
-
-var CONSTANTS = {
-  MACHINE_TYPES: ['CNC', 'Hydraulic', 'Pneumatic', 'Electrical', 'Mechanical', 'Robotic', 'Conveyor', 'Pump', 'Compressor', 'Generator', 'Other'],
-  SKILLS: ['Mechanical', 'Electrical', 'Hydraulic', 'Pneumatic', 'Electronics', 'Multi-Skill'],
-  SHIFTS: ['General', 'Morning', 'Afternoon', 'Night', 'Rotating'],
-  TECH_SKILLS: ['Mechanical', 'Electrical', 'PLC', 'Hydraulic', 'Pneumatic', 'Utility', 'Instrumentation'],
-  TECH_SHIFTS: ['General', 'A', 'B', 'C'],
-  UNITS: ['Pcs', 'Kg', 'Liter', 'Meter', 'Set', 'Box'],
-  CHECKLIST_CATEGORIES: ['Mechanical', 'Electrical', 'Hydraulic', 'Pneumatic', 'Safety', 'Quality', 'Daily', 'Weekly', 'Monthly'],
-  BREAKDOWN_TYPES: ['Mechanical Failure', 'Electrical Fault', 'Hydraulic Leak', 'Pneumatic Issue', 'Software Glitch', 'Sensor Malfunction', 'Wear & Tear', 'Operator Error', 'Overload', 'Vibration', 'Overheating', 'Other'],
-  MAINTENANCE_TEAMS: ['Mechanical Team', 'Electrical Team', 'Hydraulic Team', 'Pneumatic Team', 'Electronics Team', 'General Maintenance'],
-  ASSET_TYPES: ['Equipment', 'Tooling', 'Instrument', 'Fixture', 'Vehicle', 'Building', 'Infrastructure', 'Other'],
-  ASSET_CATEGORIES: ['Production', 'Utility', 'Safety', 'Quality', 'IT', 'Facility'],
-  ASSET_SUBCATEGORIES: ['Electrical', 'Mechanical', 'Hydraulic', 'Pneumatic', 'Electronic', 'Structural'],
-  SPARE_PART_CATEGORIES: ['Bearings', 'Seals', 'Filters', 'Belts', 'Lubricants', 'Electrical', 'Hydraulic', 'Pneumatic', 'Mechanical', 'Other'],
-  SPARE_PART_STATUSES: ['Active', 'Inactive'],
-  FREQUENCY_TYPES: ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Half Yearly', 'Yearly'],
-  PM_STATUSES: ['Scheduled', 'In Progress', 'Completed', 'Overdue', 'Missed'],
-  TRANSACTION_TYPES: ['Goods Receipt', 'Issue', 'Return', 'Transfer', 'Adjustment'],
-  PART_UNITS: ['Pcs', 'Kg', 'Liter', 'Meter', 'Set', 'Box', 'Pair', 'Roll', 'Bag'],
-  INVENTORY_LOCATIONS: ['Store A', 'Store B', 'Store C', 'Workshop', 'Warehouse']
-};
-
-var ICONS = {
-  edit: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M14.5 2.5a1.5 1.5 0 012 2L7 14l-3 1 1-3 9.5-9.5z"/></svg>',
-  trash: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M3 5h14"/><path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M16 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5"/><path d="M8 8v6"/><path d="M12 8v6"/></svg>',
-  view: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M1 10s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7z"/><circle cx="10" cy="10" r="2.5"/></svg>',
-  save: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>',
-  plus: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg>',
-  search: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg>',
-  refresh: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg>',
-  print: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg>',
-  download: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg>',
-  filter: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M4 3h12l-5 6.5V17l-2 1V9.5L4 3z"/></svg>',
-  close: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M12 8l-4 4"/><path d="M8 8l4 4"/><circle cx="10" cy="10" r="9"/></svg>',
-  start: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="10" cy="10" r="9"/><path d="M8 6l6 4-6 4V6z"/></svg>',
-  complete: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="10" cy="10" r="9"/><path d="M7 10l2 2 4-4"/></svg>',
-  check: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><polyline points="4 10 8 14 16 6"/></svg>'
-};
-
-function showModal(id) {
-  var el = document.getElementById(id);
-  if (el) { el.style.display = 'flex'; el.classList.add('show'); }
-}
-
-function hideModal(id) {
-  var el = document.getElementById(id);
-  if (el) { el.style.display = 'none'; el.classList.remove('show'); }
-}
 
 function getFormData(formId) {
   var form = document.getElementById(formId);
