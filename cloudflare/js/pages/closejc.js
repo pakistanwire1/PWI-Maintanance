@@ -163,7 +163,7 @@
         App.showToast('Failed to load: ' + err.message, 'error');
       });
 
-    API.call('getActiveBreakdownTypes').then(function(types) {
+    API.call('getBreakdownTypes').then(function(types) {
       var active = (types || []).filter(function(t) { return t.Status === 'Active'; });
       var sel = document.getElementById('closeJcBreakdownType');
       if (sel) {

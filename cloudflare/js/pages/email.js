@@ -221,7 +221,7 @@
       el = document.getElementById('emailStatPending');
       if (el && el.textContent === '-') el.textContent = '0';
     }, 10000);
-    API.call('emailGetDashboardStats')
+    API.call('emailGetPanelData')
       .then(function(stats) {
         clearTimeout(statsTimer);
         _stats = stats || {};

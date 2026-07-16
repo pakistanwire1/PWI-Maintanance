@@ -1162,7 +1162,7 @@ function submitForgotPassword() {
   if (!email) { if (resultDiv) { resultDiv.textContent = 'Please enter your email address.'; resultDiv.className = 'login-forgot-result error'; resultDiv.style.display = 'block'; } if (emailInput) emailInput.focus(); return; }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { if (resultDiv) { resultDiv.textContent = 'Please enter a valid email address.'; resultDiv.className = 'login-forgot-result error'; resultDiv.style.display = 'block'; } if (emailInput) emailInput.focus(); return; }
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending...'; }
-  API.call('generateResetToken', { email: email }, { retry: false })
+  API.call('resetPassword', { email: email }, { retry: false })
     .then(function(result) {
       if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Send Token'; }
       if (result && result.success) {
@@ -1193,7 +1193,7 @@ function submitResetPassword() {
   if (!token) { if (resultDiv) { resultDiv.textContent = 'Please enter the reset token from your email.'; resultDiv.className = 'login-forgot-result error'; resultDiv.style.display = 'block'; } if (tokenInput) tokenInput.focus(); return; }
   if (!newPass || newPass.length < 4) { if (resultDiv) { resultDiv.textContent = 'Please enter a new password (minimum 4 characters).'; resultDiv.className = 'login-forgot-result error'; resultDiv.style.display = 'block'; } if (passInput) passInput.focus(); return; }
   if (resetBtn) { resetBtn.disabled = true; resetBtn.textContent = 'Resetting...'; }
-  API.call('resetPasswordWithToken', { email: email, token: token, newPassword: newPass }, { retry: false })
+  API.call('resetPasswordConfirm', { email: email, token: token, newPassword: newPass }, { retry: false })
     .then(function(result) {
       if (resetBtn) { resetBtn.disabled = false; resetBtn.textContent = 'Reset Password'; }
       if (result && result.success) {
@@ -1736,7 +1736,7 @@ function loadDashboardData() {
 
 function loadDashboardNotifications() {
   var email = (currentUser && currentUser.email) || '';
-  API.call('getDashboardNotifications', { limit: 10, email: email })
+  API.call('getNotifications', { limit: 10, email: email })
     .then(function(result) {
       renderDashboardNotifications(result.data || []);
       checkForNewNotifications(result);
@@ -1799,7 +1799,7 @@ function renderDashboardNotifications(items) {
 }
 
 function loadDashboardRecentActivities() {
-  API.call('getRecentAuditLogs', { limit: 10 })
+  API.call('getAuditLogs', { limit: 10 })
     .then(function(data) {
       renderDashboardRecentActivities(data || []);
     })
@@ -2107,6 +2107,7 @@ function viewAuditLog(id) {
   if (Auth.isLoggedIn()) {
     currentUser = Auth.getUser();
   }
+  wsStart();
 })();
 
 document.addEventListener('visibilitychange', function() {

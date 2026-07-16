@@ -322,7 +322,7 @@
     var name = input ? input.value.trim() : '';
     if (!name) { App.showToast('Enter department name', 'warning'); return; }
     App.showLoading(true);
-    API.call('addDepartment', { name: name })
+    API.call('createDepartment', { name: name })
       .then(function() {
         App.showLoading(false);
         if (input) input.value = '';
@@ -338,7 +338,7 @@
   window.settingsDeleteDept = function(id) {
     App.showConfirm('Remove Department', 'Are you sure?', function() {
       App.showLoading(true);
-      API.call('deleteDepartment', { id: id })
+      API.call('removeDepartment', { id: id })
         .then(function() {
           App.showLoading(false);
           settingsLoadDepartments();
@@ -354,7 +354,7 @@
   /* ==================== SIMPLE SETTINGS ==================== */
 
   function settingsLoadSimpleSettings() {
-    API.call('getSettingsData')
+    API.call('getSettings')
       .then(function(data) {
         var settings = data.settings || [];
         settingsRenderList('areasList', settings, 'areas');
@@ -384,13 +384,13 @@
     var value = input ? input.value.trim() : '';
     if (!value) { App.showToast('Enter a value', 'warning'); return; }
     App.showLoading(true);
-    API.call('getSettingsData')
+    API.call('getSettings')
       .then(function(data) {
         var existing = '';
         (data.settings || []).forEach(function(s) { if (s.Setting === key) existing = s.Value || ''; });
         var values = existing ? existing.split(',').map(function(v) { return v.trim(); }) : [];
         if (values.indexOf(value) === -1) values.push(value);
-        API.call('saveSettingValue', { key: key, value: values.join(',') })
+        API.call('saveSetting', { key: key, value: values.join(',') })
           .then(function() {
             App.showLoading(false);
             if (input) input.value = '';
@@ -410,12 +410,12 @@
 
   window.settingsRemoveSimpleValue = function(key, value) {
     App.showLoading(true);
-    API.call('getSettingsData')
+    API.call('getSettings')
       .then(function(data) {
         var existing = '';
         (data.settings || []).forEach(function(s) { if (s.Setting === key) existing = s.Value || ''; });
         var values = existing.split(',').map(function(v) { return v.trim(); }).filter(function(v) { return v !== value; });
-        API.call('saveSettingValue', { key: key, value: values.join(',') })
+        API.call('saveSetting', { key: key, value: values.join(',') })
           .then(function() {
             App.showLoading(false);
             settingsLoadSimpleSettings();

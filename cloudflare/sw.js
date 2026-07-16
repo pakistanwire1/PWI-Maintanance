@@ -1,6 +1,7 @@
-const CACHE_NAME = 'cmms-v8';
+const CACHE_NAME = 'cmms-v9';
 const STATIC_ASSETS = [
-  '/', '/index.html', '/css/styles.css', '/js/api.js', '/js/auth.js', '/js/app.js',
+  '/', '/index.html', '/css/styles.css', '/css/login.css', '/css/welcome.css',
+  '/js/api.js', '/js/auth.js', '/js/app.js',
   '/logo.svg', '/favicon.svg',
   '/js/pages/dashboard.js', '/js/pages/jobcards.js', '/js/pages/openjc.js', '/js/pages/startjc.js',
   '/js/pages/closejc.js', '/js/pages/pendingjc.js', '/js/pages/approvedjc.js', '/js/pages/machines.js', '/js/pages/assets.js',
@@ -35,9 +36,7 @@ self.addEventListener('activate', function(e) {
 
 self.addEventListener('fetch', function(e) {
   if (e.request.method !== 'GET') return;
-
   if (e.request.url.indexOf('/api/') > -1) return;
-
   if (e.request.url.indexOf('script.google.com') > -1 ||
       e.request.url.indexOf('googleapis.com') > -1 ||
       e.request.url.indexOf('gstatic.com') > -1 ||
@@ -45,21 +44,31 @@ self.addEventListener('fetch', function(e) {
     return;
   }
 
+  if (e.request.destination === 'document') {
+    e.respondWith(
+      fetch(e.request).then(function(resp) {
+        var clone = resp.clone();
+        caches.open(CACHE_NAME).then(function(c) { c.put(e.request, clone); });
+        return resp;
+      }).catch(function() {
+        return caches.match(e.request).then(function(r) {
+          return r || caches.match('/index.html');
+        });
+      })
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(function(r) {
-      if (r) return r;
-      return fetch(e.request).then(function(resp) {
+      var fetchPromise = fetch(e.request).then(function(resp) {
         if (resp.status === 200 && resp.type === 'basic') {
           var clone = resp.clone();
           caches.open(CACHE_NAME).then(function(c) { c.put(e.request, clone); });
         }
         return resp;
-      });
-    }).catch(function() {
-      if (e.request.destination === 'document') {
-        return caches.match('/index.html');
-      }
-      return new Response('Offline', { status: 503, statusText: 'Offline' });
+      }).catch(function() { return r; });
+      return r || fetchPromise;
     })
   );
 });

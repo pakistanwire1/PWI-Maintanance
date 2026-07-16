@@ -123,136 +123,53 @@ var App = (function() {
   function updateUserInfo() {
     var user = Auth.getUser();
     if (!user) return;
-    setText('userName', user.name || '');
-    setText('userRole', user.role || '');
-    setText('topbarName', user.name || '');
-    setText('topbarRole', user.role || '');
-  }
-
-  function setText(id, text) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = text;
-  }
-
-  function setHtml(id, html) {
-    var el = document.getElementById(id);
-    if (el) el.innerHTML = html;
-  }
-
-  function getVal(id) {
-    var el = document.getElementById(id);
-    return el ? el.value : '';
-  }
-
-  function setVal(id, val) {
-    var el = document.getElementById(id);
-    if (el) el.value = val || '';
-  }
-
-  function showEl(id) {
-    var el = document.getElementById(id);
-    if (el) el.style.display = '';
-  }
-
-  function hideEl(id) {
-    var el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  }
-
-  function showLoading(show) {
-    var el = document.getElementById('loadingOverlay');
-    if (el) { if (show) { el.classList.add('show'); } else { el.classList.remove('show'); } }
-  }
-
-  function showToast(message, type) {
-    type = type || 'info';
-    var existing = document.querySelector('.toast');
-    if (existing) existing.remove();
-    var colors = { success: '#22c55e', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
-    var icons = { success: '&#10004;', error: '&#10006;', warning: '&#9888;', info: '&#8505;' };
-    var toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:10000;padding:14px 24px;border-radius:12px;color:#fff;font-size:14px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,0.3);backdrop-filter:blur(20px);background:' + (colors[type] || colors.info) + ';animation:toastSlideIn 0.3s ease;max-width:400px';
-    toast.innerHTML = '<span style="font-size:16px">' + (icons[type] || icons.info) + '</span><span>' + escHtml(message) + '</span>';
-    document.body.appendChild(toast);
-    setTimeout(function() { toast.style.opacity = '0'; toast.style.transform = 'translateX(100px)'; toast.style.transition = 'all 0.3s'; }, 3000);
-    setTimeout(function() { toast.remove(); }, 3500);
-  }
-
-  function showConfirm(title, message, onConfirm) {
-    var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
-    overlay.innerHTML = '<div class="glass-card" style="max-width:420px;width:90%;padding:32px;text-align:center">' +
-      '<h3 style="margin:0 0 12px;font-size:20px;color:var(--text)">' + escHtml(title) + '</h3>' +
-      '<p style="margin:0 0 24px;color:var(--text-muted);font-size:14px">' + escHtml(message) + '</p>' +
-      '<div style="display:flex;gap:12px;justify-content:center">' +
-      '<button class="btn btn-secondary" id="confirm-cancel-btn">Cancel</button>' +
-      '<button class="btn btn-primary" id="confirm-ok-btn">Confirm</button>' +
-      '</div></div>';
-    document.body.appendChild(overlay);
-    overlay.querySelector('#confirm-cancel-btn').onclick = function() { overlay.remove(); };
-    overlay.querySelector('#confirm-ok-btn').onclick = function() { overlay.remove(); onConfirm(); };
-    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
-  }
-
-  function escHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
-  function closeSidebar() {
-    var sb = document.getElementById('sidebar');
-    if (sb) sb.classList.remove('open');
-  }
-
-  function toggleSidebar() {
-    var sb = document.getElementById('sidebar');
-    if (sb) sb.classList.toggle('open');
-  }
-
-  function startClock() {
-    function update() {
-      var now = new Date();
-      var h = String(now.getHours()).padStart(2, '0');
-      var m = String(now.getMinutes()).padStart(2, '0');
-      var s = String(now.getSeconds()).padStart(2, '0');
-      setText('clock', h + ':' + m + ':' + s);
+    var initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+    var photoUrl = user.photoURL || user.PhotoURL || '';
+    function setAv(elId, size) {
+      var el = document.getElementById(elId);
+      if (!el) return;
+      if (photoUrl) { el.innerHTML = '<img src="' + photoUrl.replace(/"/g, '&quot;') + '" style="width:' + size + ';height:' + size + ';border-radius:50%;object-fit:cover">'; }
+      else { el.textContent = initial; }
     }
-    update();
-    _clockTimer = setInterval(update, 1000);
+    setAv('userAvatar', '34px');
+    setAv('topbarAvatar', '28px');
+    setText('userName', user.name || '');
+    setText('userRole', user.role + (user.department ? ' - ' + user.department : ''));
+    setText('topbarName', user.name || '');
+    setText('topbarRole', user.role + (user.department ? ' - ' + user.department : ''));
+    var isAdminUser = user.role === 'Admin' || user.isSystemAdmin === true || user.IsAdmin === true;
+    document.querySelectorAll('.sidebar-item[data-page]').forEach(function(el) {
+      var page = el.dataset.page;
+      var show = true;
+      if (page === 'machines') { show = isAdminUser || (user.canManageMachines === true); }
+      else if (page === 'assets') { show = isAdminUser || (user.canManageAssets === true); }
+      else if (page === 'users') { show = isAdminUser || (user.canManageUsers === true); }
+      else if (page === 'openjc') { show = isAdminUser || (user.canOpenJobCard === true); }
+      else if (page === 'startjc') { show = isAdminUser || (user.canStartJobCard === true); }
+      else if (page === 'closejc') { show = isAdminUser || (user.canCloseJobCard === true); }
+      else if (page === 'reports') { show = isAdminUser || (user.canViewReports === true); }
+      else if (page === 'email' || page === 'backup' || page === 'settings') { show = isAdminUser || (user.canManageUsers === true); }
+      el.style.display = show ? '' : 'none';
+    });
   }
 
-  function loadTheme() {
-    var saved = localStorage.getItem('cmms_theme');
-    var dark = saved ? saved === 'dark' : true;
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-  }
-
-  function toggleTheme() {
-    var current = document.documentElement.getAttribute('data-theme');
-    var next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('cmms_theme', next);
-  }
-
-  function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    var d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    var y = d.getFullYear();
-    var mo = String(d.getMonth() + 1).padStart(2, '0');
-    var da = String(d.getDate()).padStart(2, '0');
-    return y + '-' + mo + '-' + da;
-  }
-
-  function formatDateTime(dateStr) {
-    if (!dateStr) return '-';
-    var d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return formatDate(dateStr) + ' ' +
-      String(d.getHours()).padStart(2, '0') + ':' +
-      String(d.getMinutes()).padStart(2, '0');
-  }
+  function setText(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; }
+  function setHtml(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+  function getVal(id) { var el = document.getElementById(id); return el ? el.value : null; }
+  function setVal(id, val) { var el = document.getElementById(id); if (el) el.value = val; }
+  function showEl(id, dt) { var el = document.getElementById(id); if (el) el.style.display = dt || 'block'; }
+  function hideEl(id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; }
+  function showLoading(show) { var el = document.getElementById('loadingOverlay'); if (!el) { el = document.createElement('div'); el.className = 'loading-overlay'; el.id = 'loadingOverlay'; el.innerHTML = '<div class="spinner spinner-dark"></div><div style="color:#5f6368">Loading...</div>'; document.body.appendChild(el); } el.classList.toggle('show', show); }
+  function showToast(message, type) { type = type || 'success'; var c = document.getElementById('toastContainer'); if (!c) { c = document.createElement('div'); c.className = 'toast-container'; c.id = 'toastContainer'; document.body.appendChild(c); } var icons = { success: '\u2713', error: '\u2715', warning: '\u26A0', info: '\u2139' }; var t = document.createElement('div'); t.className = 'toast toast-' + type; t.innerHTML = '<span>' + (icons[type] || '\u2139') + '</span><span>' + message + '</span>'; c.appendChild(t); setTimeout(function() { t.style.opacity = '0'; t.style.transform = 'translateX(100%)'; t.style.transition = 'all 0.3s ease'; setTimeout(function() { t.remove(); }, 300); }, 3000); }
+  function showConfirm(title, message, onConfirm) { var o = document.getElementById('confirmOverlay'); if (!o) return; setText('confirmTitle', title); setText('confirmMessage', message); var bg = document.getElementById('confirmButtons'); if (!bg) return; bg.innerHTML = '<button class="btn btn-secondary" onclick="closeConfirm()">Cancel</button><button class="btn btn-danger" id="confirmActionBtn">Confirm</button>'; o.style.display = 'flex'; o.classList.add('show'); var cb = document.getElementById('confirmActionBtn'); if (cb) cb.onclick = function() { closeConfirm(); if (onConfirm) onConfirm(); }; }
+  function escHtml(str) { if (!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function closeSidebar() { var sb = document.getElementById('sidebar'); if (sb) sb.classList.remove('open'); }
+  function toggleSidebar() { var sb = document.getElementById('sidebar'); if (!sb) return; if (window.innerWidth <= 768) { sb.classList.toggle('open'); } else { sb.classList.toggle('collapsed'); } }
+  function startClock() { function u() { var now = new Date(); var el = document.getElementById('topbarClock'); if (el) el.textContent = formatDateTime(now); } u(); setInterval(u, 30000); }
+  function loadTheme() { var p = localStorage.getItem('cmms_themePrefs'); if (p) { try { return JSON.parse(p); } catch(e) {} } return { mode: 'dark', accentColor: '#6366f1', cardStyle: 'glass', sidebarStyle: 'default', fontSize: 'medium' }; }
+  function toggleTheme() { var p = loadTheme(); var cur = document.documentElement.getAttribute('data-theme') || 'dark'; p.mode = cur === 'dark' ? 'light' : 'dark'; localStorage.setItem('cmms_themePrefs', JSON.stringify(p)); applyTheme(p); }
+  function formatDate(date) { if (!date) return ''; var d = date instanceof Date ? date : new Date(date); if (isNaN(d.getTime())) return ''; var y = d.getFullYear(); var m = ('0' + (d.getMonth() + 1)).slice(-2); var day = ('0' + d.getDate()).slice(-2); return y + '-' + m + '-' + day; }
+  function formatDateTime(date) { if (!date) return ''; var d = date instanceof Date ? date : new Date(date); if (isNaN(d.getTime())) return ''; var day = String(d.getDate()).padStart(2, '0'); var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; var month = months[d.getMonth()]; var year = d.getFullYear(); var hours = d.getHours(); var ampm = hours >= 12 ? 'PM' : 'AM'; hours = hours % 12 || 12; var mins = String(d.getMinutes()).padStart(2, '0'); return day + ' ' + month + ' ' + year + ' | ' + String(hours).padStart(2, '0') + ':' + mins + ' ' + ampm; }
 
   function timeAgo(dateStr) {
     if (!dateStr) return '';

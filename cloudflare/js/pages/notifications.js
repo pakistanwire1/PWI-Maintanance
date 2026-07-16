@@ -158,7 +158,7 @@
 
   function load() {
     App.showLoading(true);
-    API.call('getUserNotifications', {})
+    API.call('getNotifications', {})
       .then(function(data) {
         notifData = data || [];
         App.showLoading(false);

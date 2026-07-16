@@ -190,7 +190,7 @@
       .then(function(history) {
         _data = history || [];
         App.showLoading(false);
-        API.call('getBackupStatus')
+        API.call('getBackupHistory')
           .then(function(status) {
             updateBrStatus(status);
           })
@@ -248,7 +248,7 @@
     API.call('getBackupHistory')
       .then(function(history) {
         _data = history || [];
-        API.call('getBackupStatus')
+        API.call('getBackupHistory')
           .then(function(status) {
             App.showLoading(false);
             updateBrStatus(status);

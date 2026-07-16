@@ -161,7 +161,7 @@
     var user = Auth.getUser();
     var email = (user && user.email) || '';
 
-    API.call('getUserAuditLogs', { email: email })
+    API.call('getAuditLogs', { email: email })
       .then(function(data) {
         if (data && data.length > 0) {
           _logs = data;

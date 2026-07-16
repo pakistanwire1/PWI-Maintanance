@@ -780,15 +780,15 @@
     var type = document.getElementById('invFilterType').value;
     App.showLoading(true);
     if (fromDate && toDate) {
-      API.call('getTransactionsByDateRange', { fromDate: fromDate, toDate: toDate })
+      API.call('searchTransactions', { fromDate: fromDate, toDate: toDate })
         .then(function(data) { invData = data; App.showLoading(false); invPage = 1; renderTableData(); })
         .catch(function(err) { App.showLoading(false); App.showToast('Filter failed', 'error'); });
     } else if (partCode) {
-      API.call('getTransactionsByPart', { partCode: partCode })
+      API.call('searchTransactions', { partCode: partCode })
         .then(function(data) { invData = data; App.showLoading(false); invPage = 1; renderTableData(); })
         .catch(function(err) { App.showLoading(false); App.showToast('Filter failed', 'error'); });
     } else if (type) {
-      API.call('getTransactionsByType', { type: type })
+      API.call('searchTransactions', { type: type })
         .then(function(data) { invData = data; App.showLoading(false); invPage = 1; renderTableData(); })
         .catch(function(err) { App.showLoading(false); App.showToast('Filter failed', 'error'); });
     } else {
