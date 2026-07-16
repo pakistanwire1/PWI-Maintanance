@@ -1,8 +1,8 @@
-const CACHE_NAME = 'cmms-v9';
+const CACHE_NAME = 'cmms-v10';
 const STATIC_ASSETS = [
   '/', '/index.html', '/css/styles.css', '/css/login.css', '/css/welcome.css',
   '/js/api.js', '/js/auth.js', '/js/app.js',
-  '/logo.svg', '/favicon.svg',
+  '/logo.svg', '/favicon.svg', '/assets/pwianimated.gif',
   '/js/pages/dashboard.js', '/js/pages/jobcards.js', '/js/pages/openjc.js', '/js/pages/startjc.js',
   '/js/pages/closejc.js', '/js/pages/pendingjc.js', '/js/pages/approvedjc.js', '/js/pages/machines.js', '/js/pages/assets.js',
   '/js/pages/spareparts.js', '/js/pages/technicians.js', '/js/pages/pm.js', '/js/pages/checklists.js',

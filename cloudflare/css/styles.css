@@ -1252,6 +1252,7 @@
   .loading-overlay.show { display: flex; }
   .loading-overlay .spinner { width: 36px; height: 36px; border-width: 3px; }
   .loading-overlay > div { font-size: 14px; color: var(--text-muted); }
+  .loading-logo-gif { max-width: 320px; height: auto; border-radius: 8px; }
 
   /* ===== ALERTS ===== */
   .alert {

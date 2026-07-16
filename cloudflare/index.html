@@ -335,8 +335,8 @@
     <nav id="sidebar" class="sidebar">
       <div class="sidebar-brand">
         <div class="sidebar-logo-wrapper">
-          <img class="sidebar-logo-img" id="sidebarLogoImg" alt="PWI" src="logo.svg" style="display:none" onload="this.style.display='block'" onerror="this.style.display='none'">
-          <svg class="sidebar-logo-fallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="30" height="30">
+          <img class="sidebar-logo-img" id="sidebarLogoImg" alt="PWI" src="logo.svg" style="display:none" onload="this.style.display='block';var el=document.getElementById('sidebarLogoFallback');el&&(el.style.display='none')" onerror="this.style.display='none'">
+          <svg class="sidebar-logo-fallback" id="sidebarLogoFallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="30" height="30">
             <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
             <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
             <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
@@ -982,13 +982,7 @@
   <!-- ==================== LOADING OVERLAY ==================== -->
   <div id="loadingOverlay" class="loading-overlay">
     <div class="loading-logo-area">
-      <img class="loading-logo-img" id="loadingLogoImg" alt="Pakistan Wire Industries" src="logo.svg" style="display:none" onload="this.style.display='block'" onerror="this.style.display='none'">
-      <svg class="loading-logo-fallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="44" height="44">
-        <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
-        <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
-        <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
-        <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-      </svg>
+      <img class="loading-logo-gif" alt="Pakistan Wire Industries" src="assets/pwianimated.gif">
     </div>
     <div class="spinner spinner-dark"></div>
     <div style="color:var(--text-light)">Loading...</div>
