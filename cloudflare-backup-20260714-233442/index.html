@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#6366f1">
+  <meta name="description" content="Pakistan Wire Industries - Maintenance Management System">
+  <title>CMMS - Factory Maintenance Management System</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+    <div class="spinner"></div>
+    <p style="color:var(--text-muted);font-size:14px">Loading...</p>
+  </div>
+
+  <!-- Login Page -->
+  <div id="page-login" class="page">
+    <div class="login-container">
+      <div class="login-card glass-card">
+        <div style="text-align:center;margin-bottom:32px">
+          <img src="logo.svg" alt="Logo" style="width:80px;height:80px;margin-bottom:16px" onerror="this.style.display='none'">
+          <h1 style="font-size:22px;font-weight:800;margin:0;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Pakistan Wire Industries (Pvt) Ltd</h1>
+          <p style="color:var(--text-muted);font-size:13px;margin-top:4px">CMMS Maintenance Management System</p>
+        </div>
+        <form id="login-form" onsubmit="return handleLogin(event)">
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" id="login-email" class="form-input" placeholder="Enter your email" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="login-password" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
+          </div>
+          <button type="submit" id="login-btn" class="btn btn-primary" style="width:100%;margin-top:8px;padding:12px">
+            Sign In
+          </button>
+          <p id="login-error" style="color:var(--danger);text-align:center;margin-top:12px;font-size:13px;display:none;line-height:1.6"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Container -->
+  <div id="app-container" class="app-container" style="display:none">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="btn-icon" onclick="App.toggleSidebar()">&#9776;</button>
+        <span id="page-title" style="font-weight:600;font-size:16px">Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <span id="clock" style="font-family:monospace;font-size:13px;color:var(--text-muted)"></span>
+        <div class="user-menu">
+          <button class="btn-icon" onclick="toggleUserMenu()" id="user-avatar" style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600">A</button>
+          <div id="user-dropdown" class="dropdown" style="display:none">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+              <div id="user-name" style="font-weight:600;font-size:14px"></div>
+              <div id="user-role" style="font-size:12px;color:var(--text-muted)"></div>
+            </div>
+            <button class="dropdown-item" onclick="App.toggleTheme()">Toggle Theme</button>
+            <button class="dropdown-item" onclick="Auth.logout()" style="color:var(--danger)">Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sidebar -->
+    <nav id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <img src="logo.svg" alt="Logo" style="width:36px;height:36px" onerror="this.style.display='none'">
+          <span style="font-weight:700;font-size:15px">CMMS</span>
+        </div>
+      </div>
+      <div class="sidebar-nav">
+        <div class="sidebar-group">
+          <div class="sidebar-group-header">Main</div>
+          <a class="sidebar-item active" data-page="dashboard" href="#dashboard" onclick="App.navigateTo('dashboard')">
+            <span class="sidebar-icon">&#9632;</span> Dashboard
+          </a>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-header">Job Cards</div>
+          <a class="sidebar-item" data-page="jobcards" href="#jobcards" onclick="App.navigateTo('jobcards')">
+            <span class="sidebar-icon">&#128196;</span> All Job Cards
+          </a>
+          <a class="sidebar-item" data-page="openjc" href="#openjc" onclick="App.navigateTo('openjc')">
+            <span class="sidebar-icon">&#128994;</span> Open Job Card
+          </a>
+          <a class="sidebar-item" data-page="startjc" href="#startjc" onclick="App.navigateTo('startjc')">
+            <span class="sidebar-icon">&#128993;</span> Start Job Card
+          </a>
+          <a class="sidebar-item" data-page="closejc" href="#closejc" onclick="App.navigateTo('closejc')">
+            <span class="sidebar-icon">&#128308;</span> Close Job Card
+          </a>
+          <a class="sidebar-item" data-page="pendingjc" href="#pendingjc" onclick="App.navigateTo('pendingjc')">
+            <span class="sidebar-icon">&#128992;</span> Pending Review
+          </a>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-header">Master Data</div>
+          <a class="sidebar-item" data-page="machines" href="#machines" onclick="App.navigateTo('machines')">
+            <span class="sidebar-icon">&#9881;</span> Machines
+          </a>
+          <a class="sidebar-item" data-page="assets" href="#assets" onclick="App.navigateTo('assets')">
+            <span class="sidebar-icon">&#128230;</span> Assets
+          </a>
+          <a class="sidebar-item" data-page="spareparts" href="#spareparts" onclick="App.navigateTo('spareparts')">
+            <span class="sidebar-icon">&#128296;</span> Spare Parts
+          </a>
+          <a class="sidebar-item" data-page="technicians" href="#technicians" onclick="App.navigateTo('technicians')">
+            <span class="sidebar-icon">&#128119;</span> Technicians
+          </a>
+          <a class="sidebar-item" data-page="departments" href="#departments" onclick="App.navigateTo('departments')">
+            <span class="sidebar-icon">&#128193;</span> Departments
+          </a>
+          <a class="sidebar-item" data-page="sections" href="#sections" onclick="App.navigateTo('sections')">
+            <span class="sidebar-icon">&#128194;</span> Sections
+          </a>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-header">Maintenance</div>
+          <a class="sidebar-item" data-page="pm" href="#pm" onclick="App.navigateTo('pm')">
+            <span class="sidebar-icon">&#128197;</span> Preventive Maintenance
+          </a>
+          <a class="sidebar-item" data-page="pmhistory" href="#pmhistory" onclick="App.navigateTo('pmhistory')">
+            <span class="sidebar-icon">&#128203;</span> PM History
+          </a>
+          <a class="sidebar-item" data-page="checklists" href="#checklists" onclick="App.navigateTo('checklists')">
+            <span class="sidebar-icon">&#9745;</span> Checklists
+          </a>
+          <a class="sidebar-item" data-page="breakdownhistory" href="#breakdownhistory" onclick="App.navigateTo('breakdownhistory')">
+            <span class="sidebar-icon">&#9888;</span> Breakdown History
+          </a>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-header">Inventory</div>
+          <a class="sidebar-item" data-page="inventory" href="#inventory" onclick="App.navigateTo('inventory')">
+            <span class="sidebar-icon">&#128218;</span> Inventory
+          </a>
+          <a class="sidebar-item" data-page="goodsreceipt" href="#goodsreceipt" onclick="App.navigateTo('goodsreceipt')">
+            <span class="sidebar-icon">&#128230;</span> Goods Receipt
+          </a>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-header">System</div>
+          <a class="sidebar-item" data-page="qr" href="#qr" onclick="App.navigateTo('qr')">
+            <span class="sidebar-icon">&#128247;</span> QR Scanner
+          </a>
+          <a class="sidebar-item" data-page="reports" href="#reports" onclick="App.navigateTo('reports')">
+            <span class="sidebar-icon">&#128202;</span> Reports
+          </a>
+          <a class="sidebar-item" data-page="notifications" href="#notifications" onclick="App.navigateTo('notifications')">
+            <span class="sidebar-icon">&#128276;</span> Notifications
+          </a>
+          <a class="sidebar-item" data-page="users" href="#users" onclick="App.navigateTo('users')">
+            <span class="sidebar-icon">&#128100;</span> Users
+          </a>
+          <a class="sidebar-item" data-page="email" href="#email" onclick="App.navigateTo('email')">
+            <span class="sidebar-icon">&#128231;</span> Email
+          </a>
+          <a class="sidebar-item" data-page="whatsapp" href="#whatsapp" onclick="App.navigateTo('whatsapp')">
+            <span class="sidebar-icon">&#128172;</span> WhatsApp
+          </a>
+          <a class="sidebar-item" data-page="backup" href="#backup" onclick="App.navigateTo('backup')">
+            <span class="sidebar-icon">&#128190;</span> Backup
+          </a>
+          <a class="sidebar-item" data-page="audit" href="#audit" onclick="App.navigateTo('audit')">
+            <span class="sidebar-icon">&#128220;</span> Audit Trail
+          </a>
+          <a class="sidebar-item" data-page="settings" href="#settings" onclick="App.navigateTo('settings')">
+            <span class="sidebar-icon">&#9881;</span> Settings
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content" class="main-content">
+      <div id="page-dashboard" class="page-content"></div>
+      <div id="page-jobcards" class="page-content" style="display:none"></div>
+      <div id="page-openjc" class="page-content" style="display:none"></div>
+      <div id="page-startjc" class="page-content" style="display:none"></div>
+      <div id="page-closejc" class="page-content" style="display:none"></div>
+      <div id="page-pendingjc" class="page-content" style="display:none"></div>
+      <div id="page-machines" class="page-content" style="display:none"></div>
+      <div id="page-assets" class="page-content" style="display:none"></div>
+      <div id="page-spareparts" class="page-content" style="display:none"></div>
+      <div id="page-technicians" class="page-content" style="display:none"></div>
+      <div id="page-pm" class="page-content" style="display:none"></div>
+      <div id="page-checklists" class="page-content" style="display:none"></div>
+      <div id="page-inventory" class="page-content" style="display:none"></div>
+      <div id="page-goodsreceipt" class="page-content" style="display:none"></div>
+      <div id="page-reports" class="page-content" style="display:none"></div>
+      <div id="page-settings" class="page-content" style="display:none"></div>
+      <div id="page-qr" class="page-content" style="display:none"></div>
+      <div id="page-users" class="page-content" style="display:none"></div>
+      <div id="page-departments" class="page-content" style="display:none"></div>
+      <div id="page-sections" class="page-content" style="display:none"></div>
+      <div id="page-notifications" class="page-content" style="display:none"></div>
+      <div id="page-email" class="page-content" style="display:none"></div>
+      <div id="page-whatsapp" class="page-content" style="display:none"></div>
+      <div id="page-backup" class="page-content" style="display:none"></div>
+      <div id="page-audit" class="page-content" style="display:none"></div>
+      <div id="page-breakdownhistory" class="page-content" style="display:none"></div>
+      <div id="page-pmhistory" class="page-content" style="display:none"></div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function handleLogin(e) {
+      e.preventDefault();
+      var email = document.getElementById('login-email').value;
+      var password = document.getElementById('login-password').value;
+      var btn = document.getElementById('login-btn');
+      var err = document.getElementById('login-error');
+      btn.textContent = 'Signing in...';
+      btn.disabled = true;
+      err.style.display = 'none';
+      err.innerHTML = '';
+      Auth.login(email, password)
+        .then(function(user) {
+          document.getElementById('page-login').style.display = 'none';
+          document.getElementById('page-login').classList.remove('active');
+          document.getElementById('app-container').style.display = '';
+          location.hash = '#dashboard';
+          App.navigateTo('dashboard');
+        })
+        .catch(function(loginErr) {
+          var diag = API.getDiagnostics();
+          var msg = loginErr.message || 'Login failed';
+          var html = '<strong>' + msg + '</strong>';
+          if (diag) {
+            html += '<br><span style="font-size:11px;opacity:0.8">';
+            html += 'Step: ' + diag.step + ' | Status: ' + diag.status;
+            if (diag.detail) html += '<br>' + diag.detail;
+            html += '</span>';
+          }
+          html += '<br><span style="font-size:11px;opacity:0.6">API: ' + API.getGasUrl().slice(0, 60) + '...</span>';
+          err.innerHTML = html;
+          err.style.display = 'block';
+        })
+        .finally(function() {
+          btn.textContent = 'Sign In';
+          btn.disabled = false;
+        });
+      return false;
+    }
+    function toggleUserMenu() {
+      var dd = document.getElementById('user-dropdown');
+      dd.style.display = dd.style.display === 'none' ? '' : 'none';
+    }
+    document.addEventListener('click', function(e) {
+      var dd = document.getElementById('user-dropdown');
+      if (dd && dd.style.display !== 'none' && !e.target.closest('.user-menu')) {
+        dd.style.display = 'none';
+      }
+    });
+    (function checkAuth() {
+      Auth.init();
+      if (Auth.isLoggedIn()) {
+        document.getElementById('page-login').style.display = 'none';
+        document.getElementById('app-container').style.display = '';
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -43,8 +43,10 @@
   }
 
   function load() {
+    App.showLoading(true);
     if (_tab === 'history') loadHistory();
-    if (_tab === 'search') { /* no-op until user searches */ }
+    if (_tab === 'search') { /* no-op until user searches */ App.showLoading(false); }
+    if (_tab !== 'history' && _tab !== 'search') App.showLoading(false);
   }
 
   function renderTabContent() {
@@ -221,12 +223,18 @@
         renderDetailResult(detailContainer, data);
       })
       .catch(function(err) {
+        var isNetwork = err.type === 'network';
+        var msg = isNetwork
+          ? 'Unable to reach the server. Please check your internet connection and try again.'
+          : (err.message || 'An error occurred while looking up the QR code.');
         detailContainer.innerHTML = '' +
           '<div class="qr-detail-card" style="border-color:var(--danger)">' +
             '<div class="qr-detail-body" style="text-align:center">' +
               '<div style="font-size:48px;margin-bottom:12px">&#9888;</div>' +
-              '<h3 style="margin:0 0 8px">Error</h3>' +
-              '<p style="color:var(--text-muted);font-size:13px;margin:0">' + App.escHtml(err.message) + '</p>' +
+              '<h3 style="margin:0 0 8px">Lookup Failed</h3>' +
+              '<p style="color:var(--text-muted);font-size:13px;margin:0">' + App.escHtml(msg) + '</p>' +
+              '<p style="color:var(--text-muted);font-size:12px;margin-top:8px">Scanned: ' + App.escHtml(content.substring(0, 100)) + '</p>' +
+              '<button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="QRModule.retryLookup(\'' + App.escHtml(content.replace(/'/g, "\\'")) + '\')">&#8635; Retry</button>' +
             '</div>' +
           '</div>';
       });
@@ -1113,6 +1121,9 @@
       if (detailEl) detailEl.innerHTML = '';
       _tab = 'scanner';
       render();
+    },
+    retryLookup: function(content) {
+      if (content) fetchQRDetail(content);
     }
   };
 

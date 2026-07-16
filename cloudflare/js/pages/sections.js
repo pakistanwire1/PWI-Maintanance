@@ -1,74 +1,211 @@
 /* ============================================================
-   sections.js — Sections Management Page Module
-   Cloudflare Pages Frontend
+   sections.js — Sections Page Module
+   GAS-identical: SectionsPage.html
    ============================================================ */
+
 (function() {
-  var _sections = [];
-  var _filtered = [];
+  var sectionsData = [];
+  var sectionsPage = 1;
 
   App.registerPage('sections', render, load);
 
   function render() {
-    document.getElementById('page-sections').innerHTML = '' +
-      '<div class="page-header"><h2>Sections</h2>' +
-        '<div style="display:flex;gap:8px">' +
-          '<input type="text" class="form-input" placeholder="Search..." id="sec-search" oninput="SecSearch(this.value)" style="width:240px">' +
-          (Auth.isAdmin()?'<button class="btn btn-primary" onclick="SecCreate()">+ Add Section</button>':'') +
-        '</div></div>' +
-      '<div class="card"><div class="table-container" id="sec-table"></div></div>';
+    var el = document.getElementById('page-sections');
+    el.innerHTML =
+      '<div id="sectionsPage">' +
+        '<div class="card">' +
+          '<div class="card-header">' +
+            '<div class="card-title">Section Master</div>' +
+            '<div class="card-actions">' +
+              '<div class="search-box">' +
+                '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg>' +
+                '<input type="text" class="search-input" id="sectionSearchInput" placeholder="Search sections..." oninput="searchSectionsTable(this.value)">' +
+              '</div>' +
+              '<button class="btn btn-primary" onclick="openSectionForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add Section</button>' +
+            '</div>' +
+          '</div>' +
+          '<div id="sectionsTableContainer"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="modal-overlay" id="sectionFormModal">' +
+        '<div class="modal modal-wide">' +
+          '<div class="modal-header">' +
+            '<div class="modal-title" id="sectionFormTitle">Add Section</div>' +
+            '<button class="modal-close" onclick="hideModal(\'sectionFormModal\')">&times;</button>' +
+          '</div>' +
+          '<form id="sectionForm" onsubmit="return saveSection(event)">' +
+            '<div class="modal-body">' +
+              '<input type="hidden" name="SectionID" id="editSectionId">' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Section Name *</label>' +
+                  '<input type="text" name="Section" class="form-control" id="sectionName" placeholder="Enter section name" required>' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Section Code *</label>' +
+                  '<input type="text" name="SectionCode" class="form-control" id="sectionCode" placeholder="e.g. ADM" required>' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label>Description</label>' +
+                '<textarea name="Description" class="form-control" id="sectionDescription" rows="2" placeholder="Enter description"></textarea>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Status</label>' +
+                  '<select name="Status" class="form-control" id="sectionStatus">' +
+                    '<option value="Active">Active</option>' +
+                    '<option value="Inactive">Inactive</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Sunday Off</label>' +
+                  '<select name="SundayOff" class="form-control" id="sectionSundayOff">' +
+                    '<option value="Sunday">Sunday</option>' +
+                    '<option value="Monday">Monday</option>' +
+                    '<option value="Tuesday">Tuesday</option>' +
+                    '<option value="Wednesday">Wednesday</option>' +
+                    '<option value="Thursday">Thursday</option>' +
+                    '<option value="Friday">Friday</option>' +
+                    '<option value="Saturday">Saturday</option>' +
+                    '<option value="No">No</option>' +
+                  '</select>' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Hours Per Day</label>' +
+                  '<input type="number" name="HoursPerDay" class="form-control" id="sectionHoursPerDay" placeholder="8" min="1" max="24" step="0.5">' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Department Count</label>' +
+                  '<input type="number" name="DepartmentCount" class="form-control" id="sectionDeptCount" placeholder="0" min="0" readonly>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button type="button" class="btn btn-secondary" onclick="hideModal(\'sectionFormModal\')">Cancel</button>' +
+              '<button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>' +
+            '</div>' +
+          '</form>' +
+        '</div>' +
+      '</div>';
   }
 
   function load() {
     App.showLoading(true);
     API.call('getSectionList')
-      .then(function(d){ _sections=d||[]; _filtered=_sections; App.showLoading(false); renderTable(); })
-      .catch(function(e){ App.showLoading(false); App.showToast('Error: '+e.message,'error'); });
+      .then(function(data) {
+        sectionsData = data || [];
+        App.showLoading(false);
+        renderSectionsTable();
+      })
+      .catch(function(err) {
+        App.showLoading(false);
+        App.showToast('Error loading sections: ' + err.message, 'error');
+      });
   }
 
-  function renderTable() {
-    var el = document.getElementById('sec-table');
-    if (!el) return;
-    if (!_filtered.length) { el.innerHTML='<div class="empty-state"><div class="empty-state-icon">&#128193;</div><div class="empty-state-text">No sections found</div></div>'; return; }
-    var h = '<table><thead><tr><th>ID</th><th>Name</th><th>Code</th><th>Sunday Off</th><th>Hours/Day</th><th>Status</th>'+(Auth.isAdmin()?'<th>Actions</th>':'')+'</tr></thead><tbody>';
-    _filtered.forEach(function(s){
-      var sc=(s.Status||'').toLowerCase()==='active'?'badge-success':'badge-secondary';
-      h+='<tr><td>'+App.escHtml(s.SectionID||'')+'</td><td>'+App.escHtml(s.Section||s.SectionName||'')+'</td><td>'+App.escHtml(s.SectionCode||'')+'</td><td>'+App.escHtml(s.SundayOff||'')+'</td><td>'+App.escHtml(s.HoursPerDay||'')+'</td><td><span class="badge '+sc+'">'+App.escHtml(s.Status||'')+'</span></td>';
-      if(Auth.isAdmin()) h+='<td><button class="btn btn-sm btn-secondary" onclick="SecEdit(\''+App.escHtml(s.SectionID||'')+'\')">Edit</button> <button class="btn btn-sm btn-danger" onclick="SecDelete(\''+App.escHtml(s.SectionID||'')+'\')">Del</button></td>';
-      h+='</tr>';
+  function renderSectionsTable() {
+    renderTable(sectionsData, [
+      { key: 'SectionID', label: 'ID' },
+      { key: 'Section', label: 'Section Name' },
+      { key: 'Description', label: 'Description' },
+      { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Active': 'success', 'Inactive': 'danger' } },
+      { key: 'SundayOff', label: 'Sun Off', badge: true, badgeMap: { 'No': 'success', 'Sunday': 'warning', 'Monday': 'warning', 'Tuesday': 'warning', 'Wednesday': 'warning', 'Thursday': 'warning', 'Friday': 'warning', 'Saturday': 'warning' } },
+      { key: 'HoursPerDay', label: 'Hrs/Day' },
+      { key: 'SectionCode', label: 'Code' },
+      { key: 'DepartmentCount', label: 'Depts' }
+    ], [
+      { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editSection('{id}')", idField: 'SectionID' },
+      { label: 'Delete', icon: 'trash', color: 'danger', onclick: "deleteSection('{id}')", idField: 'SectionID' }
+    ], sectionsPage, PAGE_SIZE, 'sectionsTableContainer');
+    registerPageState('sectionsTableContainer', function(p) { sectionsPage = p; renderSectionsTable(); });
+  }
+
+  window.openSectionForm = function() {
+    var el = document.getElementById('editSectionId'); if (el) el.value = '';
+    resetForm('sectionForm');
+    var el2 = document.getElementById('sectionSundayOff'); if (el2) el2.value = 'Sunday';
+    var el3 = document.getElementById('sectionHoursPerDay'); if (el3) el3.value = '8';
+    var el4 = document.getElementById('sectionDeptCount'); if (el4) el4.value = '0';
+    var el5 = document.getElementById('sectionStatus'); if (el5) el5.value = 'Active';
+    showModal('sectionFormModal');
+    var el6 = document.getElementById('sectionFormTitle'); if (el6) el6.textContent = 'Add Section';
+  };
+
+  window.editSection = function(id) {
+    var item = sectionsData.find(function(s) { return s.SectionID === id; });
+    if (!item) return;
+    setFormData('sectionForm', item);
+    var el = document.getElementById('editSectionId'); if (el) el.value = id;
+    var el2 = document.getElementById('sectionFormTitle'); if (el2) el2.textContent = 'Edit Section - ' + id;
+    showModal('sectionFormModal');
+  };
+
+  window.saveSection = function(event) {
+    event.preventDefault();
+    var id = document.getElementById('editSectionId').value;
+    var data = getFormData('sectionForm');
+    data.Section = data.Section || document.getElementById('sectionName').value.trim();
+    if (!data.Section) { App.showToast('Section name is required', 'warning'); return false; }
+    if (!data.SectionCode) { App.showToast('Section code is required', 'warning'); return false; }
+    if (!data.HoursPerDay || parseFloat(data.HoursPerDay) <= 0) { App.showToast('Hours Per Day must be a positive number', 'warning'); return false; }
+    App.showLoading(true);
+    var fn = id ? 'modifySection' : 'createSection';
+    var payload = id ? { id: id, data: data } : data;
+    API.call(fn, payload)
+      .then(function() {
+        App.showLoading(false);
+        hideModal('sectionFormModal');
+        App.showToast('Section ' + (id ? 'updated' : 'created') + ' successfully', 'success');
+        load();
+      })
+      .catch(function(err) {
+        App.showLoading(false);
+        App.showToast('Error: ' + err.message, 'error');
+      });
+    return false;
+  };
+
+  window.deleteSection = function(id) {
+    showConfirm('Delete Section', 'Are you sure you want to delete this section?', function() {
+      App.showLoading(true);
+      API.call('removeSection', { id: id })
+        .then(function() {
+          App.showLoading(false);
+          App.showToast('Section deleted successfully', 'success');
+          load();
+        })
+        .catch(function(err) {
+          App.showLoading(false);
+          App.showToast('Error: ' + err.message, 'error');
+        });
     });
-    el.innerHTML = h + '</tbody></table>';
-  }
+  };
 
-  function showForm(title, sec) {
-    var isEdit = !!sec;
-    var ov = document.createElement('div');
-    ov.className = 'modal-overlay';
-    ov.innerHTML = '<div class="modal"><div class="modal-header"><h3>'+title+'</h3><button class="btn-icon" onclick="this.closest(\'.modal-overlay\').remove()">&#10005;</button></div><div class="modal-body">' +
-      '<div class="grid grid-2">' +
-        fg('Section Name *','s-name',sec?sec.Section||sec.SectionName:'') +
-        fg('Code','s-code',sec?sec.SectionCode||'':'') +
-        fg('Description','s-desc',sec?sec.Description||'':'') +
-        fg('Sunday Off','s-sunday',sec?sec.SundayOff||'Sunday':'') +
-        fg('Hours/Day','s-hours',sec?sec.HoursPerDay||'8':'',{type:'number'}) +
-        fsel('Status','s-status',['Active','Inactive'],sec?sec.Status:'Active') +
-      '</div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">Cancel</button><button class="btn btn-primary" id="s-save">'+(isEdit?'Update':'Create')+'</button></div></div>';
-    document.body.appendChild(ov);
-    ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
-    ov.querySelector('#s-save').onclick = function() {
-      var d = { Section: ov.querySelector('#s-name').value, SectionCode: ov.querySelector('#s-code').value, Description: ov.querySelector('#s-desc').value, SundayOff: ov.querySelector('#s-sunday').value, HoursPerDay: ov.querySelector('#s-hours').value, Status: ov.querySelector('#s-status').value };
-      if (!d.Section) { App.showToast('Name required','error'); return; }
-      var btn=ov.querySelector('#s-save'); btn.textContent='Saving...'; btn.disabled=true;
-      API.call(isEdit?'modifySection':'createSection', isEdit?{id:sec.SectionID,...d}:d)
-        .then(function(){ov.remove();App.showToast('Section '+(isEdit?'updated':'created'),'success');load();})
-        .catch(function(e){btn.textContent=isEdit?'Update':'Create';btn.disabled=false;App.showToast('Error: '+e.message,'error');});
-    };
-  }
-
-  function fg(l,id,v,ro,ex){return '<div class="form-group"><label class="form-label">'+l+'</label><input class="form-input" id="'+id+'" value="'+App.escHtml(v||'')+'" '+(ro?ro:'')+(ex&&ex.type?' type="'+ex.type+'"':'')+'></div>';}
-  function fsel(l,id,o,v){var h='<div class="form-group"><label class="form-label">'+l+'</label><select class="form-select" id="'+id+'"><option value="">Select</option>';o.forEach(function(x){h+='<option value="'+x+'"'+(v===x?' selected':'')+'>'+x+'</option>';});return h+'</select>';}
-
-  window.SecSearch = function(q){ q=q.toLowerCase(); _filtered=_sections.filter(function(s){return(s.Section||s.SectionName||'').toLowerCase().indexOf(q)>-1;}); renderTable(); };
-  window.SecCreate = function(){showForm('Add Section',null);};
-  window.SecEdit = function(id){var s=_sections.find(function(x){return x.SectionID===id;});if(s)showForm('Edit Section',s);};
-  window.SecDelete = function(id){App.showConfirm('Delete','Delete section?',function(){API.call('removeSection',{id:id}).then(function(){App.showToast('Deleted','success');load();}).catch(function(e){App.showToast('Error: '+e.message,'error');});});};
+  window.searchSectionsTable = function(query) {
+    if (!query) { sectionsPage = 1; renderSectionsTable(); return; }
+    var q = query.toLowerCase();
+    var filtered = sectionsData.filter(function(s) {
+      return (s.Section || '').toLowerCase().indexOf(q) >= 0 ||
+             (s.SectionCode || '').toLowerCase().indexOf(q) >= 0 ||
+             (s.SectionID || '').toLowerCase().indexOf(q) >= 0 ||
+             (s.Description || '').toLowerCase().indexOf(q) >= 0;
+    });
+    sectionsPage = 1;
+    renderTable(filtered, [
+      { key: 'SectionID', label: 'ID' },
+      { key: 'Section', label: 'Section Name' },
+      { key: 'Description', label: 'Description' },
+      { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Active': 'success', 'Inactive': 'danger' } },
+      { key: 'SundayOff', label: 'Sun Off', badge: true, badgeMap: { 'No': 'success', 'Sunday': 'warning', 'Monday': 'warning', 'Tuesday': 'warning', 'Wednesday': 'warning', 'Thursday': 'warning', 'Friday': 'warning', 'Saturday': 'warning' } },
+      { key: 'HoursPerDay', label: 'Hrs/Day' },
+      { key: 'SectionCode', label: 'Code' },
+      { key: 'DepartmentCount', label: 'Depts' }
+    ], [
+      { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editSection('{id}')", idField: 'SectionID' },
+      { label: 'Delete', icon: 'trash', color: 'danger', onclick: "deleteSection('{id}')", idField: 'SectionID' }
+    ], 1, PAGE_SIZE, 'sectionsTableContainer');
+  };
 })();

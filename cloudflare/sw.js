@@ -1,9 +1,9 @@
-const CACHE_NAME = 'cmms-v5';
+const CACHE_NAME = 'cmms-v8';
 const STATIC_ASSETS = [
   '/', '/index.html', '/css/styles.css', '/js/api.js', '/js/auth.js', '/js/app.js',
   '/logo.svg', '/favicon.svg',
   '/js/pages/dashboard.js', '/js/pages/jobcards.js', '/js/pages/openjc.js', '/js/pages/startjc.js',
-  '/js/pages/closejc.js', '/js/pages/pendingjc.js', '/js/pages/machines.js', '/js/pages/assets.js',
+  '/js/pages/closejc.js', '/js/pages/pendingjc.js', '/js/pages/approvedjc.js', '/js/pages/machines.js', '/js/pages/assets.js',
   '/js/pages/spareparts.js', '/js/pages/technicians.js', '/js/pages/pm.js', '/js/pages/checklists.js',
   '/js/pages/inventory.js', '/js/pages/goodsreceipt.js', '/js/pages/reports.js', '/js/pages/settings.js',
   '/js/pages/qr.js', '/js/pages/users.js', '/js/pages/departments.js', '/js/pages/sections.js',
@@ -35,6 +35,8 @@ self.addEventListener('activate', function(e) {
 
 self.addEventListener('fetch', function(e) {
   if (e.request.method !== 'GET') return;
+
+  if (e.request.url.indexOf('/api/') > -1) return;
 
   if (e.request.url.indexOf('script.google.com') > -1 ||
       e.request.url.indexOf('googleapis.com') > -1 ||

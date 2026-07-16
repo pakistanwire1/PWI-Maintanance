@@ -1,154 +1,285 @@
 /* ============================================================
-   technicians.js — Technicians Page Module (CRUD)
-   Standard-021: Cloudflare Pages Frontend
+   technicians.js — Technicians Page Module
+   GAS-identical: TechniciansPage.html
    ============================================================ */
 
 (function() {
-  var _techs = [];
-  var _filtered = [];
-  var _search = '';
+  var techniciansData = [];
+  var techniciansPage = 1;
 
   App.registerPage('technicians', render, load);
 
   function render() {
     var el = document.getElementById('page-technicians');
-    el.innerHTML = '' +
-      '<div class="page-header">' +
-        '<h2>Technicians</h2>' +
-        '<div style="display:flex;gap:8px">' +
-          '<input type="text" class="form-input" placeholder="Search technicians..." id="tech-search" oninput="TechSearch(this.value)" style="width:240px">' +
-          '<button class="btn btn-primary" onclick="TechCreate()">+ Add Technician</button>' +
+    el.innerHTML =
+      '<div id="techniciansPage">' +
+        '<div class="card">' +
+          '<div class="card-header">' +
+            '<div class="card-title">Technician Master</div>' +
+            '<div class="card-actions">' +
+              '<div class="search-box">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+                '<input type="text" class="form-control" id="technicianSearch" placeholder="Search technicians..." onkeyup="searchTechniciansTable()">' +
+              '</div>' +
+              '<button class="btn btn-primary" onclick="openTechnicianForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add Technician</button>' +
+            '</div>' +
+          '</div>' +
+          '<div id="techniciansTableContainer"></div>' +
         '</div>' +
       '</div>' +
-      '<div class="card"><div class="table-container" id="tech-table"></div></div>';
+      '<div class="modal-overlay" id="technicianFormModal" style="display:none">' +
+        '<div class="modal">' +
+          '<div class="modal-header">' +
+            '<div class="modal-title" id="technicianFormTitle">Add Technician</div>' +
+            '<button class="modal-close" onclick="hideModal(\'technicianFormModal\')">&times;</button>' +
+          '</div>' +
+          '<form id="technicianForm" onsubmit="return saveTechnician(event)">' +
+            '<div class="modal-body">' +
+              '<input type="hidden" name="originalId" id="editTechId">' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Employee ID *</label>' +
+                  '<input type="text" name="EmployeeID" class="form-control" required id="techEmpId">' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Employee Code</label>' +
+                  '<input type="text" name="EmployeeCode" class="form-control">' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label>Technician Name *</label>' +
+                '<input type="text" name="TechnicianName" class="form-control" required>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label>Designation</label>' +
+                '<input type="text" name="Designation" class="form-control" placeholder="e.g. Senior Technician">' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Department</label>' +
+                  '<select name="Department" class="form-control" id="techDept" onchange="onTechDeptChange()">' +
+                    '<option value="">Select Department</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Section</label>' +
+                  '<select name="Section" class="form-control" id="techSection">' +
+                    '<option value="">Select Section</option>' +
+                  '</select>' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Skill</label>' +
+                  '<select name="Skill" class="form-control" id="techSkill"></select>' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Shift</label>' +
+                  '<select name="Shift" class="form-control" id="techShift"></select>' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Mobile</label>' +
+                  '<input type="text" name="Mobile" class="form-control">' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Email</label>' +
+                  '<input type="email" name="Email" class="form-control">' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Joining Date</label>' +
+                  '<input type="date" name="JoiningDate" class="form-control">' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Status</label>' +
+                  '<select name="Status" class="form-control">' +
+                    '<option value="Active">Active</option>' +
+                    '<option value="Inactive">Inactive</option>' +
+                  '</select>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button type="button" class="btn btn-secondary" onclick="hideModal(\'technicianFormModal\')">Cancel</button>' +
+              '<button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>' +
+            '</div>' +
+          '</form>' +
+        '</div>' +
+      '</div>';
   }
 
   function load() {
     App.showLoading(true);
     API.call('getTechnicians')
       .then(function(data) {
-        _techs = data || [];
-        _filtered = _techs;
+        techniciansData = data || [];
         App.showLoading(false);
-        renderTable();
+        renderTechniciansTable();
       })
       .catch(function(err) {
         App.showLoading(false);
-        App.showToast('Failed to load technicians: ' + err.message, 'error');
+        App.showToast('Failed to load technicians', 'error');
       });
   }
 
-  function renderTable() {
-    var el = document.getElementById('tech-table');
-    if (!el) return;
-    if (_filtered.length === 0) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128119;</div><div class="empty-state-text">No technicians found</div></div>';
-      return;
-    }
-    var html = '<table><thead><tr>' +
-      '<th>ID</th><th>Name</th><th>Specialization</th><th>Department</th><th>Phone</th><th>Status</th><th>Actions</th>' +
-      '</tr></thead><tbody>';
-    _filtered.forEach(function(t) {
-      var sc = (t.Status || '').toLowerCase() === 'active' ? 'badge-success' : 'badge-secondary';
-      html += '<tr>' +
-        '<td><strong>' + App.escHtml(t.TechnicianID || t.ID || '') + '</strong></td>' +
-        '<td>' + App.escHtml(t.Name || '') + '</td>' +
-        '<td>' + App.escHtml(t.Specialization || t.Skill || '') + '</td>' +
-        '<td>' + App.escHtml(t.Department || '') + '</td>' +
-        '<td>' + App.escHtml(t.Phone || t.Contact || '') + '</td>' +
-        '<td><span class="badge ' + sc + '">' + App.escHtml(t.Status || 'Active') + '</span></td>' +
-        '<td>' +
-          '<button class="btn btn-sm btn-secondary" onclick="TechEdit(\'' + (t.TechnicianID || t.ID || '') + '\')">Edit</button> ' +
-          '<button class="btn btn-sm btn-danger" onclick="TechDelete(\'' + (t.TechnicianID || t.ID || '') + '\')">Del</button>' +
-        '</td>' +
-        '</tr>';
-    });
-    html += '</tbody></table>';
-    el.innerHTML = html;
+  function renderTechniciansTable() {
+    renderTable(techniciansData, [
+      { key: 'EmployeeID', label: 'Emp ID' },
+      { key: 'EmployeeCode', label: 'Code' },
+      { key: 'TechnicianName', label: 'Name' },
+      { key: 'Designation', label: 'Designation' },
+      { key: 'Department', label: 'Department' },
+      { key: 'Section', label: 'Section' },
+      { key: 'Skill', label: 'Skill' },
+      { key: 'Shift', label: 'Shift' },
+      { key: 'Mobile', label: 'Mobile' },
+      { key: 'Email', label: 'Email' },
+      { key: 'JoiningDate', label: 'Joining Date' },
+      { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Active': 'success', 'Inactive': 'secondary' } }
+    ], [
+      { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editTechnician('{id}')", idField: 'EmployeeID' },
+      { label: 'Del', icon: 'trash', color: 'danger', onclick: "deleteTechnician('{id}')", idField: 'EmployeeID' }
+    ], techniciansPage, PAGE_SIZE, 'techniciansTableContainer');
+    registerPageState('techniciansTableContainer', function(p) { techniciansPage = p; renderTechniciansTable(); });
   }
 
-  function showForm(title, tech) {
-    var isEdit = !!tech;
-    var overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = '<div class="modal">' +
-      '<div class="modal-header"><h3>' + title + '</h3><button class="btn-icon" onclick="this.closest(\'.modal-overlay\').remove()">&#10005;</button></div>' +
-      '<div class="modal-body">' +
-        '<div class="grid grid-2">' +
-          '<div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="t-name" value="' + App.escHtml(tech ? tech.Name : '') + '"></div>' +
-          '<div class="form-group"><label class="form-label">Employee ID</label><input class="form-input" id="t-empid" value="' + App.escHtml(tech ? tech.EmployeeID : '') + '"></div>' +
-          '<div class="form-group"><label class="form-label">Specialization</label><input class="form-input" id="t-spec" value="' + App.escHtml(tech ? (tech.Specialization || tech.Skill) : '') + '"></div>' +
-          '<div class="form-group"><label class="form-label">Department</label><input class="form-input" id="t-dept" value="' + App.escHtml(tech ? tech.Department : '') + '"></div>' +
-          '<div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="t-phone" value="' + App.escHtml(tech ? (tech.Phone || tech.Contact) : '') + '"></div>' +
-          '<div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="t-email" value="' + App.escHtml(tech ? tech.Email : '') + '"></div>' +
-          '<div class="form-group"><label class="form-label">Shift</label><input class="form-input" id="t-shift" value="' + App.escHtml(tech ? tech.Shift : '') + '"></div>' +
-          '<div class="form-group"><label class="form-label">Status</label><select class="form-select" id="t-status">' +
-            '<option value="Active"' + (tech && tech.Status === 'Active' ? ' selected' : '') + '>Active</option>' +
-            '<option value="Inactive"' + (tech && tech.Status === 'Inactive' ? ' selected' : '') + '>Inactive</option>' +
-            '<option value="On Leave"' + (tech && tech.Status === 'On Leave' ? ' selected' : '') + '>On Leave</option>' +
-          '</select></div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="modal-footer">' +
-        '<button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">Cancel</button>' +
-        '<button class="btn btn-primary" id="t-save">' + (isEdit ? 'Update' : 'Create') + '</button>' +
-      '</div></div>';
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+  function loadTechDepartments() {
+    API.call('getDepartmentList')
+      .then(function(depts) {
+        var sel = document.getElementById('techDept');
+        if (sel) {
+          sel.innerHTML = '<option value="">Select Department</option>';
+          (depts || []).forEach(function(d) {
+            var opt = document.createElement('option');
+            opt.value = d.Department;
+            opt.textContent = d.Department || '';
+            sel.appendChild(opt);
+          });
+        }
+      })
+      .catch(function() {});
+  }
 
-    overlay.querySelector('#t-save').onclick = function() {
-      var data = {
-        Name: document.getElementById('t-name').value,
-        EmployeeID: document.getElementById('t-empid').value,
-        Specialization: document.getElementById('t-spec').value,
-        Department: document.getElementById('t-dept').value,
-        Phone: document.getElementById('t-phone').value,
-        Email: document.getElementById('t-email').value,
-        Shift: document.getElementById('t-shift').value,
-        Status: document.getElementById('t-status').value
-      };
-      if (!data.Name) { App.showToast('Name is required', 'error'); return; }
-      var action = isEdit ? 'updateTechnician' : 'addTechnician';
-      if (isEdit) data.id = tech.TechnicianID || tech.ID;
-      var btn = overlay.querySelector('#t-save');
-      btn.textContent = 'Saving...'; btn.disabled = true;
-      API.call(action, data)
-        .then(function() {
-          overlay.remove();
-          App.showToast('Technician ' + (isEdit ? 'updated' : 'created'), 'success');
-          load();
+  window.onTechDeptChange = function() {
+    var deptSel = document.getElementById('techDept');
+    var dept = deptSel ? deptSel.value : '';
+    var secSel = document.getElementById('techSection');
+    if (secSel) secSel.innerHTML = '<option value="">Select Section</option>';
+    if (!dept) return;
+    API.call('getSectionList')
+      .then(function(sections) {
+        if (secSel) {
+          (sections || []).forEach(function(s) {
+            var opt = document.createElement('option');
+            opt.value = s.Section;
+            opt.textContent = s.Section || '';
+            secSel.appendChild(opt);
+          });
+        }
+      })
+      .catch(function() {});
+  };
+
+  window.openTechnicianForm = function() {
+    var eti = document.getElementById('editTechId'); if (eti) eti.value = '';
+    var el = document.getElementById('techEmpId'); if (el) el.disabled = false;
+    resetForm('technicianForm');
+    loadTechDepartments();
+    var ts = document.getElementById('techSection'); if (ts) ts.innerHTML = '<option value="">Select Section</option>';
+    populateSelectFromList('techSkill', CONSTANTS.TECH_SKILLS, 'Select Skill');
+    populateSelectFromList('techShift', CONSTANTS.TECH_SHIFTS, 'Select Shift');
+    openModalForm('technicianForm', 'Add Technician');
+  };
+
+  window.editTechnician = function(id) {
+    var item = techniciansData.find(function(r) { return r.EmployeeID === id; });
+    if (!item) return;
+    loadTechDepartments();
+    populateSelectFromList('techSkill', CONSTANTS.TECH_SKILLS, 'Select Skill');
+    populateSelectFromList('techShift', CONSTANTS.TECH_SHIFTS, 'Select Shift');
+    setFormData('technicianForm', item);
+    var eti = document.getElementById('editTechId'); if (eti) eti.value = id;
+    var el = document.getElementById('techEmpId'); if (el) el.disabled = true;
+    onTechDeptChange();
+    setTimeout(function() {
+      if (item.Section) {
+        var ts = document.getElementById('techSection'); if (ts) ts.value = item.Section;
+      }
+    }, 300);
+    openModalForm('technicianForm', 'Edit Technician - ' + id);
+  };
+
+  window.saveTechnician = function(e) {
+    e.preventDefault();
+    var data = getFormData('technicianForm');
+    var id = document.getElementById('editTechId').value;
+    App.showLoading(true);
+
+    if (id) {
+      data.id = id;
+      API.call('updateTechnician', data)
+        .then(function(result) {
+          techniciansData = result || techniciansData;
+          App.showLoading(false);
+          hideModal('technicianFormModal');
+          App.showToast('Technician updated successfully');
+          renderTechniciansTable();
         })
         .catch(function(err) {
-          btn.textContent = isEdit ? 'Update' : 'Create'; btn.disabled = false;
-          App.showToast('Error: ' + err.message, 'error');
+          App.showLoading(false);
+          App.showToast(err.message || 'Failed to update technician', 'error');
         });
-    };
-  }
-
-  window.TechSearch = function(q) {
-    _search = q.toLowerCase();
-    _filtered = _techs.filter(function(t) {
-      return (t.Name || '').toLowerCase().indexOf(_search) > -1 ||
-             (t.TechnicianID || t.ID || '').toLowerCase().indexOf(_search) > -1 ||
-             (t.Specialization || t.Skill || '').toLowerCase().indexOf(_search) > -1 ||
-             (t.Department || '').toLowerCase().indexOf(_search) > -1;
-    });
-    renderTable();
+    } else {
+      API.call('addTechnician', data)
+        .then(function(result) {
+          techniciansData = result || techniciansData;
+          App.showLoading(false);
+          hideModal('technicianFormModal');
+          App.showToast('Technician added successfully');
+          renderTechniciansTable();
+        })
+        .catch(function(err) {
+          App.showLoading(false);
+          App.showToast(err.message || 'Failed to add technician', 'error');
+        });
+    }
+    return false;
   };
 
-  window.TechCreate = function() { showForm('Add Technician', null); };
-
-  window.TechEdit = function(id) {
-    var t = _techs.find(function(x) { return (x.TechnicianID || x.ID) === id; });
-    if (t) showForm('Edit Technician', t);
-  };
-
-  window.TechDelete = function(id) {
-    var t = _techs.find(function(x) { return (x.TechnicianID || x.ID) === id; });
-    App.showConfirm('Delete Technician', 'Delete ' + (t ? t.Name : id) + '?', function() {
+  window.deleteTechnician = function(id) {
+    showConfirm('Delete Technician', 'Are you sure you want to delete this technician?', function() {
+      App.showLoading(true);
       API.call('deleteTechnician', { id: id })
-        .then(function() { App.showToast('Technician deleted', 'success'); load(); })
-        .catch(function(err) { App.showToast('Error: ' + err.message, 'error'); });
+        .then(function(result) {
+          techniciansData = result || techniciansData;
+          App.showLoading(false);
+          App.showToast('Technician deleted successfully');
+          renderTechniciansTable();
+        })
+        .catch(function(err) {
+          App.showLoading(false);
+          App.showToast('Failed to delete technician', 'error');
+        });
     });
+  };
+
+  window.searchTechniciansTable = function() {
+    var query = document.getElementById('technicianSearch').value;
+    if (!query) { renderTechniciansTable(); return; }
+    App.showLoading(true);
+    API.call('searchTechnicians', { query: query })
+      .then(function(result) {
+        techniciansData = result;
+        App.showLoading(false);
+        techniciansPage = 1;
+        renderTechniciansTable();
+      })
+      .catch(function(err) {
+        App.showLoading(false);
+        App.showToast('Search failed', 'error');
+      });
   };
 })();

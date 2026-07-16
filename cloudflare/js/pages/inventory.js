@@ -1,119 +1,841 @@
 /* ============================================================
-   inventory.js — Inventory Dashboard Page Module
-   Standard-021: Cloudflare Pages Frontend
+   inventory.js — Inventory Dashboard Page Module (GAS-identical)
+   Matches InventoryPage.html features: stat cards, 6 tabs,
+   filter bar, CRUD modals, CSV export
    ============================================================ */
 
 (function() {
-  var _transactions = [];
-  var _filtered = [];
-  var _search = '';
-  var _tab = 'all';
+  var invData = [];
+  var invPage = 1;
+  var invActiveTab = 'all';
+  var invPartsCache = [];
+  var invSearchDebounce = null;
 
   App.registerPage('inventory', render, load);
 
   function render() {
     var el = document.getElementById('page-inventory');
-    el.innerHTML = '' +
-      '<div class="page-header">' +
-        '<h2>Inventory</h2>' +
-        '<div style="display:flex;gap:8px">' +
-          '<button class="btn btn-secondary" onclick="App.navigateTo(\'goodsreceipt\')">&#128230; Goods Receipt</button>' +
+    if (!el) return;
+    el.innerHTML =
+      '<div id="inventoryPage">' +
+        '<div class="dashboard-grid" id="invDashboardCards" style="margin-bottom:16px">' +
+          '<div class="stat-card stat-primary" onclick="Inv.switchTab(\'all\')" style="cursor:pointer">' +
+            '<div class="stat-inner">' +
+              '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg></div>' +
+              '<div class="stat-info"><h3 id="invTotalStockValue">0.00</h3><p>Total Stock Value</p></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="stat-card stat-warning" style="cursor:pointer">' +
+            '<div class="stat-inner">' +
+              '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2L2 18h16L10 2z"/><line x1="10" y1="8" x2="10" y2="12"/><line x1="10" y1="14" x2="10.01" y2="14"/></svg></div>' +
+              '<div class="stat-info"><h3 id="invLowStockCount">0</h3><p>Low Stock Items</p></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="stat-card stat-danger" style="cursor:pointer">' +
+            '<div class="stat-inner">' +
+              '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>' +
+              '<div class="stat-info"><h3 id="invOutOfStockCount">0</h3><p>Out of Stock Items</p></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="stat-card stat-info">' +
+            '<div class="stat-inner">' +
+              '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>' +
+              '<div class="stat-info"><h3 id="invTotalTransactions">0</h3><p>Total Transactions</p></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="workflow-tabs" id="invWorkflowTabs">' +
+          '<button class="workflow-tab active" data-tab="all" onclick="Inv.switchTab(\'all\', this)">' +
+            '<span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>' +
+            '<span class="tab-label">All Transactions</span>' +
+          '</button>' +
+          '<button class="workflow-tab" data-tab="grn" onclick="Inv.switchTab(\'grn\', this)">' +
+            '<span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></span>' +
+            '<span class="tab-label">Goods Receipt</span>' +
+          '</button>' +
+          '<button class="workflow-tab" data-tab="issue" onclick="Inv.switchTab(\'issue\', this)">' +
+            '<span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></span>' +
+            '<span class="tab-label">Issue</span>' +
+          '</button>' +
+          '<button class="workflow-tab" data-tab="return" onclick="Inv.switchTab(\'return\', this)">' +
+            '<span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v6a2 2 0 002 2h12a2 2 0 002-2v-6"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span>' +
+            '<span class="tab-label">Return</span>' +
+          '</button>' +
+          '<button class="workflow-tab" data-tab="transfer" onclick="Inv.switchTab(\'transfer\', this)">' +
+            '<span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></span>' +
+            '<span class="tab-label">Transfer</span>' +
+          '</button>' +
+          '<button class="workflow-tab" data-tab="adjustment" onclick="Inv.switchTab(\'adjustment\', this)">' +
+            '<span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></span>' +
+            '<span class="tab-label">Adjustment</span>' +
+          '</button>' +
+        '</div>' +
+        '<div class="filter-bar" id="invFilterBar">' +
+          '<div class="form-group">' +
+            '<label>Search</label>' +
+            '<div class="search-box">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+              '<input type="text" class="form-control" id="invSearch" placeholder="Search transactions..." onkeyup="Inv.searchTable()">' +
+            '</div>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>From Date</label>' +
+            '<input type="date" class="form-control" id="invFilterFromDate">' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>To Date</label>' +
+            '<input type="date" class="form-control" id="invFilterToDate">' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>Part</label>' +
+            '<select class="form-control" id="invFilterPart">' +
+              '<option value="">All Parts</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>Type</label>' +
+            '<select class="form-control" id="invFilterType">' +
+              '<option value="">All Types</option>' +
+              '<option value="Goods Receipt">Goods Receipt</option>' +
+              '<option value="Issue">Issue</option>' +
+              '<option value="Return">Return</option>' +
+              '<option value="Transfer">Transfer</option>' +
+              '<option value="Adjustment">Adjustment</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="form-group" style="align-self:flex-end">' +
+            '<button class="btn btn-primary btn-sm" onclick="Inv.applyFilter()">Apply</button>' +
+            '<button class="btn btn-secondary btn-sm" onclick="Inv.clearFilter()">Clear</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="card">' +
+          '<div class="card-header">' +
+            '<div class="card-title" id="invCardTitle">All Transactions</div>' +
+            '<div class="card-actions" id="invCardActions">' +
+              '<button class="btn btn-secondary" onclick="Inv.exportCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>' +
+            '</div>' +
+          '</div>' +
+          '<div id="invTableContainer"></div>' +
         '</div>' +
       '</div>' +
-      '<div class="grid grid-4" style="margin-bottom:16px">' +
-        '<div class="card stat-card"><div class="stat-label">Total Parts</div><div class="stat-value" id="inv-total">-</div></div>' +
-        '<div class="card stat-card"><div class="stat-label">Stock Value</div><div class="stat-value" id="inv-value">-</div></div>' +
-        '<div class="card stat-card"><div class="stat-label">Low Stock</div><div class="stat-value" style="color:var(--warning)" id="inv-low">-</div></div>' +
-        '<div class="card stat-card"><div class="stat-label">Transactions</div><div class="stat-value" id="inv-txns">-</div></div>' +
+      '<div class="modal-overlay" id="grnModal" style="display:none">' +
+        '<div class="modal modal-wide" style="max-width:700px">' +
+          '<div class="modal-header">' +
+            '<div class="modal-title" id="grnFormTitle">New Goods Receipt (GRN)</div>' +
+            '<button class="modal-close" onclick="hideModal(\'grnModal\')">&times;</button>' +
+          '</div>' +
+          '<form id="grnForm" onsubmit="return Inv.saveGRN(event)">' +
+            '<div class="modal-body">' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>GRN No</label>' +
+                  '<input type="text" name="GRNNo" class="form-control" id="grnNo" readonly placeholder="Auto-generated">' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Part Code *</label>' +
+                  '<select name="PartCode" class="form-control" id="grnPartCode" required onchange="Inv.onPartChange(\'grn\')">' +
+                    '<option value="">Select Part</option>' +
+                  '</select>' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Part Name</label>' +
+                  '<input type="text" name="PartName" class="form-control" id="grnPartName" readonly>' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Current Stock</label>' +
+                  '<input type="text" class="form-control" id="grnCurrentStock" readonly value="0">' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-row-3">' +
+                '<div class="form-group">' +
+                  '<label>Quantity *</label>' +
+                  '<input type="number" name="Quantity" class="form-control" id="grnQuantity" required min="0" step="0.01" oninput="Inv.calcTotal(\'grn\')">' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Unit Cost</label>' +
+                  '<input type="number" name="UnitCost" class="form-control" id="grnUnitCost" min="0" step="0.01" oninput="Inv.calcTotal(\'grn\')">' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Total Cost</label>' +
+                  '<input type="text" class="form-control" id="grnTotalCost" readonly value="0.00">' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-row-3">' +
+                '<div class="form-group">' +
+                  '<label>Supplier</label>' +
+                  '<input type="text" name="Supplier" class="form-control" id="grnSupplier">' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Invoice No</label>' +
+                  '<input type="text" name="InvoiceNo" class="form-control">' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>PO No</label>' +
+                  '<input type="text" name="PONo" class="form-control">' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Received Date</label>' +
+                  '<input type="datetime-local" name="ReceivedDate" class="form-control" id="grnReceivedDate">' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Remarks</label>' +
+                  '<textarea name="Remarks" class="form-control" rows="2"></textarea>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button type="button" class="btn btn-secondary" onclick="hideModal(\'grnModal\')">Cancel</button>' +
+              '<button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save GRN</button>' +
+            '</div>' +
+          '</form>' +
+        '</div>' +
       '</div>' +
-      '<div class="tabs">' +
-        '<button class="tab active" onclick="InvTab(this,\'all\')">All Transactions</button>' +
-        '<button class="tab" onclick="InvTab(this,\'receipt\')">Receipts</button>' +
-        '<button class="tab" onclick="InvTab(this,\'issue\')">Issues</button>' +
-        '<button class="tab" onclick="InvTab(this,\'return\')">Returns</button>' +
+      '<div class="modal-overlay" id="issueModal" style="display:none">' +
+        '<div class="modal" style="max-width:550px">' +
+          '<div class="modal-header">' +
+            '<div class="modal-title" id="issueFormTitle">New Issue</div>' +
+            '<button class="modal-close" onclick="hideModal(\'issueModal\')">&times;</button>' +
+          '</div>' +
+          '<form id="issueForm" onsubmit="return Inv.saveIssue(event)">' +
+            '<div class="modal-body">' +
+              '<div class="form-group">' +
+                '<label>Part Code *</label>' +
+                '<select name="PartCode" class="form-control" id="issuePartCode" required onchange="Inv.onPartChange(\'issue\')">' +
+                  '<option value="">Select Part</option>' +
+                '</select>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Part Name</label>' +
+                  '<input type="text" name="PartName" class="form-control" id="issuePartName" readonly>' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Available Stock</label>' +
+                  '<input type="text" class="form-control" id="issueCurrentStock" readonly value="0">' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label>Quantity *</label>' +
+                '<input type="number" name="Quantity" class="form-control" required min="0.01" step="0.01">' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Reference No</label>' +
+                  '<input type="text" name="ReferenceNo" class="form-control">' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Remarks</label>' +
+                  '<textarea name="Remarks" class="form-control" rows="2"></textarea>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button type="button" class="btn btn-secondary" onclick="hideModal(\'issueModal\')">Cancel</button>' +
+              '<button type="submit" class="btn btn-warning"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg> Issue</button>' +
+            '</div>' +
+          '</form>' +
+        '</div>' +
       '</div>' +
-      '<div class="card"><div class="table-container" id="inv-table"></div></div>';
+      '<div class="modal-overlay" id="returnModal" style="display:none">' +
+        '<div class="modal" style="max-width:550px">' +
+          '<div class="modal-header">' +
+            '<div class="modal-title" id="returnFormTitle">New Return</div>' +
+            '<button class="modal-close" onclick="hideModal(\'returnModal\')">&times;</button>' +
+          '</div>' +
+          '<form id="returnForm" onsubmit="return Inv.saveReturn(event)">' +
+            '<div class="modal-body">' +
+              '<div class="form-group">' +
+                '<label>Part Code *</label>' +
+                '<select name="PartCode" class="form-control" id="returnPartCode" required onchange="Inv.onPartChange(\'return\')">' +
+                  '<option value="">Select Part</option>' +
+                '</select>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Part Name</label>' +
+                  '<input type="text" name="PartName" class="form-control" id="returnPartName" readonly>' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Current Stock</label>' +
+                  '<input type="text" class="form-control" id="returnCurrentStock" readonly value="0">' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label>Quantity *</label>' +
+                '<input type="number" name="Quantity" class="form-control" required min="0.01" step="0.01">' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Reference No</label>' +
+                  '<input type="text" name="ReferenceNo" class="form-control">' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Remarks</label>' +
+                  '<textarea name="Remarks" class="form-control" rows="2"></textarea>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button type="button" class="btn btn-secondary" onclick="hideModal(\'returnModal\')">Cancel</button>' +
+              '<button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M4 12v6a2 2 0 002 2h12a2 2 0 002-2v-6"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Return</button>' +
+            '</div>' +
+          '</form>' +
+        '</div>' +
+      '</div>' +
+      '<div class="modal-overlay" id="transferModal" style="display:none">' +
+        '<div class="modal" style="max-width:550px">' +
+          '<div class="modal-header">' +
+            '<div class="modal-title" id="transferFormTitle">New Transfer</div>' +
+            '<button class="modal-close" onclick="hideModal(\'transferModal\')">&times;</button>' +
+          '</div>' +
+          '<form id="transferForm" onsubmit="return Inv.saveTransfer(event)">' +
+            '<div class="modal-body">' +
+              '<div class="form-group">' +
+                '<label>Part Code *</label>' +
+                '<select name="PartCode" class="form-control" id="transferPartCode" required onchange="Inv.onPartChange(\'transfer\')">' +
+                  '<option value="">Select Part</option>' +
+                '</select>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Part Name</label>' +
+                  '<input type="text" name="PartName" class="form-control" id="transferPartName" readonly>' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Current Stock</label>' +
+                  '<input type="text" class="form-control" id="transferCurrentStock" readonly value="0">' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Quantity *</label>' +
+                  '<input type="number" name="Quantity" class="form-control" required min="0.01" step="0.01">' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>From Location</label>' +
+                  '<input type="text" name="FromLocation" class="form-control" id="transferFromLocation" readonly>' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label>To Location *</label>' +
+                '<input type="text" name="ToLocation" class="form-control" required>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label>Remarks</label>' +
+                '<textarea name="Remarks" class="form-control" rows="2"></textarea>' +
+              '</div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button type="button" class="btn btn-secondary" onclick="hideModal(\'transferModal\')">Cancel</button>' +
+              '<button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg> Transfer</button>' +
+            '</div>' +
+          '</form>' +
+        '</div>' +
+      '</div>' +
+      '<div class="modal-overlay" id="adjustmentModal" style="display:none">' +
+        '<div class="modal" style="max-width:550px">' +
+          '<div class="modal-header">' +
+            '<div class="modal-title" id="adjustmentFormTitle">New Stock Adjustment</div>' +
+            '<button class="modal-close" onclick="hideModal(\'adjustmentModal\')">&times;</button>' +
+          '</div>' +
+          '<form id="adjustmentForm" onsubmit="return Inv.saveAdjustment(event)">' +
+            '<div class="modal-body">' +
+              '<div class="form-group">' +
+                '<label>Part Code *</label>' +
+                '<select name="PartCode" class="form-control" id="adjustmentPartCode" required onchange="Inv.onPartChange(\'adjustment\')">' +
+                  '<option value="">Select Part</option>' +
+                '</select>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group">' +
+                  '<label>Part Name</label>' +
+                  '<input type="text" name="PartName" class="form-control" id="adjustmentPartName" readonly>' +
+                '</div>' +
+                '<div class="form-group">' +
+                  '<label>Current Stock</label>' +
+                  '<input type="text" class="form-control" id="adjustmentCurrentStock" readonly value="0">' +
+                '</div>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label>Quantity * (+ for increase, - for decrease)</label>' +
+                '<input type="number" name="Quantity" class="form-control" required step="0.01" placeholder="e.g. 10 or -5">' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label>Reason *</label>' +
+                '<input type="text" name="Reason" class="form-control" id="adjustmentReason" required placeholder="Reason for adjustment">' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label>Remarks</label>' +
+                '<textarea name="Remarks" class="form-control" rows="2"></textarea>' +
+              '</div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+              '<button type="button" class="btn btn-secondary" onclick="hideModal(\'adjustmentModal\')">Cancel</button>' +
+              '<button type="submit" class="btn btn-warning"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> Adjust</button>' +
+            '</div>' +
+          '</form>' +
+        '</div>' +
+      '</div>';
   }
 
   function load() {
     App.showLoading(true);
     API.call('getInventoryDashboardData')
-      .then(function(data) {
+      .then(function(result) {
+        invData = result.recentTransactions || result || [];
         App.showLoading(false);
-        App.setText('inv-total', data.totalParts || 0);
-        App.setText('inv-value', data.stockValue || 'Rs. 0');
-        App.setText('inv-low', data.lowStock || 0);
-        App.setText('inv-txns', data.totalTransactions || 0);
-      })
-      .catch(function() {
-        App.showLoading(false);
-      });
-
-    App.showLoading(true);
-    API.call('getAllTransactions')
-      .then(function(data) {
-        _transactions = data || [];
-        _filtered = _transactions;
-        App.showLoading(false);
-        renderTable();
+        updateDashboard(result);
+        renderTableData();
+        loadFilterParts();
       })
       .catch(function(err) {
         App.showLoading(false);
-        App.showToast('Failed to load transactions: ' + err.message, 'error');
+        App.showToast('Failed to load inventory data', 'error');
       });
   }
 
-  function renderTable() {
-    var el = document.getElementById('inv-table');
-    if (!el) return;
-    var list = getFilteredList();
-    if (list.length === 0) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128218;</div><div class="empty-state-text">No transactions found</div></div>';
-      return;
+  function updateDashboard(data) {
+    if (!data) return;
+    var el;
+    el = document.getElementById('invTotalStockValue'); if (el) el.textContent = parseFloat(data.totalStockValue || 0).toFixed(2);
+    el = document.getElementById('invLowStockCount'); if (el) el.textContent = data.lowStockCount || 0;
+    el = document.getElementById('invOutOfStockCount'); if (el) el.textContent = data.outOfStockCount || 0;
+    el = document.getElementById('invTotalTransactions'); if (el) el.textContent = (invData && invData.length) || 0;
+  }
+
+  function renderTableData() {
+    var data = invData || [];
+    var columns, actions;
+    if (invActiveTab === 'all') {
+      columns = [
+        { key: 'TransactionID', label: 'Transaction ID' },
+        { key: 'CreatedAt', label: 'Date', datetime: true },
+        { key: 'TransactionType', label: 'Type', badge: true, badgeMap: { 'Goods Receipt': 'success', 'Issue': 'warning', 'Return': 'info', 'Transfer': 'primary', 'Adjustment': 'danger' } },
+        { key: 'PartCode', label: 'Part Code' },
+        { key: 'PartName', label: 'Part Name' },
+        { key: 'Quantity', label: 'Qty' },
+        { key: 'UnitCost', label: 'Unit Cost', format: function(v) { return parseFloat(v || 0).toFixed(2); } },
+        { key: 'TotalCost', label: 'Total Cost', format: function(v) { return parseFloat(v || 0).toFixed(2); } },
+        { key: 'ReferenceNo', label: 'Reference No' },
+        { key: 'Remarks', label: 'Remarks' }
+      ];
+      actions = null;
+    } else if (invActiveTab === 'grn') {
+      columns = [
+        { key: 'ReferenceNo', label: 'GRN No' },
+        { key: 'PartCode', label: 'Part Code' },
+        { key: 'PartName', label: 'Part Name' },
+        { key: 'Quantity', label: 'Qty' },
+        { key: 'UnitCost', label: 'Unit Cost', format: function(v) { return parseFloat(v || 0).toFixed(2); } },
+        { key: 'TotalCost', label: 'Total Cost', format: function(v) { return parseFloat(v || 0).toFixed(2); } },
+        { key: 'Supplier', label: 'Supplier' },
+        { key: 'InvoiceNo', label: 'Invoice No' },
+        { key: 'CreatedAt', label: 'Received Date', datetime: true },
+        { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Received': 'success', 'Pending': 'warning', 'Cancelled': 'danger' } }
+      ];
+      actions = null;
+    } else if (invActiveTab === 'issue') {
+      columns = [
+        { key: 'TransactionID', label: 'Transaction ID' },
+        { key: 'PartCode', label: 'Part Code' },
+        { key: 'PartName', label: 'Part Name' },
+        { key: 'Quantity', label: 'Qty' },
+        { key: 'ReferenceNo', label: 'Reference No' },
+        { key: 'ProcessedBy', label: 'Processed By' },
+        { key: 'CreatedAt', label: 'Date', datetime: true }
+      ];
+      actions = null;
+    } else if (invActiveTab === 'return') {
+      columns = [
+        { key: 'TransactionID', label: 'Transaction ID' },
+        { key: 'PartCode', label: 'Part Code' },
+        { key: 'PartName', label: 'Part Name' },
+        { key: 'Quantity', label: 'Qty' },
+        { key: 'Remarks', label: 'Remarks' },
+        { key: 'CreatedAt', label: 'Date', datetime: true }
+      ];
+      actions = null;
+    } else if (invActiveTab === 'transfer') {
+      columns = [
+        { key: 'TransactionID', label: 'Transaction ID' },
+        { key: 'PartCode', label: 'Part Code' },
+        { key: 'PartName', label: 'Part Name' },
+        { key: 'Quantity', label: 'Qty' },
+        { key: 'FromLocation', label: 'From Location' },
+        { key: 'ToLocation', label: 'To Location' },
+        { key: 'CreatedAt', label: 'Date', datetime: true }
+      ];
+      actions = null;
+    } else if (invActiveTab === 'adjustment') {
+      columns = [
+        { key: 'TransactionID', label: 'Transaction ID' },
+        { key: 'PartCode', label: 'Part Code' },
+        { key: 'PartName', label: 'Part Name' },
+        { key: 'Quantity', label: 'Qty' },
+        { key: 'Remarks', label: 'Reason' },
+        { key: 'CreatedAt', label: 'Date', datetime: true }
+      ];
+      actions = null;
     }
-    var html = '<table><thead><tr><th>ID</th><th>Type</th><th>Part</th><th>Qty</th><th>From/To</th><th>Reference</th><th>Date</th></tr></thead><tbody>';
-    list.forEach(function(t) {
-      var typeBadge = 'badge-secondary';
-      var typeText = t.Type || t.TransactionType || '';
-      if (typeText.toLowerCase() === 'receipt') typeBadge = 'badge-success';
-      else if (typeText.toLowerCase() === 'issue') typeBadge = 'badge-warning';
-      else if (typeText.toLowerCase() === 'return') typeBadge = 'badge-info';
-      html += '<tr>' +
-        '<td><strong>' + App.escHtml(t.TransactionID || t.ID || '') + '</strong></td>' +
-        '<td><span class="badge ' + typeBadge + '">' + App.escHtml(typeText) + '</span></td>' +
-        '<td>' + App.escHtml(t.PartCode || t.PartName || '') + '</td>' +
-        '<td>' + App.escHtml(t.Quantity || t.Qty || '') + '</td>' +
-        '<td>' + App.escHtml(t.FromLocation || t.ToLocation || t.Location || '') + '</td>' +
-        '<td>' + App.escHtml(t.Reference || t.JobCardNo || '') + '</td>' +
-        '<td>' + App.timeAgo(t.Date || t.TransactionDate) + '</td>' +
-        '</tr>';
+    renderTable(data, columns, actions, invPage, PAGE_SIZE, 'invTableContainer');
+    registerPageState('invTableContainer', function(p) { invPage = p; renderTableData(); });
+  }
+
+  function loadPartsForSelect(selectId) {
+    API.call('getSpareParts')
+      .then(function(data) {
+        invPartsCache = data || [];
+        populateSelectFromParts(selectId, invPartsCache);
+      })
+      .catch(function() {});
+  }
+
+  function populateSelectFromParts(selectId, parts) {
+    var sel = document.getElementById(selectId);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Select Part</option>';
+    parts.forEach(function(p) {
+      var opt = document.createElement('option');
+      opt.value = p.PartCode;
+      opt.textContent = p.PartCode + ' - ' + p.PartName;
+      sel.appendChild(opt);
     });
-    html += '</tbody></table>';
-    el.innerHTML = html;
   }
 
-  function getFilteredList() {
-    var list = _transactions;
-    if (_tab !== 'all') {
-      list = list.filter(function(t) {
-        return (t.Type || t.TransactionType || '').toLowerCase() === _tab;
-      });
-    }
-    if (_search) {
-      var q = _search.toLowerCase();
-      list = list.filter(function(t) {
-        return (t.PartCode || '').toLowerCase().indexOf(q) > -1 ||
-               (t.PartName || '').toLowerCase().indexOf(q) > -1 ||
-               (t.TransactionID || t.ID || '').toLowerCase().indexOf(q) > -1;
-      });
-    }
-    return list;
+  function loadFilterParts() {
+    API.call('getSpareParts')
+      .then(function(data) {
+        var parts = data || [];
+        var sel = document.getElementById('invFilterPart');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">All Parts</option>';
+        parts.forEach(function(p) {
+          var opt = document.createElement('option');
+          opt.value = p.PartCode;
+          opt.textContent = p.PartCode + ' - ' + p.PartName;
+          sel.appendChild(opt);
+        });
+      })
+      .catch(function() {});
   }
 
-  window.InvTab = function(btn, tab) {
-    document.querySelectorAll('.tabs .tab').forEach(function(t) { t.classList.remove('active'); });
-    btn.classList.add('active');
-    _tab = tab;
-    renderTable();
+  function autoFillDateTime(elementId) {
+    var now = new Date();
+    var y = now.getFullYear();
+    var m = String(now.getMonth() + 1).padStart(2, '0');
+    var d = String(now.getDate()).padStart(2, '0');
+    var h = String(now.getHours()).padStart(2, '0');
+    var mi = String(now.getMinutes()).padStart(2, '0');
+    var el = document.getElementById(elementId);
+    if (el) el.value = y + '-' + m + '-' + d + 'T' + h + ':' + mi;
+  }
+
+  // === Public API ===
+  window.Inv = {};
+
+  Inv.switchTab = function(tab, btn) {
+    invActiveTab = tab;
+    invPage = 1;
+    document.querySelectorAll('#inventoryPage .workflow-tab').forEach(function(b) { b.classList.remove('active'); });
+    if (btn) {
+      btn.classList.add('active');
+    } else {
+      var tabEl = document.querySelector('#inventoryPage .workflow-tab[data-tab="' + tab + '"]');
+      if (tabEl) tabEl.classList.add('active');
+    }
+    var titleMap = { all: 'All Transactions', grn: 'Goods Receipt (GRN)', issue: 'Issue', return: 'Return', transfer: 'Transfer', adjustment: 'Adjustment' };
+    var cardTitle = document.getElementById('invCardTitle'); if (cardTitle) cardTitle.textContent = titleMap[tab] || 'Transactions';
+    var actionsEl = document.getElementById('invCardActions');
+    if (actionsEl) {
+      if (tab === 'all') {
+        actionsEl.innerHTML = '<button class="btn btn-secondary" onclick="Inv.exportCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>';
+      } else if (tab === 'grn') {
+        actionsEl.innerHTML = '<button class="btn btn-success" onclick="Inv.openGRNForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> New GRN</button>' +
+          '<button class="btn btn-secondary" onclick="Inv.exportCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>';
+      } else if (tab === 'issue') {
+        actionsEl.innerHTML = '<button class="btn btn-warning" onclick="Inv.openIssueForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> New Issue</button>' +
+          '<button class="btn btn-secondary" onclick="Inv.exportCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>';
+      } else if (tab === 'return') {
+        actionsEl.innerHTML = '<button class="btn btn-primary" onclick="Inv.openReturnForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> New Return</button>' +
+          '<button class="btn btn-secondary" onclick="Inv.exportCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>';
+      } else if (tab === 'transfer') {
+        actionsEl.innerHTML = '<button class="btn btn-primary" onclick="Inv.openTransferForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> New Transfer</button>' +
+          '<button class="btn btn-secondary" onclick="Inv.exportCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>';
+      } else if (tab === 'adjustment') {
+        actionsEl.innerHTML = '<button class="btn btn-warning" onclick="Inv.openAdjustmentForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> New Adjustment</button>' +
+          '<button class="btn btn-secondary" onclick="Inv.exportCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>';
+      }
+    }
+    App.showLoading(true);
+    var fnMap = { all: 'getAllTransactions', grn: 'getTransactionsByType', issue: 'getTransactionsByType', return: 'getTransactionsByType', transfer: 'getTransactionsByType', adjustment: 'getTransactionsByType' };
+    var typeArg = tab === 'all' ? undefined : (tab === 'grn' ? 'Goods Receipt' : tab.charAt(0).toUpperCase() + tab.slice(1));
+    var callData = typeArg ? { type: typeArg } : {};
+    API.call(fnMap[tab], callData)
+      .then(function(data) {
+        invData = data || [];
+        App.showLoading(false);
+        renderTableData();
+      })
+      .catch(function(err) {
+        App.showLoading(false);
+        App.showToast('Failed to load transactions', 'error');
+      });
+  };
+
+  Inv.onPartChange = function(prefix) {
+    var partCode = document.getElementById(prefix + 'PartCode').value;
+    var part = invPartsCache.find(function(p) { return p.PartCode === partCode; });
+    if (part) {
+      var partNameEl = document.getElementById(prefix + 'PartName'); if (partNameEl) partNameEl.value = part.PartName || '';
+      var stockEl = document.getElementById(prefix + 'CurrentStock');
+      if (stockEl) stockEl.value = part.CurrentStock || 0;
+      var costEl = document.getElementById(prefix + 'UnitCost');
+      if (costEl && !costEl.value) costEl.value = part.UnitCost || 0;
+      var fromLocEl = document.getElementById(prefix + 'FromLocation');
+      if (fromLocEl) fromLocEl.value = part.StoreLocation || '';
+      Inv.calcTotal(prefix);
+    } else {
+      var pnEl = document.getElementById(prefix + 'PartName'); if (pnEl) pnEl.value = '';
+      var stEl = document.getElementById(prefix + 'CurrentStock');
+      if (stEl) stEl.value = '0';
+      var flEl = document.getElementById(prefix + 'FromLocation');
+      if (flEl) flEl.value = '';
+    }
+  };
+
+  Inv.calcTotal = function(prefix) {
+    var qty = parseFloat(document.getElementById(prefix + 'Quantity').value) || 0;
+    var cost = parseFloat(document.getElementById(prefix + 'UnitCost').value) || 0;
+    var totalCostEl = document.getElementById(prefix + 'TotalCost');
+    if (totalCostEl) totalCostEl.value = (qty * cost).toFixed(2);
+  };
+
+  Inv.openGRNForm = function() {
+    resetForm('grnForm');
+    var grnNoEl = document.getElementById('grnNo'); if (grnNoEl) grnNoEl.value = 'Auto-generated';
+    if (invPartsCache.length === 0) { loadPartsForSelect('grnPartCode'); } else { populateSelectFromParts('grnPartCode', invPartsCache); }
+    autoFillDateTime('grnReceivedDate');
+    showModal('grnModal');
+  };
+
+  Inv.openIssueForm = function() {
+    resetForm('issueForm');
+    if (invPartsCache.length === 0) { loadPartsForSelect('issuePartCode'); } else { populateSelectFromParts('issuePartCode', invPartsCache); }
+    showModal('issueModal');
+  };
+
+  Inv.openReturnForm = function() {
+    resetForm('returnForm');
+    if (invPartsCache.length === 0) { loadPartsForSelect('returnPartCode'); } else { populateSelectFromParts('returnPartCode', invPartsCache); }
+    showModal('returnModal');
+  };
+
+  Inv.openTransferForm = function() {
+    resetForm('transferForm');
+    if (invPartsCache.length === 0) { loadPartsForSelect('transferPartCode'); } else { populateSelectFromParts('transferPartCode', invPartsCache); }
+    showModal('transferModal');
+  };
+
+  Inv.openAdjustmentForm = function() {
+    resetForm('adjustmentForm');
+    if (invPartsCache.length === 0) { loadPartsForSelect('adjustmentPartCode'); } else { populateSelectFromParts('adjustmentPartCode', invPartsCache); }
+    showModal('adjustmentModal');
+  };
+
+  Inv.saveGRN = function(e) {
+    e.preventDefault();
+    var data = getFormData('grnForm');
+    App.showLoading(true);
+    API.call('processGoodsReceipt', data)
+      .then(function(result) {
+        App.showLoading(false);
+        if (result && result.success) {
+          hideModal('grnModal');
+          App.showToast('GRN ' + (result.grnNo || '') + ' saved successfully', 'success');
+          Inv.switchTab('grn', document.querySelector('#inventoryPage .workflow-tab[data-tab="grn"]'));
+        } else {
+          App.showToast(result.message || 'Failed to save GRN', 'error');
+        }
+      })
+      .catch(function(err) {
+        App.showLoading(false);
+        App.showToast(err.message || 'Failed to save GRN', 'error');
+      });
+  };
+
+  Inv.saveIssue = function(e) {
+    e.preventDefault();
+    var data = getFormData('issueForm');
+    App.showLoading(true);
+    API.call('processIssue', data)
+      .then(function(result) {
+        App.showLoading(false);
+        if (result && result.success) {
+          hideModal('issueModal');
+          App.showToast('Issue ' + (result.transactionId || '') + ' saved successfully', 'success');
+          Inv.switchTab('issue', document.querySelector('#inventoryPage .workflow-tab[data-tab="issue"]'));
+        } else {
+          App.showToast(result.message || 'Failed to process issue', 'error');
+        }
+      })
+      .catch(function(err) {
+        App.showLoading(false);
+        App.showToast(err.message || 'Failed to process issue', 'error');
+      });
+  };
+
+  Inv.saveReturn = function(e) {
+    e.preventDefault();
+    var data = getFormData('returnForm');
+    App.showLoading(true);
+    API.call('processReturn', data)
+      .then(function(result) {
+        App.showLoading(false);
+        if (result && result.success) {
+          hideModal('returnModal');
+          App.showToast('Return ' + (result.transactionId || '') + ' saved successfully', 'success');
+          Inv.switchTab('return', document.querySelector('#inventoryPage .workflow-tab[data-tab="return"]'));
+        } else {
+          App.showToast(result.message || 'Failed to process return', 'error');
+        }
+      })
+      .catch(function(err) {
+        App.showLoading(false);
+        App.showToast(err.message || 'Failed to process return', 'error');
+      });
+  };
+
+  Inv.saveTransfer = function(e) {
+    e.preventDefault();
+    var data = getFormData('transferForm');
+    App.showLoading(true);
+    API.call('processTransfer', data)
+      .then(function(result) {
+        App.showLoading(false);
+        if (result && result.success) {
+          hideModal('transferModal');
+          App.showToast('Transfer ' + (result.transactionId || '') + ' saved successfully', 'success');
+          Inv.switchTab('transfer', document.querySelector('#inventoryPage .workflow-tab[data-tab="transfer"]'));
+        } else {
+          App.showToast(result.message || 'Failed to process transfer', 'error');
+        }
+      })
+      .catch(function(err) {
+        App.showLoading(false);
+        App.showToast(err.message || 'Failed to process transfer', 'error');
+      });
+  };
+
+  Inv.saveAdjustment = function(e) {
+    e.preventDefault();
+    var data = getFormData('adjustmentForm');
+    var reasonEl = document.getElementById('adjustmentReason');
+    data.Remarks = (reasonEl ? reasonEl.value : '') + (data.Remarks ? ' - ' + data.Remarks : '');
+    App.showLoading(true);
+    API.call('processAdjustment', data)
+      .then(function(result) {
+        App.showLoading(false);
+        if (result && result.success) {
+          hideModal('adjustmentModal');
+          App.showToast('Adjustment ' + (result.transactionId || '') + ' saved successfully', 'success');
+          Inv.switchTab('adjustment', document.querySelector('#inventoryPage .workflow-tab[data-tab="adjustment"]'));
+        } else {
+          App.showToast(result.message || 'Failed to process adjustment', 'error');
+        }
+      })
+      .catch(function(err) {
+        App.showLoading(false);
+        App.showToast(err.message || 'Failed to process adjustment', 'error');
+      });
+  };
+
+  Inv.searchTable = function() {
+    var query = document.getElementById('invSearch').value;
+    if (!query) { renderTableData(); return; }
+    if (invSearchDebounce) clearTimeout(invSearchDebounce);
+    invSearchDebounce = setTimeout(function() {
+      App.showLoading(true);
+      API.call('searchTransactions', { query: query })
+        .then(function(result) {
+          invData = result;
+          App.showLoading(false);
+          invPage = 1;
+          renderTableData();
+        })
+        .catch(function(err) {
+          App.showLoading(false);
+          App.showToast('Search failed', 'error');
+        });
+    }, 300);
+  };
+
+  Inv.applyFilter = function() {
+    var fromDate = document.getElementById('invFilterFromDate').value;
+    var toDate = document.getElementById('invFilterToDate').value;
+    var partCode = document.getElementById('invFilterPart').value;
+    var type = document.getElementById('invFilterType').value;
+    App.showLoading(true);
+    if (fromDate && toDate) {
+      API.call('getTransactionsByDateRange', { fromDate: fromDate, toDate: toDate })
+        .then(function(data) { invData = data; App.showLoading(false); invPage = 1; renderTableData(); })
+        .catch(function(err) { App.showLoading(false); App.showToast('Filter failed', 'error'); });
+    } else if (partCode) {
+      API.call('getTransactionsByPart', { partCode: partCode })
+        .then(function(data) { invData = data; App.showLoading(false); invPage = 1; renderTableData(); })
+        .catch(function(err) { App.showLoading(false); App.showToast('Filter failed', 'error'); });
+    } else if (type) {
+      API.call('getTransactionsByType', { type: type })
+        .then(function(data) { invData = data; App.showLoading(false); invPage = 1; renderTableData(); })
+        .catch(function(err) { App.showLoading(false); App.showToast('Filter failed', 'error'); });
+    } else {
+      App.showLoading(false);
+      renderTableData();
+    }
+  };
+
+  Inv.clearFilter = function() {
+    var el;
+    el = document.getElementById('invFilterFromDate'); if (el) el.value = '';
+    el = document.getElementById('invFilterToDate'); if (el) el.value = '';
+    el = document.getElementById('invFilterPart'); if (el) el.value = '';
+    el = document.getElementById('invFilterType'); if (el) el.value = '';
+    el = document.getElementById('invSearch'); if (el) el.value = '';
+    App.showLoading(true);
+    API.call('getAllTransactions')
+      .then(function(data) {
+        invData = data || [];
+        App.showLoading(false);
+        invPage = 1;
+        renderTableData();
+      })
+      .catch(function(err) {
+        App.showLoading(false);
+        App.showToast('Failed to reload data', 'error');
+      });
+  };
+
+  Inv.exportCSV = function() {
+    App.showLoading(true);
+    API.call('exportTransactionsCSV')
+      .then(function(csvData) {
+        App.showLoading(false);
+        if (!csvData) { App.showToast('No data to export', 'warning'); return; }
+        var blob = new Blob([csvData], { type: 'text/csv' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'InventoryTransactions_' + new Date().toISOString().slice(0, 10) + '.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+        App.showToast('Export completed', 'success');
+      })
+      .catch(function(err) {
+        App.showLoading(false);
+        App.showToast('Export failed', 'error');
+      });
   };
 })();

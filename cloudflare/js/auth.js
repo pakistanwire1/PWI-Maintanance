@@ -23,7 +23,7 @@ var Auth = (function() {
   }
 
   function login(email, password) {
-    return API.call('login', { email: email, password: password }, { retry: false })
+    return API.call('login', { email: email, password: password }, { retry: false, timeout: 90000 })
       .then(function(result) {
         /* result = { success: true, user: {...}, token: '...', expires: '...' }
            because API.call() resolves with the inner 'data' field from the API response */
@@ -79,6 +79,7 @@ var Auth = (function() {
   function canStartJobCard() { return hasPermission('canStartJobCard'); }
   function canCloseJobCard() { return hasPermission('canCloseJobCard'); }
   function canApproveJobCard() { return hasPermission('canApproveJobCard'); }
+  function canReviewPendingJobCard() { return hasPermission('reviewPendingJobCard'); }
   function canManageMachines() { return hasPermission('canManageMachines'); }
   function canManageAssets() { return hasPermission('canManageAssets'); }
   function canManageUsers() { return hasPermission('canManageUsers'); }
@@ -100,6 +101,7 @@ var Auth = (function() {
     canStartJobCard: canStartJobCard,
     canCloseJobCard: canCloseJobCard,
     canApproveJobCard: canApproveJobCard,
+    canReviewPendingJobCard: canReviewPendingJobCard,
     canManageMachines: canManageMachines,
     canManageAssets: canManageAssets,
     canManageUsers: canManageUsers,

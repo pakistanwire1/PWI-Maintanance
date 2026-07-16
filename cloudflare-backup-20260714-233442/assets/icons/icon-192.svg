@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="ig192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="40" fill="#0b0d14"/>
+  <rect x="12" y="12" width="168" height="168" rx="32" fill="url(#ig192)" opacity="0.15"/>
+  <rect x="12" y="12" width="168" height="168" rx="32" fill="url(#ig192)" opacity="0.9"/>
+  <text x="96" y="120" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="80" font-weight="800" fill="#fff">P</text>
+  <text x="96" y="158" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="18" font-weight="700" fill="rgba(255,255,255,0.7)" letter-spacing="4">CMMS</text>
+</svg>

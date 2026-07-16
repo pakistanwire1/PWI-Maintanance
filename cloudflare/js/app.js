@@ -67,21 +67,37 @@ var App = (function() {
     closeSidebar();
   }
 
+  var _scriptMap = {
+  };
+
   function loadPage(page) {
+    showLoading(true);
+    var safetyTimer = setTimeout(function() { showLoading(false); }, 15000);
     var entry = _pages[page];
     if (entry) {
-      if (entry.render) entry.render();
-      if (entry.load) entry.load();
+      try { if (entry.render) entry.render(); } catch(e) { console.error('Render error:', page, e); showLoading(false); clearTimeout(safetyTimer); return; }
+      try { if (entry.load) entry.load(); } catch(e) { console.error('Load error:', page, e); showLoading(false); clearTimeout(safetyTimer); return; }
+      clearTimeout(safetyTimer);
       return;
     }
-    loadScript('js/pages/' + page + '.js').then(function() {
+    var scriptName = _scriptMap[page] || page;
+    loadScript('js/pages/' + scriptName + '.js').then(function() {
       var entry2 = _pages[page];
+      if (!entry2) entry2 = _pages[scriptName];
       if (entry2) {
-        if (entry2.render) entry2.render();
-        if (entry2.load) entry2.load();
+        try { if (entry2.render) entry2.render(); } catch(e) { console.error('Render error:', page, e); showLoading(false); clearTimeout(safetyTimer); return; }
+        try { if (entry2.load) entry2.load(); } catch(e) { console.error('Load error:', page, e); showLoading(false); clearTimeout(safetyTimer); return; }
+        clearTimeout(safetyTimer);
+      } else {
+        showPagePlaceholder(page);
+        showLoading(false);
+        clearTimeout(safetyTimer);
       }
-    }).catch(function() {
+    }).catch(function(e) {
+      console.error('Script load error:', page, e);
       showPagePlaceholder(page);
+      showLoading(false);
+      clearTimeout(safetyTimer);
     });
   }
 
@@ -109,9 +125,10 @@ var App = (function() {
   function updateUserInfo() {
     var user = Auth.getUser();
     if (!user) return;
-    setText('user-name', user.name || '');
-    setText('user-role', user.role || '');
-    setText('user-email', user.email || '');
+    setText('userName', user.name || '');
+    setText('userRole', user.role || '');
+    setText('topbarName', user.name || '');
+    setText('topbarRole', user.role || '');
   }
 
   function setText(id, text) {
@@ -145,8 +162,8 @@ var App = (function() {
   }
 
   function showLoading(show) {
-    var el = document.getElementById('loading-overlay');
-    if (el) el.style.display = show ? 'flex' : 'none';
+    var el = document.getElementById('loadingOverlay');
+    if (el) { if (show) { el.classList.add('show'); } else { el.classList.remove('show'); } }
   }
 
   function showToast(message, type) {
@@ -187,12 +204,12 @@ var App = (function() {
 
   function closeSidebar() {
     var sb = document.getElementById('sidebar');
-    if (sb) sb.classList.remove('sidebar-open');
+    if (sb) sb.classList.remove('open');
   }
 
   function toggleSidebar() {
     var sb = document.getElementById('sidebar');
-    if (sb) sb.classList.toggle('sidebar-open');
+    if (sb) sb.classList.toggle('open');
   }
 
   function startClock() {
@@ -279,8 +296,208 @@ var App = (function() {
     formatDate: formatDate,
     formatDateTime: formatDateTime,
     timeAgo: timeAgo,
+    loadPage: loadPage,
     badgeColor: badgeColor
   };
 })();
 
-document.addEventListener('DOMContentLoaded', function() { App.init(); });
+/* ============================================================
+   Shared Utilities (Global) — matching GAS ScriptsPage.html
+   ============================================================ */
+
+var PAGE_SIZE = 10;
+
+var CONSTANTS = {
+  MACHINE_TYPES: ['CNC', 'Hydraulic', 'Pneumatic', 'Electrical', 'Mechanical', 'Robotic', 'Conveyor', 'Pump', 'Compressor', 'Generator', 'Other'],
+  SKILLS: ['Mechanical', 'Electrical', 'Hydraulic', 'Pneumatic', 'Electronics', 'Multi-Skill'],
+  SHIFTS: ['General', 'Morning', 'Afternoon', 'Night', 'Rotating'],
+  TECH_SKILLS: ['Mechanical', 'Electrical', 'PLC', 'Hydraulic', 'Pneumatic', 'Utility', 'Instrumentation'],
+  TECH_SHIFTS: ['General', 'A', 'B', 'C'],
+  UNITS: ['Pcs', 'Kg', 'Liter', 'Meter', 'Set', 'Box'],
+  CHECKLIST_CATEGORIES: ['Mechanical', 'Electrical', 'Hydraulic', 'Pneumatic', 'Safety', 'Quality', 'Daily', 'Weekly', 'Monthly'],
+  BREAKDOWN_TYPES: ['Mechanical Failure', 'Electrical Fault', 'Hydraulic Leak', 'Pneumatic Issue', 'Software Glitch', 'Sensor Malfunction', 'Wear & Tear', 'Operator Error', 'Overload', 'Vibration', 'Overheating', 'Other'],
+  MAINTENANCE_TEAMS: ['Mechanical Team', 'Electrical Team', 'Hydraulic Team', 'Pneumatic Team', 'Electronics Team', 'General Maintenance'],
+  ASSET_TYPES: ['Equipment', 'Tooling', 'Instrument', 'Fixture', 'Vehicle', 'Building', 'Infrastructure', 'Other'],
+  ASSET_CATEGORIES: ['Production', 'Utility', 'Safety', 'Quality', 'IT', 'Facility'],
+  ASSET_SUBCATEGORIES: ['Electrical', 'Mechanical', 'Hydraulic', 'Pneumatic', 'Electronic', 'Structural'],
+  SPARE_PART_CATEGORIES: ['Bearings', 'Seals', 'Filters', 'Belts', 'Lubricants', 'Electrical', 'Hydraulic', 'Pneumatic', 'Mechanical', 'Other'],
+  SPARE_PART_STATUSES: ['Active', 'Inactive'],
+  FREQUENCY_TYPES: ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Half Yearly', 'Yearly'],
+  PM_STATUSES: ['Scheduled', 'In Progress', 'Completed', 'Overdue', 'Missed'],
+  TRANSACTION_TYPES: ['Goods Receipt', 'Issue', 'Return', 'Transfer', 'Adjustment'],
+  PART_UNITS: ['Pcs', 'Kg', 'Liter', 'Meter', 'Set', 'Box', 'Pair', 'Roll', 'Bag'],
+  INVENTORY_LOCATIONS: ['Store A', 'Store B', 'Store C', 'Workshop', 'Warehouse']
+};
+
+var ICONS = {
+  edit: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M14.5 2.5a1.5 1.5 0 012 2L7 14l-3 1 1-3 9.5-9.5z"/></svg>',
+  trash: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M3 5h14"/><path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M16 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5"/><path d="M8 8v6"/><path d="M12 8v6"/></svg>',
+  view: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M1 10s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7z"/><circle cx="10" cy="10" r="2.5"/></svg>',
+  save: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>',
+  plus: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg>',
+  search: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg>',
+  refresh: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg>',
+  print: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg>',
+  download: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg>',
+  filter: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M4 3h12l-5 6.5V17l-2 1V9.5L4 3z"/></svg>',
+  close: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M12 8l-4 4"/><path d="M8 8l4 4"/><circle cx="10" cy="10" r="9"/></svg>',
+  start: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="10" cy="10" r="9"/><path d="M8 6l6 4-6 4V6z"/></svg>',
+  complete: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="10" cy="10" r="9"/><path d="M7 10l2 2 4-4"/></svg>',
+  check: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><polyline points="4 10 8 14 16 6"/></svg>'
+};
+
+function showModal(id) {
+  var el = document.getElementById(id);
+  if (el) { el.style.display = 'flex'; el.classList.add('show'); }
+}
+
+function hideModal(id) {
+  var el = document.getElementById(id);
+  if (el) { el.style.display = 'none'; el.classList.remove('show'); }
+}
+
+function getFormData(formId) {
+  var form = document.getElementById(formId);
+  if (!form) return {};
+  var data = {};
+  var elements = form.elements;
+  for (var i = 0; i < elements.length; i++) {
+    var el = elements[i];
+    var name = el.name || el.id;
+    if (!name) continue;
+    if (el.type === 'checkbox') { data[name] = el.checked; }
+    else if (el.type === 'radio') { if (el.checked) data[name] = el.value; }
+    else { data[name] = el.value; }
+  }
+  return data;
+}
+
+function setFormData(formId, data) {
+  var form = document.getElementById(formId);
+  if (!form) return;
+  form.querySelectorAll('[name]').forEach(function(el) {
+    if (data[el.name] !== undefined) el.value = data[el.name];
+  });
+}
+
+function resetForm(formId) {
+  var form = document.getElementById(formId);
+  if (form) form.reset();
+}
+
+function openModalForm(formId, title) {
+  setText(formId + 'Title', title);
+  showModal(formId + 'Modal');
+}
+
+function closeModalForm(formId) {
+  hideModal(formId + 'Modal');
+  resetForm(formId);
+}
+
+function renderTable(data, columns, actions, page, pageSize, containerId) {
+  containerId = containerId || 'tableContainer';
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  page = page || 1;
+  pageSize = pageSize || PAGE_SIZE;
+
+  if (!data || data.length === 0) {
+    container.innerHTML =
+      '<div class="empty-state">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>' +
+        '<h3>No Data Found</h3>' +
+        '<p>No records available in this module.</p>' +
+      '</div>';
+    return;
+  }
+
+  var totalPages = Math.ceil(data.length / pageSize);
+  var start = (page - 1) * pageSize;
+  var end = Math.min(start + pageSize, data.length);
+  var pageData = data.slice(start, end);
+
+  var html = '<div class="table-container"><table><thead><tr>';
+  columns.forEach(function(col) { html += '<th>' + (col.label || col) + '</th>'; });
+  if (actions) html += '<th style="width:120px">Actions</th>';
+  html += '</tr></thead><tbody>';
+
+  pageData.forEach(function(row) {
+    html += '<tr>';
+    columns.forEach(function(col) {
+      var key = col.key || col;
+      var val = row[key] !== undefined && row[key] !== null ? row[key] : '';
+      if (col.badge && col.badgeMap) {
+        var mapKey = val;
+        if (!(mapKey in col.badgeMap)) {
+          mapKey = Object.keys(col.badgeMap).find(function(k) { return k.toLowerCase() === String(val).toLowerCase(); }) || mapKey;
+        }
+        val = '<span class="badge badge-' + (col.badgeMap[mapKey] || 'primary') + '">' + val + '</span>';
+      }
+      if (col.format) val = col.format(val, row);
+      if (col.date) { var d = new Date(val); if (!isNaN(d.getTime())) val = formatDateTime(d).split(' | ')[0]; }
+      if (col.datetime) { var d = new Date(val); if (!isNaN(d.getTime())) val = formatDateTime(d); }
+      html += '<td>' + val + '</td>';
+    });
+    if (actions) {
+      html += '<td><div class="actions-cell">';
+      actions.forEach(function(action) {
+        if (action.condition && !action.condition(row)) return;
+        var idField = action.idField || Object.keys(row)[0];
+        var onclick = action.onclick ? action.onclick.replace(/\{id\}/g, row[idField]) : '';
+        if (action.icon && ICONS[action.icon]) {
+          html += '<button class="icon-btn icon-btn-' + (action.color || 'primary') + '" onclick="' + onclick + '" title="' + (action.label || '') + '">' + ICONS[action.icon] + '</button>';
+        } else {
+          html += '<button class="btn btn-sm ' + (action.class || 'btn-primary') + '" onclick="' + onclick + '" title="' + (action.label || '') + '">' + action.label + '</button>';
+        }
+      });
+      html += '</div></td>';
+    }
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+
+  if (totalPages > 1) {
+    html += '<div class="pagination">' +
+      '<div class="pagination-info">Showing ' + (start + 1) + ' to ' + end + ' of ' + data.length + ' entries</div>' +
+      '<div class="pagination-btns">' +
+      '<button onclick="changePage(\'' + containerId + '\',' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>Prev</button>';
+    for (var p = 1; p <= totalPages; p++) {
+      html += '<button class="' + (p === page ? 'active' : '') + '" onclick="changePage(\'' + containerId + '\',' + p + ')">' + p + '</button>';
+    }
+    html += '<button onclick="changePage(\'' + containerId + '\',' + (page + 1) + ')" ' + (page >= totalPages ? 'disabled' : '') + '>Next</button>' +
+      '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+function changePage(containerId, page) {
+  var state = window.__pageStates || {};
+  if (state[containerId]) state[containerId](page);
+}
+
+function registerPageState(containerId, renderFn) {
+  if (!window.__pageStates) window.__pageStates = {};
+  window.__pageStates[containerId] = renderFn;
+}
+
+function populateSelectFromList(id, list, defaultText) {
+  list = list || [];
+  var select = document.getElementById(id);
+  if (!select) return;
+  select.innerHTML = '';
+  if (defaultText) {
+    var opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = defaultText;
+    select.appendChild(opt);
+  }
+  list.forEach(function(val) {
+    if (val) {
+      var opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = val;
+      select.appendChild(opt);
+    }
+  });
+}

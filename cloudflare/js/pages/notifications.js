@@ -1,131 +1,480 @@
 /* ============================================================
    notifications.js — Notifications Center Page Module
-   Cloudflare Pages Frontend
+   Cloudflare Pages Frontend (GAS-identical: NotificationsPage.html)
    ============================================================ */
+
 (function() {
-  var _notifications = [];
-  var _total = 0;
-  var _unread = 0;
-  var _page = 1;
-  var _pageSize = 25;
-  var _filter = { module: '', status: '', search: '' };
+  var notifData = [];
+  var notifPage = 1;
+  var notifFilter = { search: '', type: '', notifType: '', status: '', priority: '' };
+  var notifSearchDebounce = null;
 
   App.registerPage('notifications', render, load);
 
   function render() {
-    document.getElementById('page-notifications').innerHTML = '' +
-      '<div class="page-header"><h2>Notifications</h2>' +
-        '<button class="btn btn-secondary" onclick="NotifMarkAllRead()">Mark All Read</button></div>' +
-      '<div id="notif-stats" class="qr-stats-row" style="margin-bottom:16px"></div>' +
-      '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">' +
-        '<select class="form-select" id="notif-module" onchange="NotifFilter()" style="max-width:160px"><option value="">All Modules</option>' +
-          ['Job Cards','Machines','Assets','Spare Parts','Inventory','PM','Checklists','Settings','Users','System'].map(function(m){return '<option value="'+m+'">'+m+'</option>';}).join('') +
-        '</select>' +
-        '<select class="form-select" id="notif-status" onchange="NotifFilter()" style="max-width:140px"><option value="">All Status</option><option value="unread">Unread</option><option value="read">Read</option></select>' +
-        '<input type="text" class="form-input" placeholder="Search..." id="notif-search" oninput="NotifFilter()" style="flex:1;min-width:150px">' +
+    var el = document.getElementById('page-notifications');
+    if (!el) return;
+    el.innerHTML =
+      '<div id="notificationsPage" class="page">' +
+        '<div class="dashboard-grid" id="notifSummaryCards" style="margin-bottom:16px">' +
+          '<div class="stat-card stat-primary" style="cursor:pointer" onclick="Notif.filterByType(\'\')">' +
+            '<div class="stat-inner">' +
+              '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>' +
+              '<div class="stat-info"><h3 id="notifTotal">0</h3><p>Total Notifications</p></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="stat-card stat-danger" style="cursor:pointer" onclick="Notif.filterByRead(\'Unread\')">' +
+            '<div class="stat-inner">' +
+              '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>' +
+              '<div class="stat-info"><h3 id="notifUnread">0</h3><p>Unread</p></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="stat-card stat-success" style="cursor:pointer" onclick="Notif.filterByRead(\'Read\')">' +
+            '<div class="stat-inner">' +
+              '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>' +
+              '<div class="stat-info"><h3 id="notifRead">0</h3><p>Read</p></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="stat-card stat-info">' +
+            '<div class="stat-inner">' +
+              '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>' +
+              '<div class="stat-info"><h3 id="notifTypes">0</h3><p>Modules</p></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="filter-bar" id="notifFilterBar">' +
+          '<div class="form-group">' +
+            '<label>Search</label>' +
+            '<div class="search-box">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+              '<input type="text" class="form-control" id="notifSearch" placeholder="Search notifications..." onkeyup="Notif.searchTable()">' +
+            '</div>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>Module</label>' +
+            '<select class="form-control" id="notifFilterType">' +
+              '<option value="">All Modules</option>' +
+              '<option value="Job Card">Job Card</option>' +
+              '<option value="Preventive Maintenance">Preventive Maintenance</option>' +
+              '<option value="Spare Part">Spare Part</option>' +
+              '<option value="Inventory">Inventory</option>' +
+              '<option value="Goods Receipt">Goods Receipt</option>' +
+              '<option value="User">User</option>' +
+              '<option value="Machine">Machine</option>' +
+              '<option value="Asset">Asset</option>' +
+              '<option value="Breakdown">Breakdown</option>' +
+              '<option value="System">System</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>Type</label>' +
+            '<select class="form-control" id="notifFilterNotifType">' +
+              '<option value="">All Types</option>' +
+              '<option value="Information">Information</option>' +
+              '<option value="Success">Success</option>' +
+              '<option value="Warning">Warning</option>' +
+              '<option value="Critical">Critical</option>' +
+              '<option value="Approval">Approval</option>' +
+              '<option value="Reminder">Reminder</option>' +
+              '<option value="System">System</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>Status</label>' +
+            '<select class="form-control" id="notifFilterStatus">' +
+              '<option value="">All</option>' +
+              '<option value="Unread">Unread</option>' +
+              '<option value="Read">Read</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>Priority</label>' +
+            '<select class="form-control" id="notifFilterPriority">' +
+              '<option value="">All Priority</option>' +
+              '<option value="Critical">Critical</option>' +
+              '<option value="High">High</option>' +
+              '<option value="Medium">Medium</option>' +
+              '<option value="Low">Low</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="form-group" style="align-self:flex-end">' +
+            '<button class="btn btn-primary btn-sm" onclick="Notif.applyFilter()">Apply</button>' +
+            '<button class="btn btn-secondary btn-sm" onclick="Notif.clearFilter()">Clear</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="card">' +
+          '<div class="card-header">' +
+            '<div class="card-title">Notifications</div>' +
+            '<div class="card-actions">' +
+              '<button class="btn btn-success" onclick="Notif.markAllRead()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M7 10l2 2 4-4"/></svg> Mark All Read</button>' +
+              '<button class="btn btn-danger" onclick="Notif.deleteAll()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M3 5h14"/><path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M16 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5"/></svg> Clear All</button>' +
+              '<button class="btn btn-secondary" onclick="Notif.exportCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>' +
+              '<button class="btn btn-secondary" onclick="Notif.exportPDF()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg> PDF</button>' +
+              '<button class="btn btn-secondary" onclick="Notif.printView()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg> Print</button>' +
+              '<button class="btn btn-secondary" onclick="Notif.refresh()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg> Refresh</button>' +
+            '</div>' +
+          '</div>' +
+          '<div id="notifTableContainer"></div>' +
+        '</div>' +
       '</div>' +
-      '<div class="card"><div id="notif-list"></div><div id="notif-pagination" class="pagination"></div></div>';
+      '<div class="modal-overlay" id="notifViewModal" style="display:none">' +
+        '<div class="modal modal-wide">' +
+          '<div class="modal-header">' +
+            '<div class="modal-title" id="notifViewTitle">Notification Details</div>' +
+            '<button class="modal-close" onclick="hideModal(\'notifViewModal\')">&times;</button>' +
+          '</div>' +
+          '<div class="modal-body">' +
+            '<div class="view-grid">' +
+              '<div class="view-section">' +
+                '<h4>Notification Info</h4>' +
+                '<div class="view-row"><span>Notification ID</span><strong id="notifViewId">-</strong></div>' +
+                '<div class="view-row"><span>Module</span><strong id="notifViewType">-</strong></div>' +
+                '<div class="view-row"><span>Notification Type</span><strong id="notifViewNotifType">-</strong></div>' +
+                '<div class="view-row"><span>Title</span><strong id="notifViewTitleText">-</strong></div>' +
+                '<div class="view-row"><span>Priority</span><strong id="notifViewPriority">-</strong></div>' +
+                '<div class="view-row"><span>Created By</span><strong id="notifViewCreatedBy">-</strong></div>' +
+                '<div class="view-row"><span>Assigned To</span><strong id="notifViewAssignedTo">-</strong></div>' +
+              '</div>' +
+              '<div class="view-section">' +
+                '<h4>Status</h4>' +
+                '<div class="view-row"><span>Read Status</span><strong id="notifViewReadStatus">-</strong></div>' +
+                '<div class="view-row"><span>Created Date/Time</span><strong id="notifViewCreatedAt">-</strong></div>' +
+                '<div class="view-row"><span>Action URL</span><strong id="notifViewActionUrl">-</strong></div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="view-grid" style="margin-top:16px">' +
+              '<div class="view-section" style="grid-column:1/-1">' +
+                '<h4>Message</h4>' +
+                '<p id="notifViewMessage" style="color:var(--text);font-size:13px;line-height:1.5;white-space:pre-wrap">-</p>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="modal-footer">' +
+            '<button class="btn btn-secondary" onclick="hideModal(\'notifViewModal\')">Close</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
   }
 
-  function load() { loadNotifications(); }
-
-  function loadNotifications() {
-    var el = document.getElementById('notif-list');
-    if (!el) return;
-    el.innerHTML = '<div style="text-align:center;padding:24px"><div class="spinner" style="margin:0 auto"></div></div>';
-    var params = { page: _page, pageSize: _pageSize };
-    if (_filter.module) params.module = _filter.module;
-    if (_filter.status === 'unread') params.unreadOnly = true;
-
-    API.call('getNotifications', params)
+  function load() {
+    App.showLoading(true);
+    API.call('getUserNotifications', {})
       .then(function(data) {
-        _notifications = data.records || [];
-        _total = data.total || 0;
-        _unread = data.unreadCount || 0;
-        renderStats();
-        renderList();
-        renderPagination(data);
+        notifData = data || [];
+        App.showLoading(false);
+        updateSummary();
+        renderTable();
+        updateBadge();
       })
-      .catch(function(e) {
-        el.innerHTML = '<div class="empty-state"><div class="empty-state-text">Failed to load: '+App.escHtml(e.message)+'</div></div>';
+      .catch(function(err) {
+        App.showLoading(false);
+        App.showToast('Failed to load notifications', 'error');
       });
   }
 
-  function renderStats() {
-    var el = document.getElementById('notif-stats');
-    if (!el) return;
-    el.innerHTML =
-      '<div class="qr-stat-card"><div class="stat-icon">&#128276;</div><div class="stat-num">'+_total+'</div><div class="stat-lbl">Total</div></div>' +
-      '<div class="qr-stat-card"><div class="stat-icon">&#128680;</div><div class="stat-num" style="color:var(--warning)">'+_unread+'</div><div class="stat-lbl">Unread</div></div>' +
-      '<div class="qr-stat-card"><div class="stat-icon">&#9989;</div><div class="stat-num" style="color:var(--success)">'+(_total-_unread)+'</div><div class="stat-lbl">Read</div></div>';
+  function updateSummary() {
+    var total = notifData.length;
+    var unread = notifData.filter(function(r) { return (r.ReadStatus || '').toLowerCase() !== 'read'; }).length;
+    var read = total - unread;
+    var modules = {};
+    notifData.forEach(function(r) { if (r.Module) modules[r.Module] = true; });
+    var el;
+    el = document.getElementById('notifTotal'); if (el) el.textContent = total;
+    el = document.getElementById('notifUnread'); if (el) el.textContent = unread;
+    el = document.getElementById('notifRead'); if (el) el.textContent = read;
+    el = document.getElementById('notifTypes'); if (el) el.textContent = Object.keys(modules).length;
   }
 
-  function renderList() {
-    var el = document.getElementById('notif-list');
-    if (!el) return;
-    var filtered = _notifications;
-    if (_filter.search) {
-      var q = _filter.search.toLowerCase();
-      filtered = filtered.filter(function(n){ return (n.Title||'').toLowerCase().indexOf(q)>-1||(n.Message||'').toLowerCase().indexOf(q)>-1||(n.Module||'').toLowerCase().indexOf(q)>-1; });
-    }
-    if (!filtered.length) { el.innerHTML='<div class="empty-state"><div class="empty-state-icon">&#128276;</div><div class="empty-state-text">No notifications</div></div>'; return; }
-    var h = '<div style="display:flex;flex-direction:column;gap:4px">';
-    filtered.forEach(function(n) {
-      var isRead = (n.ReadStatus||'').toLowerCase() === 'read';
-      var priColors = { Critical:'badge-danger', High:'badge-warning', Medium:'badge-info', Low:'badge-secondary' };
-      var pri = priColors[n.Priority]||'badge-secondary';
-      h += '<div class="qr-history-card" style="opacity:'+(isRead?'0.7':'1')+';border-left:3px solid '+(isRead?'var(--border)':'var(--primary)')+'">' +
-        '<div class="qr-history-card-info" style="flex:1">' +
-          '<div class="qr-history-card-title">'+App.escHtml(n.Title||n.NotificationType||'Notification')+'</div>' +
-          '<div class="qr-history-card-meta">' +
-            '<span class="badge badge-primary" style="font-size:10px">'+App.escHtml(n.Module||'')+'</span>' +
-            '<span class="badge '+pri+'" style="font-size:10px">'+App.escHtml(n.Priority||'')+'</span>' +
-            '<span>'+App.escHtml(n.CreatedDateTime||'')+'</span>' +
-          '</div>' +
-          (n.Message?'<div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+App.escHtml(n.Message).substring(0,120)+'</div>':'') +
-        '</div>' +
-        '<div style="display:flex;gap:4px;flex-shrink:0">' +
-          (!isRead?'<button class="btn btn-sm btn-secondary" onclick="NotifMarkRead(\''+App.escHtml(n.NotificationID||n.id||'')+'\')" title="Mark Read">&#9713;</button>':'') +
-          '<button class="btn btn-sm btn-danger" onclick="NotifDelete(\''+App.escHtml(n.NotificationID||n.id||'')+'\')" title="Delete">&#128465;</button>' +
-        '</div>' +
-      '</div>';
+  function renderNotifTable() {
+    var data = applyClientFilters(notifData);
+    var columns = [
+      { key: 'NotificationID', label: 'ID' },
+      { key: 'CreatedDateTime', label: 'Date', datetime: true },
+      { key: 'Module', label: 'Module', badge: true, badgeMap: {
+        'Job Card': 'primary', 'Preventive Maintenance': 'info', 'Spare Part': 'warning',
+        'Inventory': 'info', 'Goods Receipt': 'success', 'User': 'primary',
+        'Machine': 'info', 'Asset': 'success', 'Breakdown': 'danger', 'System': 'secondary'
+      } },
+      { key: 'NotificationType', label: 'Type', badge: true, badgeMap: {
+        'Information': 'info', 'Success': 'success', 'Warning': 'warning',
+        'Critical': 'danger', 'Approval': 'purple', 'Reminder': 'orange', 'System': 'secondary'
+      } },
+      { key: 'Title', label: 'Title' },
+      { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Critical': 'danger', 'High': 'warning', 'Medium': 'info', 'Low': 'success' } },
+      { key: 'ReadStatus', label: 'Read', badge: true, badgeMap: { 'Unread': 'danger', 'Read': 'success' } }
+    ];
+    var actions = [
+      { label: 'View', icon: 'view', color: 'primary', onclick: "Notif.view('{id}')", idField: 'NotificationID' },
+      { label: 'Open', icon: 'start', color: 'info', onclick: "Notif.openAction('{id}')", idField: 'NotificationID', condition: function(r) { return !!(r.ActionURL); } },
+      { label: 'Delete', icon: 'trash', color: 'danger', onclick: "Notif.deleteNotif('{id}')", idField: 'NotificationID' }
+    ];
+    actions.push({
+      label: 'Mark Read', icon: 'check', color: 'success', onclick: "Notif.markRead('{id}')", idField: 'NotificationID',
+      condition: function(r) { return (r.ReadStatus || '').toLowerCase() !== 'read'; }
     });
-    el.innerHTML = h + '</div>';
+    renderTable(data, columns, actions, notifPage, PAGE_SIZE, 'notifTableContainer');
+    registerPageState('notifTableContainer', function(p) { notifPage = p; renderNotifTable(); });
   }
 
-  function renderPagination(data) {
-    var el = document.getElementById('notif-pagination');
-    if (!el) return;
-    var tp = Math.ceil(_total / _pageSize);
-    if (tp <= 1) { el.innerHTML=''; return; }
-    var h = '';
-    h += '<button '+(_page<=1?'disabled':'')+' onclick="NotifPage('+(_page-1)+')">Prev</button>';
-    for (var i=Math.max(1,_page-2);i<=Math.min(tp,_page+2);i++) {
-      h += '<button class="'+(i===_page?'active':'')+'" onclick="NotifPage('+i+')">'+i+'</button>';
+  function renderTableForExport(data) { return renderNotifTable(); }
+
+  function viewNotif(id) {
+    var item = notifData.find(function(r) { return r.NotificationID === id; });
+    if (!item) { App.showToast('Record not found', 'error'); return; }
+    var el;
+    el = document.getElementById('notifViewId'); if (el) el.textContent = item.NotificationID || '-';
+    el = document.getElementById('notifViewType'); if (el) el.textContent = item.Module || '-';
+    el = document.getElementById('notifViewNotifType'); if (el) el.textContent = item.NotificationType || '-';
+    el = document.getElementById('notifViewTitleText'); if (el) el.textContent = item.Title || '-';
+    el = document.getElementById('notifViewPriority'); if (el) el.textContent = item.Priority || '-';
+    el = document.getElementById('notifViewCreatedBy'); if (el) el.textContent = item.CreatedBy || '-';
+    el = document.getElementById('notifViewAssignedTo'); if (el) el.textContent = item.AssignedTo || '-';
+    el = document.getElementById('notifViewReadStatus'); if (el) el.textContent = item.ReadStatus || '-';
+    el = document.getElementById('notifViewCreatedAt'); if (el) el.textContent = item.CreatedDateTime || '-';
+    el = document.getElementById('notifViewActionUrl'); if (el) el.textContent = item.ActionURL || '-';
+    el = document.getElementById('notifViewMessage'); if (el) el.textContent = item.Message || '-';
+    showModal('notifViewModal');
+  }
+
+  function markNotifRead(id) {
+    App.showLoading(true);
+    API.call('markNotificationRead', { id: id })
+      .then(function(data) {
+        notifData = data || [];
+        App.showLoading(false);
+        updateSummary();
+        renderNotifTable();
+        updateBadge();
+        App.showToast('Notification marked as read', 'success');
+      })
+      .catch(function(err) {
+        App.showLoading(false);
+        App.showToast('Failed to mark as read', 'error');
+      });
+  }
+
+  function markAllNotifRead() {
+    showConfirm('Mark All Read', 'Are you sure you want to mark all notifications as read?', function() {
+      App.showLoading(true);
+      API.call('markAllNotificationsRead', {})
+        .then(function(data) {
+          notifData = data || [];
+          App.showLoading(false);
+          updateSummary();
+          renderNotifTable();
+          updateBadge();
+          App.showToast('All notifications marked as read', 'success');
+        })
+        .catch(function(err) {
+          App.showLoading(false);
+          App.showToast('Failed to mark all as read', 'error');
+        });
+    });
+  }
+
+  function deleteNotif(id) {
+    showConfirm('Delete Notification', 'Are you sure you want to delete this notification?', function() {
+      App.showLoading(true);
+      API.call('deleteNotification', { id: id })
+        .then(function(data) {
+          notifData = data || [];
+          App.showLoading(false);
+          updateSummary();
+          renderNotifTable();
+          updateBadge();
+          App.showToast('Notification deleted', 'success');
+        })
+        .catch(function(err) {
+          App.showLoading(false);
+          App.showToast('Failed to delete notification', 'error');
+        });
+    });
+  }
+
+  function deleteAllNotif() {
+    showConfirm('Clear All Notifications', 'Are you sure you want to delete ALL notifications? This cannot be undone.', function() {
+      App.showLoading(true);
+      API.call('clearAllNotifications', {})
+        .then(function() {
+          notifData = [];
+          App.showLoading(false);
+          updateSummary();
+          renderNotifTable();
+          updateBadge();
+          App.showToast('All notifications cleared', 'success');
+        })
+        .catch(function(err) {
+          App.showLoading(false);
+          App.showToast('Failed to clear notifications', 'error');
+        });
+    });
+  }
+
+  function openNotifAction(id) {
+    var item = notifData.find(function(r) { return r.NotificationID === id; });
+    if (!item) return;
+    if ((item.ReadStatus || '').toLowerCase() !== 'read') {
+      markNotifRead(id);
     }
-    h += '<button '+(_page>=tp?'disabled':'')+' onclick="NotifPage('+(_page+1)+')">Next</button>';
-    h += '<span style="font-size:12px;color:var(--text-muted);margin-left:8px">Page '+_page+'/'+tp+'</span>';
-    el.innerHTML = h;
+    if (item.ActionURL) {
+      try { eval(item.ActionURL); } catch(e) {}
+    }
   }
 
-  window.NotifFilter = function() {
-    var m = document.getElementById('notif-module');
-    var s = document.getElementById('notif-status');
-    var q = document.getElementById('notif-search');
-    _filter.module = m ? m.value : '';
-    _filter.status = s ? s.value : '';
-    _filter.search = q ? q.value : '';
-    _page = 1;
-    loadNotifications();
-  };
-  window.NotifPage = function(p){ _page=p; loadNotifications(); };
-  window.NotifMarkRead = function(id) {
-    API.call('markNotificationRead',{id:id}).then(function(){ loadNotifications(); }).catch(function(){});
-  };
-  window.NotifMarkAllRead = function() {
-    API.call('markAllNotificationsRead',{}).then(function(){ App.showToast('All marked read','success'); loadNotifications(); }).catch(function(e){App.showToast('Error: '+e.message,'error');});
-  };
-  window.NotifDelete = function(id) {
-    API.call('deleteNotification',{id:id}).then(function(){ loadNotifications(); }).catch(function(e){App.showToast('Error: '+e.message,'error');});
+  function updateNotifBadge() {
+    var badge = document.getElementById('notificationBadge');
+    if (!badge) return;
+    var unread = notifData.filter(function(r) { return (r.ReadStatus || '').toLowerCase() !== 'read'; }).length;
+    if (unread > 0) {
+      badge.textContent = unread > 99 ? '99+' : unread;
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  function searchNotifTable() {
+    var el = document.getElementById('notifSearch');
+    if (!el) return;
+    var query = el.value;
+    notifFilter.search = query;
+    if (notifSearchDebounce) clearTimeout(notifSearchDebounce);
+    notifSearchDebounce = setTimeout(function() {
+      notifPage = 1;
+      renderNotifTable();
+    }, 300);
+  }
+
+  function applyNotifFilter() {
+    var el;
+    el = document.getElementById('notifFilterType'); if (el) notifFilter.type = el.value;
+    el = document.getElementById('notifFilterNotifType'); if (el) notifFilter.notifType = el.value;
+    el = document.getElementById('notifFilterStatus'); if (el) notifFilter.status = el.value;
+    el = document.getElementById('notifFilterPriority'); if (el) notifFilter.priority = el.value;
+    notifPage = 1;
+    renderNotifTable();
+  }
+
+  function clearNotifFilter() {
+    var el;
+    el = document.getElementById('notifFilterType'); if (el) el.value = '';
+    el = document.getElementById('notifFilterNotifType'); if (el) el.value = '';
+    el = document.getElementById('notifFilterStatus'); if (el) el.value = '';
+    el = document.getElementById('notifFilterPriority'); if (el) el.value = '';
+    el = document.getElementById('notifSearch'); if (el) el.value = '';
+    notifFilter = { search: '', type: '', notifType: '', status: '', priority: '' };
+    notifPage = 1;
+    renderNotifTable();
+  }
+
+  function filterNotifByType(type) {
+    var el = document.getElementById('notifFilterType');
+    if (el) el.value = type;
+    notifFilter.type = type;
+    notifPage = 1;
+    renderNotifTable();
+  }
+
+  function filterNotifByRead(status) {
+    var el = document.getElementById('notifFilterStatus');
+    if (el) el.value = status;
+    notifFilter.status = status;
+    notifPage = 1;
+    renderNotifTable();
+  }
+
+  function applyClientFilters(data) {
+    if (notifFilter.search) {
+      var q = notifFilter.search.toLowerCase();
+      data = data.filter(function(r) {
+        return (r.NotificationID && r.NotificationID.toLowerCase().indexOf(q) > -1) ||
+               (r.Title && r.Title.toLowerCase().indexOf(q) > -1) ||
+               (r.Message && r.Message.toLowerCase().indexOf(q) > -1) ||
+               (r.Module && r.Module.toLowerCase().indexOf(q) > -1);
+      });
+    }
+    if (notifFilter.type) data = data.filter(function(r) { return r.Module === notifFilter.type; });
+    if (notifFilter.notifType) data = data.filter(function(r) { return (r.NotificationType || 'Information') === notifFilter.notifType; });
+    if (notifFilter.status) data = data.filter(function(r) { return (r.ReadStatus || '').toLowerCase() === notifFilter.status.toLowerCase(); });
+    if (notifFilter.priority) data = data.filter(function(r) { return r.Priority === notifFilter.priority; });
+    return data;
+  }
+
+  function exportNotifCSV() {
+    var data = applyClientFilters(notifData);
+    if (!data || data.length === 0) { App.showToast('No data to export', 'warning'); return; }
+    var headers = ['NotificationID','Title','Message','Module','NotificationType','Priority','CreatedBy','AssignedTo','CreatedDateTime','ReadStatus','ActionURL'];
+    var csv = headers.join(',') + '\n';
+    data.forEach(function(r) {
+      var row = headers.map(function(h) {
+        var val = r[h] !== undefined && r[h] !== null ? r[h] : '';
+        val = String(val).replace(/"/g, '""');
+        if (val.indexOf(',') > -1 || val.indexOf('"') > -1 || val.indexOf('\n') > -1) val = '"' + val + '"';
+        return val;
+      });
+      csv += row.join(',') + '\n';
+    });
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'Notifications_' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    App.showToast('Export completed', 'success');
+  }
+
+  function exportNotifPDF() {
+    var data = applyClientFilters(notifData);
+    if (!data || data.length === 0) { App.showToast('No data to export', 'warning'); return; }
+    var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#1F4E78;color:#fff}</style></head><body>';
+    html += '<h2 style="text-align:center">Notifications Report</h2><p style="text-align:center">Generated: ' + new Date().toLocaleString() + '</p>';
+    html += '<table><thead><tr><th>ID</th><th>Module</th><th>Title</th><th>Priority</th><th>Read Status</th><th>Date</th></tr></thead><tbody>';
+    data.forEach(function(r) {
+      html += '<tr><td>' + escapeHtml(r.NotificationID || '') + '</td><td>' + escapeHtml(r.Module || '') + '</td><td>' + escapeHtml(r.Title || '') + '</td><td>' + escapeHtml(r.Priority || '') + '</td><td>' + escapeHtml(r.ReadStatus || '') + '</td><td>' + escapeHtml(r.CreatedDateTime || '') + '</td></tr>';
+    });
+    html += '</tbody></table></body></html>';
+    var blob = new Blob([html], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'Notifications_' + new Date().toISOString().slice(0, 10) + '.html';
+    a.click();
+    URL.revokeObjectURL(url);
+    App.showToast('PDF export completed', 'success');
+  }
+
+  function printNotif() {
+    var data = applyClientFilters(notifData);
+    if (!data || data.length === 0) { App.showToast('No data to print', 'warning'); return; }
+    var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px}th,td{border:1px solid #000;padding:4px;text-align:left}th{background:#1F4E78;color:#fff}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>';
+    html += '<h2 style="text-align:center">Notifications Report</h2><p style="text-align:center">Generated: ' + new Date().toLocaleString() + '</p>';
+    html += '<table><thead><tr><th>ID</th><th>Module</th><th>Title</th><th>Priority</th><th>Read Status</th></tr></thead><tbody>';
+    data.forEach(function(r) {
+      html += '<tr><td>' + escapeHtml(r.NotificationID || '') + '</td><td>' + escapeHtml(r.Module || '') + '</td><td>' + escapeHtml(r.Title || '') + '</td><td>' + escapeHtml(r.Priority || '') + '</td><td>' + escapeHtml(r.ReadStatus || '') + '</td></tr>';
+    });
+    html += '</tbody></table></body></html>';
+    var w = window.open('', '', 'width=800,height=600');
+    w.document.write(html);
+    w.document.close();
+    w.print();
+  }
+
+  window.Notif = {
+    refresh: function() { load(); },
+    view: viewNotif,
+    markRead: markNotifRead,
+    markAllRead: markAllNotifRead,
+    deleteNotif: deleteNotif,
+    deleteAll: deleteAllNotif,
+    openAction: openNotifAction,
+    searchTable: searchNotifTable,
+    applyFilter: applyNotifFilter,
+    clearFilter: clearNotifFilter,
+    filterByType: filterNotifByType,
+    filterByRead: filterNotifByRead,
+    exportCSV: exportNotifCSV,
+    exportPDF: exportNotifPDF,
+    printView: printNotif
   };
 })();

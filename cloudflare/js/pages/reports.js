@@ -39,6 +39,7 @@
   }
 
   function load() {
+    App.showLoading(true);
     var now = new Date();
     var firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     var fromInput = document.getElementById('rpt-from');
@@ -56,7 +57,8 @@
           sel.appendChild(opt);
         });
       }
-    }).catch(function() {});
+      App.showLoading(false);
+    }).catch(function() { App.showLoading(false); });
 
     var genBtn = document.getElementById('rpt-generate');
     if (genBtn) genBtn.onclick = function() { generateReport('jobcards'); };

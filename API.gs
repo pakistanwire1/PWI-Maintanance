@@ -85,11 +85,15 @@ var API_ROUTES = {
   /* ---- Users ---- */
   'getUsers':              { auth: true,  handler: function(d) { return apiGetUsers(d); } },
   'addUser':               { auth: true,  handler: function(d) { return addUser(d); } },
-  'updateUser':            { auth: true,  handler: function(d) { return updateUser(d.email, d); } },
-  'deleteUser':            { auth: true,  handler: function(d) { return deleteUser(d.email); } },
+  'updateUser':            { auth: true,  handler: function(d) { return updateUser(d.id || d.email, d); } },
+  'deleteUser':            { auth: true,  handler: function(d) { return deleteUser(d.id || d.email); } },
+  'permanentlyDeleteUser': { auth: true,  handler: function(d) { return permanentlyDeleteUser(d.id); } },
   'searchUsers':           { auth: true,  handler: function(d) { return searchUsers(d.query); } },
   'resetUserPassword':     { auth: true,  handler: function(d) { return resetUserPassword(d.id, d.tempPassword, d.forceChange); } },
-  'uploadUserPhoto':       { auth: true,  handler: function(d) { return uploadUserPhoto(d.base64Data, d.employeeId); } },
+  'uploadUserPhoto':       { auth: true,  handler: function(d) { return uploadUserPhoto(d.photo || d.base64Data, d.employeeId); } },
+  'getUserDepartments':    { auth: true,  handler: function(d) { return getUserDepartments(); } },
+  'getUserSections':       { auth: true,  handler: function(d) { return getUserSections(); } },
+  'exportUsersToExcel':    { auth: true,  handler: function(d) { return exportUsersToExcel(); } },
 
   /* ---- Job Cards ---- */
   'getJobCards':           { auth: true,  handler: function(d) { return apiGetJobCards(d); } },

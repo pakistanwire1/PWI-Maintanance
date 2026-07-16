@@ -5,276 +5,2123 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#6366f1">
   <meta name="description" content="Pakistan Wire Industries - Maintenance Management System">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CMMS">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>CMMS - Factory Maintenance Management System</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="apple-touch-icon" href="assets/icons/icon-192.svg">
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="apple-touch-icon" href="logo.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/login.css">
+  <link rel="stylesheet" href="css/welcome.css">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
 </head>
 <body>
-  <!-- Loading Overlay -->
-  <div id="loading-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:16px">
-    <div class="spinner"></div>
-    <p style="color:var(--text-muted);font-size:14px">Loading...</p>
-  </div>
-
-  <!-- Login Page -->
-  <div id="page-login" class="page">
-    <div class="login-container">
-      <div class="login-card glass-card">
-        <div style="text-align:center;margin-bottom:32px">
-          <img src="logo.svg" alt="Logo" style="width:80px;height:80px;margin-bottom:16px" onerror="this.style.display='none'">
-          <h1 style="font-size:22px;font-weight:800;margin:0;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Pakistan Wire Industries (Pvt) Ltd</h1>
-          <p style="color:var(--text-muted);font-size:13px;margin-top:4px">CMMS Maintenance Management System</p>
+  <!-- ==================== WELCOME SCREEN ==================== -->
+  <div id="page-welcome">
+    <div class="ws-bg-base"></div>
+    <div class="ws-bg-drift"></div>
+    <div class="ws-slideshow">
+      <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=1920&q=80')"></div>
+      <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1513828583688-c52646db42da?w=1920&q=80')"></div>
+      <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1565043666747-69f6646db940?w=1920&q=80')"></div>
+      <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&q=80')"></div>
+      <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1920&q=80')"></div>
+      <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1920&q=80')"></div>
+    </div>
+    <div class="ws-bg-grid"></div>
+    <div class="ws-bg-factory"></div>
+    <div class="ws-particles">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="ws-sparks">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span>
+    </div>
+    <div class="ws-glow-lines"></div>
+    <div class="ws-overlay"></div>
+    <div class="ws-watermark">Pakistan Wires Industries (Pvt.) Ltd.</div>
+    <button class="ws-theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+      <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </button>
+    <div class="ws-wrapper">
+      <div class="ws-card">
+        <div class="ws-logo-area">
+          <div class="ws-glow-ring"></div>
+          <img class="logo-img" alt="Pakistan Wires Industries" src="logo.svg" style="display:none" onload="this.style.display='block';var el=document.getElementById('wsLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('wsLogoFallback');el&&(el.style.display='flex')">
+          <div class="logo-fallback" id="wsLogoFallback">
+            <svg class="logo-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
+              <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
+              <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
+              <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+            </svg>
+            <span class="logo-letter">PWI</span>
+          </div>
         </div>
-        <form id="login-form" onsubmit="return handleLogin(event)">
-          <div class="form-group">
-            <label class="form-label">Email Address</label>
-            <input type="email" id="login-email" class="form-input" placeholder="Enter your email" required autocomplete="email">
+        <div class="ws-welcome-label">WELCOME TO</div>
+        <div class="ws-company-name">
+          <span class="ws-co-primary">Pakistan Wires Industries</span>
+          <span class="ws-co-bracket">(Private) Limited</span>
+        </div>
+        <div class="ws-subtitle">CMMS Maintenance Management System</div>
+        <div class="ws-divisions">
+          <div class="ws-div-card ws-div-blue">
+            <div class="ws-div-icon">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            </div>
+            <div class="ws-div-name">Spoke Division</div>
+            <div class="ws-div-desc">Manufacturing &amp; Production</div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Password</label>
-            <input type="password" id="login-password" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
+          <div class="ws-div-card ws-div-orange">
+            <div class="ws-div-icon">
+              <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            </div>
+            <div class="ws-div-name">Control Cable Division</div>
+            <div class="ws-div-desc">Cable &amp; Wire Production</div>
           </div>
-          <button type="submit" id="login-btn" class="btn btn-primary" style="width:100%;margin-top:8px;padding:12px">
-            Sign In
-          </button>
-          <p id="login-error" style="color:var(--danger);text-align:center;margin-top:12px;font-size:13px;display:none;line-height:1.6"></p>
-        </form>
+        </div>
+        <div class="ws-company">Maintenance &amp; Engineering Excellence</div>
+        <div class="ws-sep"></div>
+        <div class="ws-loading-text" id="wsLoadingText">Initializing system...</div>
+        <div class="ws-progress">
+          <div class="ws-progress-bar" id="wsProgressBar"></div>
+        </div>
+        <button class="ws-btn" id="wsBtn" onclick="wsEnter()">
+          ENTER CMMS
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <div class="ws-error" id="wsError">
+          <span id="wsErrorText">Connection error. Please try again.</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- App Container -->
-  <div id="app-container" class="app-container" style="display:none">
-    <!-- Topbar -->
-    <header class="topbar">
-      <div class="topbar-left">
-        <button class="btn-icon" onclick="App.toggleSidebar()">&#9776;</button>
-        <span id="page-title" style="font-weight:600;font-size:16px">Dashboard</span>
+  <!-- ==================== LOGIN PAGE ==================== -->
+  <div id="page-login" style="display:none">
+    <div class="login-wrapper">
+      <div class="login-bg-base"></div>
+      <div class="login-bg-drift"></div>
+      <div class="login-slideshow">
+        <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=1920&q=80')"></div>
+        <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1513828583688-c52646db42da?w=1920&q=80')"></div>
+        <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1565043666747-69f6646db940?w=1920&q=80')"></div>
+        <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&q=80')"></div>
+        <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1920&q=80')"></div>
+        <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1920&q=80')"></div>
       </div>
-      <div class="topbar-right">
-        <span id="clock" style="font-family:monospace;font-size:13px;color:var(--text-muted)"></span>
-        <div class="user-menu">
-          <button class="btn-icon" onclick="toggleUserMenu()" id="user-avatar" style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600">A</button>
-          <div id="user-dropdown" class="dropdown" style="display:none">
-            <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
-              <div id="user-name" style="font-weight:600;font-size:14px"></div>
-              <div id="user-role" style="font-size:12px;color:var(--text-muted)"></div>
+      <div class="login-bg-grid"></div>
+      <div class="login-bg-factory"></div>
+      <div class="login-particles">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="login-sparks">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span>
+      </div>
+      <div class="login-glow-lines"></div>
+      <div class="login-overlay"></div>
+      <div class="login-watermark">Pakistan Wires Industries (Pvt.) Ltd.</div>
+      <button class="login-theme-toggle" onclick="loginToggleTheme()" title="Toggle theme">
+        <svg id="loginThemeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+
+      <div class="lw-scroll-banner">
+        <div class="lw-scroll-track">
+          <span class="lw-scroll-item">Pakistan Wire Industries Pvt. Ltd.</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Engineering Excellence</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Quality Manufacturing</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Hydraulic &amp; Mechanical Maintenance</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Pakistan Wire Industries Pvt. Ltd.</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Engineering Excellence</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Quality Manufacturing</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Hydraulic &amp; Mechanical Maintenance</span>
+        </div>
+      </div>
+
+      <div class="lw-main-container">
+        <div class="lw-hero">
+          <div class="lw-hero-content">
+            <div class="lw-greeting fade-in-up">Welcome</div>
+            <h1 class="lw-company fade-in-up" style="animation-delay:0.15s">
+              <span class="lw-co-primary">Pakistan Wires Industries</span>
+              <span class="lw-co-bracket">(Private) Limited</span>
+            </h1>
+            <p class="lw-subtitle fade-in-up" style="animation-delay:0.3s">Computerized Maintenance Management System</p>
+          </div>
+          <div class="lw-division-cards fade-in-up" style="animation-delay:0.45s">
+            <div class="lw-dcard lw-dcard-spoke">
+              <div class="lw-dcard-shine"></div>
+              <div class="lw-dcard-icon">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <circle cx="32" cy="32" r="14"/><circle cx="32" cy="32" r="22" stroke-dasharray="8 6"/><circle cx="32" cy="32" r="5"/>
+                  <line x1="32" y1="10" x2="32" y2="6"/><line x1="32" y1="54" x2="32" y2="58"/>
+                  <line x1="10" y1="32" x2="6" y2="32"/><line x1="54" y1="32" x2="58" y2="32"/>
+                  <line x1="16.4" y1="16.4" x2="13.2" y2="13.2"/><line x1="47.6" y1="47.6" x2="50.8" y2="50.8"/>
+                  <line x1="47.6" y1="16.4" x2="50.8" y2="13.2"/><line x1="16.4" y1="47.6" x2="13.2" y2="50.8"/>
+                </svg>
+              </div>
+              <h3>Spoke Division</h3>
+              <p>Industrial Manufacturing</p>
             </div>
-            <button class="dropdown-item" onclick="App.toggleTheme()">Toggle Theme</button>
-            <button class="dropdown-item" onclick="Auth.logout()" style="color:var(--danger)">Sign Out</button>
+            <div class="lw-dcard lw-dcard-cable">
+              <div class="lw-dcard-shine"></div>
+              <div class="lw-dcard-icon">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M12 52 L12 12 Q12 6 18 6 L46 6 Q52 6 52 12 L52 52" stroke-linejoin="round"/>
+                  <line x1="20" y1="6" x2="20" y2="52"/><line x1="28" y1="6" x2="28" y2="52"/>
+                  <line x1="36" y1="6" x2="36" y2="52"/><line x1="44" y1="6" x2="44" y2="52"/>
+                  <path d="M16 20 L48 20" opacity="0.4"/><path d="M16 28 L48 28" opacity="0.4"/>
+                  <path d="M16 36 L48 36" opacity="0.4"/><path d="M16 44 L48 44" opacity="0.4"/>
+                  <circle cx="20" cy="52" r="2.5" fill="currentColor" opacity="0.6"/>
+                  <circle cx="28" cy="52" r="2.5" fill="currentColor" opacity="0.6"/>
+                  <circle cx="36" cy="52" r="2.5" fill="currentColor" opacity="0.6"/>
+                  <circle cx="44" cy="52" r="2.5" fill="currentColor" opacity="0.6"/>
+                </svg>
+              </div>
+              <h3>Control Cable Division</h3>
+              <p>Cable Manufacturing</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="lw-login-section">
+          <div class="login-card">
+            <div class="login-card-glow"></div>
+            <div class="login-header">
+              <div class="login-logo-area">
+                <img class="login-logo-img" id="loginLogoImg" alt="Pakistan Wires Industries" src="logo.svg" style="display:none" onload="this.style.display='block';var el=document.getElementById('loginLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('loginLogoFallback');el&&(el.style.display='flex')">
+                <div class="login-logo-fallback" id="loginLogoFallback">
+                  <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="50" height="50">
+                    <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
+                    <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
+                    <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
+                    <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+                  </svg>
+                </div>
+              </div>
+              <h1 class="login-title">
+                <span class="lt-primary">Pakistan Wires Industries</span>
+                <span class="lt-bracket">(Private) Limited</span>
+              </h1>
+              <p class="login-subtitle">Computerized Maintenance Management System</p>
+            </div>
+            <form id="loginForm" onsubmit="return handleLogin(event)">
+              <div class="login-form-group">
+                <label for="loginEmail">Email</label>
+                <div class="login-input-wrap">
+                  <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                  <input type="email" id="loginEmail" class="login-input" placeholder="Enter your email" required>
+                </div>
+              </div>
+              <div class="login-form-group">
+                <label for="loginPassword">Password</label>
+                <div class="login-input-wrap">
+                  <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                  </svg>
+                  <input type="password" id="loginPassword" class="login-input login-input-pass" placeholder="Enter your password" required>
+                  <button type="button" class="login-eye-btn" id="loginEyeBtn" onclick="togglePasswordVisibility()" title="Show/Hide password" tabindex="-1">
+                    <svg id="eyeIconOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <svg id="eyeIconClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="display:none">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="login-options">
+                <label class="login-checkbox">
+                  <input type="checkbox" id="loginRemember" checked>
+                  <span class="login-checkmark"></span>
+                  <span class="login-checkbox-label">Remember Me</span>
+                </label>
+                <a href="#" class="login-forgot" onclick="showForgotPassword();return false">Forgot Password?</a>
+              </div>
+              <button type="submit" class="login-btn" id="loginBtn">
+                <span class="login-btn-text">Sign In</span>
+                <span class="spinner" style="display:none"></span>
+              </button>
+              <div id="loginError" class="login-error" style="display:none"></div>
+            </form>
+            <div class="login-version">Maintenance Management System v2.0</div>
           </div>
         </div>
       </div>
-    </header>
 
-    <!-- Sidebar -->
-    <nav id="sidebar" class="sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-logo">
-          <img src="logo.svg" alt="Logo" style="width:36px;height:36px" onerror="this.style.display='none'">
-          <span style="font-weight:700;font-size:15px">CMMS</span>
+      <div class="login-forgot-modal" id="forgotPasswordModal" style="display:none">
+        <div class="login-forgot-overlay" onclick="closeForgotPassword()"></div>
+        <div class="login-forgot-dialog">
+          <div class="login-forgot-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color:var(--lw-accent)">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            <h3>Reset Password</h3>
+            <button class="login-forgot-close" onclick="closeForgotPassword()">&times;</button>
+          </div>
+          <div class="login-forgot-body">
+            <p id="forgotStep1">Enter your registered email address. If the email exists, a password reset token will be sent.</p>
+            <div class="login-form-group" style="margin-top:16px">
+              <label for="forgotEmail">Email Address</label>
+              <div class="login-input-wrap">
+                <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <input type="email" id="forgotEmail" class="login-input" placeholder="Enter your registered email">
+              </div>
+            </div>
+            <div id="forgotStep2" style="display:none;margin-top:16px">
+              <p style="color:var(--lw-text-sec);font-size:13px;margin-bottom:12px">A reset token has been sent to your email. Enter the token and your new password below.</p>
+              <div class="login-form-group">
+                <label for="resetToken">Reset Token</label>
+                <input type="text" id="resetToken" class="login-input" placeholder="Enter reset token from email">
+              </div>
+              <div class="login-form-group">
+                <label for="resetNewPassword">New Password</label>
+                <div class="login-input-wrap">
+                  <input type="password" id="resetNewPassword" class="login-input login-input-pass" placeholder="Enter new password">
+                  <button type="button" class="login-eye-btn" onclick="toggleResetPasswordVisibility()" title="Show/Hide" tabindex="-1">
+                    <svg id="resetEyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <svg id="resetEyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="display:none">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div id="forgotResult" class="login-forgot-result" style="display:none"></div>
+          </div>
+          <div class="login-forgot-footer">
+            <button class="login-forgot-cancel" onclick="closeForgotPassword()">Cancel</button>
+            <button class="login-forgot-submit" id="forgotSubmitBtn" onclick="submitForgotPassword()">Send Token</button>
+            <button class="login-forgot-submit" id="resetPasswordBtn" style="display:none" onclick="submitResetPassword()">Reset Password</button>
+          </div>
         </div>
       </div>
-      <div class="sidebar-nav">
-        <div class="sidebar-group">
-          <div class="sidebar-group-header">Main</div>
-          <a class="sidebar-item active" data-page="dashboard" href="#dashboard" onclick="App.navigateTo('dashboard')">
-            <span class="sidebar-icon">&#9632;</span> Dashboard
-          </a>
+    </div>
+  </div>
+
+  <!-- ==================== APP CONTAINER ==================== -->
+  <div id="app-container" class="app-container" style="display:none">
+
+    <!-- ========== SIDEBAR ========== -->
+    <nav id="sidebar" class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-logo-wrapper">
+          <img class="sidebar-logo-img" id="sidebarLogoImg" alt="PWI" src="logo.svg" style="display:none" onload="this.style.display='block'" onerror="this.style.display='none'">
+          <svg class="sidebar-logo-fallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="30" height="30">
+            <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
+            <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
+            <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
+            <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+          </svg>
         </div>
-        <div class="sidebar-group">
-          <div class="sidebar-group-header">Job Cards</div>
-          <a class="sidebar-item" data-page="jobcards" href="#jobcards" onclick="App.navigateTo('jobcards')">
-            <span class="sidebar-icon">&#128196;</span> All Job Cards
-          </a>
-          <a class="sidebar-item" data-page="openjc" href="#openjc" onclick="App.navigateTo('openjc')">
-            <span class="sidebar-icon">&#128994;</span> Open Job Card
-          </a>
-          <a class="sidebar-item" data-page="startjc" href="#startjc" onclick="App.navigateTo('startjc')">
-            <span class="sidebar-icon">&#128993;</span> Start Job Card
-          </a>
-          <a class="sidebar-item" data-page="closejc" href="#closejc" onclick="App.navigateTo('closejc')">
-            <span class="sidebar-icon">&#128308;</span> Close Job Card
-          </a>
-          <a class="sidebar-item" data-page="pendingjc" href="#pendingjc" onclick="App.navigateTo('pendingjc')">
-            <span class="sidebar-icon">&#128992;</span> Pending Review
-          </a>
+        <div class="sidebar-brand-text">
+          <h2>CMMS</h2>
+          <small>Maintenance Management</small>
         </div>
-        <div class="sidebar-group">
-          <div class="sidebar-group-header">Master Data</div>
-          <a class="sidebar-item" data-page="machines" href="#machines" onclick="App.navigateTo('machines')">
-            <span class="sidebar-icon">&#9881;</span> Machines
-          </a>
-          <a class="sidebar-item" data-page="assets" href="#assets" onclick="App.navigateTo('assets')">
-            <span class="sidebar-icon">&#128230;</span> Assets
-          </a>
-          <a class="sidebar-item" data-page="spareparts" href="#spareparts" onclick="App.navigateTo('spareparts')">
-            <span class="sidebar-icon">&#128296;</span> Spare Parts
-          </a>
-          <a class="sidebar-item" data-page="technicians" href="#technicians" onclick="App.navigateTo('technicians')">
-            <span class="sidebar-icon">&#128119;</span> Technicians
-          </a>
-          <a class="sidebar-item" data-page="departments" href="#departments" onclick="App.navigateTo('departments')">
-            <span class="sidebar-icon">&#128193;</span> Departments
-          </a>
-          <a class="sidebar-item" data-page="sections" href="#sections" onclick="App.navigateTo('sections')">
-            <span class="sidebar-icon">&#128194;</span> Sections
-          </a>
+      </div>
+      <div class="sidebar-menu" id="sidebarMenu">
+        <div class="sidebar-item active" onclick="navigateTo('dashboard')" data-page="dashboard" data-tooltip="Dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          <span class="sidebar-item-label">Dashboard</span>
         </div>
-        <div class="sidebar-group">
-          <div class="sidebar-group-header">Maintenance</div>
-          <a class="sidebar-item" data-page="pm" href="#pm" onclick="App.navigateTo('pm')">
-            <span class="sidebar-icon">&#128197;</span> Preventive Maintenance
-          </a>
-          <a class="sidebar-item" data-page="pmhistory" href="#pmhistory" onclick="App.navigateTo('pmhistory')">
-            <span class="sidebar-icon">&#128203;</span> PM History
-          </a>
-          <a class="sidebar-item" data-page="checklists" href="#checklists" onclick="App.navigateTo('checklists')">
-            <span class="sidebar-icon">&#9745;</span> Checklists
-          </a>
-          <a class="sidebar-item" data-page="breakdownhistory" href="#breakdownhistory" onclick="App.navigateTo('breakdownhistory')">
-            <span class="sidebar-icon">&#9888;</span> Breakdown History
-          </a>
+
+        <div class="sidebar-group" data-group="masterData">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span>
+            <span class="sidebar-group-title">Master Data</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('sections')" data-page="sections" data-tooltip="Sections">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+              <span class="sidebar-item-label">Sections</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('departments')" data-page="departments" data-tooltip="Departments">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span class="sidebar-item-label">Departments</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('machines')" data-page="machines" data-tooltip="Machines">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+              <span class="sidebar-item-label">Machines</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('assets')" data-page="assets" data-tooltip="Assets">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              <span class="sidebar-item-label">Assets</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('technicians')" data-page="technicians" data-tooltip="Technicians">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span class="sidebar-item-label">Technicians</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('users')" data-page="users" data-tooltip="Users">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+              <span class="sidebar-item-label">Users</span>
+            </div>
+          </div>
         </div>
-        <div class="sidebar-group">
-          <div class="sidebar-group-header">Inventory</div>
-          <a class="sidebar-item" data-page="inventory" href="#inventory" onclick="App.navigateTo('inventory')">
-            <span class="sidebar-icon">&#128218;</span> Inventory
-          </a>
-          <a class="sidebar-item" data-page="goodsreceipt" href="#goodsreceipt" onclick="App.navigateTo('goodsreceipt')">
-            <span class="sidebar-icon">&#128230;</span> Goods Receipt
-          </a>
+
+        <div class="sidebar-group" data-group="maintenance">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></span>
+            <span class="sidebar-group-title">Maintenance</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('openjc')" data-page="openjc" data-tooltip="Open Job Card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              <span class="sidebar-item-label">Open Job Cards</span>
+              <span class="sidebar-badge" id="badge-openjc" data-status="open">0</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('startjc')" data-page="startjc" data-tooltip="Start Job Card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+              <span class="sidebar-item-label">Started Job Cards</span>
+              <span class="sidebar-badge" id="badge-startjc" data-status="running">0</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('closejc')" data-page="closejc" data-tooltip="Close Job Card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span class="sidebar-item-label">Closed Job Cards</span>
+              <span class="sidebar-badge" id="badge-closejc" data-status="closed">0</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('pendingjc')" data-page="pendingjc" data-tooltip="Pending Review">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="sidebar-item-label">Pending Review</span>
+              <span class="sidebar-badge" id="badge-pendingjc" data-status="pending">0</span>
+            </div>
+            <div class="sidebar-item" onclick="openApproveJobCard()" data-page="approvejobcard" data-tooltip="Approve Job Card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+              <span class="sidebar-item-label">Approved Job Cards</span>
+              <span class="sidebar-badge" id="badge-approvejobcard" data-status="approved">0</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('jobcards')" data-page="jobcards" data-tooltip="All Job Cards" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span class="sidebar-item-label">All Job Cards</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('pm')" data-page="pm" data-tooltip="PM Schedule">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="sidebar-item-label">PM Schedule</span>
+              <span class="sidebar-badge" id="badge-pm" data-status="all">0</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('spareparts')" data-page="spareparts" data-tooltip="Spare Parts">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+              <span class="sidebar-item-label">Spare Parts</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('inventory')" data-page="inventory" data-tooltip="Inventory">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              <span class="sidebar-item-label">Inventory</span>
+              <span class="sidebar-badge" id="badge-inventory">0</span>
+            </div>
+          </div>
         </div>
-        <div class="sidebar-group">
-          <div class="sidebar-group-header">System</div>
-          <a class="sidebar-item" data-page="qr" href="#qr" onclick="App.navigateTo('qr')">
-            <span class="sidebar-icon">&#128247;</span> QR Scanner
-          </a>
-          <a class="sidebar-item" data-page="reports" href="#reports" onclick="App.navigateTo('reports')">
-            <span class="sidebar-icon">&#128202;</span> Reports
-          </a>
-          <a class="sidebar-item" data-page="notifications" href="#notifications" onclick="App.navigateTo('notifications')">
-            <span class="sidebar-icon">&#128276;</span> Notifications
-          </a>
-          <a class="sidebar-item" data-page="users" href="#users" onclick="App.navigateTo('users')">
-            <span class="sidebar-icon">&#128100;</span> Users
-          </a>
-          <a class="sidebar-item" data-page="email" href="#email" onclick="App.navigateTo('email')">
-            <span class="sidebar-icon">&#128231;</span> Email
-          </a>
-          <a class="sidebar-item" data-page="whatsapp" href="#whatsapp" onclick="App.navigateTo('whatsapp')">
-            <span class="sidebar-icon">&#128172;</span> WhatsApp
-          </a>
-          <a class="sidebar-item" data-page="backup" href="#backup" onclick="App.navigateTo('backup')">
-            <span class="sidebar-icon">&#128190;</span> Backup
-          </a>
-          <a class="sidebar-item" data-page="audit" href="#audit" onclick="App.navigateTo('audit')">
-            <span class="sidebar-icon">&#128220;</span> Audit Trail
-          </a>
-          <a class="sidebar-item" data-page="settings" href="#settings" onclick="App.navigateTo('settings')">
-            <span class="sidebar-icon">&#9881;</span> Settings
-          </a>
+
+        <div class="sidebar-group" data-group="history">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+            <span class="sidebar-group-title">History</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('breakdownhistory')" data-page="breakdownhistory" data-tooltip="Breakdown History">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+              <span class="sidebar-item-label">Breakdown History</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('pmhistory')" data-page="pmhistory" data-tooltip="PM History">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="sidebar-item-label">PM History</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('stockhistory')" data-page="stockhistory" data-tooltip="Stock History">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span class="sidebar-item-label">Stock History</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('inventorytransactions')" data-page="inventorytransactions" data-tooltip="Inventory Transactions">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              <span class="sidebar-item-label">Inventory Transactions</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('goodsreceipt')" data-page="goodsreceipt" data-tooltip="Goods Receipt">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <span class="sidebar-item-label">Goods Receipt</span>
+              <span class="sidebar-badge" id="badge-goodsreceipt" data-status="all">0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-group" data-group="reports">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+            <span class="sidebar-group-title">Reports</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('reports')" data-page="reports" data-tooltip="Reports">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span class="sidebar-item-label">Reports</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-group" data-group="communication">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+            <span class="sidebar-group-title">Communication</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('notifications')" data-page="notifications" data-tooltip="Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+              <span class="sidebar-item-label">Notifications</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('email')" data-page="email" data-tooltip="Email Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span class="sidebar-item-label">Email Notifications</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('whatsapp')" data-page="whatsapp" data-tooltip="WhatsApp Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+              <span class="sidebar-item-label">WhatsApp Notifications</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-group" data-group="qrBarcode">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg></span>
+            <span class="sidebar-group-title">QR / Barcode Management</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('qr')" data-page="qr" data-tooltip="QR Overview">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+              <span class="sidebar-item-label">QR Overview</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('qrmachines')" data-page="qrmachines" data-tooltip="Machine QR">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+              <span class="sidebar-item-label">Machine QR</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('qrassets')" data-page="qrassets" data-tooltip="Asset QR">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              <span class="sidebar-item-label">Asset QR</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('qrspareparts')" data-page="qrspareparts" data-tooltip="Spare Parts QR">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+              <span class="sidebar-item-label">Spare Parts QR</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('qrjobcards')" data-page="qrjobcards" data-tooltip="Job Card QR">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span class="sidebar-item-label">Job Card QR</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('qrprint')" data-page="qrprint" data-tooltip="Print QR Labels">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span class="sidebar-item-label">Print QR Labels</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('qrhistory')" data-page="qrhistory" data-tooltip="QR History">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="sidebar-item-label">QR History</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-group" data-group="administration">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+            <span class="sidebar-group-title">Administration</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('settings')" data-page="settings" data-tooltip="Settings">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+              <span class="sidebar-item-label">Settings</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('audit')" data-page="audit" data-tooltip="Audit Trail">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+              <span class="sidebar-item-label">Audit Trail</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('backup')" data-page="backup" data-tooltip="Backup &amp; Restore">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span class="sidebar-item-label">Backup &amp; Restore</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">User</div>
+            <div class="user-role" id="userRole">Role</div>
+          </div>
         </div>
       </div>
     </nav>
 
-    <!-- Main Content -->
-    <main id="main-content" class="main-content">
-      <div id="page-dashboard" class="page-content"></div>
-      <div id="page-jobcards" class="page-content" style="display:none"></div>
-      <div id="page-openjc" class="page-content" style="display:none"></div>
-      <div id="page-startjc" class="page-content" style="display:none"></div>
-      <div id="page-closejc" class="page-content" style="display:none"></div>
-      <div id="page-pendingjc" class="page-content" style="display:none"></div>
-      <div id="page-machines" class="page-content" style="display:none"></div>
-      <div id="page-assets" class="page-content" style="display:none"></div>
-      <div id="page-spareparts" class="page-content" style="display:none"></div>
-      <div id="page-technicians" class="page-content" style="display:none"></div>
-      <div id="page-pm" class="page-content" style="display:none"></div>
-      <div id="page-checklists" class="page-content" style="display:none"></div>
-      <div id="page-inventory" class="page-content" style="display:none"></div>
-      <div id="page-goodsreceipt" class="page-content" style="display:none"></div>
-      <div id="page-reports" class="page-content" style="display:none"></div>
-      <div id="page-settings" class="page-content" style="display:none"></div>
-      <div id="page-qr" class="page-content" style="display:none"></div>
-      <div id="page-users" class="page-content" style="display:none"></div>
-      <div id="page-departments" class="page-content" style="display:none"></div>
-      <div id="page-sections" class="page-content" style="display:none"></div>
-      <div id="page-notifications" class="page-content" style="display:none"></div>
-      <div id="page-email" class="page-content" style="display:none"></div>
-      <div id="page-whatsapp" class="page-content" style="display:none"></div>
-      <div id="page-backup" class="page-content" style="display:none"></div>
-      <div id="page-audit" class="page-content" style="display:none"></div>
-      <div id="page-breakdownhistory" class="page-content" style="display:none"></div>
-      <div id="page-pmhistory" class="page-content" style="display:none"></div>
-    </main>
+    <!-- ========== MAIN CONTENT ========== -->
+    <div id="main-content" class="main-content">
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="hamburger" onclick="toggleSidebar()" title="Toggle sidebar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="topbar-brand" onclick="navigateTo('dashboard')" style="cursor:pointer" title="Go to Dashboard">
+            <div class="topbar-logo-mini">
+              <img class="topbar-logo-img" id="topbarLogoImg" alt="PWI" src="logo.svg" style="display:none" onload="this.style.display='block';var el=document.getElementById('topbarLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('topbarLogoFallback');el&&(el.style.display='block')">
+              <svg class="topbar-logo-fallback" id="topbarLogoFallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="24" height="24">
+                <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
+                <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
+                <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
+                <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+              </svg>
+            </div>
+            <span>CMMS</span>
+          </div>
+          <div class="breadcrumb">
+            <span id="page-title">Dashboard</span>
+          </div>
+        </div>
+        <div class="topbar-center">
+          <div class="topbar-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="globalSearch" placeholder="Search machines, job cards, parts..." oninput="onGlobalSearch(this.value)">
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-datetime">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <div id="topbarClock" class="time" style="font-size:12px;color:var(--text-secondary);font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap">00 Jan 0000 | 00:00 AM</div>
+          </div>
+          <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Switch to Light Mode">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          </button>
+          <div class="email-dropdown-container">
+            <button class="topbar-btn email-btn" onclick="toggleEmailPanel()" title="Email Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span class="email-badge" id="emailBadge" style="display:none">0</span>
+            </button>
+            <div class="email-panel" id="emailPanel">
+              <div class="email-panel-header"><h3>Email Queue</h3></div>
+              <div class="email-panel-stats">
+                <div class="email-stat-item" style="color:var(--success)"><span class="email-stat-value" id="emailDropdownSent">0</span><span class="email-stat-label">Sent</span></div>
+                <div class="email-stat-item" style="color:var(--danger)"><span class="email-stat-value" id="emailDropdownFailed">0</span><span class="email-stat-label">Failed</span></div>
+                <div class="email-stat-item" style="color:var(--warning)"><span class="email-stat-value" id="emailDropdownPending">0</span><span class="email-stat-label">Pending</span></div>
+              </div>
+              <div class="email-panel-list" id="emailPanelList"><div class="email-panel-empty">Loading...</div></div>
+              <div class="email-panel-footer">
+                <button class="btn btn-xs btn-primary" onclick="navigateTo('email');closeEmailPanel()">View All Emails</button>
+                <button class="btn btn-xs btn-secondary" onclick="emailRetryFailed();closeEmailPanel()">Retry Failed</button>
+              </div>
+            </div>
+          </div>
+          <button class="topbar-btn wa-btn" onclick="navigateTo('whatsapp')" title="WhatsApp Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+            <span class="wa-badge" id="waBadge" style="display:none">0</span>
+          </button>
+          <button class="topbar-btn notification-btn" onclick="toggleNotificationPanel()" title="Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <span class="notification-badge" id="notificationBadge" style="display:none">0</span>
+          </button>
+          <button class="topbar-btn" id="topbarRefreshBtn" onclick="refreshCurrentPage()" title="Refresh Data">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px" id="refreshIcon"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg>
+          </button>
+          <button class="topbar-btn" onclick="navigateTo('settings')" title="Settings" id="topbarSettingsBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </button>
+          <button class="topbar-btn topbar-logout" onclick="handleLogout()" title="Sign Out">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+          <div class="topbar-user" onclick="toggleUserMenu(event)" style="position:relative">
+            <div class="user-avatar-sm" id="topbarAvatar">A</div>
+            <div>
+              <div class="user-name-display" id="topbarName">User</div>
+              <div class="user-role-display" id="topbarRole">Role</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="user-menu-dropdown" id="userMenuDropdown">
+        <button class="menu-item" onclick="navigateTo('settings'); closeUserMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          Settings
+        </button>
+        <div class="menu-divider"></div>
+        <button class="menu-item danger" onclick="handleLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign Out
+        </button>
+      </div>
+
+      <!-- ========== PAGE CONTENT ========== -->
+      <div class="page-content">
+        <div id="page-dashboard" class="page active">
+  <div class="dashboard-filter-bar">
+    <button class="filter-btn active" onclick="setDashboardFilter('today', this)">Today</button>
+    <button class="filter-btn" onclick="setDashboardFilter('week', this)">This Week</button>
+    <button class="filter-btn" onclick="setDashboardFilter('month', this)">This Month</button>
+    <button class="filter-btn" onclick="setDashboardFilter('lastmonth', this)">Last Month</button>
+    <button class="filter-btn" onclick="setDashboardFilter('all', this)">All Time</button>
+    <div style="flex:1"></div>
+    <button class="scan-qr-btn" onclick="openQRScanner()" title="Scan QR Code">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+      Scan QR
+    </button>
   </div>
 
-  <!-- Scripts -->
+  <div class="dashboard-grid" id="dashboardCards">
+    <div class="stat-card stat-primary">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg></div>
+        <div class="stat-info"><h3 id="statMachines">0</h3><p>Total Machines</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-success">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div class="stat-info"><h3 id="statRunningMachines">0</h3><p>Running</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-danger">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="stat-info"><h3 id="statUnderMaintenance">0</h3><p>Under Maintenance</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-open">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="stat-info"><h3 id="statOpenJobs">0</h3><p>Open Jobs</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-running">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></div>
+        <div class="stat-info"><h3 id="statRunningJobs">0</h3><p>Running Jobs</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-closed">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="stat-info"><h3 id="statClosedJobs">0</h3><p>Closed Jobs</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-approved">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="stat-info"><h3 id="statApprovedJobs">0</h3><p>Approved Jobs</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-pending">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="stat-info"><h3 id="statPendingJobs">0</h3><p>Pending Approval</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-warning">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
+        <div class="stat-info"><h3 id="statWaitingJobs">0</h3><p>Waiting Jobs</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-danger">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
+        <div class="stat-info"><h3 id="statBreakdownHours">0</h3><p>Total Downtime</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-info">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M9 18l3 3 3-3"/><path d="M4 12h2l3-9 3 9h2"/></svg></div>
+        <div class="stat-info"><h3 id="statMTTR">N/A</h3><p>MTTR (hrs)</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-success">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M9 18l3 3 3-3"/><path d="M20 12h-2l-3-9L9 3l-3 9H4"/></svg></div>
+        <div class="stat-info"><h3 id="statMTBF">N/A</h3><p>MTBF (hrs)</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-primary">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="stat-info"><h3 id="statAvailability">0%</h3><p>Availability</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-purple">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="stat-info"><h3 id="statPMDue">0</h3><p>PM Due</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-orange">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4M12 16h.01"/></svg></div>
+        <div class="stat-info"><h3 id="statPMOverdue">0</h3><p>PM Overdue</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-primary">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
+        <div class="stat-info"><h3 id="statLowStock">0</h3><p>Low Stock Parts</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-danger">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="stat-info"><h3 id="statOutOfStock">0</h3><p>Out of Stock</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-success">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div class="stat-info"><h3 id="statPMCompliance">0%</h3><p>PM Compliance</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-primary" onclick="navigateTo('qr')" style="cursor:pointer">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg></div>
+        <div class="stat-info"><h3 id="statQRGenerated">0</h3><p>QR Codes</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-success">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
+        <div class="stat-info"><h3 id="statStockValue">$0</h3><p>Inventory Value</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid" style="margin-bottom:16px;grid-template-columns:1fr">
+    <div class="card" style="padding:0">
+      <div class="card-header" style="padding:14px 18px">
+        <div class="card-title" style="font-size:14px;font-weight:600">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          Recent Notifications
+        </div>
+        <div class="card-actions" style="display:flex;gap:10px;align-items:center">
+          <span class="dash-notif-counter" id="dashNotifUnread" style="color:var(--danger)"><span class="counter-num" id="dashNotifUnreadNum">0</span> Unread</span>
+          <span class="dash-notif-counter" id="dashNotifCritical" style="color:var(--danger)"><span class="counter-num" id="dashNotifCriticalNum">0</span> Critical</span>
+          <span class="dash-notif-counter" id="dashNotifApproval" style="color:var(--purple)"><span class="counter-num" id="dashNotifApprovalNum">0</span> Pending Approval</span>
+          <button class="btn btn-xs btn-primary" onclick="navigateTo('notifications')">View All</button>
+        </div>
+      </div>
+      <div id="dashboardNotifications" style="padding:0 18px 14px">
+        <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Loading notifications...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid" style="margin-bottom:16px;grid-template-columns:1fr">
+    <div class="card" style="padding:0">
+      <div class="card-header" style="padding:14px 18px">
+        <div class="card-title" style="font-size:14px;font-weight:600">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+          Recent Activities
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-xs btn-secondary" onclick="navigateTo('audit')">View All</button>
+        </div>
+      </div>
+      <div id="dashboardRecentActivities" style="padding:0 18px 14px">
+        <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Loading activities...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="card-title">Job Status Overview <span class="chart-badge" id="jobStatusBadge">Current</span></div>
+      <div id="chartJobStatus" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">Priority Distribution <span class="chart-badge" id="priorityBadge">Current</span></div>
+      <div id="chartPriority" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">MTTR Trend <span class="chart-badge" id="mttrBadge">6 Months</span></div>
+      <div id="chartMTTR" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">MTBF Trend <span class="chart-badge" id="mtbfBadge">6 Months</span></div>
+      <div id="chartMTBF" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">Monthly Jobs <span class="chart-badge" id="monthlyJobsBadge">6 Months</span></div>
+      <div id="chartMonthlyJobs" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">Breakdown Trend <span class="chart-badge" id="breakdownBadge">6 Months</span></div>
+      <div id="chartBreakdown" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+    </div>
+  </div>
+</div>
+        <div id="page-jobcards" class="page"></div>
+        <div id="page-openjc" class="page"></div>
+        <div id="page-startjc" class="page"></div>
+        <div id="page-closejc" class="page"></div>
+        <div id="page-pendingjc" class="page"></div>
+        <div id="page-approvejobcard" class="page"></div>
+        <div id="page-machines" class="page"></div>
+        <div id="page-assets" class="page"></div>
+        <div id="page-spareparts" class="page"></div>
+        <div id="page-technicians" class="page"></div>
+        <div id="page-departments" class="page"></div>
+        <div id="page-sections" class="page"></div>
+        <div id="page-users" class="page"></div>
+        <div id="page-pm" class="page"></div>
+        <div id="page-pmhistory" class="page"></div>
+        <div id="page-checklists" class="page"></div>
+        <div id="page-breakdownhistory" class="page"></div>
+        <div id="page-inventory" class="page"></div>
+        <div id="page-inventorytransactions" class="page"></div>
+        <div id="page-stockhistory" class="page"></div>
+        <div id="page-goodsreceipt" class="page"></div>
+        <div id="page-notifications" class="page"></div>
+        <div id="page-reports" class="page"></div>
+        <div id="page-qr" class="page"></div>
+        <div id="page-qrmachines" class="page"></div>
+        <div id="page-qrassets" class="page"></div>
+        <div id="page-qrspareparts" class="page"></div>
+        <div id="page-qrjobcards" class="page"></div>
+        <div id="page-qrprint" class="page"></div>
+        <div id="page-qrhistory" class="page"></div>
+        <div id="page-email" class="page"></div>
+        <div id="page-whatsapp" class="page"></div>
+        <div id="page-backup" class="page"></div>
+        <div id="page-audit" class="page"></div>
+        <div id="page-settings" class="page"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== NOTIFICATION PANEL ==================== -->
+  <div class="notification-overlay" id="notificationOverlay" onclick="toggleNotificationPanel()"></div>
+  <div class="notification-panel" id="notificationPanel">
+    <div class="notification-panel-header">
+      <h3>Notification Center</h3>
+      <button class="close-btn" onclick="toggleNotificationPanel()">&times;</button>
+    </div>
+    <div class="notification-panel-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="notifSearchInput" placeholder="Search notifications..." oninput="onNotifSearchInput()">
+    </div>
+    <div class="notification-panel-filters">
+      <div class="notif-filter-tabs" id="notifFilterTabs">
+        <button class="notif-filter-tab active" data-filter="all" onclick="setNotifListFilter('all')">All</button>
+        <button class="notif-filter-tab" data-filter="unread" onclick="setNotifListFilter('unread')">Unread</button>
+        <button class="notif-filter-tab" data-filter="read" onclick="setNotifListFilter('read')">Read</button>
+      </div>
+      <div class="notif-filter-dropdowns">
+        <select class="notif-filter-select" id="notifFilterPriority" onchange="applyNotifListFilters()">
+          <option value="">All Priority</option>
+          <option value="Critical">Critical</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <select class="notif-filter-select" id="notifFilterModule" onchange="applyNotifListFilters()">
+          <option value="">All Modules</option>
+          <option value="Job Card">Job Card</option>
+          <option value="Preventive Maintenance">PM</option>
+          <option value="Spare Part">Spare Part</option>
+          <option value="Inventory">Inventory</option>
+          <option value="Goods Receipt">Goods Receipt</option>
+          <option value="Breakdown">Breakdown</option>
+          <option value="Machine">Machine</option>
+          <option value="Asset">Asset</option>
+          <option value="User">User</option>
+          <option value="System">System</option>
+        </select>
+        <select class="notif-filter-select" id="notifFilterType" onchange="applyNotifListFilters()">
+          <option value="">All Types</option>
+          <option value="Information">Information</option>
+          <option value="Success">Success</option>
+          <option value="Warning">Warning</option>
+          <option value="Critical">Critical</option>
+          <option value="Approval">Approval</option>
+          <option value="Reminder">Reminder</option>
+          <option value="System">System</option>
+        </select>
+      </div>
+    </div>
+    <div class="notification-panel-toolbar">
+      <button class="btn btn-xs btn-success" onclick="markAllNotifRead()" title="Mark All as Read">&#10003; Mark Read</button>
+      <button class="btn btn-xs btn-danger" onclick="deleteAllNotifications()" title="Clear All">&#10005; Clear All</button>
+      <span class="notif-count-badge" id="notifPanelCount">0 notifications</span>
+    </div>
+    <div class="notification-list" id="notificationList">
+      <div class="notification-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <p>No notifications</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LOADING OVERLAY ==================== -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-logo-area">
+      <img class="loading-logo-img" id="loadingLogoImg" alt="Pakistan Wire Industries" src="logo.svg" style="display:none" onload="this.style.display='block'" onerror="this.style.display='none'">
+      <svg class="loading-logo-fallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="44" height="44">
+        <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
+        <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
+        <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
+        <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+      </svg>
+    </div>
+    <div class="spinner spinner-dark"></div>
+    <div style="color:var(--text-light)">Loading...</div>
+  </div>
+
+  <!-- ==================== CONFIRM MODAL ==================== -->
+  <div id="confirmOverlay" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:400px">
+      <div class="modal-header">
+        <div class="modal-title" id="confirmTitle">Confirm</div>
+        <button class="modal-close" onclick="closeConfirm()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-dialog" style="text-align:center;padding:12px 0">
+          <p id="confirmMessage" style="margin:12px 0 24px;font-size:14px;color:var(--text-light)"></p>
+          <div class="btn-group" style="justify-content:center" id="confirmButtons"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== OFFLINE / INSTALL BANNERS ==================== -->
+  <div id="offlineBanner" class="offline-banner" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.56 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+    You are offline. Changes will sync when connected.
+  </div>
+  <div id="installBanner" class="install-banner" style="display:none">
+    <div class="install-banner-content">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Install CMMS App</span>
+      <button class="btn btn-xs btn-primary" onclick="installPWA()">Install</button>
+      <button class="btn btn-xs btn-secondary" onclick="dismissInstall()">Later</button>
+    </div>
+  </div>
+
+  <!-- ==================== EXTERNAL SCRIPTS ==================== -->
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/app.js"></script>
-  <script>
-    function handleLogin(e) {
-      e.preventDefault();
-      var email = document.getElementById('login-email').value;
-      var password = document.getElementById('login-password').value;
-      var btn = document.getElementById('login-btn');
-      var err = document.getElementById('login-error');
-      btn.textContent = 'Signing in...';
-      btn.disabled = true;
-      err.style.display = 'none';
-      err.innerHTML = '';
-      Auth.login(email, password)
-        .then(function(user) {
-          document.getElementById('page-login').style.display = 'none';
-          document.getElementById('page-login').classList.remove('active');
-          document.getElementById('app-container').style.display = '';
-          location.hash = '#dashboard';
-          App.navigateTo('dashboard');
-        })
-        .catch(function(loginErr) {
-          var diag = API.getDiagnostics();
-          var msg = loginErr.message || 'Login failed';
-          var html = '<strong>' + msg + '</strong>';
-          if (diag) {
-            html += '<br><span style="font-size:11px;opacity:0.8">';
-            html += 'Step: ' + diag.step + ' | Status: ' + diag.status;
-            if (diag.detail) html += '<br>' + diag.detail;
-            html += '</span>';
-          }
-          html += '<br><span style="font-size:11px;opacity:0.6">API: ' + API.getGasUrl().slice(0, 60) + '...</span>';
-          err.innerHTML = html;
-          err.style.display = 'block';
-        })
-        .finally(function() {
-          btn.textContent = 'Sign In';
-          btn.disabled = false;
+<script>
+var LOGO_URL = 'logo.svg';
+
+var currentUser = null;
+var currentPage = 'dashboard';
+var PAGE_SIZE = 10;
+
+var CONSTANTS = {
+  MACHINE_TYPES: ['CNC', 'Hydraulic', 'Pneumatic', 'Electrical', 'Mechanical', 'Robotic', 'Conveyor', 'Pump', 'Compressor', 'Generator', 'Other'],
+  SKILLS: ['Mechanical', 'Electrical', 'Hydraulic', 'Pneumatic', 'Electronics', 'Multi-Skill'],
+  SHIFTS: ['General', 'Morning', 'Afternoon', 'Night', 'Rotating'],
+  TECH_SKILLS: ['Mechanical', 'Electrical', 'PLC', 'Hydraulic', 'Pneumatic', 'Utility', 'Instrumentation'],
+  TECH_SHIFTS: ['General', 'A', 'B', 'C'],
+  UNITS: ['Pcs', 'Kg', 'Liter', 'Meter', 'Set', 'Box'],
+  CHECKLIST_CATEGORIES: ['Mechanical', 'Electrical', 'Hydraulic', 'Pneumatic', 'Safety', 'Quality', 'Daily', 'Weekly', 'Monthly'],
+  BREAKDOWN_TYPES: ['Mechanical Failure', 'Electrical Fault', 'Hydraulic Leak', 'Pneumatic Issue', 'Software Glitch', 'Sensor Malfunction', 'Wear & Tear', 'Operator Error', 'Overload', 'Vibration', 'Overheating', 'Other'],
+  MAINTENANCE_TEAMS: ['Mechanical Team', 'Electrical Team', 'Hydraulic Team', 'Pneumatic Team', 'Electronics Team', 'General Maintenance'],
+  ASSET_TYPES: ['Equipment', 'Tooling', 'Instrument', 'Fixture', 'Vehicle', 'Building', 'Infrastructure', 'Other'],
+  ASSET_CATEGORIES: ['Production', 'Utility', 'Safety', 'Quality', 'IT', 'Facility'],
+  ASSET_SUBCATEGORIES: ['Electrical', 'Mechanical', 'Hydraulic', 'Pneumatic', 'Electronic', 'Structural'],
+  SPARE_PART_CATEGORIES: ['Bearings', 'Seals', 'Filters', 'Belts', 'Lubricants', 'Electrical', 'Hydraulic', 'Pneumatic', 'Mechanical', 'Other'],
+  SPARE_PART_STATUSES: ['Active', 'Inactive'],
+  FREQUENCY_TYPES: ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Half Yearly', 'Yearly'],
+  PM_STATUSES: ['Scheduled', 'In Progress', 'Completed', 'Overdue', 'Missed'],
+  TRANSACTION_TYPES: ['Goods Receipt', 'Issue', 'Return', 'Transfer', 'Adjustment'],
+  PART_UNITS: ['Pcs', 'Kg', 'Liter', 'Meter', 'Set', 'Box', 'Pair', 'Roll', 'Bag'],
+  INVENTORY_LOCATIONS: ['Store A', 'Store B', 'Store C', 'Workshop', 'Warehouse']
+};
+
+var ICONS = {
+  edit: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M14.5 2.5a1.5 1.5 0 012 2L7 14l-3 1 1-3 9.5-9.5z"/></svg>',
+  trash: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M3 5h14"/><path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M16 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5"/><path d="M8 8v6"/><path d="M12 8v6"/></svg>',
+  view: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M1 10s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7z"/><circle cx="10" cy="10" r="2.5"/></svg>',
+  save: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>',
+  plus: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg>',
+  search: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg>',
+  refresh: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg>',
+  print: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg>',
+  download: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg>',
+  filter: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M4 3h12l-5 6.5V17l-2 1V9.5L4 3z"/></svg>',
+  close: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M12 8l-4 4"/><path d="M8 8l4 4"/><circle cx="10" cy="10" r="9"/></svg>',
+  start: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="10" cy="10" r="9"/><path d="M8 6l6 4-6 4V6z"/></svg>',
+  complete: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="10" cy="10" r="9"/><path d="M7 10l2 2 4-4"/></svg>',
+  check: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><polyline points="4 10 8 14 16 6"/></svg>'
+};
+
+function iconBtn(iconName, onclick, tooltip, extraClass) {
+  var svg = ICONS[iconName] || '';
+  var cls = 'icon-btn' + (extraClass ? ' ' + extraClass : '');
+  return '<button class="' + cls + '" onclick="' + onclick + '" title="' + (tooltip || '') + '">' + svg + '</button>';
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+/* ==================== LOGIN FUNCTIONS ==================== */
+function loginUpdateThemeIcon() {
+  var icon = document.getElementById('loginThemeIcon');
+  if (!icon) return;
+  var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  icon.innerHTML = isLight
+    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    : '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+}
+
+function loginToggleTheme() {
+  var current = document.documentElement.getAttribute('data-theme') || 'dark';
+  var next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('cmms_theme', next);
+  loginUpdateThemeIcon();
+}
+
+function togglePasswordVisibility() {
+  var passInput = document.getElementById('loginPassword');
+  var openIcon = document.getElementById('eyeIconOpen');
+  var closedIcon = document.getElementById('eyeIconClosed');
+  if (!passInput) return;
+  if (passInput.type === 'password') {
+    passInput.type = 'text';
+    if (openIcon) openIcon.style.display = 'none';
+    if (closedIcon) closedIcon.style.display = 'block';
+  } else {
+    passInput.type = 'password';
+    if (openIcon) openIcon.style.display = 'block';
+    if (closedIcon) closedIcon.style.display = 'none';
+  }
+}
+
+function toggleResetPasswordVisibility() {
+  var passInput = document.getElementById('resetNewPassword');
+  var openIcon = document.getElementById('resetEyeOpen');
+  var closedIcon = document.getElementById('resetEyeClosed');
+  if (!passInput) return;
+  if (passInput.type === 'password') {
+    passInput.type = 'text';
+    if (openIcon) openIcon.style.display = 'none';
+    if (closedIcon) closedIcon.style.display = 'block';
+  } else {
+    passInput.type = 'password';
+    if (openIcon) openIcon.style.display = 'block';
+    if (closedIcon) closedIcon.style.display = 'none';
+  }
+}
+
+function showForgotPassword() {
+  var modal = document.getElementById('forgotPasswordModal');
+  if (modal) modal.style.display = 'flex';
+  var emailInput = document.getElementById('forgotEmail');
+  if (emailInput) {
+    var loginEmail = document.getElementById('loginEmail');
+    emailInput.value = loginEmail ? loginEmail.value.trim() : '';
+  }
+  var result = document.getElementById('forgotResult');
+  if (result) { result.style.display = 'none'; result.textContent = ''; }
+  document.getElementById('forgotStep1').style.display = 'block';
+  document.getElementById('forgotStep2').style.display = 'none';
+  document.getElementById('forgotSubmitBtn').style.display = 'inline-block';
+  document.getElementById('resetPasswordBtn').style.display = 'none';
+}
+
+function closeForgotPassword() {
+  var modal = document.getElementById('forgotPasswordModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function submitForgotPassword() {
+  var emailInput = document.getElementById('forgotEmail');
+  var resultDiv = document.getElementById('forgotResult');
+  var submitBtn = document.getElementById('forgotSubmitBtn');
+  var email = emailInput ? emailInput.value.trim() : '';
+  if (!email) { if (resultDiv) { resultDiv.textContent = 'Please enter your email address.'; resultDiv.className = 'login-forgot-result error'; resultDiv.style.display = 'block'; } if (emailInput) emailInput.focus(); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { if (resultDiv) { resultDiv.textContent = 'Please enter a valid email address.'; resultDiv.className = 'login-forgot-result error'; resultDiv.style.display = 'block'; } if (emailInput) emailInput.focus(); return; }
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending...'; }
+  API.call('generateResetToken', { email: email }, { retry: false })
+    .then(function(result) {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Send Token'; }
+      if (result && result.success) {
+        if (resultDiv) { resultDiv.textContent = result.message; resultDiv.className = 'login-forgot-result success'; resultDiv.style.display = 'block'; }
+        document.getElementById('forgotStep1').style.display = 'none';
+        document.getElementById('forgotStep2').style.display = 'block';
+        document.getElementById('forgotSubmitBtn').style.display = 'none';
+        document.getElementById('resetPasswordBtn').style.display = 'inline-block';
+      } else {
+        if (resultDiv) { resultDiv.textContent = result && result.message ? result.message : 'Email not registered.'; resultDiv.className = 'login-forgot-result error'; resultDiv.style.display = 'block'; }
+      }
+    })
+    .catch(function() {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Send Token'; }
+      if (resultDiv) { resultDiv.textContent = 'An error occurred. Please try again.'; resultDiv.className = 'login-forgot-result error'; resultDiv.style.display = 'block'; }
+    });
+}
+
+function submitResetPassword() {
+  var emailInput = document.getElementById('forgotEmail');
+  var tokenInput = document.getElementById('resetToken');
+  var passInput = document.getElementById('resetNewPassword');
+  var resultDiv = document.getElementById('forgotResult');
+  var resetBtn = document.getElementById('resetPasswordBtn');
+  var email = emailInput ? emailInput.value.trim() : '';
+  var token = tokenInput ? tokenInput.value.trim() : '';
+  var newPass = passInput ? passInput.value : '';
+  if (!token) { if (resultDiv) { resultDiv.textContent = 'Please enter the reset token from your email.'; resultDiv.className = 'login-forgot-result error'; resultDiv.style.display = 'block'; } if (tokenInput) tokenInput.focus(); return; }
+  if (!newPass || newPass.length < 4) { if (resultDiv) { resultDiv.textContent = 'Please enter a new password (minimum 4 characters).'; resultDiv.className = 'login-forgot-result error'; resultDiv.style.display = 'block'; } if (passInput) passInput.focus(); return; }
+  if (resetBtn) { resetBtn.disabled = true; resetBtn.textContent = 'Resetting...'; }
+  API.call('resetPasswordWithToken', { email: email, token: token, newPassword: newPass }, { retry: false })
+    .then(function(result) {
+      if (resetBtn) { resetBtn.disabled = false; resetBtn.textContent = 'Reset Password'; }
+      if (result && result.success) {
+        if (resultDiv) { resultDiv.textContent = 'Password reset successfully! You can now login with your new password.'; resultDiv.className = 'login-forgot-result success'; resultDiv.style.display = 'block'; }
+        document.getElementById('forgotStep2').style.display = 'none';
+        document.getElementById('resetPasswordBtn').style.display = 'none';
+        setTimeout(function() { closeForgotPassword(); }, 1500);
+      } else {
+        if (resultDiv) { resultDiv.textContent = result && result.message ? result.message : 'Invalid or expired token.'; resultDiv.className = 'login-forgot-result error'; resultDiv.style.display = 'block'; }
+      }
+    })
+    .catch(function() {
+      if (resetBtn) { resetBtn.disabled = false; resetBtn.textContent = 'Reset Password'; }
+      if (resultDiv) { resultDiv.textContent = 'An error occurred. Please try again.'; resultDiv.className = 'login-forgot-result error'; resultDiv.style.display = 'block'; }
+    });
+}
+
+function handleLogin(e) {
+  e.preventDefault();
+  var emailEl = document.getElementById('loginEmail');
+  var passEl = document.getElementById('loginPassword');
+  var email = emailEl ? emailEl.value.trim() : '';
+  var password = passEl ? passEl.value : '';
+  var btn = document.getElementById('loginBtn');
+  var errorDiv = document.getElementById('loginError');
+  var rememberEl = document.getElementById('loginRemember');
+  var remember = rememberEl ? rememberEl.checked : false;
+  if (errorDiv) errorDiv.style.display = 'none';
+  if (!email) { if (errorDiv) { errorDiv.textContent = 'Please enter your email.'; errorDiv.style.display = 'block'; } if (emailEl) emailEl.focus(); return false; }
+  if (!password) { if (errorDiv) { errorDiv.textContent = 'Please enter your password.'; errorDiv.style.display = 'block'; } if (passEl) passEl.focus(); return false; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { if (errorDiv) { errorDiv.textContent = 'Please enter a valid email address.'; errorDiv.style.display = 'block'; } if (emailEl) emailEl.focus(); return false; }
+  if (btn) { btn.disabled = true; var btnText = btn.querySelector('.login-btn-text'); if (btnText) btnText.textContent = 'Signing in...'; var spnr = btn.querySelector('.spinner'); if (spnr) spnr.style.display = 'inline-block'; }
+  if (remember) { localStorage.setItem('cmms_remember_email', email); } else { localStorage.removeItem('cmms_remember_email'); }
+  Auth.login(email, password)
+    .then(function(user) {
+      currentUser = user;
+      showApp();
+    })
+    .catch(function(err) {
+      if (errorDiv) { errorDiv.textContent = err.message || 'Invalid Email or Password.'; errorDiv.style.display = 'block'; }
+    })
+    .finally(function() {
+      if (btn) { btn.disabled = false; var btnText = btn.querySelector('.login-btn-text'); if (btnText) btnText.textContent = 'Sign In'; var spnr = btn.querySelector('.spinner'); if (spnr) spnr.style.display = 'none'; }
+    });
+  return false;
+}
+/* ==================== WELCOME SCREEN ==================== */
+var wsTimer = null;
+var wsLoaded = false;
+var loadingTexts = ['Initializing system...', 'Loading modules...', 'Preparing interface...', 'Almost ready...'];
+var textIndex = 0;
+
+function wsEnter() {
+  if (wsLoaded) return;
+  wsLoaded = true;
+  if (wsTimer) { clearTimeout(wsTimer); wsTimer = null; }
+  var welcomePage = document.getElementById('page-welcome');
+  var loginPage = document.getElementById('page-login');
+  if (welcomePage) welcomePage.style.display = 'none';
+  if (Auth.isLoggedIn()) {
+    currentUser = Auth.getUser();
+    showApp();
+  } else {
+    if (loginPage) loginPage.style.display = '';
+  }
+  wsLoaded = false;
+}
+
+function wsStart() {
+  var bar = document.getElementById('wsProgressBar');
+  var loadingText = document.getElementById('wsLoadingText');
+  if (!bar) { wsEnter(); return; }
+  var start = Date.now();
+  function tick() {
+    var elapsed = Date.now() - start;
+    var pct = Math.min(100, (elapsed / 400) * 100);
+    bar.style.width = pct + '%';
+    var newIndex = Math.min(3, Math.floor(pct / 25));
+    if (newIndex !== textIndex && loadingText) {
+      textIndex = newIndex;
+      loadingText.textContent = loadingTexts[textIndex];
+    }
+    if (pct < 100) wsTimer = setTimeout(tick, 50);
+    else wsEnter();
+  }
+  wsTimer = setTimeout(tick, 50);
+}
+/* ==================== APP FUNCTIONS ==================== */
+function showApp() {
+  var loginPage = document.getElementById('page-login'); if (loginPage) loginPage.style.display = 'none';
+  var appContainer = document.getElementById('app-container'); if (appContainer) appContainer.style.display = 'flex';
+  applyTheme();
+  updateUserInfo();
+  initSidebar();
+  startClock();
+  initLiveTimers();
+  var lastPage = localStorage.getItem('cmms_last_page');
+  if (lastPage && lastPage !== 'dashboard') { navigateTo(lastPage); } else { navigateTo('dashboard'); loadDashboardData(); }
+}
+
+function updateUserInfo() {
+  if (!currentUser) return;
+  var initial = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
+  var photoUrl = currentUser.photoURL || currentUser.PhotoURL || '';
+  function setAvatar(elId, size) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    if (photoUrl) { el.innerHTML = '<img src="' + photoUrl.replace(/"/g, '&quot;') + '" style="width:' + size + ';height:' + size + ';border-radius:50%;object-fit:cover">'; }
+    else { el.textContent = initial; }
+  }
+  setAvatar('userAvatar', '34px');
+  setAvatar('topbarAvatar', '28px');
+  setText('userName', currentUser.name || '');
+  setText('userRole', currentUser.role + (currentUser.department ? ' - ' + currentUser.department : ''));
+  setText('topbarName', currentUser.name || '');
+  setText('topbarRole', currentUser.role + (currentUser.department ? ' - ' + currentUser.department : ''));
+  var isAdminUser = isAdmin();
+  document.querySelectorAll('.sidebar-item[data-page]').forEach(function(el) {
+    var page = el.dataset.page;
+    var show = true;
+    if (page === 'machines') { show = isAdminUser || hasPermission('manageMachines'); }
+    else if (page === 'assets') { show = isAdminUser || hasPermission('manageAssets'); }
+    else if (page === 'technicians') { show = isAdminUser || hasPermission('manageMachines'); }
+    else if (page === 'departments') { show = isAdminUser || hasPermission('manageMachines'); }
+    else if (page === 'sections') { show = isAdminUser || hasPermission('manageMachines'); }
+    else if (page === 'users') { show = isAdminUser || hasPermission('manageUsers'); }
+    else if (page === 'openjc') { show = isAdminUser || hasPermission('openJobCard'); }
+    else if (page === 'startjc') { show = isAdminUser || hasPermission('startJobCard'); }
+    else if (page === 'closejc') { show = isAdminUser || hasPermission('closeJobCard'); }
+    else if (page === 'pendingjc') { show = isAdminUser || hasPermission('reviewPendingJobCard'); }
+    else if (page === 'jobcards') { show = isAdminUser || hasPermission('viewAllJobCards'); }
+    else if (page === 'approvejobcard') { show = isAdminUser || hasPermission('approveJobCard'); }
+    else if (page === 'checklists') { show = isAdminUser || hasPermission('managePM'); }
+    else if (page === 'pm') { show = isAdminUser || hasPermission('managePM'); }
+    else if (page === 'spareparts') { show = isAdminUser || hasPermission('manageSpareParts'); }
+    else if (page === 'inventory') { show = isAdminUser || hasPermission('manageInventory'); }
+    else if (page === 'inventorytransactions') { show = isAdminUser || hasPermission('manageInventory'); }
+    else if (page === 'stockhistory') { show = isAdminUser || hasPermission('manageInventory'); }
+    else if (page === 'goodsreceipt') { show = isAdminUser || hasPermission('manageInventory'); }
+    else if (page === 'pmhistory') { show = isAdminUser || hasPermission('managePM'); }
+    else if (page === 'breakdownhistory') { show = isAdminUser || hasPermission('viewReports'); }
+    else if (page === 'reports') { show = isAdminUser || hasPermission('viewReports'); }
+    else if (page === 'audit') { show = isAdminUser || currentUser.role === 'Department Manager' || currentUser.role === 'Maintenance Manager'; }
+    else if (page === 'qr') { show = true; }
+    else if (page === 'qrmachines' || page === 'qrassets' || page === 'qrspareparts' || page === 'qrjobcards' || page === 'qrprint' || page === 'qrhistory') { show = true; }
+    else if (page === 'email') { show = isAdminUser; }
+    else if (page === 'whatsapp') { show = isAdminUser; }
+    else if (page === 'backup') { show = isAdminUser; }
+    else if (page === 'settings') { show = isAdminUser || hasPermission('manageUsers'); }
+    el.style.display = show ? '' : 'none';
+  });
+  var settingsBtn = document.getElementById('topbarSettingsBtn');
+  if (settingsBtn) settingsBtn.style.display = (isAdminUser || hasPermission('manageUsers')) ? '' : 'none';
+}
+
+function toggleUserMenu(e) {
+  if (e) e.stopPropagation();
+  var menu = document.getElementById('userMenuDropdown');
+  if (menu) menu.classList.toggle('show');
+}
+
+function closeUserMenu() {
+  var menu = document.getElementById('userMenuDropdown');
+  if (menu) menu.classList.remove('show');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.topbar-user')) closeUserMenu();
+  if (e.target.classList.contains('modal-overlay')) { e.target.style.display = 'none'; e.target.classList.remove('show'); }
+});
+
+function setText(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; }
+function setHtml(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+function getVal(id) { var el = document.getElementById(id); return el ? el.value : null; }
+function setVal(id, val) { var el = document.getElementById(id); if (el) el.value = val; }
+function showEl(id, displayType) { var el = document.getElementById(id); if (el) el.style.display = displayType || 'block'; }
+function hideEl(id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; }
+
+function handleLogout() {
+  showConfirm('Sign Out', 'Are you sure you want to sign out?', function() {
+    // logout logged
+    currentUser = null;
+    localStorage.removeItem('cmms_user');
+    var appContainer = document.getElementById('app-container'); if (appContainer) appContainer.style.display = 'none';
+    var loginPage = document.getElementById('page-login'); if (loginPage) loginPage.style.display = '';
+    var emailEl = document.getElementById('loginEmail');
+    var passEl = document.getElementById('loginPassword');
+    if (emailEl) emailEl.value = '';
+    if (passEl) passEl.value = '';
+  });
+}
+
+function navigateTo(page) {
+  if (!currentUser) { var lp = document.getElementById('page-login'); if (lp) lp.style.display = ''; var ac = document.getElementById('app-container'); if (ac) ac.style.display = 'none'; return; }
+  var originalPage = page;
+  try { localStorage.setItem('cmms_last_page', page); } catch(e) {}
+  var qrPages = ['qrmachines','qrassets','qrspareparts','qrjobcards','qrprint','qrhistory'];
+  if (qrPages.indexOf(page) > -1) page = 'qr';
+  if (page === 'inventorytransactions' || page === 'stockhistory') page = 'inventory';
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.sidebar-item').forEach(function(i) { i.classList.remove('active'); });
+  var mc = document.querySelector('.main-content');
+  if (mc) mc.scrollTop = 0;
+  var pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
+  var menuItem = document.querySelector('.sidebar-item[data-page="' + originalPage + '"]');
+  if (menuItem) { menuItem.classList.add('active'); var parentGroup = menuItem.closest('.sidebar-group'); if (parentGroup) parentGroup.classList.add('open'); }
+  var titles = { dashboard: 'Dashboard', assets: 'Asset Master', machines: 'Machine Master', technicians: 'Technician Master', departments: 'Department Master', sections: 'Section Master', jobcards: 'All Job Cards', checklists: 'Checklists', pm: 'Preventive Maintenance', spareparts: 'Spare Parts', inventory: 'Inventory Management', inventorytransactions: 'Inventory Transactions', stockhistory: 'Stock History', goodsreceipt: 'Goods Receipt', pmhistory: 'PM History', notifications: 'Notifications', breakdownhistory: 'Breakdown History', audit: 'Audit Trail', qr: 'QR & Barcode Center', qrmachines: 'Machine QR Management', qrassets: 'Asset QR Management', qrspareparts: 'Spare Parts QR Management', qrjobcards: 'Job Card QR Management', qrprint: 'Print QR Labels', qrhistory: 'QR Scan History', email: 'Email Notification Settings', reports: 'Reports', backup: 'Backup & Restore', settings: 'Settings', openjc: 'Open Job Card', users: 'Users', startjc: 'Start Job Card', closejc: 'Close Job Card', pendingjc: 'Pending Review', approvejobcard: 'Approve Job Cards', whatsapp: 'WhatsApp Notifications' };
+  setText('page-title', titles[originalPage] || originalPage);
+  document.querySelector('.sidebar').classList.remove('open');
+  closeUserMenu();
+  App.loadPage(page);
+}
+/* ==================== SIDEBAR ==================== */
+function toggleSidebar() {
+  var sidebar = document.getElementById('sidebar');
+  if (window.innerWidth <= 768) { sidebar.classList.toggle('open'); }
+  else { sidebar.classList.toggle('collapsed'); }
+}
+
+function initSidebar() {
+  var sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+  try {
+    var saved = JSON.parse(localStorage.getItem('cmms_sidebarGroups') || '{}');
+    var hasSaved = Object.keys(saved).length > 0;
+    document.querySelectorAll('.sidebar-group').forEach(function(g) {
+      var key = g.dataset.group;
+      if (hasSaved) { if (saved[key] === true) g.classList.add('open'); }
+      else { g.classList.add('open'); }
+    });
+  } catch(e) {}
+}
+
+function toggleSidebarGroup(header) {
+  var group = header.parentElement;
+  group.classList.toggle('open');
+  var key = group.dataset.group;
+  if (key) {
+    try {
+      var saved = JSON.parse(localStorage.getItem('cmms_sidebarGroups') || '{}');
+      saved[key] = group.classList.contains('open');
+      localStorage.setItem('cmms_sidebarGroups', JSON.stringify(saved));
+    } catch(e) {}
+  }
+}
+
+function openApproveJobCard() {
+  if (!isAdmin() && !hasPermission('approveJobCard')) { showToast('You do not have permission to approve job cards', 'warning'); return; }
+  navigateTo('approvejobcard');
+}
+
+/* ==================== CLOCK ==================== */
+function startClock() {
+  function updateClock() {
+    var now = new Date();
+    var formatted = formatDateTime(now);
+    var clockEl = document.getElementById('topbarClock');
+    if (clockEl) clockEl.textContent = formatted;
+  }
+  updateClock();
+  setInterval(updateClock, 30000);
+}
+
+/* ==================== THEME ==================== */
+function loadTheme() {
+  var prefs = localStorage.getItem('cmms_themePrefs');
+  if (prefs) { try { return JSON.parse(prefs); } catch(e) {} }
+  return { mode: 'dark', accentColor: '#6366f1', cardStyle: 'glass', sidebarStyle: 'default', fontSize: 'medium' };
+}
+
+function saveThemePrefs(prefs) { localStorage.setItem('cmms_themePrefs', JSON.stringify(prefs)); }
+
+function applyTheme(prefs) {
+  prefs = prefs || loadTheme();
+  var mode = prefs.mode;
+  if (mode === 'auto') { mode = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'; }
+  document.documentElement.setAttribute('data-theme', mode === 'light' ? 'light' : 'dark');
+  if (prefs.accentColor) {
+    document.documentElement.style.setProperty('--primary', prefs.accentColor);
+    var r = parseInt(prefs.accentColor.slice(1,3), 16);
+    var g = parseInt(prefs.accentColor.slice(3,5), 16);
+    var b = parseInt(prefs.accentColor.slice(5,7), 16);
+    document.documentElement.style.setProperty('--primary-dark', 'rgb(' + Math.max(0,r-20) + ',' + Math.max(0,g-20) + ',' + Math.max(0,b-20) + ')');
+    document.documentElement.style.setProperty('--primary-light', 'rgba(' + r + ',' + g + ',' + b + ',0.14)');
+    document.documentElement.style.setProperty('--primary-glow', 'rgba(' + r + ',' + g + ',' + b + ',0.25)');
+  }
+}
+
+function toggleTheme() {
+  var prefs = loadTheme();
+  var currentMode = document.documentElement.getAttribute('data-theme') || 'dark';
+  prefs.mode = currentMode === 'dark' ? 'light' : 'dark';
+  saveThemePrefs(prefs);
+  applyTheme(prefs);
+}
+
+function updateThemeToggleIcon(mode) {
+  var btn = document.getElementById('themeToggle');
+  if (!btn) return;
+  if (mode === 'light') { btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>'; btn.title = 'Switch to Dark Mode'; }
+  else { btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>'; btn.title = 'Switch to Light Mode'; }
+}
+
+/* ==================== DATE/TIME ==================== */
+function formatDate(date) {
+  if (!date) return '';
+  var d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return '';
+  var y = d.getFullYear(); var m = ('0' + (d.getMonth() + 1)).slice(-2); var day = ('0' + d.getDate()).slice(-2);
+  return y + '-' + m + '-' + day;
+}
+
+function formatDateTime(date) {
+  if (!date) return '';
+  var d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return '';
+  var day = String(d.getDate()).padStart(2, '0');
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var month = months[d.getMonth()]; var year = d.getFullYear();
+  var hours = d.getHours(); var ampm = hours >= 12 ? 'PM' : 'AM'; hours = hours % 12 || 12;
+  var mins = String(d.getMinutes()).padStart(2, '0');
+  return day + ' ' + month + ' ' + year + ' | ' + String(hours).padStart(2, '0') + ':' + mins + ' ' + ampm;
+}
+
+function nowLocalISO() {
+  var d = new Date(); var offset = -d.getTimezoneOffset(); var sign = offset >= 0 ? '+' : '-'; var pad2 = function(n) { return String(n).padStart(2, '0'); };
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + 'T' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()) + sign + pad2(Math.floor(Math.abs(offset) / 60)) + ':' + pad2(Math.abs(offset) % 60);
+}
+
+/* ==================== DURATION ==================== */
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+function formatDuration(ms) {
+  if (!ms || ms < 0) ms = 0;
+  var totalMinutes = Math.floor(ms / 60000); var days = Math.floor(totalMinutes / 1440);
+  var hours = Math.floor((totalMinutes % 1440) / 60); var minutes = totalMinutes % 60;
+  var parts = [];
+  if (days > 0) parts.push(days + 'd'); if (hours > 0 || days > 0) parts.push(hours + 'h'); parts.push(minutes + 'm');
+  return parts.join(' ');
+}
+
+function displayDuration(val) {
+  if (!val && val !== 0 && val !== '0') return '00:00';
+  if (typeof val === 'string' && (val.indexOf(':') > -1 || val.indexOf('Day') > -1)) return val;
+  var totalMinutes; if (val instanceof Date) { totalMinutes = Math.round(val.getTime() / 60000); }
+  else if (typeof val === 'number') { totalMinutes = Math.floor(val); }
+  else { var hours = parseFloat(val); totalMinutes = isNaN(hours) ? 0 : Math.round(hours * 60); }
+  if (totalMinutes < 0) totalMinutes = 0;
+  var d = Math.floor(totalMinutes / 1440); var h = Math.floor((totalMinutes % 1440) / 60); var m = totalMinutes % 60;
+  if (d > 0) return d + ' Day' + (d > 1 ? 's ' : ' ') + pad(h) + ':' + pad(m);
+  return pad(h) + ':' + pad(m);
+}
+
+function getTimeAgo(dateStr) {
+  if (!dateStr) return '';
+  var d = new Date(dateStr);
+  var now = new Date();
+  var diff = Math.floor((now - d) / 1000);
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+  var mo = String(d.getMonth() + 1).padStart(2, '0');
+  var da = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + mo + '-' + da;
+}
+
+/* ==================== LIVE TIMERS ==================== */
+function initLiveTimers() {
+  setInterval(function() {
+    document.querySelectorAll('.live-timer[data-start]').forEach(function(el) {
+      var start = el.getAttribute('data-start');
+      if (start) { var diff = Date.now() - new Date(start).getTime(); el.textContent = formatDuration(diff); }
+    });
+  }, 10000);
+}
+
+/* ==================== TOAST ==================== */
+function showToast(message, type) {
+  type = type || 'success';
+  var container = document.getElementById('toastContainer');
+  if (!container) { container = document.createElement('div'); container.className = 'toast-container'; container.id = 'toastContainer'; document.body.appendChild(container); }
+  var icons = { success: '\u2713', error: '\u2715', warning: '\u26A0', info: '\u2139' };
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.innerHTML = '<span>' + (icons[type] || '\u2139') + '</span><span>' + message + '</span>';
+  container.appendChild(toast);
+  setTimeout(function() { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; toast.style.transition = 'all 0.3s ease'; setTimeout(function() { toast.remove(); }, 300); }, 3000);
+}
+
+/* ==================== LOADING ==================== */
+function showLoading(show) {
+  var overlay = document.getElementById('loadingOverlay');
+  if (!overlay) { overlay = document.createElement('div'); overlay.className = 'loading-overlay'; overlay.id = 'loadingOverlay'; overlay.innerHTML = '<div class="spinner spinner-dark"></div><div style="color:#5f6368">Loading...</div>'; document.body.appendChild(overlay); }
+  overlay.classList.toggle('show', show);
+}
+
+/* ==================== IMAGE PREVIEW ==================== */
+function showImagePreview(src) {
+  if (!src) return;
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:10000;cursor:pointer';
+  var img = document.createElement('img');
+  img.src = src;
+  img.style.cssText = 'max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.5)';
+  overlay.appendChild(img);
+  var closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '&times;';
+  closeBtn.style.cssText = 'position:absolute;top:16px;right:24px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;line-height:1';
+  closeBtn.onclick = function() { overlay.remove(); };
+  overlay.appendChild(closeBtn);
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+/* ==================== CONFIRM MODAL ==================== */
+function showConfirm(title, message, onConfirm) {
+  var overlay = document.getElementById('confirmOverlay');
+  if (!overlay) return;
+  setText('confirmTitle', title);
+  setText('confirmMessage', message);
+  var btnGroup = document.getElementById('confirmButtons');
+  if (!btnGroup) return;
+  btnGroup.innerHTML = '<button class="btn btn-secondary" onclick="closeConfirm()">Cancel</button><button class="btn btn-danger" id="confirmActionBtn">Confirm</button>';
+  overlay.style.display = 'flex';
+  overlay.classList.add('show');
+  var confirmBtn = document.getElementById('confirmActionBtn');
+  if (confirmBtn) confirmBtn.onclick = function() { closeConfirm(); if (onConfirm) onConfirm(); };
+}
+
+function closeConfirm() {
+  var overlay = document.getElementById('confirmOverlay');
+  if (overlay) { overlay.style.display = 'none'; overlay.classList.remove('show'); }
+}
+
+function showModal(id) { var el = document.getElementById(id); if (el) { el.style.display = 'flex'; el.classList.add('show'); } }
+function hideModal(id) { var el = document.getElementById(id); if (el) { el.style.display = 'none'; el.classList.remove('show'); } }
+
+/* ==================== HTML ESCAPE ==================== */
+function escHtml(str) { if (!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escapeHtml(str) { if (!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+
+/* ==================== PERMISSIONS ==================== */
+function hasPermission(perm) {
+  if (!currentUser) return false;
+  if (currentUser.role === 'Admin' || currentUser.isSystemAdmin) return true;
+  return currentUser['can' + perm.charAt(0).toUpperCase() + perm.slice(1)] === true;
+}
+
+function isAdmin() {
+  return currentUser && (currentUser.role === 'Admin' || currentUser.isSystemAdmin === true || currentUser.IsAdmin === true);
+}
+
+function getUserDept() { return (currentUser && currentUser.department) || ''; }
+
+/* ==================== STUBS ==================== */
+function toggleNotificationPanel() { var panel = document.getElementById('notificationPanel'); var overlay = document.getElementById('notificationOverlay'); if (panel) panel.classList.toggle('open'); if (overlay) overlay.classList.toggle('open'); }
+function toggleEmailPanel() { var panel = document.getElementById('emailPanel'); if (panel) panel.classList.toggle('open'); }
+function closeEmailPanel() { var panel = document.getElementById('emailPanel'); if (panel) panel.classList.remove('open'); }
+function emailRetryFailed() { showToast('Email retry not available in CF mode', 'info'); }
+function onGlobalSearch(val) { /* stub */ }
+function onNotifSearchInput() { /* stub */ }
+function setNotifListFilter(filter) { /* stub */ }
+function applyNotifListFilters() { /* stub */ }
+function markAllNotifRead() { /* stub */ }
+function deleteAllNotifications() { /* stub */ }
+function loadNotifications() { /* stub */ }
+function startNotificationRefresh() { /* stub */ }
+function stopNotificationRefresh() { /* stub */ }
+function loadEmailPanelData() { /* stub */ }
+function startEmailPanelRefresh() { /* stub */ }
+function startBadgeRefresh() { /* stub */ }
+function stopAutoRefresh() { /* stub */ }
+function installPWA() { showToast('PWA install not available', 'info'); }
+function dismissInstall() { var banner = document.getElementById('installBanner'); if (banner) banner.style.display = 'none'; }
+function checkQRUrlParameter() { /* stub */ }
+function runFrontendDiagnostic() { /* stub */ }
+function refreshCurrentPage() {
+  if (currentPage === 'dashboard') { loadDashboardData(); }
+  else { App.loadPage(currentPage); }
+  showToast('Refreshed', 'success');
+}
+function toggleSidebarGroupState(key, open) { /* stub */ }
+
+/* ==================== DASHBOARD ==================== */
+var globalDashboardFilter = 'today';
+var dashboardChartsLoaded = false;
+
+function setDashboardFilter(filter, btn) {
+  globalDashboardFilter = filter;
+  document.querySelectorAll('.dashboard-filter-bar .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  loadDashboardData();
+}
+
+function loadDashboardData() {
+  showLoading(true);
+  var cards = document.querySelectorAll('#dashboardCards .stat-info');
+  cards.forEach(function(el) { el.classList.add('loading'); });
+  API.call('getDashboardData', { filter: globalDashboardFilter, department: currentUser && currentUser.department ? currentUser.department : '' })
+    .then(function(data) {
+      cards.forEach(function(el) { el.classList.remove('loading'); });
+      showLoading(false);
+      setText('statMachines', data.totalMachines);
+      setText('statRunningMachines', data.runningMachines);
+      setText('statUnderMaintenance', data.breakdownMachines);
+      setText('statOpenJobs', data.openJobs);
+      setText('statRunningJobs', data.runningJobs);
+      setText('statClosedJobs', data.closedJobs);
+      setText('statApprovedJobs', data.approvedJobs);
+      setText('statPendingJobs', data.pendingJobs);
+      setText('statWaitingJobs', data.waitingJobs);
+      setText('statBreakdownHours', displayDuration(Math.round((data.breakdownHours || 0) * 60)));
+      setText('statMTTR', data.mttr !== null && data.mttr !== undefined ? data.mttr : 'N/A');
+      setText('statMTBF', data.mtbf !== null && data.mtbf !== undefined ? data.mtbf : 'N/A');
+      setText('statAvailability', (data.availability || 0) + '%');
+      setText('statPMDue', data.pmDue);
+      setText('statPMOverdue', data.pmOverdue);
+      setText('statLowStock', data.lowStockParts);
+      setText('statOutOfStock', data.outOfStockParts);
+      setText('statPMCompliance', (data.pmCompliance || 0) + '%');
+      setText('statQRGenerated', data.qrGenerated);
+      setText('statStockValue', '$' + (data.totalStockValue || 0).toFixed(2));
+      drawDashboardCharts(data);
+      loadDashboardNotifications();
+      loadDashboardRecentActivities();
+    })
+    .catch(function(err) {
+      cards.forEach(function(el) { el.classList.remove('loading'); });
+      showLoading(false);
+      var chartIds = ['chartJobStatus','chartPriority','chartMTTR','chartMTBF','chartMonthlyJobs','chartBreakdown'];
+      chartIds.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && el.textContent.indexOf('Loading') > -1) el.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px">Failed to load chart data</div>';
+      });
+    });
+}
+
+function loadDashboardNotifications() {
+  var email = (currentUser && currentUser.email) || '';
+  API.call('getDashboardNotifications', { limit: 10, email: email })
+    .then(function(result) {
+      renderDashboardNotifications(result.data || []);
+      checkForNewNotifications(result);
+      if (result.stats) {
+        setText('dashNotifUnreadNum', result.stats.unread || 0);
+        setText('dashNotifCriticalNum', result.stats.critical || 0);
+        setText('dashNotifApprovalNum', result.stats.pendingApproval || 0);
+      }
+    })
+    .catch(function() {
+      var el = document.getElementById('dashboardNotifications');
+      if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Failed to load</div>';
+    });
+}
+
+function renderDashboardNotifications(items) {
+  var el = document.getElementById('dashboardNotifications');
+  if (!el) return;
+  if (!items || items.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No notifications</div>';
+    return;
+  }
+  var typeColors = {
+    'Information': { color: '#06b6d4', bg: 'rgba(6,182,212,0.11)' },
+    'Success': { color: '#22c55e', bg: 'rgba(34,197,94,0.11)' },
+    'Warning': { color: '#f59e0b', bg: 'rgba(245,158,11,0.11)' },
+    'Critical': { color: '#ef4444', bg: 'rgba(239,68,68,0.11)' },
+    'Approval': { color: '#a855f7', bg: 'rgba(168,85,247,0.11)' },
+    'Reminder': { color: '#f97316', bg: 'rgba(249,115,22,0.11)' },
+    'System': { color: '#9498b8', bg: 'rgba(148,152,184,0.11)' }
+  };
+  var priorityBadge = { 'Critical': 'danger', 'High': 'warning', 'Medium': 'info', 'Low': 'success' };
+  var html = '<div style="display:flex;flex-direction:column;gap:6px">';
+  items.forEach(function(n) {
+    var notifType = n.NotificationType || 'Information';
+    var tc = typeColors[notifType] || typeColors['Information'];
+    var priBadge = priorityBadge[n.Priority] || 'primary';
+    var isUnread = (n.ReadStatus || '').toLowerCase() !== 'read';
+    var dt = n.CreatedDateTime || '';
+    var displayDt = '';
+    if (dt) {
+      var d = new Date(dt);
+      if (!isNaN(d.getTime()) && typeof getTimeAgo === 'function') displayDt = getTimeAgo(dt);
+    }
+    html +=
+      '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);background:var(--bg-input);' + (isUnread ? 'border-left:3px solid var(--primary);background:var(--primary-light);' : '') + 'cursor:pointer" onclick="handleNotifClick(\'' + escapeHtml(n.NotificationID) + '\',\'' + escapeHtml(n.ActionURL || '') + '\')">' +
+        '<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:' + tc.bg + ';color:' + tc.color + ';font-size:12px;font-weight:700">' + (notifType.charAt(0)) + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(n.Title) + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);display:flex;gap:6px;align-items:center">' +
+            '<span class="badge badge-' + priBadge + '" style="font-size:8px;padding:0 5px">' + escapeHtml(n.Priority || '') + '</span>' +
+            '<span class="badge badge-secondary" style="font-size:8px;padding:0 5px">' + escapeHtml(n.Module || '') + '</span>' +
+            '<span>' + displayDt + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function loadDashboardRecentActivities() {
+  API.call('getRecentAuditLogs', { limit: 10 })
+    .then(function(data) {
+      renderDashboardRecentActivities(data || []);
+    })
+    .catch(function() {
+      var el = document.getElementById('dashboardRecentActivities');
+      if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Failed to load</div>';
+    });
+}
+
+function renderDashboardRecentActivities(items) {
+  var el = document.getElementById('dashboardRecentActivities');
+  if (!el) return;
+  if (!items || items.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No recent activities</div>';
+    return;
+  }
+  var actionIcons = {
+    'Login': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><path d="M9 3H5a2 2 0 00-2 2v10a2 2 0 002 2h4"/><polyline points="13 7 17 11 13 15"/><line x1="9" y1="11" x2="17" y2="11"/></svg>',
+    'Logout': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><path d="M11 3H7a2 2 0 00-2 2v10a2 2 0 002 2h4"/><polyline points="17 7 13 11 17 15"/><line x1="13" y1="11" x2="5" y2="11"/></svg>',
+    'Create': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg>',
+    'Update': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><path d="M14.5 2.5a1.5 1.5 0 012 2L7 14l-3 1 1-3 9.5-9.5z"/></svg>',
+    'Delete': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><path d="M3 5h14"/><path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M16 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5"/></svg>',
+    'Approve': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>',
+    'Reject': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><circle cx="10" cy="10" r="9"/><path d="M7 7l6 6"/><path d="M13 7l-6 6"/></svg>',
+    'Open': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>',
+    'Start': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><circle cx="10" cy="10" r="9"/><path d="M8 6l6 4-6 4V6z"/></svg>',
+    'Close': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    'Complete': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><circle cx="10" cy="10" r="9"/><path d="M7 10l2 2 4-4"/></svg>',
+    'Cancel': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><circle cx="10" cy="10" r="9"/><line x1="15" y1="5" x2="5" y2="15"/></svg>'
+  };
+  var html = '<div style="display:flex;flex-direction:column;gap:4px">';
+  items.forEach(function(r) {
+    var icon = actionIcons[r.Action] || '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><circle cx="10" cy="10" r="9"/><path d="M9 9h2v5"/><path d="M9 12h3"/></svg>';
+    var dt = r.DateTime || '';
+    var displayDt = '';
+    if (dt) {
+      var d = new Date(dt);
+      if (!isNaN(d.getTime()) && typeof getTimeAgo === 'function') displayDt = getTimeAgo(dt);
+    }
+    html +=
+        '<div style="display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:var(--radius-sm);background:var(--bg-input);cursor:default" onclick="viewAuditLog(\'' + escapeHtml(r.AuditID) + '\')">' +
+        '<div style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--primary-light);color:var(--primary);font-size:11px">' + icon + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+            '<span class="badge badge-secondary" style="font-size:8px;padding:0 4px;">' + escapeHtml(r.Action || '') + '</span> ' +
+            escapeHtml(r.Module || '') +
+          '</div>' +
+          '<div style="font-size:10px;color:var(--text-muted);display:flex;gap:6px;align-items:center">' +
+            escapeHtml(r.UserName || '') + ' &middot; ' + displayDt +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function doDrawCharts(data) {
+  try {
+    var c = data.charts || {};
+    var months = c.months || [];
+    var op = c.openJobs || [];
+    var rn = c.runningJobs || [];
+    var cl = c.closedJobs || [];
+    var pd = c.pendingJobs || [];
+    var ap = c.approvedJobs || [];
+    var bd = c.breakdowns || [];
+    var mt = c.mttr || [];
+    var mf = c.mtbf || [];
+    var animCfg = { startup: true, duration: 800, easing: 'out' };
+    var tooltipStyle = 'text-align:left;padding:10px 14px;font-size:13px;line-height:1.6;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:inherit;';
+
+    var jobStatusDiv = document.getElementById('chartJobStatus');
+    if (jobStatusDiv) {
+      var statusCounts = [
+        { name: 'Open', count: data.openJobs || 0, color: '#3B82F6' },
+        { name: 'Running', count: data.runningJobs || 0, color: '#22C55E' },
+        { name: 'Closed', count: data.closedJobs || 0, color: '#6B7280' },
+        { name: 'Pending', count: data.pendingJobs || 0, color: '#F97316' },
+        { name: 'Approved', count: data.approvedJobs || 0, color: '#A855F7' }
+      ];
+      var statusTotal = statusCounts.reduce(function(s, r) { return s + r.count; }, 0);
+      if (statusTotal === 0) {
+        jobStatusDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px">No job status data available</div>';
+      } else {
+        jobStatusDiv.innerHTML = '';
+        var jobRows = [['Status', 'Count', { role: 'style' }, { role: 'tooltip', type: 'string', p: { html: true } }]];
+        statusCounts.forEach(function(r) {
+          var pct = statusTotal > 0 ? Math.round((r.count / statusTotal) * 100) : 0;
+          var tip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;font-size:14px;margin-bottom:4px;color:' + r.color + '">' + r.name + '</div><div>Jobs: <b>' + r.count + '</b></div><div>Share: <b>' + pct + '%</b> of ' + statusTotal + ' total</div></div>';
+          jobRows.push([r.name, r.count, r.color, tip]);
         });
-      return false;
+        var jobData = new google.visualization.arrayToDataTable(jobRows);
+        var jobOptions = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 20, bottom: 50, width: '90%', height: '65%' }, legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 11 } }, hAxis: { textStyle: { color: '#9498b8', fontSize: 11 }, gridlines: { color: 'transparent' }, slantedText: false }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, bar: { groupWidth: '60%' }, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg, enableInteractivity: true };
+        var statusChart = new google.visualization.ColumnChart(jobStatusDiv);
+        statusChart.draw(jobData, jobOptions);
+        addDataLabels(jobStatusDiv, statusCounts, statusTotal);
+      }
     }
-    function toggleUserMenu() {
-      var dd = document.getElementById('user-dropdown');
-      dd.style.display = dd.style.display === 'none' ? '' : 'none';
+
+    var priorityDiv = document.getElementById('chartPriority');
+    if (priorityDiv) {
+      var priCounts = [
+        { name: 'Critical', count: data.criticalPriority || 0, color: '#EF4444' },
+        { name: 'High', count: data.highPriority || 0, color: '#F97316' },
+        { name: 'Medium', count: data.mediumPriority || 0, color: '#3B82F6' },
+        { name: 'Low', count: data.lowPriority || 0, color: '#22C55E' }
+      ];
+      var priTotal = priCounts.reduce(function(s, r) { return s + r.count; }, 0);
+      if (priTotal === 0) {
+        priorityDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px">No priority data available</div>';
+      } else {
+        priorityDiv.innerHTML = '';
+        var priRows = [['Priority', 'Count', { role: 'tooltip', type: 'string', p: { html: true } }]];
+        priCounts.forEach(function(r) {
+          var pct = priTotal > 0 ? Math.round((r.count / priTotal) * 100) : 0;
+          var tip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;font-size:14px;margin-bottom:4px;color:' + r.color + '">' + r.name + '</div><div>Jobs: <b>' + r.count + '</b></div><div>Share: <b>' + pct + '%</b> of ' + priTotal + ' total</div></div>';
+          priRows.push([r.name, r.count, tip]);
+        });
+        var priData = new google.visualization.arrayToDataTable(priRows);
+        var pieColors = priCounts.map(function(r) { return r.color; });
+        var pieOptions = { backgroundColor: 'transparent', chartArea: { left: 10, right: 10, top: 10, bottom: 40, width: '90%', height: '70%' }, legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 11 } }, colors: pieColors, pieHole: 0.45, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, pieSliceText: 'none', animation: animCfg };
+        var pieChart = new google.visualization.PieChart(priorityDiv);
+        pieChart.draw(priData, pieOptions);
+      }
     }
-    document.addEventListener('click', function(e) {
-      var dd = document.getElementById('user-dropdown');
-      if (dd && dd.style.display !== 'none' && !e.target.closest('.user-menu')) {
-        dd.style.display = 'none';
+
+    var mttrDiv = document.getElementById('chartMTTR');
+    if (mttrDiv) {
+      var stats = data.mttrStats || { avg: 0, max: 0, min: 0, count: 0 };
+      var mttrHasData = mt.some(function(v) { return v !== null && v > 0; });
+      if (!mttrHasData) {
+        mttrDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;margin-bottom:8px;opacity:0.4"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><div>Not enough maintenance history</div><div style="font-size:11px;margin-top:4px;opacity:0.6">MTTR data will appear once job cards are closed</div></div>';
+      } else {
+        mttrDiv.innerHTML = '';
+        var mttrRows = [['Period', 'MTTR (hrs)', { role: 'tooltip', type: 'string', p: { html: true } }]];
+        for (var mi = 0; mi < months.length; mi++) {
+          var val = (mt[mi] !== null && mt[mi] !== undefined) ? mt[mi] : null;
+          var tip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#3B82F6">MTTR</div><div>Period: <b>' + months[mi] + '</b></div><div>MTTR: <b>' + (val !== null ? val.toFixed(1) + ' hrs' : 'N/A') + '</b></div>' + (stats.avg > 0 ? '<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:11px;color:#888">Avg: ' + stats.avg.toFixed(1) + 'h &middot; Max: ' + stats.max.toFixed(1) + 'h &middot; Min: ' + stats.min.toFixed(1) + 'h</div>' : '') + '</div>';
+          mttrRows.push([months[mi], val, tip]);
+        }
+        var mttrData = new google.visualization.arrayToDataTable(mttrRows);
+        var mttrOptions = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#3B82F6'], curveType: 'function', lineWidth: 3, pointSize: 6, pointShape: 'circle', tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg };
+        if (stats.avg > 0) {
+          mttrData.addColumn('number', 'Average');
+          mttrData.addColumn({ type: 'string', role: 'tooltip', p: { html: true } });
+          for (var mi2 = 0; mi2 < months.length; mi2++) {
+            var avgTip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;color:#94A3B8">Average MTTR</div><div>' + stats.avg.toFixed(1) + ' hours</div></div>';
+            mttrData.setCell(mi2, 2, stats.avg, avgTip);
+          }
+          mttrOptions.colors.push('#94A3B8');
+          mttrOptions.lineDashStyle = [6, 4];
+          mttrOptions.series = { 1: { lineDashStyle: [6, 4], lineWidth: 1, pointSize: 0, enableInteractivity: false } };
+        }
+        var mttrChart = new google.visualization.LineChart(mttrDiv);
+        mttrChart.draw(mttrData, mttrOptions);
+      }
+      var mttrBadge = document.getElementById('mttrBadge');
+      if (mttrBadge) {
+        var lastMttr = mt[mt.length - 1];
+        if (lastMttr !== null && lastMttr !== undefined) mttrBadge.textContent = lastMttr.toFixed(1) + 'h';
+        else if (data.mttr) mttrBadge.textContent = data.mttr + 'h';
+        else mttrBadge.textContent = 'N/A';
+      }
+    }
+
+    var mtbfDiv = document.getElementById('chartMTBF');
+    if (mtbfDiv) {
+      var mtbfHasData = mf.some(function(v) { return v !== null && v > 0; });
+      if (!mtbfHasData) {
+        mtbfDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;margin-bottom:8px;opacity:0.4"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><div>Not enough maintenance history</div><div style="font-size:11px;margin-top:4px;opacity:0.6">MTBF data will appear after multiple breakdowns are recorded</div></div>';
+      } else {
+        mtbfDiv.innerHTML = '';
+        var mtbfRows = [['Period', 'MTBF (days)', { role: 'tooltip', type: 'string', p: { html: true } }]];
+        for (var mi3 = 0; mi3 < months.length; mi3++) {
+          var mfVal = (mf[mi3] !== null && mf[mi3] !== undefined) ? mf[mi3] : null;
+          var mfTip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#22C55E">MTBF</div><div>Period: <b>' + months[mi3] + '</b></div><div>MTBF: <b>' + (mfVal !== null ? mfVal.toFixed(1) + ' days' : 'N/A') + '</b></div></div>';
+          mtbfRows.push([months[mi3], mfVal, mfTip]);
+        }
+        var mtbfData = new google.visualization.arrayToDataTable(mtbfRows);
+        var mtbfOptions = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#22C55E'], curveType: 'function', lineWidth: 3, pointSize: 6, pointShape: 'circle', tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg };
+        var mtbfChart = new google.visualization.LineChart(mtbfDiv);
+        mtbfChart.draw(mtbfData, mtbfOptions);
+      }
+      var mtbfBadge = document.getElementById('mtbfBadge');
+      if (mtbfBadge) {
+        var lastMtbf = mf[mf.length - 1];
+        if (lastMtbf !== null && lastMtbf !== undefined) mtbfBadge.textContent = lastMtbf.toFixed(1) + 'd';
+        else if (data.mtbf) mtbfBadge.textContent = data.mtbf + 'd';
+        else mtbfBadge.textContent = 'N/A';
+      }
+    }
+
+    var monthlyDiv = document.getElementById('chartMonthlyJobs');
+    if (monthlyDiv) {
+      var hasMonthly = op.some(function(v) { return v > 0; }) || rn.some(function(v) { return v > 0; }) || cl.some(function(v) { return v > 0; }) || pd.some(function(v) { return v > 0; }) || ap.some(function(v) { return v > 0; });
+      if (!hasMonthly) {
+        monthlyDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px">No monthly job data</div>';
+      } else {
+        var monthRows = [['Month', 'Open', 'Running', 'Pending', 'Closed', 'Approved', { role: 'tooltip', type: 'string', p: { html: true } }]];
+        for (var mi4 = 0; mi4 < months.length; mi4++) {
+          var monthTotal = op[mi4] + rn[mi4] + pd[mi4] + cl[mi4] + ap[mi4];
+          var mtip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;font-size:14px;margin-bottom:6px">' + months[mi4] + '</div><div style="display:flex;flex-direction:column;gap:2px">' + (op[mi4] > 0 ? '<div style="color:#3B82F6">Open: <b>' + op[mi4] + '</b></div>' : '') + (rn[mi4] > 0 ? '<div style="color:#22C55E">Running: <b>' + rn[mi4] + '</b></div>' : '') + (pd[mi4] > 0 ? '<div style="color:#F97316">Pending: <b>' + pd[mi4] + '</b></div>' : '') + (cl[mi4] > 0 ? '<div style="color:#6B7280">Closed: <b>' + cl[mi4] + '</b></div>' : '') + (ap[mi4] > 0 ? '<div style="color:#A855F7">Approved: <b>' + ap[mi4] + '</b></div>' : '') + '<div style="border-top:1px solid #eee;padding-top:3px;margin-top:3px;font-weight:600">Total: ' + monthTotal + '</div></div></div>';
+          monthRows.push([months[mi4], op[mi4], rn[mi4], pd[mi4], cl[mi4], ap[mi4], mtip]);
+        }
+        var monthlyData = new google.visualization.arrayToDataTable(monthRows);
+        var monthlyOptions = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 10 } }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#3B82F6', '#22C55E', '#F97316', '#6B7280', '#A855F7'], bar: { groupWidth: '65%' }, isStacked: true, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg };
+        var monthlyChart = new google.visualization.ColumnChart(monthlyDiv);
+        monthlyChart.draw(monthlyData, monthlyOptions);
+      }
+    }
+
+    var breakdownDiv = document.getElementById('chartBreakdown');
+    if (breakdownDiv) {
+      var hasBd = bd.some(function(v) { return v > 0; });
+      if (!hasBd) {
+        breakdownDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px">No breakdown data</div>';
+      } else {
+        var bdRows = [['Month', 'Breakdowns', { role: 'tooltip', type: 'string', p: { html: true } }]];
+        var bdTotal = 0;
+        for (var mi5 = 0; mi5 < months.length; mi5++) { bdTotal += bd[mi5]; }
+        for (var mi6 = 0; mi6 < months.length; mi6++) {
+          var bdPct = bdTotal > 0 ? Math.round((bd[mi6] / bdTotal) * 100) : 0;
+          var bdTip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#EF4444">Breakdowns</div><div>Period: <b>' + months[mi6] + '</b></div><div>Count: <b>' + bd[mi6] + '</b></div><div>Share: <b>' + bdPct + '%</b> of ' + bdTotal + ' total</div></div>';
+          bdRows.push([months[mi6], bd[mi6], bdTip]);
+        }
+        var breakdownData = new google.visualization.arrayToDataTable(bdRows);
+        var areaOptions = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#EF4444'], lineWidth: 2, curveType: 'function', pointSize: 5, pointShape: 'circle', areaOpacity: 0.15, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg };
+        var breakdownChart = new google.visualization.AreaChart(breakdownDiv);
+        breakdownChart.draw(breakdownData, areaOptions);
+      }
+    }
+  } catch (e) {
+    console.log('Chart error:', e);
+  }
+}
+
+function addDataLabels(divEl, items, total) {
+  var bars = divEl.querySelectorAll('rect');
+  if (!bars || bars.length === 0) return;
+  var rects = Array.prototype.slice.call(bars).filter(function(r) {
+    return r.getAttribute('fill') && r.getAttribute('height') && parseFloat(r.getAttribute('height')) > 2;
+  });
+  var counts = items.map(function(r) { return r.count; });
+  var maxCount = Math.max.apply(null, counts.concat([1]));
+  for (var i = 0; i < rects.length && i < counts.length; i++) {
+    var rect = rects[i];
+    var count = counts[i];
+    if (count <= 0) continue;
+    var textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    var rx = parseFloat(rect.getAttribute('x')) + parseFloat(rect.getAttribute('width')) / 2;
+    var ry = parseFloat(rect.getAttribute('y')) - 6;
+    textEl.setAttribute('x', rx);
+    textEl.setAttribute('y', ry < 10 ? 14 : ry);
+    textEl.setAttribute('text-anchor', 'middle');
+    textEl.setAttribute('fill', '#ccc');
+    textEl.setAttribute('font-size', '12');
+    textEl.setAttribute('font-weight', '600');
+    textEl.textContent = count;
+    rect.parentNode.appendChild(textEl);
+  }
+}
+
+function drawDashboardCharts(data) {
+  if (!dashboardChartsLoaded) {
+    google.charts.load('current', { packages: ['corechart'] });
+    google.charts.setOnLoadCallback(function() {
+      dashboardChartsLoaded = true;
+      doDrawCharts(data);
+    });
+  } else {
+    doDrawCharts(data);
+  }
+}
+
+var _lastNotifIds = [];
+function checkForNewNotifications(data) {
+  if (!data || !data.data) return;
+  var newIds = data.data.map(function(n) { return n.NotificationID; });
+  if (_lastNotifIds.length > 0) {
+    var newOnes = data.data.filter(function(n) {
+      return _lastNotifIds.indexOf(n.NotificationID) === -1 && (n.Priority === 'Critical' || n.Priority === 'High');
+    });
+    newOnes.forEach(function(n) {
+      if (Notification.permission === 'granted') {
+        new Notification(n.Title || 'CMMS Alert', { body: n.Message || '', icon: '/favicon.ico' });
       }
     });
-    (function checkAuth() {
-      Auth.init();
-      if (Auth.isLoggedIn()) {
-        document.getElementById('page-login').style.display = 'none';
-        document.getElementById('app-container').style.display = '';
-      }
-    })();
-  </script>
+  }
+  _lastNotifIds = newIds;
+}
+
+function viewAuditLog(id) {
+  navigateTo('audit');
+}
+
+/* ==================== INIT ==================== */
+(function checkAuth() {
+  var savedTheme = localStorage.getItem('cmms_theme');
+  if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+  loginUpdateThemeIcon();
+  var saved = localStorage.getItem('cmms_remember_email');
+  if (saved) { var emailInput = document.getElementById('loginEmail'); if (emailInput) emailInput.value = saved; }
+  Auth.init();
+  if (Auth.isLoggedIn()) {
+    currentUser = Auth.getUser();
+  }
+})();
+
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden && currentPage === 'dashboard') {
+    loadDashboardData();
+  }
+});
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(function(reg) {
+    console.log('Service Worker registered:', reg.scope);
+  }).catch(function(err) {
+    console.log('SW registration failed:', err);
+  });
+}
+</script>
 </body>
 </html>
