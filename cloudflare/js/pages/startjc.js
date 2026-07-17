@@ -104,8 +104,7 @@
     App.showLoading(true);
     API.call('getJobCards')
       .then(function(data) {
-        var all = data || data.records || [];
-        if (data && data.records) all = data.records;
+        var all = data.records || data || [];
         _allJobs = all.filter(function(jc) {
           var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
           return s === 'open' || s === 'waiting';

@@ -697,6 +697,12 @@
         <div class="stat-info"><h3 id="statMachines">0</h3><p>Total Machines</p></div>
       </div>
     </div>
+    <div class="stat-card stat-info">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+        <div class="stat-info"><h3 id="statTotalJobs">0</h3><p>Total Job Cards</p></div>
+      </div>
+    </div>
     <div class="stat-card stat-success">
       <div class="stat-inner">
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
@@ -916,68 +922,7 @@
     </div>
   </div>
 
-  <!-- ==================== NOTIFICATION PANEL ==================== -->
-  <div class="notification-overlay" id="notificationOverlay" onclick="toggleNotificationPanel()"></div>
-  <div class="notification-panel" id="notificationPanel">
-    <div class="notification-panel-header">
-      <h3>Notification Center</h3>
-      <button class="close-btn" onclick="toggleNotificationPanel()">&times;</button>
-    </div>
-    <div class="notification-panel-search">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="notifSearchInput" placeholder="Search notifications..." oninput="onNotifSearchInput()">
-    </div>
-    <div class="notification-panel-filters">
-      <div class="notif-filter-tabs" id="notifFilterTabs">
-        <button class="notif-filter-tab active" data-filter="all" onclick="setNotifListFilter('all')">All</button>
-        <button class="notif-filter-tab" data-filter="unread" onclick="setNotifListFilter('unread')">Unread</button>
-        <button class="notif-filter-tab" data-filter="read" onclick="setNotifListFilter('read')">Read</button>
-      </div>
-      <div class="notif-filter-dropdowns">
-        <select class="notif-filter-select" id="notifFilterPriority" onchange="applyNotifListFilters()">
-          <option value="">All Priority</option>
-          <option value="Critical">Critical</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
-        </select>
-        <select class="notif-filter-select" id="notifFilterModule" onchange="applyNotifListFilters()">
-          <option value="">All Modules</option>
-          <option value="Job Card">Job Card</option>
-          <option value="Preventive Maintenance">PM</option>
-          <option value="Spare Part">Spare Part</option>
-          <option value="Inventory">Inventory</option>
-          <option value="Goods Receipt">Goods Receipt</option>
-          <option value="Breakdown">Breakdown</option>
-          <option value="Machine">Machine</option>
-          <option value="Asset">Asset</option>
-          <option value="User">User</option>
-          <option value="System">System</option>
-        </select>
-        <select class="notif-filter-select" id="notifFilterType" onchange="applyNotifListFilters()">
-          <option value="">All Types</option>
-          <option value="Information">Information</option>
-          <option value="Success">Success</option>
-          <option value="Warning">Warning</option>
-          <option value="Critical">Critical</option>
-          <option value="Approval">Approval</option>
-          <option value="Reminder">Reminder</option>
-          <option value="System">System</option>
-        </select>
-      </div>
-    </div>
-    <div class="notification-panel-toolbar">
-      <button class="btn btn-xs btn-success" onclick="markAllNotifRead()" title="Mark All as Read">&#10003; Mark Read</button>
-      <button class="btn btn-xs btn-danger" onclick="deleteAllNotifications()" title="Clear All">&#10005; Clear All</button>
-      <span class="notif-count-badge" id="notifPanelCount">0 notifications</span>
-    </div>
-    <div class="notification-list" id="notificationList">
-      <div class="notification-empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-        <p>No notifications</p>
-      </div>
-    </div>
-  </div>
+  <!-- ==================== NOTIFICATION PANEL (dynamic, created by toggleNotificationPanel) ==================== -->
 
   <!-- ==================== LOADING OVERLAY ==================== -->
   <div id="loadingOverlay" class="loading-overlay">
@@ -1699,9 +1644,10 @@ function toggleNotificationPanel() {
     var notifBtn = document.querySelector('.notification-btn');
     if (notifBtn && notifBtn.parentElement) { notifBtn.parentElement.style.position = 'relative'; notifBtn.parentElement.appendChild(panel); }
     else document.body.appendChild(panel);
+    panel.style.display = 'flex';
     loadNotifPanelData();
   } else if (panel) {
-    panel.style.display = _notifPanelOpen ? 'block' : 'none';
+    panel.style.display = _notifPanelOpen ? 'flex' : 'none';
     if (_notifPanelOpen) loadNotifPanelData();
   }
 }
@@ -1749,22 +1695,24 @@ function loadEmailPanelData() {
   API.call('emailGetPanelData')
     .then(function(data) {
       if (!data) return;
-      setText('emailDropdownSent', data.sentToday || 0);
-      setText('emailDropdownFailed', data.failedToday || 0);
-      setText('emailDropdownPending', data.pendingToday || 0);
+      var stats = data.stats || {};
+      setText('emailDropdownSent', stats.sentToday || 0);
+      setText('emailDropdownFailed', stats.failedToday || 0);
+      setText('emailDropdownPending', stats.pendingToday || 0);
       var eb = document.getElementById('emailBadge');
       if (eb) {
-        var pending = data.pendingToday || 0;
+        var pending = stats.pendingToday || 0;
         if (pending > 0) { eb.textContent = pending > 99 ? '99+' : pending; eb.style.display = ''; }
         else { eb.style.display = 'none'; }
       }
+      var recentEmails = data.recentEmails || [];
       var list = document.getElementById('emailPanelList');
-      if (list && data.recentLogs) {
-        if (data.recentLogs.length === 0) { list.innerHTML = '<div class="email-panel-empty">No recent emails</div>'; return; }
+      if (list) {
+        if (recentEmails.length === 0) { list.innerHTML = '<div class="email-panel-empty">No recent emails</div>'; return; }
         var html = '';
-        var count = Math.min(data.recentLogs.length, 10);
+        var count = Math.min(recentEmails.length, 10);
         for (var i = 0; i < count; i++) {
-          var l = data.recentLogs[i];
+          var l = recentEmails[i];
           var sc = (l.Status || '').toLowerCase() === 'sent' ? 'badge-success' : ((l.Status || '').toLowerCase() === 'failed' ? 'badge-danger' : 'badge-warning');
           html += '<div class="email-panel-item"><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(l.Subject || '') + '</div><div style="font-size:11px;color:var(--text-muted)">' + escapeHtml(l.Recipient || '') + '</div></div><span class="badge ' + sc + '" style="font-size:9px">' + escapeHtml(l.Status || '') + '</span></div>';
         }
@@ -1836,6 +1784,7 @@ function loadDashboardData() {
       setText('statMachines', data.totalMachines);
       setText('statRunningMachines', data.runningMachines);
       setText('statUnderMaintenance', data.breakdownMachines);
+      setText('statTotalJobs', data.totalJobCards);
       setText('statOpenJobs', data.openJobs);
       setText('statRunningJobs', data.runningJobs);
       setText('statClosedJobs', data.closedJobs);

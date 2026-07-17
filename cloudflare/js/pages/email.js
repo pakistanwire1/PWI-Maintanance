@@ -222,9 +222,9 @@
       if (el && el.textContent === '-') el.textContent = '0';
     }, 10000);
     API.call('emailGetPanelData')
-      .then(function(stats) {
+      .then(function(result) {
         clearTimeout(statsTimer);
-        _stats = stats || {};
+        _stats = (result && result.stats) ? result.stats : (result || {});
         var el;
         el = document.getElementById('emailStatSent'); if (el) el.textContent = _stats.sentToday || '0';
         el = document.getElementById('emailStatFailed'); if (el) el.textContent = _stats.failedToday || '0';

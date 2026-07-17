@@ -68,6 +68,7 @@ var App = (function() {
   }
 
   var _scriptMap = {
+    approvejobcard: 'approvedjc'
   };
 
   function loadPage(page) {

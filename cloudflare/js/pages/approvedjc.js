@@ -8,6 +8,7 @@
 (function() {
   var _allJobs = [];
   var _currentPage = 1;
+  var PAGE_SIZE = 15;
 
   App.registerPage('approvejobcard', render, load);
 
@@ -18,7 +19,7 @@
         '<div class="card-header">' +
           '<div class="card-title">' +
             '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.4);vertical-align:middle;margin-right:8px"></span>' +
-            'Approve Jobs' +
+            'Approve Job Cards' +
           '</div>' +
           '<div class="card-actions">' +
             '<div class="search-box">' +
@@ -152,7 +153,7 @@
     if (!container) return;
     var list = getFilteredCards();
     if (list.length === 0) {
-      container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div style="font-size:48px;margin-bottom:12px">&#9989;</div><div style="font-size:14px;font-weight:500">No pending approvals</div></div>';
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div style="font-size:48px;margin-bottom:12px">&#128203;</div><div style="font-size:14px;font-weight:500">No pending job cards for approval</div></div>';
       return;
     }
     var totalPages = Math.ceil(list.length / PAGE_SIZE);

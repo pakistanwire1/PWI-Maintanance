@@ -15,7 +15,7 @@
     var el = document.getElementById('page-notifications');
     if (!el) return;
     el.innerHTML =
-      '<div id="notificationsPage" class="page">' +
+      '<div id="notificationsPage">' +
         '<div class="dashboard-grid" id="notifSummaryCards" style="margin-bottom:16px">' +
           '<div class="stat-card stat-primary" style="cursor:pointer" onclick="Notif.filterByType(\'\')">' +
             '<div class="stat-inner">' +

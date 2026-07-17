@@ -151,7 +151,7 @@
     App.showLoading(true);
     API.call('getJobCardsByStatus', { status: 'Running' })
       .then(function(data) {
-        _allJobs = data || [];
+        _allJobs = data.records || data || [];
         _jobs = _allJobs.slice();
         App.showLoading(false);
         populateFilters();

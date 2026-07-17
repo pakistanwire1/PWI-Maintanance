@@ -155,6 +155,7 @@ var API_ROUTES = {
   'getCurrentStockSummary':{ auth: true,  handler: function(d) { return getCurrentStockSummary(); } },
   'getInventoryDashboardData': { auth: true, handler: function(d) { return getInventoryDashboardData(); } },
   'searchTransactions':    { auth: true,  handler: function(d) { return searchTransactions(d.query); } },
+  'exportTransactionsCSV': { auth: true,  handler: function(d) { return exportTransactionsCSV(); } },
 
   /* ---- Departments ---- */
   'getDepartmentList':     { auth: true,  handler: function(d) { return getDepartmentList(); } },
@@ -200,6 +201,7 @@ var API_ROUTES = {
   'getDuePMs':             { auth: true,  handler: function(d) { return getDuePMs(); } },
   'getOverduePMs':         { auth: true,  handler: function(d) { return getOverduePMs(); } },
   'getPMByMachine':        { auth: true,  handler: function(d) { return getPMByMachine(d.machineId); } },
+  'bulkGeneratePMs':       { auth: true,  handler: function(d) { return bulkGeneratePMs(d); } },
 
   /* ---- PM History ---- */
   'getPMHistory':          { auth: true,  handler: function(d) { return getPMHistory(); } },
@@ -277,6 +279,9 @@ var API_ROUTES = {
   'createBackup':          { auth: true,  handler: function(d) { return createBackup(d.label); } },
   'restoreBackup':         { auth: true,  handler: function(d) { return restoreBackup(d.backupId); } },
   'deleteBackup':          { auth: true,  handler: function(d) { return deleteBackup(d.backupId); } },
+  'getBackupSheetsList':   { auth: true,  handler: function(d) { return getBackupSheetsList(); } },
+  'exportBackup':          { auth: true,  handler: function(d) { return exportBackup(d.backupId); } },
+  'importBackup':          { auth: true,  handler: function(d) { return importBackup(d.data); } },
 
   /* ---- Badges ---- */
   'getSidebarCounts':      { auth: true,  handler: function(d) { return getSidebarCounts(d._userEmail); } },
