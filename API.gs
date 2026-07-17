@@ -259,6 +259,9 @@ var API_ROUTES = {
   'emailSaveSettings':     { auth: true,  handler: function(d) { return emailSaveSettings(d); } },
   'emailGetLogs':          { auth: true,  handler: function(d) { return emailGetLogs(d.filters); } },
   'emailGetPanelData':     { auth: true,  handler: function(d) { return emailGetPanelData(); } },
+  'emailSendRaw':          { auth: true,  handler: function(d) { return emailSendRaw(d.recipient, d.subject, d.body, d.module || '', d.reference || ''); } },
+  'emailRetryFailed':      { auth: true,  handler: function(d) { return emailRetryFailed(); } },
+  'emailSendDailySummary': { auth: true,  handler: function(d) { return emailSendDailySummary(); } },
 
   /* ---- WhatsApp ---- */
   'whatsappGetSettings':   { auth: true,  handler: function(d) { return whatsappGetSettings(); } },
@@ -267,6 +270,7 @@ var API_ROUTES = {
   'whatsappSaveTemplate':  { auth: true,  handler: function(d) { return whatsappSaveTemplate(d); } },
   'whatsappGetLogs':       { auth: true,  handler: function(d) { return whatsappGetLogs(d.filters); } },
   'whatsappGetPanelData':  { auth: true,  handler: function(d) { return whatsappGetPanelData(); } },
+  'whatsappTestSend':      { auth: true,  handler: function(d) { return whatsappTestSend(d.phone, d.message); } },
 
   /* ---- Backup ---- */
   'getBackupHistory':      { auth: true,  handler: function(d) { return getBackupHistory(); } },

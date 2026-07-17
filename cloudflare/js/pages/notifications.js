@@ -159,12 +159,12 @@
   function load() {
     App.showLoading(true);
     API.call('getNotifications', {})
-      .then(function(data) {
-        notifData = data || [];
+      .then(function(result) {
+        notifData = (result && result.records) ? result.records : (result || []);
         App.showLoading(false);
         updateSummary();
-        renderTable();
-        updateBadge();
+        renderNotifTable();
+        updateNotifBadge();
       })
       .catch(function(err) {
         App.showLoading(false);
@@ -239,12 +239,13 @@
   function markNotifRead(id) {
     App.showLoading(true);
     API.call('markNotificationRead', { id: id })
-      .then(function(data) {
-        notifData = data || [];
+      .then(function(result) {
+        var data = (result && result.records) ? result.records : (result || []);
+        notifData = Array.isArray(data) ? data : notifData;
         App.showLoading(false);
         updateSummary();
         renderNotifTable();
-        updateBadge();
+        updateNotifBadge();
         App.showToast('Notification marked as read', 'success');
       })
       .catch(function(err) {
@@ -257,12 +258,13 @@
     showConfirm('Mark All Read', 'Are you sure you want to mark all notifications as read?', function() {
       App.showLoading(true);
       API.call('markAllNotificationsRead', {})
-        .then(function(data) {
-          notifData = data || [];
+        .then(function(result) {
+          var data = (result && result.records) ? result.records : (result || []);
+          notifData = Array.isArray(data) ? data : [];
           App.showLoading(false);
           updateSummary();
           renderNotifTable();
-          updateBadge();
+          updateNotifBadge();
           App.showToast('All notifications marked as read', 'success');
         })
         .catch(function(err) {
@@ -276,12 +278,13 @@
     showConfirm('Delete Notification', 'Are you sure you want to delete this notification?', function() {
       App.showLoading(true);
       API.call('deleteNotification', { id: id })
-        .then(function(data) {
-          notifData = data || [];
+        .then(function(result) {
+          var data = (result && result.records) ? result.records : (result || []);
+          notifData = Array.isArray(data) ? data : notifData.filter(function(n) { return n.NotificationID !== id; });
           App.showLoading(false);
           updateSummary();
           renderNotifTable();
-          updateBadge();
+          updateNotifBadge();
           App.showToast('Notification deleted', 'success');
         })
         .catch(function(err) {
@@ -300,7 +303,7 @@
           App.showLoading(false);
           updateSummary();
           renderNotifTable();
-          updateBadge();
+          updateNotifBadge();
           App.showToast('All notifications cleared', 'success');
         })
         .catch(function(err) {
@@ -475,6 +478,8 @@
     filterByRead: filterNotifByRead,
     exportCSV: exportNotifCSV,
     exportPDF: exportNotifPDF,
-    printView: printNotif
+    printView: printNotif,
+    getData: function() { return notifData; },
+    getUnreadCount: function() { return notifData.filter(function(r) { return (r.ReadStatus || '').toLowerCase() !== 'read'; }).length; }
   };
 })();

@@ -1284,6 +1284,9 @@ function showApp() {
   initSidebar();
   startClock();
   initLiveTimers();
+  loadBadgeCounts();
+  startBadgeRefresh();
+  startEmailPanelRefresh();
   var lastPage = localStorage.getItem('cmms_last_page');
   if (lastPage && lastPage !== 'dashboard') { navigateTo(lastPage); } else { navigateTo('dashboard'); loadDashboardData(); }
 }
@@ -1645,11 +1648,151 @@ function isAdmin() {
 
 function getUserDept() { return (currentUser && currentUser.department) || ''; }
 
-/* ==================== STUBS ==================== */
-function toggleNotificationPanel() { var panel = document.getElementById('notificationPanel'); var overlay = document.getElementById('notificationOverlay'); if (panel) panel.classList.toggle('open'); if (overlay) overlay.classList.toggle('open'); }
-function toggleEmailPanel() { var panel = document.getElementById('emailPanel'); if (panel) panel.classList.toggle('open'); }
+/* ==================== BADGE COUNTS ==================== */
+var _badgeRefreshTimer = null;
+
+function loadBadgeCounts() {
+  API.call('getSidebarCounts', {})
+    .then(function(data) {
+      if (!data) return;
+      var nb = document.getElementById('notificationBadge');
+      if (nb) {
+        var un = data.unreadNotifications || 0;
+        if (un > 0) { nb.textContent = un > 99 ? '99+' : un; nb.style.display = ''; }
+        else { nb.style.display = 'none'; }
+      }
+      var eb = document.getElementById('emailBadge');
+      if (eb) {
+        var pe = data.pendingEmails || 0;
+        if (pe > 0) { eb.textContent = pe > 99 ? '99+' : pe; eb.style.display = ''; }
+        else { eb.style.display = 'none'; }
+      }
+      var wb = document.getElementById('waBadge');
+      if (wb) {
+        var pw = data.pendingWhatsApp || 0;
+        if (pw > 0) { wb.textContent = pw > 99 ? '99+' : pw; wb.style.display = ''; }
+        else { wb.style.display = 'none'; }
+      }
+    })
+    .catch(function() {});
+}
+
+function startBadgeRefresh() {
+  stopBadgeRefresh();
+  _badgeRefreshTimer = setInterval(loadBadgeCounts, 60000);
+}
+
+function stopBadgeRefresh() {
+  if (_badgeRefreshTimer) { clearInterval(_badgeRefreshTimer); _badgeRefreshTimer = null; }
+}
+
+/* ==================== NOTIFICATION PANEL ==================== */
+var _notifPanelOpen = false;
+function toggleNotificationPanel() {
+  _notifPanelOpen = !_notifPanelOpen;
+  var panel = document.getElementById('notificationPanel');
+  if (!panel && _notifPanelOpen) {
+    panel = document.createElement('div');
+    panel.id = 'notificationPanel';
+    panel.className = 'notif-panel';
+    panel.innerHTML = '<div class="notif-panel-header"><h3>Notifications</h3><button class="btn btn-xs btn-secondary" onclick="navigateTo(\'notifications\');toggleNotificationPanel()">View All</button></div><div class="notif-panel-list" id="notifPanelList"><div style="text-align:center;padding:20px;color:var(--text-muted)">Loading...</div></div>';
+    var notifBtn = document.querySelector('.notification-btn');
+    if (notifBtn && notifBtn.parentElement) { notifBtn.parentElement.style.position = 'relative'; notifBtn.parentElement.appendChild(panel); }
+    else document.body.appendChild(panel);
+    loadNotifPanelData();
+  } else if (panel) {
+    panel.style.display = _notifPanelOpen ? 'block' : 'none';
+    if (_notifPanelOpen) loadNotifPanelData();
+  }
+}
+
+function loadNotifPanelData() {
+  var list = document.getElementById('notifPanelList');
+  if (!list) return;
+  API.call('getNotifications', { unreadOnly: true })
+    .then(function(result) {
+      var items = (result && result.records) ? result.records : (result || []);
+      if (!items || items.length === 0) { list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No unread notifications</div>'; return; }
+      var html = '';
+      var count = Math.min(items.length, 20);
+      for (var i = 0; i < count; i++) {
+        var n = items[i];
+        var typeColors = { 'Information': '#06b6d4', 'Success': '#22c55e', 'Warning': '#f59e0b', 'Critical': '#ef4444', 'Approval': '#a855f7', 'Reminder': '#f97316', 'System': '#9498b8' };
+        var color = typeColors[n.NotificationType] || '#06b6d4';
+        var dt = '';
+        if (n.CreatedDateTime) { var d = new Date(n.CreatedDateTime); if (!isNaN(d.getTime())) dt = getTimeAgo(n.CreatedDateTime); }
+        html += '<div class="notif-panel-item" onclick="handleNotifClick(\'' + escapeHtml(n.NotificationID) + '\',\'' + escapeHtml(n.ActionURL || '') + '\')">' +
+          '<div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:' + color + '"></div>' +
+          '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(n.Title || '') + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);display:flex;gap:6px"><span>' + escapeHtml(n.Module || '') + '</span><span>' + dt + '</span></div></div></div>';
+      }
+      list.innerHTML = html;
+    })
+    .catch(function() { list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Failed to load</div>'; });
+}
+
+function handleNotifClick(notifId, actionUrl) {
+  toggleNotificationPanel();
+  if (actionUrl) { try { eval(actionUrl); } catch(e) { navigateTo('notifications'); } }
+  else { navigateTo('notifications'); }
+}
+
+/* ==================== EMAIL PANEL ==================== */
+var _emailPanelRefreshTimer = null;
+function toggleEmailPanel() {
+  var panel = document.getElementById('emailPanel');
+  if (panel) { panel.classList.toggle('open'); if (panel.classList.contains('open')) loadEmailPanelData(); }
+}
 function closeEmailPanel() { var panel = document.getElementById('emailPanel'); if (panel) panel.classList.remove('open'); }
-function emailRetryFailed() { showToast('Email retry not available in CF mode', 'info'); }
+
+function loadEmailPanelData() {
+  API.call('emailGetPanelData')
+    .then(function(data) {
+      if (!data) return;
+      setText('emailDropdownSent', data.sentToday || 0);
+      setText('emailDropdownFailed', data.failedToday || 0);
+      setText('emailDropdownPending', data.pendingToday || 0);
+      var eb = document.getElementById('emailBadge');
+      if (eb) {
+        var pending = data.pendingToday || 0;
+        if (pending > 0) { eb.textContent = pending > 99 ? '99+' : pending; eb.style.display = ''; }
+        else { eb.style.display = 'none'; }
+      }
+      var list = document.getElementById('emailPanelList');
+      if (list && data.recentLogs) {
+        if (data.recentLogs.length === 0) { list.innerHTML = '<div class="email-panel-empty">No recent emails</div>'; return; }
+        var html = '';
+        var count = Math.min(data.recentLogs.length, 10);
+        for (var i = 0; i < count; i++) {
+          var l = data.recentLogs[i];
+          var sc = (l.Status || '').toLowerCase() === 'sent' ? 'badge-success' : ((l.Status || '').toLowerCase() === 'failed' ? 'badge-danger' : 'badge-warning');
+          html += '<div class="email-panel-item"><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(l.Subject || '') + '</div><div style="font-size:11px;color:var(--text-muted)">' + escapeHtml(l.Recipient || '') + '</div></div><span class="badge ' + sc + '" style="font-size:9px">' + escapeHtml(l.Status || '') + '</span></div>';
+        }
+        list.innerHTML = html;
+      }
+    })
+    .catch(function() {});
+}
+
+function emailRetryFailed() {
+  API.call('emailRetryFailed')
+    .then(function(result) {
+      showToast('Retried: ' + (result.retried || 0) + ', Succeeded: ' + (result.succeeded || 0), 'success');
+      loadEmailPanelData();
+    })
+    .catch(function(e) { showToast('Retry failed: ' + (e.message || e), 'error'); });
+}
+
+function startEmailPanelRefresh() {
+  stopEmailPanelRefresh();
+  _emailPanelRefreshTimer = setInterval(loadEmailPanelData, 120000);
+}
+
+function stopEmailPanelRefresh() {
+  if (_emailPanelRefreshTimer) { clearInterval(_emailPanelRefreshTimer); _emailPanelRefreshTimer = null; }
+}
+
+/* ==================== STUBS ==================== */
 function onGlobalSearch(val) { /* stub */ }
 function onNotifSearchInput() { /* stub */ }
 function setNotifListFilter(filter) { /* stub */ }
@@ -1659,10 +1802,6 @@ function deleteAllNotifications() { /* stub */ }
 function loadNotifications() { /* stub */ }
 function startNotificationRefresh() { /* stub */ }
 function stopNotificationRefresh() { /* stub */ }
-function loadEmailPanelData() { /* stub */ }
-function startEmailPanelRefresh() { /* stub */ }
-function startBadgeRefresh() { /* stub */ }
-function stopAutoRefresh() { /* stub */ }
 function installPWA() { showToast('PWA install not available', 'info'); }
 function dismissInstall() { var banner = document.getElementById('installBanner'); if (banner) banner.style.display = 'none'; }
 function checkQRUrlParameter() { /* stub */ }
@@ -1670,6 +1809,7 @@ function runFrontendDiagnostic() { /* stub */ }
 function refreshCurrentPage() {
   if (currentPage === 'dashboard') { loadDashboardData(); }
   else { App.loadPage(currentPage); }
+  loadBadgeCounts();
   showToast('Refreshed', 'success');
 }
 function toggleSidebarGroupState(key, open) { /* stub */ }
@@ -1732,12 +1872,11 @@ function loadDashboardNotifications() {
   var email = (currentUser && currentUser.email) || '';
   API.call('getNotifications', { limit: 10, email: email })
     .then(function(result) {
-      renderDashboardNotifications(result.data || []);
-      checkForNewNotifications(result);
-      if (result.stats) {
-        setText('dashNotifUnreadNum', result.stats.unread || 0);
-        setText('dashNotifCriticalNum', result.stats.critical || 0);
-        setText('dashNotifApprovalNum', result.stats.pendingApproval || 0);
+      var items = (result && result.records) ? result.records : (result && result.data ? result.data : (result || []));
+      renderDashboardNotifications(items);
+      checkForNewNotifications({ data: items });
+      if (result) {
+        setText('dashNotifUnreadNum', result.unreadCount || 0);
       }
     })
     .catch(function() {
@@ -2105,8 +2244,11 @@ function viewAuditLog(id) {
 })();
 
 document.addEventListener('visibilitychange', function() {
-  if (!document.hidden && currentPage === 'dashboard') {
-    loadDashboardData();
+  if (!document.hidden) {
+    loadBadgeCounts();
+    if (currentPage === 'dashboard') {
+      loadDashboardData();
+    }
   }
 });
 

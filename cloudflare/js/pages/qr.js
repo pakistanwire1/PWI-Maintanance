@@ -912,6 +912,7 @@
           '<div style="display:flex;gap:8px;margin-top:8px">' +
             '<button class="btn btn-primary" onclick="QRModule.generatePrintLabel()">Generate Label</button>' +
             '<button class="btn btn-secondary" onclick="QRModule.bulkGenerateQR()">Bulk Generate QR</button>' +
+            '<button class="btn btn-secondary" onclick="QRModule.bulkGenerateBarcode()">Bulk Generate Barcode</button>' +
           '</div>' +
         '</div>' +
         '<div id="qr-print-preview"></div>' +
@@ -1034,6 +1035,24 @@
     });
   }
 
+  function bulkGenerateBarcode() {
+    var moduleEl = document.getElementById('qr-print-module');
+    if (!moduleEl || !moduleEl.value) { App.showToast('Select a module first', 'warning'); return; }
+    var module = moduleEl.value;
+    App.showConfirm('Bulk Generate Barcodes', 'Generate barcodes for all ' + module + ' records that don\'t have one yet?', function() {
+      App.showLoading(true);
+      API.call('bulkGenerateBarcode', { module: module })
+        .then(function(results) {
+          App.showLoading(false);
+          App.showToast('Generated ' + (results ? results.length : 0) + ' barcodes', 'success');
+        })
+        .catch(function(err) {
+          App.showLoading(false);
+          App.showToast('Error: ' + err.message, 'error');
+        });
+    });
+  }
+
   /* ==========================================================
      OFFLINE MODE
      ========================================================== */
@@ -1115,6 +1134,7 @@
     printLabelWindow: printLabelWindow,
     showPrintDialog: showPrintDialog,
     bulkGenerateQR: bulkGenerateQR,
+    bulkGenerateBarcode: bulkGenerateBarcode,
     rescan: function() {
       _scanResult = null;
       var detailEl = document.getElementById('qr-detail-container');
