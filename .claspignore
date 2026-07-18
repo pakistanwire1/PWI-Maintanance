@@ -1,10 +1,11 @@
 cloudflare/**
+cloudflare-backup-20260714-233442/**
 .wrangler/**
 node_modules/**
 .git/**
-.gitattributes
 assets/**
 functions/**
-package-lock.json
 *.md
 .DS_Store
+package-lock.json
+.gitattributes

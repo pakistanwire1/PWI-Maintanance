@@ -853,7 +853,7 @@
           usersData = result;
           showLoading(false);
           if (selectedUserId === id) selectedUserId = '';
-          showToast('User deactivated successfully');
+          showToast('User deleted successfully');
           usrmgmtRenderTable();
         })
         .catch(function(err) {

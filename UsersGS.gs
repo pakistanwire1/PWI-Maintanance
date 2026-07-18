@@ -156,22 +156,50 @@ function addUser(data) {
 }
 
 function updateUser(id, data) {
-  var current = getUser(id);
-  if (!current || !current.UserID) throw new Error('User not found: ' + id);
+  Logger.log('updateUser called: id=' + id);
+  var incomingId = String(id || '').trim();
+  var incomingEmail = String(data && data.Email || '').trim().toLowerCase();
+
+  var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
+  var matchedUser = null;
+
+  if (incomingId) {
+    for (var i = 0; i < users.length; i++) {
+      if (String(users[i]['UserID'] || '').trim() === incomingId) {
+        matchedUser = users[i];
+        break;
+      }
+    }
+  }
+
+  if (!matchedUser && incomingEmail) {
+    for (var j = 0; j < users.length; j++) {
+      if (String(users[j]['Email'] || '').trim().toLowerCase() === incomingEmail) {
+        matchedUser = users[j];
+        break;
+      }
+    }
+  }
+
+  if (!matchedUser) {
+    Logger.log('updateUser FAILED: no match for id="' + incomingId + '" email="' + incomingEmail + '"');
+    throw new Error('User not found.');
+  }
+
+  var current = matchedUser;
+  var resolvedId = current.UserID;
   if (data.Password && data.Password.trim() === '') delete data.Password;
   if (data.ConfirmPassword) delete data.ConfirmPassword;
   if (data.Email && data.Email !== current.Email) {
-    var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
-    for (var i = 0; i < users.length; i++) {
-      if (users[i].Email === data.Email && users[i].UserID !== id) {
+    for (var k = 0; k < users.length; k++) {
+      if (users[k].Email === data.Email && users[k].UserID !== resolvedId) {
         throw new Error('Email "' + data.Email + '" already exists');
       }
     }
   }
   if (data.EmployeeID && data.EmployeeID !== current.EmployeeID) {
-    var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
-    for (var i = 0; i < users.length; i++) {
-      if (users[i].EmployeeID === data.EmployeeID && users[i].UserID !== id) {
+    for (var m = 0; m < users.length; m++) {
+      if (users[m].EmployeeID === data.EmployeeID && users[m].UserID !== resolvedId) {
         throw new Error('Employee ID "' + data.EmployeeID + '" already exists');
       }
     }
@@ -188,14 +216,14 @@ function updateUser(id, data) {
     if (data[p] !== undefined && data[p] !== current[p]) permissionChanged = true;
   });
   ensureUserCols();
-  var result = updateRow(CONFIG.SHEET_NAMES.USERS, 'UserID', id, data);
+  var result = updateRow(CONFIG.SHEET_NAMES.USERS, 'UserID', resolvedId, data);
   try {
-    createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.UPDATE, id, data.Name || current.Name, '',
+    createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.UPDATE, resolvedId, data.Name || current.Name, '',
       JSON.stringify(data).substring(0, 200), 'Success', 'User updated');
   } catch(e) {}
   if (permissionChanged) {
     try {
-      createAuditLog(CONFIG.AUDIT_MODULES.PERMISSION, CONFIG.AUDIT_ACTIONS.PERMISSION_CHANGE, id, data.Name || current.Name, '',
+      createAuditLog(CONFIG.AUDIT_MODULES.PERMISSION, CONFIG.AUDIT_ACTIONS.PERMISSION_CHANGE, resolvedId, data.Name || current.Name, '',
         'Permissions updated', 'Success', 'User permissions changed');
     } catch(e) {}
   }
@@ -203,56 +231,116 @@ function updateUser(id, data) {
 }
 
 function deleteUser(id, email) {
-  var resolvedId = id;
-  if (!resolvedId && email) {
-    var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
+  Logger.log('deleteUser called: id=' + id + ', email=' + email);
+  console.log('deleteUser called:', { id: id, email: email });
+
+  var incomingId = String(id || '').trim();
+  var incomingEmail = String(email || '').trim().toLowerCase();
+
+  Logger.log('deleteUser incomingId=' + incomingId + ', incomingEmail=' + incomingEmail);
+
+  var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
+  Logger.log('deleteUser total users in sheet: ' + users.length);
+
+  var matchedUser = null;
+  var matchedRow = -1;
+
+  if (incomingId) {
     for (var i = 0; i < users.length; i++) {
-      if (String(users[i]['Email']).toLowerCase() === String(email).toLowerCase()) {
-        resolvedId = users[i]['UserID'];
+      var rowId = String(users[i]['UserID'] || '').trim();
+      if (rowId === incomingId) {
+        matchedUser = users[i];
+        matchedRow = i;
+        Logger.log('deleteUser MATCH by UserID at row ' + (i + 2) + ': UserID=' + rowId + ', Name=' + users[i]['Name'] + ', Email=' + users[i]['Email']);
         break;
       }
     }
   }
-  if (!resolvedId) {
-    Logger.log('deleteUser: no resolvedId (id=' + id + ', email=' + email + ')');
-    throw new Error('Please select a user first.');
+
+  if (!matchedUser && incomingEmail) {
+    Logger.log('deleteUser UserID lookup failed, trying Email fallback');
+    for (var j = 0; j < users.length; j++) {
+      var rowEmail = String(users[j]['Email'] || '').trim().toLowerCase();
+      if (rowEmail === incomingEmail) {
+        matchedUser = users[j];
+        matchedRow = j;
+        Logger.log('deleteUser MATCH by Email at row ' + (j + 2) + ': UserID=' + users[j]['UserID'] + ', Name=' + users[j]['Name'] + ', Email=' + rowEmail);
+        break;
+      }
+    }
   }
-  var current = getUser(resolvedId);
-  if (!current || !current.UserID) {
-    Logger.log('deleteUser: user not found after resolve (resolvedId=' + resolvedId + ')');
+
+  if (!matchedUser) {
+    Logger.log('deleteUser FAILED: no match found. Searched id="' + incomingId + '", email="' + incomingEmail + '"');
     throw new Error('User not found.');
   }
-  if (current.IsAdmin === 'TRUE') throw new Error('Cannot delete an administrator account');
-  var now = getCurrentTimestamp();
-  var data = { Status: 'Inactive', UpdatedBy: Session.getActiveUser().getEmail(), UpdatedAt: now };
+
+  Logger.log('deleteUser matched: UserID=' + matchedUser.UserID + ', Name=' + matchedUser.Name + ', Email=' + matchedUser.Email + ', Status=' + matchedUser.Status);
+
+  if (matchedUser.IsAdmin === 'TRUE') {
+    Logger.log('deleteUser BLOCKED: user is admin (IsAdmin=TRUE)');
+    throw new Error('Cannot delete an administrator account');
+  }
+
+  var resolvedId = matchedUser.UserID;
   ensureUserCols();
-  var result = updateRow(CONFIG.SHEET_NAMES.USERS, 'UserID', resolvedId, data);
+  deleteRow(CONFIG.SHEET_NAMES.USERS, 'UserID', resolvedId);
+  Logger.log('deleteUser DELETED row for UserID=' + resolvedId + ', Name=' + matchedUser.Name);
+
   try {
-    createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.DELETE, resolvedId, current.Name, 'Status changed to Inactive', 'Soft delete by ' + data.UpdatedBy, 'Success', 'User deactivated');
-  } catch(e) {}
+    var currentEmail = Session.getActiveUser().getEmail();
+    createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.DELETE, resolvedId, matchedUser.Name, '', 'Permanent delete by ' + currentEmail, 'Success', 'User permanently deleted');
+  } catch(e) {
+    Logger.log('deleteUser audit log error: ' + e.message);
+  }
+
+  var result = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
   return result.map(normalizeUser);
 }
 
 function permanentlyDeleteUser(id, email) {
-  var resolvedId = id;
-  if (!resolvedId && email) {
-    var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
+  Logger.log('permanentlyDeleteUser called: id=' + id + ', email=' + email);
+
+  var incomingId = String(id || '').trim();
+  var incomingEmail = String(email || '').trim().toLowerCase();
+
+  var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
+  var matchedUser = null;
+
+  if (incomingId) {
     for (var i = 0; i < users.length; i++) {
-      if (String(users[i]['Email']).toLowerCase() === String(email).toLowerCase()) {
-        resolvedId = users[i]['UserID'];
+      if (String(users[i]['UserID'] || '').trim() === incomingId) {
+        matchedUser = users[i];
         break;
       }
     }
   }
-  if (!resolvedId) throw new Error('Please select a user first.');
-  var current = getUser(resolvedId);
-  if (!current || !current.UserID) throw new Error('User not found.');
-  if (current.IsAdmin === 'TRUE') throw new Error('Cannot delete an administrator account');
+
+  if (!matchedUser && incomingEmail) {
+    for (var j = 0; j < users.length; j++) {
+      if (String(users[j]['Email'] || '').trim().toLowerCase() === incomingEmail) {
+        matchedUser = users[j];
+        break;
+      }
+    }
+  }
+
+  if (!matchedUser) {
+    Logger.log('permanentlyDeleteUser FAILED: no match for id="' + incomingId + '" email="' + incomingEmail + '"');
+    throw new Error('User not found.');
+  }
+
+  if (matchedUser.IsAdmin === 'TRUE') throw new Error('Cannot delete an administrator account');
+
+  var resolvedId = matchedUser.UserID;
   ensureUserCols();
-  var result = deleteRow(CONFIG.SHEET_NAMES.USERS, 'UserID', resolvedId);
+  deleteRow(CONFIG.SHEET_NAMES.USERS, 'UserID', resolvedId);
+
   try {
-    createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.DELETE, resolvedId, current.Name, '', 'Permanent delete by ' + Session.getActiveUser().getEmail(), 'Success', 'User permanently deleted');
+    createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.DELETE, resolvedId, matchedUser.Name, '', 'Permanent delete by ' + Session.getActiveUser().getEmail(), 'Success', 'User permanently deleted');
   } catch(e) {}
+
+  var result = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
   return result.map(normalizeUser);
 }
 
@@ -262,8 +350,25 @@ function searchUsers(query) {
 }
 
 function resetUserPassword(id, tempPassword, forceChange) {
-  var current = getUser(id);
-  if (!current || !current.UserID) throw new Error('User not found: ' + id);
+  var incomingId = String(id || '').trim();
+  Logger.log('resetUserPassword called: id=' + incomingId);
+
+  var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
+  var matchedUser = null;
+  for (var i = 0; i < users.length; i++) {
+    if (String(users[i]['UserID'] || '').trim() === incomingId) {
+      matchedUser = users[i];
+      break;
+    }
+  }
+
+  if (!matchedUser) {
+    Logger.log('resetUserPassword FAILED: no match for id="' + incomingId + '"');
+    throw new Error('User not found.');
+  }
+
+  var current = matchedUser;
+  var resolvedId = current.UserID;
   if (!tempPassword || tempPassword.length < 6) throw new Error('Password must be at least 6 characters');
   var now = getCurrentTimestamp();
   var data = {
@@ -273,9 +378,9 @@ function resetUserPassword(id, tempPassword, forceChange) {
     UpdatedAt: now
   };
   ensureUserCols();
-  var result = updateRow(CONFIG.SHEET_NAMES.USERS, 'UserID', id, data);
+  var result = updateRow(CONFIG.SHEET_NAMES.USERS, 'UserID', resolvedId, data);
   try {
-    createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.UPDATE, id, current.Name, '',
+    createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.UPDATE, resolvedId, current.Name, '',
       'Password reset by ' + data.UpdatedBy, 'Success', 'Password reset');
   } catch(e) {}
   return result.map(normalizeUser);
@@ -303,61 +408,105 @@ function updateUserLastLogin(userId, ip) {
 }
 
 function getUserDepartments() {
+  Logger.log('getUserDepartments called');
   try {
     var depts = getDepartmentList() || [];
+    Logger.log('getUserDepartments raw count: ' + depts.length);
+
     if (depts.length === 0) {
-      try { initDepartmentSheet(); } catch(initErr) {}
+      Logger.log('getUserDepartments sheet empty, attempting initDepartmentSheet');
+      try {
+        initDepartmentSheet();
+      } catch(initErr) {
+        Logger.log('getUserDepartments initDepartmentSheet ERROR: ' + initErr.message);
+      }
+      invalidateCache(CONFIG.SHEET_NAMES.DEPARTMENTS);
       depts = getDepartmentList() || [];
+      Logger.log('getUserDepartments after init count: ' + depts.length);
     }
+
     var seen = {};
     var result = [];
     depts.forEach(function(d) {
-      var name = d.Department || '';
+      var name = String(d.Department || '').trim();
       if (name && !seen[name]) {
         seen[name] = true;
         result.push({ name: name, id: d.DepartmentID || d.DeptID || name });
       }
     });
+    Logger.log('getUserDepartments returning ' + result.length + ' departments');
+    if (result.length > 0) {
+      Logger.log('getUserDepartments first 3: ' + JSON.stringify(result.slice(0, 3)));
+    }
     return result;
   } catch(e) {
     Logger.log('getUserDepartments ERROR: ' + e.message);
-    console.error('getUserDepartments ERROR: ' + e.message);
+    console.error('getUserDepartments ERROR:', e);
     return [];
   }
 }
 
 function getUserSections(department) {
+  Logger.log('getUserSections called: department=' + department);
   try {
     var sections = getSectionList() || [];
+    Logger.log('getUserSections raw count: ' + sections.length);
+
     if (sections.length === 0) {
-      try { initSectionSheet(); } catch(initErr) {}
+      Logger.log('getUserSections sheet empty, attempting initSectionSheet');
+      try {
+        initSectionSheet();
+      } catch(initErr) {
+        Logger.log('getUserSections initSectionSheet ERROR: ' + initErr.message);
+      }
+      invalidateCache(CONFIG.SHEET_NAMES.SECTIONS);
       sections = getSectionList() || [];
+      Logger.log('getUserSections after init count: ' + sections.length);
     }
+
     if (department) {
+      Logger.log('getUserSections filtering by department: ' + department);
       var depts = getDepartmentList() || [];
+      Logger.log('getUserSections depts count: ' + depts.length);
+      var targetSectionIds = [];
       for (var i = 0; i < depts.length; i++) {
-        if (depts[i].Department === department && depts[i].SectionID) {
-          var targetSectionId = depts[i].SectionID;
-          sections = sections.filter(function(s) {
-            return s.SectionID === targetSectionId;
-          });
-          break;
+        var deptName = String(depts[i].Department || '').trim();
+        if (deptName === String(department).trim() && depts[i].SectionID) {
+          targetSectionIds.push(String(depts[i].SectionID).trim());
+          Logger.log('getUserSections matched dept row ' + i + ': Department=' + deptName + ', SectionID=' + depts[i].SectionID);
         }
       }
+      Logger.log('getUserSections collected ' + targetSectionIds.length + ' SectionIDs: ' + targetSectionIds.join(', '));
+      if (targetSectionIds.length > 0) {
+        var beforeCount = sections.length;
+        sections = sections.filter(function(s) {
+          return targetSectionIds.indexOf(String(s.SectionID || '').trim()) > -1;
+        });
+        Logger.log('getUserSections filtered from ' + beforeCount + ' to ' + sections.length + ' sections');
+      } else {
+        Logger.log('getUserSections WARNING: no SectionIDs found for department=' + department + ', returning all sections');
+      }
+    } else {
+      Logger.log('getUserSections no department filter, returning all sections');
     }
+
     var seen = {};
     var result = [];
     sections.forEach(function(s) {
-      var name = s.Section || '';
+      var name = String(s.Section || '').trim();
       if (name && !seen[name]) {
         seen[name] = true;
         result.push({ name: name, id: s.SectionID || name });
       }
     });
+    Logger.log('getUserSections returning ' + result.length + ' sections');
+    if (result.length > 0) {
+      Logger.log('getUserSections first 3: ' + JSON.stringify(result.slice(0, 3)));
+    }
     return result;
   } catch(e) {
     Logger.log('getUserSections ERROR: ' + e.message);
-    console.error('getUserSections ERROR: ' + e.message);
+    console.error('getUserSections ERROR:', e);
     return [];
   }
 }

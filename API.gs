@@ -25,46 +25,53 @@ function apiError(message, code, e) {
 /* ---- POST Handler (main API entry) ---- */
 
 function doPost(e) {
-
-  /* Guard: no POST data */
-  if (!e || !e.postData || !e.postData.contents) {
-    return apiError('Invalid request: no POST data', 400, e);
-  }
-
-  var body;
   try {
-    body = JSON.parse(e.postData.contents);
-  } catch(parseErr) {
-    return apiError('Invalid JSON: ' + (e.postData.contents || '').slice(0, 100), 400, e);
-  }
+    if (!e || !e.postData || !e.postData.contents) {
+      return apiError('Invalid request: no POST data', 400, e);
+    }
 
-  var action = body.action || '';
-  var token = body.token || '';
-  var data = body.data || {};
+    var body;
+    try {
+      body = JSON.parse(e.postData.contents);
+    } catch(parseErr) {
+      return apiError('Invalid JSON: ' + (e.postData.contents || '').slice(0, 100), 400, e);
+    }
 
-  if (!action) return apiError('Missing action', 400, e);
+    var action = body.action || '';
+    var token = body.token || '';
+    var data = body.data || {};
 
-  /* Special: login does not require auth */
-  var route = API_ROUTES[action];
-  if (!route) return apiError('Unknown action: ' + action, 404, e);
+    if (!action) return apiError('Missing action', 400, e);
 
-  /* Auth check */
-  if (route.auth) {
-    if (!token) return apiError('Unauthorized. Please login again.', 401, e);
-    var user = validateApiToken(token);
-    if (!user) return apiError('Session expired. Please login again.', 401, e);
-    data._userEmail = user.email;
-    data._userRole = user.role;
-    data._userName = user.name || '';
-    data._token = token;
-  }
+    var route = API_ROUTES[action];
+    if (!route) return apiError('Unknown action: ' + action, 404, e);
 
-  try {
-    var result = route.handler(data);
-    return apiSuccess(result, e);
-  } catch(err) {
-    Logger.log('API Route Error [' + action + ']: ' + err.message);
-    return apiError(err.message || 'Internal server error', 500, e);
+    if (route.auth) {
+      if (!token) return apiError('Unauthorized. Please login again.', 401, e);
+      var user = validateApiToken(token);
+      if (!user) return apiError('Session expired. Please login again.', 401, e);
+      data._userEmail = user.email;
+      data._userRole = user.role;
+      data._userName = user.name || '';
+      data._token = token;
+    }
+
+    try {
+      var result = route.handler(data);
+      return apiSuccess(result, e);
+    } catch(routeErr) {
+      Logger.log('API Route Error [' + action + ']: ' + routeErr.message);
+      return apiError(routeErr.message || 'Internal server error', 500, e);
+    }
+
+  } catch(fatalErr) {
+    Logger.log('FATAL doPost Error: ' + fatalErr.message + ' | Stack: ' + (fatalErr.stack || ''));
+    try {
+      return apiError(fatalErr.message || 'Fatal server error', 500, e);
+    } catch(lastResort) {
+      return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'Fatal server error' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
   }
 }
 
