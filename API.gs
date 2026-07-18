@@ -337,7 +337,8 @@ function apiStartJobCard(d) {
     MaintenanceTeam: d.team || '',
     StartDateTime: d.startDateTime || getCurrentTimestamp(),
     InitialRemarks: d.remarks || '',
-    StartedBy: d._userEmail
+    StartedBy: d._userEmail,
+    CurrentStatus: 'RUNNING'
   };
   return updateJobCard(d.id, data);
 }
@@ -354,7 +355,7 @@ function apiCloseJobCard(d) {
     BreakdownType: d.breakdownType || '',
     CloseDateTime: d.closeDateTime || getCurrentTimestamp(),
     ClosedBy: d._userEmail,
-    CurrentStatus: 'Closed'
+    CurrentStatus: 'PENDING'
   };
   return updateJobCard(d.id, data);
 }
@@ -364,7 +365,7 @@ function apiPendingJobCard(d) {
     PendingDateTime: d.pendingDateTime || getCurrentTimestamp(),
     PendingBy: d._userEmail,
     PendingRemarks: d.remarks || '',
-    CurrentStatus: 'Pending'
+    CurrentStatus: 'PENDING'
   };
   return updateJobCard(d.id, data);
 }

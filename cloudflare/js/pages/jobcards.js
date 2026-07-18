@@ -8,6 +8,7 @@
   var _activeTab = 'open';
   var _page = 1;
   var _pageSize = 25;
+  var _searchQuery = '';
 
   App.registerPage('jobcards', render, load);
 
@@ -127,7 +128,7 @@
 
   function getDisplayStatus(item) {
     if (item.ApprovalStatus === 'Approved') return 'Approved';
-    return item.Status || '';
+    return item.CurrentStatus || item.Status || '';
   }
 
   function getStatusBadgeClass(status) {
@@ -143,7 +144,7 @@
   function renderTabs() {
     var open = 0, running = 0, closed = 0, pending = 0, approved = 0;
     _jobs.forEach(function(jc) {
-      var s = (jc.Status || '').toLowerCase();
+      var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
       var as = (jc.ApprovalStatus || '').toLowerCase();
       if (as === 'approved') { approved++; }
       else if (s === 'open') { open++; }
@@ -168,7 +169,7 @@
   function renderTable() {
     _filtered = [];
     _jobs.forEach(function(jc) {
-      var s = (jc.Status || '').toLowerCase();
+      var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
       var as = (jc.ApprovalStatus || '').toLowerCase();
       if (_activeTab === 'open' && s === 'open') _filtered.push(jc);
       else if (_activeTab === 'running' && (s === 'running' || s === 'in progress')) _filtered.push(jc);
@@ -184,6 +185,14 @@
     var dVal = df ? df.value : '';
     if (pVal) _filtered = _filtered.filter(function(jc) { return jc.Priority === pVal; });
     if (dVal) _filtered = _filtered.filter(function(jc) { return jc.Department === dVal; });
+    if (_searchQuery) {
+      _filtered = _filtered.filter(function(jc) {
+        return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(_searchQuery) !== -1) ||
+               (jc.Machine && jc.Machine.toLowerCase().indexOf(_searchQuery) !== -1) ||
+               (jc.AssignedTechnician && jc.AssignedTechnician.toLowerCase().indexOf(_searchQuery) !== -1) ||
+               (jc.ComplaintDescription && jc.ComplaintDescription.toLowerCase().indexOf(_searchQuery) !== -1);
+      });
+    }
 
     var columns = [
       { key: 'JobCardNo', label: 'Job Card No' },
@@ -384,17 +393,9 @@
     filter: function() { _page = 1; renderTable(); },
     page: function(p) { _page = p; renderTable(); },
     searchTable: function(q) {
-      var query = q.toLowerCase();
-      if (!query) { renderTable(); return; }
-      var orig = _filtered;
-      _filtered = _filtered.filter(function(jc) {
-        return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(query) !== -1) ||
-               (jc.Machine && jc.Machine.toLowerCase().indexOf(query) !== -1) ||
-               (jc.AssignedTechnician && jc.AssignedTechnician.toLowerCase().indexOf(query) !== -1) ||
-               (jc.ComplaintDescription && jc.ComplaintDescription.toLowerCase().indexOf(query) !== -1);
-      });
+      _searchQuery = q ? q.toLowerCase() : '';
+      _page = 1;
       renderTable();
-      _filtered = orig;
     },
     viewDetail: viewDetail,
     openImage: function(url) {

@@ -69,11 +69,11 @@ var Auth = (function() {
   function getRole() { return _user ? _user.role : ''; }
   function getDepartment() { return _user ? _user.department : ''; }
 
-  function hasPermission(perm) {
-    if (!_user) return false;
-    if (_user.isSystemAdmin) return true;
-    return !!_user[perm];
-  }
+    function hasPermission(perm) {
+        if (!_user) return false;
+        if (_user.role === 'Admin' || _user.isSystemAdmin === true || _user.IsAdmin === true) return true;
+        return !!_user[perm];
+    }
 
   function canOpenJobCard() { return hasPermission('canOpenJobCard'); }
   function canStartJobCard() { return hasPermission('canStartJobCard'); }
@@ -84,7 +84,7 @@ var Auth = (function() {
   function canManageAssets() { return hasPermission('canManageAssets'); }
   function canManageUsers() { return hasPermission('canManageUsers'); }
   function canViewReports() { return hasPermission('canViewReports'); }
-  function isAdmin() { return _user ? !!_user.isSystemAdmin : false; }
+  function isAdmin() { return _user ? (_user.role === 'Admin' || _user.isSystemAdmin === true || _user.IsAdmin === true) : false; }
 
   return {
     init: init,

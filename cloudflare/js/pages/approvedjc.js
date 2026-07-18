@@ -24,7 +24,7 @@
           '<div class="card-actions">' +
             '<div class="search-box">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
-              '<input type="text" class="form-control" id="jcaSearch" placeholder="Search pending approvals...">' +
+              '<input type="text" class="form-control" id="jcaSearch" placeholder="Search approved job cards...">' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -86,7 +86,7 @@
 
   function load() {
     App.showLoading(true);
-    API.call('getJobCardsByStatus', { status: 'Pending' })
+    API.call('getJobCardsByStatus', { status: 'APPROVED' })
       .then(function(data) {
         _allJobs = data.records || data || [];
         App.showLoading(false);
@@ -131,7 +131,7 @@
     return _allJobs.filter(function(jc) {
       var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
       var as = (jc.ApprovalStatus || '').toLowerCase();
-      if (s !== 'pending' || as === 'approved') return false;
+      if (s !== 'approved' && !(s === 'closed' && as === 'approved')) return false;
       if (!isAdminUser && userDept && jc.Department !== userDept) return false;
       if (dept && jc.Department !== dept) return false;
       if (q) {
@@ -153,7 +153,7 @@
     if (!container) return;
     var list = getFilteredCards();
     if (list.length === 0) {
-      container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div style="font-size:48px;margin-bottom:12px">&#128203;</div><div style="font-size:14px;font-weight:500">No pending job cards for approval</div></div>';
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div style="font-size:48px;margin-bottom:12px">&#128203;</div><div style="font-size:14px;font-weight:500">No approved job cards</div></div>';
       return;
     }
     var totalPages = Math.ceil(list.length / PAGE_SIZE);

@@ -62,7 +62,6 @@
                   '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--text-muted);font-size:13px">Maintenance Team</span><strong id="pjTeam" style="font-size:13px">\u2014</strong></div>' +
                 '</div>' +
                 '<div class="view-section"><h4>Time Summary</h4>' +
-                  '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Started</span><strong id="pjStarted" style="font-size:13px">\u2014</strong></div>' +
                   '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Working Time</span><strong id="pjWorkingTime" style="font-size:13px">00:00</strong></div>' +
                   '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Total Downtime</span><strong id="pjDowntime" style="font-size:13px">00:00</strong></div>' +
                   '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Waiting Time</span><strong id="pjWaitingTime" style="font-size:13px">00:00</strong></div>' +
@@ -356,7 +355,6 @@
     el = document.getElementById('pjComplaint'); if (el) el.textContent = item.ComplaintDescription || '\u2014';
     el = document.getElementById('pjTechnician'); if (el) el.textContent = item.AssignedTechnician || '\u2014';
     el = document.getElementById('pjTeam'); if (el) el.textContent = item.MaintenanceTeam || '\u2014';
-    el = document.getElementById('pjStarted'); if (el) el.textContent = fmtDt(item.StartTime || item.StartDateTime);
     el = document.getElementById('pjWorkingTime'); if (el) el.textContent = displayDuration(item.WorkingTime);
     el = document.getElementById('pjDowntime'); if (el) el.textContent = displayDuration(item.Downtime);
     el = document.getElementById('pjWaitingTime'); if (el) el.textContent = displayDuration(item.WaitingTime);
