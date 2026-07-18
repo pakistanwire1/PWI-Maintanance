@@ -640,10 +640,10 @@
     var secSel = document.getElementById('userSectionSelect');
     if (secSel) secSel.innerHTML = '<option value="">Select Section</option>';
     if (!dept) return;
-    API.call('getSectionList')
+    API.call('getUserSections', { department: dept })
       .then(function(sections) {
         (sections || []).forEach(function(s) {
-          if (secSel) secSel.innerHTML += '<option value="' + App.escHtml(s.Section) + '">' + App.escHtml(s.Section) + '</option>';
+          if (secSel) secSel.innerHTML += '<option value="' + App.escHtml(s.name) + '">' + App.escHtml(s.name) + '</option>';
         });
       })
       .catch(function() { console.error('Failed to load sections'); });

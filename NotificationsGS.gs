@@ -565,3 +565,11 @@ function runAllChecks() {
     return { lowStock: 0, pmDue: 0, pmOverdue: 0, pendingJobCards: 0, waitingApproval: 0, machineBreakdown: 0, total: 0 };
   }
 }
+
+function notifyLowStock(partCode, partName, currentStock, minimumStock) {
+  try {
+    var title = 'Low Stock Alert: ' + (partName || partCode);
+    var message = 'Part ' + (partName || partCode) + ' (' + (partCode || '') + ') is low on stock. Current: ' + currentStock + ', Minimum: ' + minimumStock + '.';
+    createNotification(title, message, CONFIG.NOTIFICATION_MODULES.SPARE_PART, CONFIG.PRIORITY.HIGH, 'System', '', "navigateTo('spare-parts')");
+  } catch (e) {}
+}

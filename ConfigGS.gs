@@ -164,7 +164,9 @@ var CONFIG = {
     'CanReviewPendingJobCard', 'CanViewAllJobCards', 'CanBackupRestore',
     'CanManageMachines', 'CanManageAssets', 'CanManageSpareParts', 'CanManagePM',
     'CanManageTechnicians', 'CanManageDepartments', 'CanManageSections', 'CanManageUsers',
-    'CanViewDashboard', 'CanViewReports', 'CanManageInventory', 'IsAdmin'
+    'CanViewDashboard', 'CanViewReports', 'CanManageInventory', 'IsAdmin',
+    'CanManageBreakdown', 'CanExportReports', 'CanManageSettings',
+    'CanViewAudit', 'CanManageQR', 'CanManageEmail', 'CanManageWhatsApp', 'CanSystemConfig'
   ],
 
   USER_FIELDS: [
@@ -176,8 +178,11 @@ var CONFIG = {
     'CanManageMachines', 'CanManageAssets', 'CanManageSpareParts', 'CanManagePM',
     'CanManageTechnicians', 'CanManageDepartments', 'CanManageSections', 'CanManageUsers',
     'CanViewDashboard', 'CanViewReports', 'CanManageInventory', 'IsAdmin',
+    'CanManageBreakdown', 'CanExportReports', 'CanManageSettings',
+    'CanViewAudit', 'CanManageQR', 'CanManageEmail', 'CanManageWhatsApp', 'CanSystemConfig',
     'ForcePasswordChange',
-    'LastLogin', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
+    'LastLogin', 'LastLoginDate', 'LastLoginTime', 'LastLoginIP',
+    'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
   ],
 
   USER_ROLES: ['Administrator', 'Manager', 'Supervisor', 'Engineer', 'Technician', 'Operator', 'Viewer'],

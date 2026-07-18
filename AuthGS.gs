@@ -120,30 +120,7 @@ function initUsersSheet() {
   initializeUserMaster();
 }
 
-function normalizeUser(u) {
-  if (!u) return u;
-  var out = {};
-  CONFIG.USER_FIELDS.forEach(function(c) { out[c] = u[c] || ''; });
-  out.UserID = out.UserID || '';
-  out.EmployeeID = out.EmployeeID || '';
-  out.Name = out.Name || '';
-  out.Email = out.Email || '';
-  out.Mobile = out.Mobile || '';
-  out.Department = out.Department || '';
-  out.Section = out.Section || '';
-  out.Designation = out.Designation || '';
-  out.Role = out.Role || '';
-  out.Status = out.Status || CONFIG.STATUS.ACTIVE;
-  out.LastLogin = out.LastLogin || '';
-  out.CreatedBy = out.CreatedBy || '';
-  out.CreatedAt = out.CreatedAt || '';
-  out.UpdatedBy = out.UpdatedBy || '';
-  out.UpdatedAt = out.UpdatedAt || '';
-  CONFIG.PERMISSION_FIELDS.forEach(function(p) {
-    out[p] = out[p] || 'FALSE';
-  });
-  return out;
-}
+/* normalizeUser moved to UsersGS.gs */
 
 function loginUser(email, password) {
   Logger.log('loginUser() called: ' + email);
@@ -159,6 +136,11 @@ function loginUser(email, password) {
           Logger.log('loginUser(): raw user keys=' + Object.keys(user).join(','));
           console.log('loginUser(): raw user keys=' + Object.keys(user).join(','));
           try { createAuditLog(CONFIG.AUDIT_MODULES.LOGIN, CONFIG.AUDIT_ACTIONS.LOGIN, '', user.Name || email, '', 'Role: ' + (user.Role || ''), 'Success', 'User logged in'); } catch(e) {}
+          try {
+            var ip = '';
+            try { ip = Session.getEffectiveUser().getEmail(); } catch(e2) {}
+            if (user.UserID) updateUserLastLogin(user.UserID, ip);
+          } catch(e) {}
           return {
             success: true,
             user: {
@@ -178,8 +160,22 @@ function loginUser(email, password) {
               canManageAssets: getPermValue(user.CanManageAssets),
               canManageSpareParts: getPermValue(user.CanManageSpareParts),
               canManagePM: getPermValue(user.CanManagePM),
+              canManageBreakdown: getPermValue(user.CanManageBreakdown),
+              canManageInventory: getPermValue(user.CanManageInventory),
+              canViewDashboard: getPermValue(user.CanViewDashboard),
               canViewReports: getPermValue(user.CanViewReports),
+              canExportReports: getPermValue(user.CanExportReports),
               canManageUsers: getPermValue(user.CanManageUsers),
+              canManageSettings: getPermValue(user.CanManageSettings),
+              canManageTechnicians: getPermValue(user.CanManageTechnicians),
+              canManageDepartments: getPermValue(user.CanManageDepartments),
+              canManageSections: getPermValue(user.CanManageSections),
+              canManageQR: getPermValue(user.CanManageQR),
+              canManageEmail: getPermValue(user.CanManageEmail),
+              canManageWhatsApp: getPermValue(user.CanManageWhatsApp),
+              canBackupRestore: getPermValue(user.CanBackupRestore),
+              canSystemConfig: getPermValue(user.CanSystemConfig),
+              canViewAudit: getPermValue(user.CanViewAudit),
               isSystemAdmin: getPermValue(user.IsAdmin)
             }
           };
@@ -352,81 +348,11 @@ function validateAppSession(sessionEmail) {
   }
 }
 
-function getUsers() {
-  var data = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
-  return data;
-}
+/* getUsers moved to UsersGS.gs */
 
-function addUser(data) {
-  Logger.log('addUser() called: email=' + data.Email + ', data keys=' + Object.keys(data).join(','));
-  console.log('addUser() called: email=' + data.Email + ', data keys=' + Object.keys(data).join(','));
-  try {
-    var errors = validateUserData(data);
-    if (errors.length > 0) {
-      throw new Error(errors.join('\n'));
-    }
-    var dupCheck = checkDuplicateField(CONFIG.SHEET_NAMES.USERS, 'Email', data.Email);
-    if (dupCheck) {
-      throw new Error('Email "' + data.Email + '" already exists.');
-    }
-    if (data.EmployeeID) {
-      var empCheck = checkDuplicateField(CONFIG.SHEET_NAMES.USERS, 'EmployeeID', data.EmployeeID);
-      if (empCheck) {
-        throw new Error('Employee ID "' + data.EmployeeID + '" already exists.');
-      }
-    }
-    data.UserID = generateUserId();
-    data.Status = data.Status || CONFIG.STATUS.ACTIVE;
-    data.CreatedBy = Session.getActiveUser().getEmail();
-    data.CreatedAt = getCurrentTimestamp();
-    data.UpdatedBy = data.CreatedBy;
-    data.UpdatedAt = data.CreatedAt;
-    CONFIG.PERMISSION_FIELDS.forEach(function(p) {
-      if (data[p] === undefined || data[p] === null) data[p] = 'FALSE';
-    });
-    var result = addRow(CONFIG.SHEET_NAMES.USERS, data);
-    logActivity('Add User', data.Email);
-    Logger.log('addUser() SUCCESS: email=' + data.Email + ', result length=' + result.length);
-    console.log('addUser() SUCCESS: email=' + data.Email);
-    try { createNotification('New User Created: ' + (data.Name || data.Email), 'User ' + (data.Name || data.Email) + ' has been created with role ' + (data.Role || '') + '.', CONFIG.NOTIFICATION_MODULES.USER, CONFIG.PRIORITY.LOW, data.CreatedBy, data.Email, "navigateTo('settings')"); } catch(e) {}
-    try { createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.CREATE, data.UserID, data.Name || data.Email, '', 'Role: ' + (data.Role || '') + ', Dept: ' + (data.Department || ''), 'Success', 'User created'); } catch(e) {}
-    try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.USER_CREATED, { userId: data.UserID || '', name: data.Name || '', email: data.Email || '', role: data.Role || '', department: data.Department || '', designation: data.Designation || '', tempPassword: data.Password || '' }); } catch(e) {}
-    return result;
-  } catch (e) {
-    Logger.log('addUser() ERROR: email=' + data.Email + ', message=' + e.message + ' stack=' + e.stack);
-    console.log('addUser() ERROR: email=' + data.Email + ', message=' + e.message);
-    throw e;
-  }
-}
+/* addUser moved to UsersGS.gs */
 
-function updateUser(email, data) {
-  Logger.log('updateUser() called: email=' + email + ', data keys=' + Object.keys(data).join(',') + ', data=' + JSON.stringify(data));
-  console.log('updateUser() called: email=' + email + ', data keys=' + Object.keys(data).join(','));
-  try {
-    if (data.Password && data.Password.trim() === '') {
-      delete data.Password;
-    }
-    var oldUser = getRecordById(CONFIG.SHEET_NAMES.USERS, 'Email', email);
-    data.UpdatedBy = Session.getActiveUser().getEmail();
-    data.UpdatedAt = getCurrentTimestamp();
-    var result = updateRow(CONFIG.SHEET_NAMES.USERS, 'Email', email, data);
-    logActivity('Update User', email);
-    Logger.log('updateUser() SUCCESS: email=' + email + ', result length=' + result.length);
-    console.log('updateUser() SUCCESS: email=' + email);
-    try { createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.UPDATE, email, data.Name || (oldUser ? oldUser.Name : ''), '', JSON.stringify(data).substring(0, 200), 'Success', 'User updated'); } catch(e) {}
-    if (data.Password && oldUser) {
-      try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.PASSWORD_RESET, { userId: oldUser.UserID || '', name: data.Name || oldUser.Name || '', email: email, tempPassword: data.Password }); } catch(e) {}
-    }
-    if (oldUser && data.Role && data.Role !== oldUser.Role) {
-      try { createAuditLog(CONFIG.AUDIT_MODULES.PERMISSION, CONFIG.AUDIT_ACTIONS.PERMISSION_CHANGE, email, oldUser.Name || email, 'Role: ' + (oldUser.Role || ''), 'Role: ' + (data.Role || ''), 'Success', 'User role changed from ' + (oldUser.Role || 'None') + ' to ' + (data.Role || 'None')); } catch(e) {}
-    }
-    return result;
-  } catch (e) {
-    Logger.log('updateUser() ERROR: email=' + email + ', message=' + e.message + ' stack=' + e.stack);
-    console.log('updateUser() ERROR: email=' + email + ', message=' + e.message);
-    throw e;
-  }
-}
+/* updateUser moved to UsersGS.gs */
 
 function logUserLogout(email) {
   try {
@@ -437,12 +363,7 @@ function logUserLogout(email) {
   }
 }
 
-function deleteUser(email) {
-  var result = deleteRow(CONFIG.SHEET_NAMES.USERS, 'Email', email);
-  logActivity('Delete User', email);
-  try { createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.DELETE, email, '', '', '', 'Success', 'User deleted'); } catch(e) {}
-  return result;
-}
+/* deleteUser moved to UsersGS.gs */
 
 function generateUserId() {
   var data = getAllData(CONFIG.SHEET_NAMES.USERS);

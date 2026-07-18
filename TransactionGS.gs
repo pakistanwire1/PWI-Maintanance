@@ -1,17 +1,4 @@
-function getStockHistory() {
-  Logger.log('getStockHistory() called');
-  console.log('getStockHistory() called');
-  try {
-    var data = getAllData(CONFIG.SHEET_NAMES.STOCK_HISTORY) || [];
-    Logger.log('getStockHistory() returning ' + data.length + ' records');
-    console.log('getStockHistory() returning ' + data.length + ' records');
-    return data;
-  } catch (e) {
-    Logger.log('getStockHistory() ERROR: ' + e.message);
-    console.log('getStockHistory() ERROR: ' + e.message);
-    return [];
-  }
-}
+/* getStockHistory moved to SparePartsGS.gs (accepts partCode param) */
 
 function getStockHistoryByPart(partCode) {
   Logger.log('getStockHistoryByPart() called: ' + partCode);

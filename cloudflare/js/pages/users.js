@@ -97,7 +97,7 @@
                 '<div class="form-group"><label>Confirm Password</label><input type="password" name="ConfirmPassword" class="form-control" id="uConfirmPassword"></div>' +
               '</div>' +
               '<div class="form-row">' +
-                '<div class="form-group"><label>Department *</label><select name="Department" class="form-control" id="uDept" required><option value="">Select Department</option></select></div>' +
+                '<div class="form-group"><label>Department *</label><select name="Department" class="form-control" id="uDept" required onchange="onDepartmentChange(this.value)"><option value="">Select Department</option></select></div>' +
                 '<div class="form-group"><label>Section</label><select name="Section" class="form-control" id="uSection"><option value="">Select Section</option></select></div>' +
               '</div>' +
               '<div class="form-row">' +
@@ -308,7 +308,7 @@
         '<td>' + escHtml(row.Designation) + '</td>' +
         '<td><span class="badge badge-' + roleBadge + '">' + escHtml(row.Role) + '</span></td>' +
         '<td><span class="badge badge-' + statusBadge + '">' + escHtml(row.Status) + '</span></td>' +
-        '<td style="font-size:11px;color:var(--text-muted)">' + (row.LastLoginDate || row.LastLogin ? (row.LastLoginDate || row.LastLogin.substring(0, 10)) : '-') + '</td>' +
+        '<td style="font-size:11px;color:var(--text-muted)">' + (row.LastLogin || row.LastLoginDate || '-') + '</td>' +
         '<td style="font-size:11px;color:var(--text-muted)">' + (row.CreatedAt ? formatDateShort(row.CreatedAt) : '-') + '</td>' +
         '<td><div class="actions-cell">' +
           '<button class="icon-btn icon-btn-primary" onclick="event.stopPropagation();viewUser(\'' + row.UserID + '\')" title="View User">' + ICONS.view + '</button>' +
@@ -363,11 +363,16 @@
           });
         }
       })
-      .catch(function() {});
+      .catch(function(err) {
+        console.error('loadUserDepartments failed:', err);
+        showToast('Failed to load departments', 'error');
+      });
   }
 
-  function loadUserSectionOptions(selected) {
-    API.call('getUserSections')
+  function loadUserSectionOptions(selected, department) {
+    var params = {};
+    if (department) params.department = department;
+    API.call('getUserSections', params)
       .then(function(sections) {
         var sel = document.getElementById('uSection');
         if (sel) {
@@ -381,8 +386,16 @@
           });
         }
       })
-      .catch(function() {});
+      .catch(function(err) {
+        console.error('loadUserSections failed:', err);
+      });
   }
+
+  window.onDepartmentChange = function(deptValue) {
+    var sectionSel = document.getElementById('uSection');
+    if (sectionSel) sectionSel.value = '';
+    loadUserSectionOptions('', deptValue);
+  };
 
   function resetUserPermissions() {
     document.querySelectorAll('#userForm input[type="checkbox"]').forEach(function(cb) {
@@ -469,8 +482,7 @@
     }
 
     var joinedDate = item.JoiningDate ? formatDateShort(item.JoiningDate) : '-';
-    var lastLogin = item.LastLoginDate || item.LastLogin || '-';
-    if (lastLogin !== '-' && lastLogin.length > 10) lastLogin = lastLogin.substring(0, 10);
+    var lastLogin = item.LastLogin || item.LastLoginDate || '-';
     var createdDate = item.CreatedAt ? formatDateShort(item.CreatedAt) : '-';
     var forcePwdChange = item.ForcePasswordChange === 'TRUE' ? '<span class="badge badge-warning">Change Required</span>' : '<span class="badge badge-success">OK</span>';
 
@@ -595,7 +607,7 @@
     var cpw = document.getElementById('uConfirmPassword'); if (cpw) cpw.required = true;
     resetUserPermissions();
     loadUserDepartmentOptions('');
-    loadUserSectionOptions('');
+    loadUserSectionOptions('', '');
     openModalForm('userForm', 'Add User');
   };
 
@@ -610,7 +622,7 @@
     _formPhotoBase64 = '';
     setUserPermissionCheckboxes(item);
     loadUserDepartmentOptions(item.Department || '');
-    loadUserSectionOptions(item.Section || '');
+    loadUserSectionOptions(item.Section || '', item.Department || '');
     openModalForm('userForm', 'Edit User - ' + (item.Name || item.EmployeeID));
   };
 
@@ -792,6 +804,7 @@
   window.hideDeleteOverlay = hideDeleteOverlayFn;
 
   window.usrmgmtDeleteUser = function(id) {
+    if (!id) { showToast('Please select a user from the table first', 'warning'); return; }
     var item = usersData.find(function(r) { return r.UserID === id; });
     if (!item) { showToast('User not found', 'error'); return; }
 
@@ -835,7 +848,7 @@
     if (deleteBtn) deleteBtn.onclick = function() {
       hideDeleteOverlay();
       showLoading(true);
-      API.call('deleteUser', { id: id })
+      API.call('deleteUser', { id: id, email: item.Email || '' })
         .then(function(result) {
           usersData = result;
           showLoading(false);
@@ -871,7 +884,7 @@
     if (permDeleteBtn) permDeleteBtn.onclick = function() {
       hideDeleteOverlay();
       showLoading(true);
-      API.call('permanentlyDeleteUser', { id: id })
+      API.call('permanentlyDeleteUser', { id: id, email: item.Email || '' })
         .then(function(result) {
           usersData = result;
           showLoading(false);

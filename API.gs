@@ -86,13 +86,13 @@ var API_ROUTES = {
   'getUsers':              { auth: true,  handler: function(d) { return apiGetUsers(d); } },
   'addUser':               { auth: true,  handler: function(d) { return addUser(d); } },
   'updateUser':            { auth: true,  handler: function(d) { return updateUser(d.id || d.email, d); } },
-  'deleteUser':            { auth: true,  handler: function(d) { return deleteUser(d.id || d.email); } },
-  'permanentlyDeleteUser': { auth: true,  handler: function(d) { return permanentlyDeleteUser(d.id); } },
+  'deleteUser':            { auth: true,  handler: function(d) { return deleteUser(d.id, d.email); } },
+  'permanentlyDeleteUser': { auth: true,  handler: function(d) { return permanentlyDeleteUser(d.id, d.email); } },
   'searchUsers':           { auth: true,  handler: function(d) { return searchUsers(d.query); } },
   'resetUserPassword':     { auth: true,  handler: function(d) { return resetUserPassword(d.id, d.tempPassword, d.forceChange); } },
   'uploadUserPhoto':       { auth: true,  handler: function(d) { return uploadUserPhoto(d.photo || d.base64Data, d.employeeId); } },
   'getUserDepartments':    { auth: true,  handler: function(d) { return getUserDepartments(); } },
-  'getUserSections':       { auth: true,  handler: function(d) { return getUserSections(); } },
+  'getUserSections':       { auth: true,  handler: function(d) { return getUserSections(d.department); } },
   'exportUsersToExcel':    { auth: true,  handler: function(d) { return exportUsersToExcel(); } },
 
   /* ---- Job Cards ---- */
@@ -261,7 +261,7 @@ var API_ROUTES = {
   'emailSaveSettings':     { auth: true,  handler: function(d) { return emailSaveSettings(d); } },
   'emailGetLogs':          { auth: true,  handler: function(d) { return emailGetLogs(d.filters); } },
   'emailGetPanelData':     { auth: true,  handler: function(d) { return emailGetPanelData(); } },
-  'emailSendRaw':          { auth: true,  handler: function(d) { return emailSendRaw(d.recipient, d.subject, d.body, d.module || '', d.reference || ''); } },
+  'emailSendRaw':          { auth: true,  handler: function(d) { return emailSendRaw(d.recipient, d.subject, d.body, d.senderName || '', d.replyTo || ''); } },
   'emailRetryFailed':      { auth: true,  handler: function(d) { return emailRetryFailed(); } },
   'emailSendDailySummary': { auth: true,  handler: function(d) { return emailSendDailySummary(); } },
 
@@ -272,7 +272,7 @@ var API_ROUTES = {
   'whatsappSaveTemplate':  { auth: true,  handler: function(d) { return whatsappSaveTemplate(d); } },
   'whatsappGetLogs':       { auth: true,  handler: function(d) { return whatsappGetLogs(d.filters); } },
   'whatsappGetPanelData':  { auth: true,  handler: function(d) { return whatsappGetPanelData(); } },
-  'whatsappTestSend':      { auth: true,  handler: function(d) { return whatsappTestSend(d.phone, d.message); } },
+  'whatsappTestSend':      { auth: true,  handler: function(d) { return whatsappTestSend(); } },
 
   /* ---- Backup ---- */
   'getBackupHistory':      { auth: true,  handler: function(d) { return getBackupHistory(); } },
