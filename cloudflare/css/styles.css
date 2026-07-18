@@ -630,22 +630,19 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    border-radius: 9px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
     font-size: 10px;
     font-weight: 700;
     line-height: 1;
     margin-left: auto;
     flex-shrink: 0;
     transition: background 0.2s, color 0.2s;
+    border: none;
   }
 
-  .sidebar-badge.badge-zero { background: var(--bg-card); color: var(--text-muted); }
-  .sidebar-badge.badge-low { background: var(--primary); color: #fff; }
-  .sidebar-badge.badge-medium { background: var(--warning); color: #000; }
-  .sidebar-badge.badge-high { background: var(--danger); color: #fff; }
   .sidebar-badge.status-open { background: var(--status-open); color: #fff; }
   .sidebar-badge.status-running { background: var(--status-running); color: #fff; }
   .sidebar-badge.status-closed { background: var(--status-closed); color: #fff; }

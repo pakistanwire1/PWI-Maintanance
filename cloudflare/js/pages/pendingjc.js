@@ -190,7 +190,7 @@
     var canReview = Auth.isAdmin() || Auth.canReviewPendingJobCard();
 
     var html = '<div style="overflow-x:auto"><table><thead><tr>' +
-      '<th>Job Card No</th><th>Date</th><th>Dept</th><th>Section</th><th>Machine</th><th>Asset</th><th>Complaint</th><th>Priority</th><th>Technician(s)</th><th>Working</th><th>Downtime</th><th>Pending Since</th><th>Supervisor</th>' +
+      '<th>Job Card No</th><th>Date</th><th>Dept</th><th>Section</th><th>Machine</th><th>Asset</th><th>Complaint</th><th>Priority</th><th>Technician(s)</th><th>Waiting</th><th>Working</th><th>Downtime</th><th>Pending Since</th><th>Supervisor</th>' +
       (canReview ? '<th>Actions</th>' : '') +
       '</tr></thead><tbody>';
     pageJobs.forEach(function(jc) {
@@ -210,6 +210,7 @@
         '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + App.escHtml(jc.ComplaintDescription || '') + '</td>' +
         '<td><span class="badge ' + priClass + '">' + App.escHtml(jc.Priority || '') + '</span></td>' +
         '<td>' + App.escHtml(jc.AssignedTechnician || '-') + '</td>' +
+        '<td>' + fmtDur(jc.WaitingTime) + '</td>' +
         '<td>' + fmtDur(jc.WorkingTime) + '</td>' +
         '<td>' + fmtDur(jc.Downtime) + '</td>' +
         '<td>' + fmtDt(jc.PendingDateTime || '') + '</td>' +
@@ -241,7 +242,7 @@
   }
 
   function fmtDur(val) {
-    return displayDuration(val);
+    return durationToggle(val);
   }
 
   /* Read-only View modal — matches GAS viewPendingJc() */
@@ -292,9 +293,9 @@
             '<div class="view-section"><h4>Time Summary</h4>' +
               '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Started</span><strong style="font-size:13px">' + fmtDt(item.StartTime || item.StartDateTime) + '</strong></div>' +
               '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Closed</span><strong style="font-size:13px">' + fmtDt(item.CloseTime || item.CloseDateTime) + '</strong></div>' +
-              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Waiting Time</span><strong style="font-size:13px">' + displayDuration(item.WaitingTime) + '</strong></div>' +
-              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Working Time</span><strong style="font-size:13px">' + displayDuration(item.WorkingTime) + '</strong></div>' +
-              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Total Downtime</span><strong style="font-size:13px">' + displayDuration(item.Downtime) + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Waiting Time</span><strong style="font-size:13px">' + durationToggle(item.WaitingTime) + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Working Time</span><strong style="font-size:13px">' + durationToggle(item.WorkingTime) + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Total Downtime</span><strong style="font-size:13px">' + durationToggle(item.Downtime) + '</strong></div>' +
               '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--text-muted);font-size:13px">Pending Since</span><strong style="font-size:13px">' + fmtDt(item.PendingDateTime) + '</strong></div>' +
             '</div>' +
           '</div>' +
@@ -340,9 +341,9 @@
     el = document.getElementById('pjComplaint'); if (el) el.textContent = item.ComplaintDescription || '\u2014';
     el = document.getElementById('pjTechnician'); if (el) el.textContent = item.AssignedTechnician || '\u2014';
     el = document.getElementById('pjTeam'); if (el) el.textContent = item.MaintenanceTeam || '\u2014';
-    el = document.getElementById('pjWorkingTime'); if (el) el.textContent = displayDuration(item.WorkingTime);
-    el = document.getElementById('pjDowntime'); if (el) el.textContent = displayDuration(item.Downtime);
-    el = document.getElementById('pjWaitingTime'); if (el) el.textContent = displayDuration(item.WaitingTime);
+    el = document.getElementById('pjWorkingTime'); if (el) el.innerHTML = durationToggle(item.WorkingTime);
+    el = document.getElementById('pjDowntime'); if (el) el.innerHTML = durationToggle(item.Downtime);
+    el = document.getElementById('pjWaitingTime'); if (el) el.innerHTML = durationToggle(item.WaitingTime);
     el = document.getElementById('pjClosedOn'); if (el) el.textContent = fmtDt(item.CloseTime || item.CloseDateTime);
     el = document.getElementById('pjPendingSince'); if (el) el.textContent = fmtDt(item.PendingDateTime);
     el = document.getElementById('pjRootCause'); if (el) el.textContent = item.RootCause || '\u2014';

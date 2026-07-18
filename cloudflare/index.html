@@ -399,7 +399,7 @@
             <div class="sidebar-item" onclick="navigateTo('openjc')" data-page="openjc" data-tooltip="Open Job Card">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
               <span class="sidebar-item-label">Open Job Cards</span>
-              <span class="sidebar-badge" id="badge-openjc" data-status="open">0</span>
+              <span class="sidebar-badge" id="badge-openjc" data-status="open" style="display:none"></span>
             </div>
             <div class="sidebar-item" onclick="navigateTo('startjc')" data-page="startjc" data-tooltip="Start Job Card">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
@@ -1471,26 +1471,61 @@ function nowLocalISO() {
 /* ==================== DURATION ==================== */
 function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
-function formatDuration(ms) {
-  if (!ms || ms < 0) ms = 0;
-  var totalMinutes = Math.floor(ms / 60000); var days = Math.floor(totalMinutes / 1440);
-  var hours = Math.floor((totalMinutes % 1440) / 60); var minutes = totalMinutes % 60;
-  var parts = [];
-  if (days > 0) parts.push(days + 'd'); if (hours > 0 || days > 0) parts.push(hours + 'h'); parts.push(minutes + 'm');
-  return parts.join(' ');
-}
-
 function displayDuration(val) {
-  if (!val && val !== 0 && val !== '0') return '00:00';
-  if (typeof val === 'string' && (val.indexOf(':') > -1 || val.indexOf('Day') > -1)) return val;
+  if (!val && val !== 0 && val !== '0') return '0m';
+  if (typeof val === 'string' && val.indexOf('h ') > -1) return val;
   var totalMinutes; if (val instanceof Date) { totalMinutes = Math.round(val.getTime() / 60000); }
   else if (typeof val === 'number') { totalMinutes = Math.floor(val); }
   else { var hours = parseFloat(val); totalMinutes = isNaN(hours) ? 0 : Math.round(hours * 60); }
-  if (totalMinutes < 0) totalMinutes = 0;
-  var d = Math.floor(totalMinutes / 1440); var h = Math.floor((totalMinutes % 1440) / 60); var m = totalMinutes % 60;
-  if (d > 0) return d + ' Day' + (d > 1 ? 's ' : ' ') + pad(h) + ':' + pad(m);
-  return pad(h) + ':' + pad(m);
+  return fmtDurationDays(totalMinutes);
 }
+
+function fmtDurationHours(minutes) {
+  if (!minutes && minutes !== 0) return '0h 0m';
+  minutes = Math.floor(minutes);
+  var h = Math.floor(minutes / 60);
+  var m = minutes % 60;
+  return h + 'h ' + m + 'm';
+}
+
+function fmtDurationDays(minutes) {
+  if (!minutes && minutes !== 0) return '0m';
+  minutes = Math.floor(minutes);
+  var d = Math.floor(minutes / 1440);
+  var h = Math.floor((minutes % 1440) / 60);
+  var m = minutes % 60;
+  if (d > 0) return d + 'd ' + h + 'h ' + m + 'm';
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + 'm';
+}
+
+function durationToggle(minutes, startStr) {
+  var mins = startStr ? _durElapsedMin(startStr) : Math.floor(minutes || 0);
+  var sa = startStr ? ' data-dur-start="' + App.escHtml(startStr) + '"' : '';
+  return '<span class="duration-toggle" data-dur="' + mins + '" data-phase="0"' + sa + '>' + fmtDurationHours(mins) + '</span>';
+}
+
+function _durElapsedMin(startStr) {
+  if (!startStr) return 0;
+  var ms = Date.now() - new Date(startStr).getTime();
+  return ms > 0 ? Math.floor(ms / 60000) : 0;
+}
+
+(function() {
+  setInterval(function() {
+    document.querySelectorAll('.duration-toggle').forEach(function(el) {
+      var mins = parseInt(el.getAttribute('data-dur')) || 0;
+      var startStr = el.getAttribute('data-dur-start');
+      if (startStr) {
+        mins = _durElapsedMin(startStr);
+        el.setAttribute('data-dur', mins);
+      }
+      var phase = parseInt(el.getAttribute('data-phase')) || 0;
+      el.textContent = (phase % 2 === 0) ? fmtDurationHours(mins) : fmtDurationDays(mins);
+      el.setAttribute('data-phase', phase + 1);
+    });
+  }, 3000);
+})();
 
 function getTimeAgo(dateStr) {
   if (!dateStr) return '';
@@ -1601,16 +1636,19 @@ function loadBadgeCounts() {
   API.call('getSidebarCounts', {})
     .then(function(data) {
       if (!data) return;
-      function setBadge(id, val) {
+      function setBadge(id, val, forceZero) {
         var el = document.getElementById(id);
         if (!el) return;
-        var n = parseInt(val) || 0;
+        var n = forceZero ? 0 : (parseInt(val) || 0);
+        var status = el.getAttribute('data-status');
+        el.classList.remove('status-open','status-running','status-closed','status-pending','status-approved','status-all');
+        if (n > 0 && status) el.classList.add('status-' + status);
         if (n > 0) { el.textContent = n > 99 ? '99+' : n; el.style.display = ''; }
-        else { el.textContent = '0'; el.style.display = 'none'; }
+        else { el.textContent = ''; el.style.display = 'none'; }
       }
-      setBadge('badge-openjc', data.openJobCards);
-      setBadge('badge-startjc', data.startedJobCards);
-      setBadge('badge-closejc', data.closedJobCards);
+      setBadge('badge-openjc', 0, true);
+      setBadge('badge-startjc', data.openJobCards);
+      setBadge('badge-closejc', data.startedJobCards);
       setBadge('badge-pendingjc', data.pendingJobCards);
       setBadge('badge-approvejobcard', data.approvedJobCards);
       setBadge('badge-pm', data.pendingPM);
@@ -1636,6 +1674,11 @@ function loadBadgeCounts() {
       }
     })
     .catch(function() {});
+}
+
+function refreshDashboardCounters() {
+  loadBadgeCounts();
+  if (typeof loadDashboardData === 'function') loadDashboardData();
 }
 
 function startBadgeRefresh() {
@@ -1695,6 +1738,9 @@ function loadNotifPanelData() {
 
 function handleNotifClick(notifId, actionUrl) {
   toggleNotificationPanel();
+  API.call('markNotificationRead', { id: notifId }).then(function() {
+    loadBadgeCounts();
+  }).catch(function() {});
   if (actionUrl) { try { eval(actionUrl); } catch(e) { navigateTo('notifications'); } }
   else { navigateTo('notifications'); }
 }

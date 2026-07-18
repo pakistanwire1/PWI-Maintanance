@@ -73,9 +73,9 @@
                 '</div>' +
                 '<div class="ts-divider"></div>' +
                 '<div class="ts-stats">' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Waiting Time</span><span class="ts-stat-value ts-stat-waiting" id="closeJcWaitingDisplay">0h 0m</span><span class="ts-stat-desc">Opened \u2192 Started</span></div>' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Working Time</span><span class="ts-stat-value ts-stat-working" id="closeJcWorkingDisplay">0h 0m</span><span class="ts-stat-desc">Started \u2192 Closed</span></div>' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Total Downtime</span><span class="ts-stat-value ts-stat-breakdown" id="closeJcBreakdownDisplay">0h 0m</span><span class="ts-stat-desc">Opened \u2192 Closed</span></div>' +
+                  '<div class="ts-stat"><span class="ts-stat-label">Waiting Time</span><span class="ts-stat-value ts-stat-waiting" id="closeJcWaitingDisplay">0m</span><span class="ts-stat-desc">Opened \u2192 Started</span></div>' +
+                  '<div class="ts-stat"><span class="ts-stat-label">Working Time</span><span class="ts-stat-value ts-stat-working" id="closeJcWorkingDisplay">0m</span><span class="ts-stat-desc">Started \u2192 Closed</span></div>' +
+                  '<div class="ts-stat"><span class="ts-stat-label">Total Downtime</span><span class="ts-stat-value ts-stat-breakdown" id="closeJcBreakdownDisplay">0m</span><span class="ts-stat-desc">Opened \u2192 Closed</span></div>' +
                 '</div>' +
               '</div>' +
               '<div class="form-row">' +
@@ -259,7 +259,7 @@
 
     var canClose = Auth.isAdmin() || Auth.canCloseJobCard();
     var html = '<div style="overflow-x:auto"><table><thead><tr>' +
-      '<th>Job Card No</th><th>Opened</th><th>Machine</th><th>Dept</th><th>Technician</th><th>Working</th>' +
+      '<th>Job Card No</th><th>Opened</th><th>Machine</th><th>Dept</th><th>Technician</th><th>Waiting</th><th>Working</th>' +
       (canClose ? '<th>Action</th>' : '') +
       '</tr></thead><tbody>';
     pageJobs.forEach(function(jc) {
@@ -270,7 +270,8 @@
         '<td>' + App.escHtml(jc.Machine || '') + '</td>' +
         '<td>' + App.escHtml(jc.Department || '') + '</td>' +
         '<td>' + App.escHtml(jc.AssignedTechnician || '-') + '</td>' +
-        '<td><span class="live-timer" data-start="' + App.escHtml(startStr || '') + '">' + formatDurationFromDates(startStr) + '</span></td>';
+        '<td>' + durationToggle(jc.WaitingTime) + '</td>' +
+        '<td>' + durationToggle(0, startStr) + '</td>';
       if (canClose) {
         html += '<td><button class="btn btn-sm btn-success" onclick="CloseJC.openModal(\'' + App.escHtml(jc.JobCardNo || '') + '\')">Close</button></td>';
       }
@@ -296,31 +297,8 @@
     return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
   }
 
-  function formatDurationFromDates(startStr) {
-    if (!startStr) return '\u2014';
-    var start = new Date(startStr);
-    if (isNaN(start.getTime())) return '\u2014';
-    var ms = Date.now() - start.getTime();
-    if (ms < 0) ms = 0;
-    return formatDuration(ms);
-  }
-
-  function formatDuration(ms) {
-    var totalMin = Math.floor(ms / 60000);
-    var h = Math.floor(totalMin / 60);
-    var m = totalMin % 60;
-    if (h > 0) return h + 'h ' + m + 'm';
-    return m + 'm';
-  }
-
   function startLiveTimers() {
     if (_timer) clearInterval(_timer);
-    _timer = setInterval(function() {
-      document.querySelectorAll('.live-timer[data-start]').forEach(function(el) {
-        var startStr = el.getAttribute('data-start');
-        if (startStr) el.textContent = formatDurationFromDates(startStr);
-      });
-    }, 30000);
   }
 
   function openModal(jobCardNo) {
@@ -352,17 +330,15 @@
     if (openedStr) {
       var el = document.getElementById('closeJcOpenedDisplay'); if (el) el.textContent = formatDateTime(openedStr);
       var waitingMs = (startStr ? new Date(startStr) : now).getTime() - new Date(openedStr).getTime();
-      el = document.getElementById('closeJcWaitingDisplay'); if (el) el.textContent = formatDuration(waitingMs > 0 ? waitingMs : 0);
+      el = document.getElementById('closeJcWaitingDisplay'); if (el) el.innerHTML = durationToggle(waitingMs > 0 ? Math.floor(waitingMs / 60000) : 0);
     }
     if (startStr) {
       var el = document.getElementById('closeJcStartedDisplay'); if (el) el.textContent = formatDateTime(startStr);
-      var workingMs = now.getTime() - new Date(startStr).getTime();
-      el = document.getElementById('closeJcWorkingDisplay'); if (el) el.textContent = formatDuration(workingMs > 0 ? workingMs : 0);
+      el = document.getElementById('closeJcWorkingDisplay'); if (el) el.innerHTML = durationToggle(0, startStr);
     }
     var el = document.getElementById('closeJcClosedDisplay'); if (el) el.textContent = formatDateTime(now);
     if (openedStr) {
-      var breakdownMs = now.getTime() - new Date(openedStr).getTime();
-      el = document.getElementById('closeJcBreakdownDisplay'); if (el) el.textContent = formatDuration(breakdownMs > 0 ? breakdownMs : 0);
+      el = document.getElementById('closeJcBreakdownDisplay'); if (el) el.innerHTML = durationToggle(0, openedStr);
     }
   }
 

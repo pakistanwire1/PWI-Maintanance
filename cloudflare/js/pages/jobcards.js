@@ -205,20 +205,20 @@
     if (_activeTab === 'open') {
       columns.push({ key: 'DateTime', label: 'Waiting', format: function(val, row) {
         var dt = row.DateTime || row.OpenTime || row.OpenDateTime;
-        return '<span class="live-timer" data-start="' + dt + '">' + displayDuration(dt ? (Date.now() - new Date(dt).getTime()) / 60000 : 0) + '</span>';
+        return durationToggle(0, dt);
       }});
       columns.push({ key: 'ComplaintDescription', label: 'Description' });
     } else if (_activeTab === 'running') {
       columns.push({ key: 'AssignedTechnician', label: 'Technician' });
       columns.push({ key: 'StartTime', label: 'Working', format: function(val, row) {
         var st = row.StartTime || row.StartDateTime;
-        return '<span class="live-timer" data-start="' + st + '">' + displayDuration(st ? (Date.now() - new Date(st).getTime()) / 60000 : 0) + '</span>';
+        return durationToggle(0, st);
       }});
     } else if (_activeTab === 'closed' || _activeTab === 'pendingapproval') {
       columns.push({ key: 'AssignedTechnician', label: 'Technician' });
-      columns.push({ key: 'WaitingTime', label: 'Waiting', format: function(val) { return displayDuration(val); } });
-      columns.push({ key: 'WorkingTime', label: 'Working', format: function(val) { return displayDuration(val); } });
-      columns.push({ key: 'BreakdownTime', label: 'Breakdown', format: function(val) { return displayDuration(val); } });
+      columns.push({ key: 'WaitingTime', label: 'Waiting', format: function(val) { return durationToggle(val); } });
+      columns.push({ key: 'WorkingTime', label: 'Working', format: function(val) { return durationToggle(val); } });
+      columns.push({ key: 'BreakdownTime', label: 'Breakdown', format: function(val) { return durationToggle(val); } });
     } else if (_activeTab === 'approved') {
       columns.push({ key: 'AssignedTechnician', label: 'Technician' });
       columns.push({ key: 'ApprovedBy', label: 'Approved By' });
@@ -304,9 +304,9 @@
     var displayBadge = getStatusBadgeClass(displayStatus);
     var pBadge = item.Priority === 'Critical' || item.Priority === 'High' ? 'danger' :
                  item.Priority === 'Medium' ? 'warning' : 'success';
-    var waitingHrs = displayDuration(item.WaitingTime);
-    var workingHrs = displayDuration(item.WorkingTime);
-    var downtimeHrs = displayDuration(item.BreakdownTime);
+    var waitingHrs = durationToggle(item.WaitingTime);
+    var workingHrs = durationToggle(item.WorkingTime);
+    var downtimeHrs = durationToggle(item.BreakdownTime);
 
     var faultThumb = item.FaultImage ? '<img src="' + item.FaultImage + '" class="img-thumb" onclick="JC.openImage(\'' + escapeHtml(item.FaultImage) + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '—';
     var repairThumb = item.RepairImage ? '<img src="' + item.RepairImage + '" class="img-thumb" onclick="JC.openImage(\'' + escapeHtml(item.RepairImage) + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '—';

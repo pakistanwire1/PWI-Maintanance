@@ -60,7 +60,7 @@
               '<input type="hidden" name="JobCardNo" id="startJcJobNo">' +
               '<input type="hidden" name="CurrentStatus" value="RUNNING">' +
               '<div style="margin-bottom:16px;padding:12px;background:var(--bg-input);border-radius:var(--radius-sm)">' +
-                '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:var(--text)">Waiting Time</span><span style="font-size:15px;font-weight:700;color:var(--warning)" id="startJcWaitingDisplay">0h 0m</span></div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:var(--text)">Waiting Time</span><span style="font-size:15px;font-weight:700;color:var(--warning)" id="startJcWaitingDisplay">0m</span></div>' +
                 '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">Opened: <span id="startJcOpenedDisplay"></span></div>' +
               '</div>' +
               '<div class="form-group">' +
@@ -206,7 +206,7 @@
         '<td>' + App.escHtml(jc.Machine || '') + '</td>' +
         '<td>' + App.escHtml(jc.Department || '') + '</td>' +
         '<td><span class="badge ' + priClass + '">' + App.escHtml(jc.Priority || '') + '</span></td>' +
-        '<td><span class="live-timer" data-start="' + App.escHtml(dt) + '">' + fmtDurLive(dt) + '</span></td>' +
+        '<td>' + durationToggle(0, dt) + '</td>' +
         '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + App.escHtml(jc.ComplaintDescription || '') + '</td>';
       if (canStart) {
         html += '<td><button class="btn btn-sm btn-warning" onclick="StartJC.openModal(\'' + App.escHtml(jc.JobCardNo || '') + '\')">Start</button></td>';
@@ -232,26 +232,8 @@
     return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
   }
 
-  function fmtDurLive(dtStr) {
-    if (!dtStr) return '\u2014';
-    var start = new Date(dtStr);
-    if (isNaN(start.getTime())) return '\u2014';
-    var ms = Date.now() - start.getTime();
-    if (ms < 0) ms = 0;
-    var totalMin = Math.floor(ms / 60000);
-    var h = Math.floor(totalMin / 60);
-    var m = totalMin % 60;
-    return h + 'h ' + m + 'm';
-  }
-
   function startLiveTimers() {
     if (_timer) clearInterval(_timer);
-    _timer = setInterval(function() {
-      document.querySelectorAll('.live-timer[data-start]').forEach(function(el) {
-        var dt = el.getAttribute('data-start');
-        if (dt) el.textContent = fmtDurLive(dt);
-      });
-    }, 30000);
   }
 
   function openModal(jobCardNo) {
@@ -288,11 +270,8 @@
     if (!dtStr) return;
     var diff = Date.now() - new Date(dtStr).getTime();
     if (diff < 0) diff = 0;
-    var totalMin = Math.floor(diff / 60000);
-    var h = Math.floor(totalMin / 60);
-    var m = totalMin % 60;
     var el = document.getElementById('startJcWaitingDisplay');
-    if (el) el.textContent = h + 'h ' + m + 'm';
+    if (el) el.innerHTML = durationToggle(Math.floor(diff / 60000));
   }
 
   function hideModal() {

@@ -1,8 +1,7 @@
 /* ============================================================
-   approvedjc.js — Approve Job Cards Page Module
+   approvedjc.js — Approved Job Cards (Read-Only)
    GAS-identical: ApproveJobCardPage.html
-   Features: Table with search/filter, Time-summary modal,
-   approve/return decision with remarks, button disabling.
+   Features: Table with search/filter, read-only View modal.
    ============================================================ */
 
 (function() {
@@ -19,7 +18,7 @@
         '<div class="card-header">' +
           '<div class="card-title">' +
             '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.4);vertical-align:middle;margin-right:8px"></span>' +
-            'Approve Job Cards' +
+            'Approved Job Cards' +
           '</div>' +
           '<div class="card-actions">' +
             '<div class="search-box">' +
@@ -32,55 +31,6 @@
           '<div class="form-group"><select class="form-control" id="jcaDeptFilter"><option value="">All Departments</option></select></div>' +
         '</div>' +
         '<div id="jcaTableContainer"></div>' +
-      '</div>' +
-      '<div class="modal-overlay" id="jcaModal" style="display:none">' +
-        '<div class="modal modal-wide">' +
-          '<div class="modal-header">' +
-            '<div class="modal-title">' +
-              '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.4);vertical-align:middle;margin-right:8px"></span>' +
-              'Approve Job \u2014 <span id="jcaRef"></span>' +
-            '</div>' +
-            '<button class="modal-close" onclick="ApproveJC.hideModal()">&times;</button>' +
-          '</div>' +
-          '<form id="jcaForm" onsubmit="return ApproveJC.submitFromForm(event)">' +
-            '<input type="hidden" name="JobCardNo" id="jcaJobNo">' +
-            '<div class="modal-body">' +
-              '<div class="time-summary-panel">' +
-                '<div class="ts-header">Job Summary</div>' +
-                '<div class="ts-stats">' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Department</span><span class="ts-stat-value" id="jcaDept">\u2014</span></div>' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Machine</span><span class="ts-stat-value" id="jcaMachine">\u2014</span></div>' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Technician</span><span class="ts-stat-value" id="jcaTech">\u2014</span></div>' +
-                '</div>' +
-                '<div class="ts-stats">' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Waiting Time</span><span class="ts-stat-value" id="jcaWaiting">00:00</span></div>' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Working Time</span><span class="ts-stat-value" id="jcaWorking">00:00</span></div>' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Total Downtime</span><span class="ts-stat-value" id="jcaBreakdown">00:00</span></div>' +
-                '</div>' +
-                '<div class="ts-stats">' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Description</span><span class="ts-stat-value" id="jcaDesc" style="font-weight:400;font-size:12px">\u2014</span></div>' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-group" style="margin-top:16px">' +
-                '<label>Approval Remarks</label>' +
-                '<textarea id="jcaRemarks" class="form-control" rows="2" placeholder="Optional remarks..."></textarea>' +
-              '</div>' +
-              '<div class="form-group" style="margin-top:12px">' +
-                '<label>Decision *</label>' +
-                '<div style="display:flex;gap:24px;margin-top:8px">' +
-                  '<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="approveDecision" value="approve" checked><span style="font-size:14px;font-weight:500">Approve</span></label>' +
-                  '<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="approveDecision" value="return"><span style="font-size:14px;font-weight:500">Return to Technician</span></label>' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-group" id="jcaReturnReasonGroup" style="display:none"><label>Return Reason *</label><textarea name="ReturnReason" id="jcaReturnReason" class="form-control" rows="2" placeholder="Why is the job card being returned?"></textarea></div>' +
-            '</div>' +
-            '<div class="modal-footer">' +
-              '<button type="button" class="btn btn-secondary" onclick="ApproveJC.hideModal()">Cancel</button>' +
-              '<button type="button" class="btn btn-warning" id="jcaReturnBtn" onclick="ApproveJC.submitDecision(\'return\')" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0016.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 002 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> Return to Technician</button>' +
-              '<button type="button" class="btn btn-success" id="jcaApproveBtn" onclick="ApproveJC.submitDecision(\'approve\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg> Approve</button>' +
-            '</div>' +
-          '</form>' +
-        '</div>' +
       '</div>';
   }
 
@@ -105,9 +55,6 @@
     if (searchEl) searchEl.onkeyup = function() { filterCards(); };
     var deptFilter = document.getElementById('jcaDeptFilter');
     if (deptFilter) deptFilter.onchange = function() { filterCards(); };
-    document.querySelectorAll('input[name="approveDecision"]').forEach(function(r) {
-      r.addEventListener('change', toggleDecision);
-    });
   }
 
   function populateSelects() {
@@ -174,7 +121,7 @@
         '<td>' + fmtDur(jc.WaitingTime) + '</td>' +
         '<td>' + fmtDur(jc.WorkingTime) + '</td>' +
         '<td>' + fmtDur(jc.BreakdownTime) + '</td>' +
-        '<td><button class="btn btn-sm btn-success" onclick="ApproveJC.openModal(\'' + App.escHtml(jc.JobCardNo || '') + '\')">Review</button></td>' +
+        '<td><button class="btn btn-sm btn-secondary" onclick="ApproveJC.viewModal(\'' + App.escHtml(jc.JobCardNo || '') + '\')">View</button></td>' +
       '</tr>';
     });
     html += '</tbody></table></div>';
@@ -196,112 +143,97 @@
   }
 
   function fmtDur(val) {
-    return displayDuration(val);
+    return durationToggle(val);
   }
 
-  function openModal(id) {
-    if (!Auth.isAdmin() && !Auth.canApproveJobCard()) {
-      App.showToast('You do not have permission to approve job cards', 'warning');
-      return;
-    }
+  function viewModal(id) {
     var item = _allJobs.find(function(r) { return r.JobCardNo === id; });
     if (!item) return;
-    var form = document.getElementById('jcaForm');
-    if (form) form.reset();
-    document.querySelectorAll('input[name="approveDecision"]').forEach(function(r) { if (r.value === 'approve') r.checked = true; });
-    toggleDecision();
-    var el = document.getElementById('jcaJobNo'); if (el) el.value = id;
-    el = document.getElementById('jcaRef'); if (el) el.textContent = id;
-    el = document.getElementById('jcaDept'); if (el) el.textContent = item.Department || '\u2014';
-    el = document.getElementById('jcaMachine'); if (el) el.textContent = item.Machine || '\u2014';
-    el = document.getElementById('jcaTech'); if (el) el.textContent = item.AssignedTechnician || '\u2014';
-    el = document.getElementById('jcaDesc'); if (el) el.textContent = ((item.ComplaintDescription || '').substring(0, 100) + ((item.ComplaintDescription || '').length > 100 ? '...' : '')) || '\u2014';
-    el = document.getElementById('jcaWaiting'); if (el) el.textContent = fmtDur(item.WaitingTime);
-    el = document.getElementById('jcaWorking'); if (el) el.textContent = fmtDur(item.WorkingTime);
-    el = document.getElementById('jcaBreakdown'); if (el) el.textContent = fmtDur(item.BreakdownTime);
-    el = document.getElementById('jcaRemarks'); if (el) el.value = '';
-    var modal = document.getElementById('jcaModal');
-    if (modal) modal.style.display = 'flex';
-  }
 
-  function toggleDecision() {
-    var decision = document.querySelector('input[name="approveDecision"]:checked');
-    var isReturn = decision && decision.value === 'return';
-    var el = document.getElementById('jcaReturnReasonGroup'); if (el) el.style.display = isReturn ? 'block' : 'none';
-    el = document.getElementById('jcaReturnBtn'); if (el) el.style.display = isReturn ? '' : 'none';
-    el = document.getElementById('jcaApproveBtn'); if (el) el.style.display = isReturn ? 'none' : '';
-  }
+    var backdrop = document.createElement('div');
+    backdrop.className = 'modal-overlay';
+    backdrop.style.display = 'flex';
 
-  function hideModal() {
-    var modal = document.getElementById('jcaModal');
-    if (modal) modal.style.display = 'none';
-  }
+    var priBadge = 'badge-secondary';
+    var p = (item.Priority || '').toLowerCase();
+    if (p === 'critical' || p === 'high') priBadge = 'badge-danger';
+    else if (p === 'medium') priBadge = 'badge-warning';
+    else if (p === 'low') priBadge = 'badge-success';
 
-  function submitDecision(decision) {
-    var id = document.getElementById('jcaJobNo').value;
-    if (!id) return;
-    var remarks = (document.getElementById('jcaRemarks') || {}).value || '';
+    var approvalBadge = 'badge-success';
+    var approvalRemarks = item.ApprovalRemarks || '\u2014';
 
-    if (decision === 'return') {
-      var reason = (document.getElementById('jcaReturnReason') || {}).value || '';
-      if (!reason) { App.showToast('Please enter the return reason', 'error'); return; }
-      var btn = document.getElementById('jcaReturnBtn');
-      var approveBtn = document.getElementById('jcaApproveBtn');
-      if (btn) btn.disabled = true;
-      if (approveBtn) approveBtn.disabled = true;
-      App.showLoading(true);
-      API.call('returnJobCard', { id: id, ReturnReason: reason, ApprovalRemarks: remarks })
-        .then(function() {
-          App.showLoading(false);
-          if (btn) btn.disabled = false;
-          if (approveBtn) approveBtn.disabled = false;
-          hideModal();
-          App.showToast('Job card returned to Running', 'success');
-          load();
-          if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters();
-        })
-        .catch(function(err) {
-          App.showLoading(false);
-          if (btn) btn.disabled = false;
-          if (approveBtn) approveBtn.disabled = false;
-          App.showToast(err.message || 'Failed to return job card', 'error');
+    var html =
+      '<div class="modal modal-wide">' +
+        '<div class="modal-header">' +
+          '<div class="modal-title">' +
+            '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.4);vertical-align:middle;margin-right:8px"></span>' +
+            'Approved Job Card \u2014 ' + App.escHtml(id) +
+          '</div>' +
+          '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<div class="view-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">' +
+            '<div class="view-section"><h4>Job Card Details</h4>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Job Card No</span><strong style="font-size:13px">' + App.escHtml(item.JobCardNo || '') + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Opened</span><strong style="font-size:13px">' + fmtDt(item.DateTime || item.OpenTime || item.OpenDateTime) + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Machine</span><strong style="font-size:13px">' + App.escHtml(item.Machine || '-') + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Asset</span><strong style="font-size:13px">' + App.escHtml(item.Asset || item.AssetID || '-') + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Department</span><strong style="font-size:13px">' + App.escHtml(item.Department || '-') + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Section</span><strong style="font-size:13px">' + App.escHtml(item.Section || '-') + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Priority</span><strong style="font-size:13px"><span class="badge ' + priBadge + '">' + App.escHtml(item.Priority || '-') + '</span></strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Complaint</span><strong style="font-size:13px">' + App.escHtml(item.ComplaintDescription || '-') + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--text-muted);font-size:13px">Technician(s)</span><strong style="font-size:13px">' + App.escHtml(item.AssignedTechnician || '-') + '</strong></div>' +
+            '</div>' +
+            '<div class="view-section"><h4>Time Summary</h4>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Opened</span><strong style="font-size:13px">' + fmtDt(item.DateTime || item.OpenTime || item.OpenDateTime) + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Started</span><strong style="font-size:13px">' + fmtDt(item.StartTime || item.StartDateTime) + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Closed</span><strong style="font-size:13px">' + fmtDt(item.CloseTime || item.CloseDateTime) + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Waiting Time</span><strong style="font-size:13px">' + durationToggle(item.WaitingTime) + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Working Time</span><strong style="font-size:13px">' + durationToggle(item.WorkingTime) + '</strong></div>' +
+              '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--text-muted);font-size:13px">Total Downtime</span><strong style="font-size:13px">' + durationToggle(item.Downtime || item.BreakdownTime) + '</strong></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="view-section" style="margin-top:16px"><h4>Work Details</h4>' +
+            '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Breakdown Type</span><strong style="font-size:13px">' + App.escHtml(item.BreakdownType || '-') + '</strong></div>' +
+            '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Root Cause</span><strong style="font-size:13px">' + App.escHtml(item.RootCause || '-') + '</strong></div>' +
+            '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Corrective Action</span><strong style="font-size:13px">' + App.escHtml(item.CorrectiveAction || '-') + '</strong></div>' +
+            '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Spare Parts</span><strong style="font-size:13px">' + App.escHtml(item.SpareParts || '-') + '</strong></div>' +
+            '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--text-muted);font-size:13px">Technician Remarks</span><strong style="font-size:13px">' + App.escHtml(item.FinalRemarks || item.Remarks || '-') + '</strong></div>' +
+          '</div>' +
+          '<div class="view-section" style="margin-top:16px"><h4>Approval</h4>' +
+            '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Approval Status</span><strong style="font-size:13px"><span class="badge badge-success">APPROVED</span></strong></div>' +
+            '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-muted);font-size:13px">Approved By</span><strong style="font-size:13px">' + App.escHtml(item.ApprovedBy || item.ApprovalBy || '-') + '</strong></div>' +
+            '<div class="view-row" style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--text-muted);font-size:13px">Approval Remarks</span><strong style="font-size:13px">' + App.escHtml(approvalRemarks) + '</strong></div>' +
+          '</div>' +
+          '<div class="form-group" style="margin-top:16px"><label>Repair Images</label><div id="jcaViewImages" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div></div>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+          '<button type="button" class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">Close</button>' +
+        '</div>' +
+      '</div>';
+
+    backdrop.innerHTML = html;
+    backdrop.onclick = function(e) { if (e.target === backdrop) backdrop.remove(); };
+    document.body.appendChild(backdrop);
+
+    var imgContainer = document.getElementById('jcaViewImages');
+    if (imgContainer) {
+      if (item.RepairImage) {
+        var urls = item.RepairImage.split(',').map(function(u) { return u.trim(); }).filter(Boolean);
+        urls.forEach(function(url) {
+          var src = url.indexOf('http') === 0 ? url : 'https://drive.google.com/thumbnail?id=' + url;
+          imgContainer.innerHTML += '<img src="' + App.escHtml(src) + '" style="max-width:200px;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="showImagePreview(this.src)" onerror="this.style.display=\'none\'">';
         });
-    } else {
-      var btn = document.getElementById('jcaApproveBtn');
-      var returnBtn = document.getElementById('jcaReturnBtn');
-      if (btn) btn.disabled = true;
-      if (returnBtn) returnBtn.disabled = true;
-      App.showLoading(true);
-      API.call('approveJobCard', { id: id, ApprovalStatus: 'Approved', ApprovalRemarks: remarks })
-        .then(function() {
-          App.showLoading(false);
-          if (btn) btn.disabled = false;
-          if (returnBtn) returnBtn.disabled = false;
-          hideModal();
-          App.showToast('Job card approved successfully', 'success');
-          load();
-          if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters();
-        })
-        .catch(function(err) {
-          App.showLoading(false);
-          if (btn) btn.disabled = false;
-          if (returnBtn) returnBtn.disabled = false;
-          App.showToast(err.message || 'Failed to approve job card', 'error');
-        });
+      }
+      if (!imgContainer.children.length) {
+        imgContainer.innerHTML = '<span style="color:var(--text-muted)">No images</span>';
+      }
     }
-  }
-
-  function submitFromForm(e) {
-    e.preventDefault();
-    var decision = document.querySelector('input[name="approveDecision"]:checked');
-    submitDecision(decision ? decision.value : 'approve');
   }
 
   window.ApproveJC = {
-    openModal: openModal,
-    hideModal: hideModal,
-    submitDecision: submitDecision,
-    submitFromForm: submitFromForm,
+    viewModal: viewModal,
     prevPage: function() { if (_currentPage > 1) { _currentPage--; renderTable(); } },
     nextPage: function() { var tp = Math.ceil(getFilteredCards().length / PAGE_SIZE); if (_currentPage < tp) { _currentPage++; renderTable(); } }
   };

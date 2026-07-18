@@ -229,11 +229,22 @@
     el = document.getElementById('notifViewPriority'); if (el) el.textContent = item.Priority || '-';
     el = document.getElementById('notifViewCreatedBy'); if (el) el.textContent = item.CreatedBy || '-';
     el = document.getElementById('notifViewAssignedTo'); if (el) el.textContent = item.AssignedTo || '-';
-    el = document.getElementById('notifViewReadStatus'); if (el) el.textContent = item.ReadStatus || '-';
+    el = document.getElementById('notifViewReadStatus'); if (el) el.textContent = 'Read';
     el = document.getElementById('notifViewCreatedAt'); if (el) el.textContent = item.CreatedDateTime || '-';
     el = document.getElementById('notifViewActionUrl'); if (el) el.textContent = item.ActionURL || '-';
     el = document.getElementById('notifViewMessage'); if (el) el.textContent = item.Message || '-';
     showModal('notifViewModal');
+    if ((item.ReadStatus || '').toLowerCase() !== 'read') {
+      API.call('markNotificationRead', { id: id })
+        .then(function() {
+          item.ReadStatus = 'Read';
+          updateSummary();
+          renderNotifTable();
+          updateNotifBadge();
+          if (typeof loadBadgeCounts === 'function') loadBadgeCounts();
+        })
+        .catch(function() {});
+    }
   }
 
   function markNotifRead(id) {
