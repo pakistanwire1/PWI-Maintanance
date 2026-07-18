@@ -241,22 +241,7 @@
   }
 
   function fmtDur(val) {
-    if (!val && val !== 0) return '00:00';
-    var totalMin = Math.floor(Number(val) / 60000);
-    if (isNaN(totalMin)) return val || '00:00';
-    var h = Math.floor(totalMin / 60);
-    var m = totalMin % 60;
-    var pad = function(n) { return String(n).padStart(2, '0'); };
-    return pad(h) + ':' + pad(m);
-  }
-
-  function displayDuration(val) {
-    if (!val && val !== 0) return '0h 0m';
-    var totalMin = Math.floor(Number(val) / 60000);
-    if (isNaN(totalMin)) return val || '0h 0m';
-    var h = Math.floor(totalMin / 60);
-    var m = totalMin % 60;
-    return h + 'h ' + m + 'm';
+    return displayDuration(val);
   }
 
   /* Read-only View modal — matches GAS viewPendingJc() */

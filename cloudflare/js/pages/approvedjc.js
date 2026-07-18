@@ -196,13 +196,7 @@
   }
 
   function fmtDur(val) {
-    if (!val && val !== 0) return '00:00';
-    var totalMin = Math.floor(Number(val) / 60000);
-    if (isNaN(totalMin)) return val || '00:00';
-    var h = Math.floor(totalMin / 60);
-    var m = totalMin % 60;
-    var pad = function(n) { return String(n).padStart(2, '0'); };
-    return pad(h) + ':' + pad(m);
+    return displayDuration(val);
   }
 
   function openModal(id) {

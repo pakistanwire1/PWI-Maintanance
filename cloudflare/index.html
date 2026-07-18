@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="css/welcome.css">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
 </head>
 <body>
   <!-- ==================== WELCOME SCREEN ==================== -->
@@ -1600,6 +1601,21 @@ function loadBadgeCounts() {
   API.call('getSidebarCounts', {})
     .then(function(data) {
       if (!data) return;
+      function setBadge(id, val) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var n = parseInt(val) || 0;
+        if (n > 0) { el.textContent = n > 99 ? '99+' : n; el.style.display = ''; }
+        else { el.textContent = '0'; el.style.display = 'none'; }
+      }
+      setBadge('badge-openjc', data.openJobCards);
+      setBadge('badge-startjc', data.startedJobCards);
+      setBadge('badge-closejc', data.closedJobCards);
+      setBadge('badge-pendingjc', data.pendingJobCards);
+      setBadge('badge-approvejobcard', data.approvedJobCards);
+      setBadge('badge-pm', data.pendingPM);
+      setBadge('badge-inventory', data.inventoryAlerts);
+      setBadge('badge-goodsreceipt', data.pendingGR);
       var nb = document.getElementById('notificationBadge');
       if (nb) {
         var un = data.unreadNotifications || 0;
@@ -1802,9 +1818,7 @@ function loadDashboardData() {
       setText('statPMCompliance', (data.pmCompliance || 0) + '%');
       setText('statQRGenerated', data.qrGenerated);
       setText('statStockValue', '$' + (data.totalStockValue || 0).toFixed(2));
-      drawDashboardCharts(data);
-      loadDashboardNotifications();
-      loadDashboardRecentActivities();
+      try { drawDashboardCharts(data); } catch(e) { console.log('Chart draw error:', e); }
     })
     .catch(function(err) {
       cards.forEach(function(el) { el.classList.remove('loading'); });
@@ -1815,6 +1829,8 @@ function loadDashboardData() {
         if (el && el.textContent.indexOf('Loading') > -1) el.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px">Failed to load chart data</div>';
       });
     });
+  loadDashboardNotifications();
+  loadDashboardRecentActivities();
 }
 
 function loadDashboardNotifications() {
@@ -1881,9 +1897,10 @@ function renderDashboardNotifications(items) {
 }
 
 function loadDashboardRecentActivities() {
-  API.call('getAuditLogs', { limit: 10 })
+  API.call('getAuditLogs', {})
     .then(function(data) {
-      renderDashboardRecentActivities(data || []);
+      var items = Array.isArray(data) ? data.slice(0, 10) : (data && data.records ? data.records.slice(0, 10) : []);
+      renderDashboardRecentActivities(items);
     })
     .catch(function() {
       var el = document.getElementById('dashboardRecentActivities');
