@@ -97,7 +97,6 @@ function getAllData(sheetName) {
     if (!__sheetCacheDirty[sheetName] && __sheetCache[sheetName]) {
       return __sheetCache[sheetName];
     }
-    SpreadsheetApp.flush();
     var sheet = getSheet(sheetName);
     var range = sheet.getDataRange();
     var data = range.getValues();

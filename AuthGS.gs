@@ -123,12 +123,12 @@ function initUsersSheet() {
 /* normalizeUser moved to UsersGS.gs */
 
 function loginUser(email, password) {
-  Logger.log('loginUser() called: ' + email);
-  console.log('loginUser() called: ' + email);
+  var _t0 = Date.now();
+  console.log('[LOGIN] loginUser() start: ' + email);
   try {
+    console.log('[LOGIN] getAllData("Users") start');
     var users = getAllData(CONFIG.SHEET_NAMES.USERS);
-    Logger.log('loginUser() found ' + users.length + ' users');
-    console.log('loginUser() found ' + users.length + ' users');
+    console.log('[LOGIN] getAllData("Users") done in ' + (Date.now() - _t0) + 'ms, found ' + users.length + ' users');
     for (var i = 0; i < users.length; i++) {
         if (users[i].Email === email && users[i].Password === password) {
         if (users[i].Status === CONFIG.STATUS.ACTIVE) {
@@ -141,14 +141,9 @@ function loginUser(email, password) {
           if (driveIdMatch && photoURL.indexOf('lh3.googleusercontent.com') === -1) {
             photoURL = drivePhotoUrl(driveIdMatch[1]);
           }
-          Logger.log('loginUser(): raw user keys=' + Object.keys(user).join(','));
-          console.log('loginUser(): raw user keys=' + Object.keys(user).join(','));
-          try { createAuditLog(CONFIG.AUDIT_MODULES.LOGIN, CONFIG.AUDIT_ACTIONS.LOGIN, '', user.Name || email, '', 'Role: ' + (user.Role || ''), 'Success', 'User logged in'); } catch(e) {}
-          try {
-            var ip = '';
-            try { ip = Session.getEffectiveUser().getEmail(); } catch(e2) {}
-            if (user.UserID) updateUserLastLogin(user.UserID, ip);
-          } catch(e) {}
+          console.log('[LOGIN] credentials OK, building response in ' + (Date.now() - _t0) + 'ms');
+          try { deferLoginSideEffects(email, user.Name || email, user.Role || '', user.UserID || ''); } catch(e) {}
+          console.log('[LOGIN] loginUser() total: ' + (Date.now() - _t0) + 'ms');
           return {
             success: true,
             user: {
@@ -195,6 +190,53 @@ function loginUser(email, password) {
     return { success: false, message: 'Invalid email or password.' };
   } catch (e) {
     return handleError('loginUser', e);
+  }
+}
+
+function deferLoginSideEffects(email, userName, userRole, userId) {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    props.setProperty('pending_login_' + email, JSON.stringify({
+      email: email, name: userName, role: userRole, userId: userId, ts: new Date().toISOString()
+    }));
+    var triggers = ScriptApp.getProjectTriggers();
+    var hasTrigger = false;
+    for (var i = 0; i < triggers.length; i++) {
+      if (triggers[i].getHandlerFunction() === 'processPendingLoginSideEffects') {
+        hasTrigger = true;
+        break;
+      }
+    }
+    if (!hasTrigger) {
+      ScriptApp.newTrigger('processPendingLoginSideEffects').timeBased().after(100).create();
+    }
+  } catch (e) {
+    console.log('[LOGIN] deferLoginSideEffects setup failed: ' + e.message);
+  }
+}
+
+function processPendingLoginSideEffects() {
+  var props = PropertiesService.getScriptProperties();
+  var keys = props.getKeys();
+  var pendingKeys = [];
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i].indexOf('pending_login_') === 0) pendingKeys.push(keys[i]);
+  }
+  for (var j = 0; j < pendingKeys.length; j++) {
+    try {
+      var raw = props.getProperty(pendingKeys[j]);
+      props.deleteProperty(pendingKeys[j]);
+      if (!raw) continue;
+      var info = JSON.parse(raw);
+      try {
+        createAuditLog(CONFIG.AUDIT_MODULES.LOGIN, CONFIG.AUDIT_ACTIONS.LOGIN, '', info.name || info.email, '', 'Role: ' + (info.role || ''), 'Success', 'User logged in');
+      } catch (e) { console.log('[LOGIN-ASYNC] auditLog error: ' + e.message); }
+      try {
+        if (info.userId) updateUserLastLogin(info.userId, '');
+      } catch (e) { console.log('[LOGIN-ASYNC] lastLogin error: ' + e.message); }
+    } catch (e) {
+      console.log('[LOGIN-ASYNC] processing error: ' + e.message);
+    }
   }
 }
 

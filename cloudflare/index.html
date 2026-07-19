@@ -988,6 +988,23 @@
     </div>
   </div>
 
+  <!-- ==================== NOTIFICATION DETAIL MODAL ==================== -->
+  <div id="dashNotifModal" class="modal-overlay" onclick="if(event.target===this)closeDashNotifModal()">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <div class="modal-title">Notification Details</div>
+        <button class="modal-close" onclick="closeDashNotifModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="dashNotifModalBody">
+        <div style="text-align:center;padding:20px;color:var(--text-muted)">Loading...</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeDashNotifModal()">Close</button>
+        <button class="btn btn-primary" id="dashNotifModalAction" style="display:none" onclick="dashNotifModalGoTo()">Go to Item</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== OFFLINE / INSTALL BANNERS ==================== -->
   <div id="offlineBanner" class="offline-banner" style="display:none">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.56 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
@@ -1945,13 +1962,23 @@ function loadDashboardData() {
   startDashboardAutoRefresh();
 }
 
-function loadDashboardNotifications() {
+/* ==================== DASHBOARD NOTIFICATIONS (UNREAD ONLY) ==================== */
+var _dashNotifPage = 1;
+var _dashNotifPageSize = 5;
+var _dashNotifTotal = 0;
+var _dashNotifAllItems = [];
+var _dashNotifCurrentActionUrl = '';
+
+function loadDashboardNotifications(page) {
+  _dashNotifPage = page || 1;
   var email = (currentUser && currentUser.email) || '';
-  API.call('getNotifications', { limit: 10, email: email })
+  API.call('getNotifications', { unreadOnly: true, page: _dashNotifPage, pageSize: _dashNotifPageSize, email: email })
     .then(function(result) {
-      var items = (result && result.records) ? result.records : (result && result.data ? result.data : (result || []));
-      renderDashboardNotifications(items);
-      checkForNewNotifications({ data: items });
+      var records = (result && result.records) ? result.records : [];
+      _dashNotifTotal = (result && result.total !== undefined) ? result.total : records.length;
+      _dashNotifAllItems = records;
+      renderDashboardNotifications(records);
+      checkForNewNotifications({ data: records });
     })
     .catch(function() {
       var el = document.getElementById('dashboardNotifications');
@@ -1963,7 +1990,7 @@ function renderDashboardNotifications(items) {
   var el = document.getElementById('dashboardNotifications');
   if (!el) return;
   if (!items || items.length === 0) {
-    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No notifications</div>';
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No unread notifications</div>';
     return;
   }
   var typeColors = {
@@ -1976,33 +2003,108 @@ function renderDashboardNotifications(items) {
     'System': { color: '#9498b8', bg: 'rgba(148,152,184,0.11)' }
   };
   var priorityBadge = { 'Critical': 'danger', 'High': 'warning', 'Medium': 'info', 'Low': 'success' };
-  var html = '<div style="display:flex;flex-direction:column;gap:6px">';
+  var html = '<div style="display:flex;flex-direction:column;gap:4px">';
   items.forEach(function(n) {
     var notifType = n.NotificationType || 'Information';
     var tc = typeColors[notifType] || typeColors['Information'];
     var priBadge = priorityBadge[n.Priority] || 'primary';
-    var isUnread = (n.ReadStatus || '').toLowerCase() !== 'read';
     var dt = n.CreatedDateTime || '';
     var displayDt = '';
     if (dt) {
       var d = new Date(dt);
       if (!isNaN(d.getTime()) && typeof getTimeAgo === 'function') displayDt = getTimeAgo(dt);
     }
+    var safeId = escapeHtml(n.NotificationID);
+    var safeUrl = escapeHtml(n.ActionURL || '');
     html +=
-      '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);background:var(--bg-input);' + (isUnread ? 'border-left:3px solid var(--primary);background:var(--primary-light);' : '') + 'cursor:pointer" onclick="handleNotifClick(\'' + escapeHtml(n.NotificationID) + '\',\'' + escapeHtml(n.ActionURL || '') + '\')">' +
-        '<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:' + tc.bg + ';color:' + tc.color + ';font-size:12px;font-weight:700">' + (notifType.charAt(0)) + '</div>' +
-        '<div style="flex:1;min-width:0">' +
-          '<div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(n.Title) + '</div>' +
-          '<div style="font-size:11px;color:var(--text-muted);display:flex;gap:6px;align-items:center">' +
+      '<div class="dash-notif-row" onclick="openDashNotifModal(\'' + safeId + '\')">' +
+        '<div class="dash-notif-icon" style="background:' + tc.bg + ';color:' + tc.color + '">' + (notifType.charAt(0)) + '</div>' +
+        '<div class="dash-notif-content">' +
+          '<div class="dash-notif-title">' + escapeHtml(n.Title) + '</div>' +
+          '<div class="dash-notif-meta">' +
             '<span class="badge badge-' + priBadge + '" style="font-size:8px;padding:0 5px">' + escapeHtml(n.Priority || '') + '</span>' +
             '<span class="badge badge-secondary" style="font-size:8px;padding:0 5px">' + escapeHtml(n.Module || '') + '</span>' +
             '<span>' + displayDt + '</span>' +
           '</div>' +
         '</div>' +
+        '<button class="dash-notif-view-btn" title="View Details" onclick="event.stopPropagation();openDashNotifModal(\'' + safeId + '\')">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
+        '</button>' +
       '</div>';
   });
   html += '</div>';
+  if (_dashNotifTotal > _dashNotifPageSize) {
+    var totalPages = Math.ceil(_dashNotifTotal / _dashNotifPageSize);
+    html += '<div class="dash-notif-pagination">';
+    html += '<button class="dash-notif-page-btn" onclick="loadDashboardNotifications(' + (_dashNotifPage - 1) + ')"' + (_dashNotifPage <= 1 ? ' disabled' : '') + '>&#8249; Prev</button>';
+    var startPage = Math.max(1, _dashNotifPage - 2);
+    var endPage = Math.min(totalPages, startPage + 4);
+    if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+    for (var p = startPage; p <= endPage; p++) {
+      html += '<button class="dash-notif-page-btn' + (p === _dashNotifPage ? ' active' : '') + '" onclick="loadDashboardNotifications(' + p + ')">' + p + '</button>';
+    }
+    html += '<button class="dash-notif-page-btn" onclick="loadDashboardNotifications(' + (_dashNotifPage + 1) + ')"' + (_dashNotifPage >= totalPages ? ' disabled' : '') + '>Next &#8250;</button>';
+    html += '</div>';
+  }
   el.innerHTML = html;
+}
+
+function openDashNotifModal(notifId) {
+  var item = null;
+  for (var i = 0; i < _dashNotifAllItems.length; i++) {
+    if (_dashNotifAllItems[i].NotificationID === notifId) { item = _dashNotifAllItems[i]; break; }
+  }
+  if (!item) return;
+  _dashNotifCurrentActionUrl = item.ActionURL || '';
+  var typeColors = {
+    'Information': '#06b6d4', 'Success': '#22c55e', 'Warning': '#f59e0b',
+    'Critical': '#ef4444', 'Approval': '#a855f7', 'Reminder': '#f97316', 'System': '#9498b8'
+  };
+  var priorityColors = { 'Critical': '#ef4444', 'High': '#f59e0b', 'Medium': '#06b6d4', 'Low': '#22c55e' };
+  var notifType = item.NotificationType || 'Information';
+  var tc = typeColors[notifType] || '#06b6d4';
+  var pc = priorityColors[item.Priority] || '#06b6d4';
+  var createdDt = item.CreatedDateTime || '-';
+  var body = document.getElementById('dashNotifModalBody');
+  var actionBtn = document.getElementById('dashNotifModalAction');
+  if (actionBtn) actionBtn.style.display = _dashNotifCurrentActionUrl ? '' : 'none';
+  if (!body) return;
+  body.innerHTML =
+    '<div class="dash-notif-modal-type" style="color:' + tc + '">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg> ' +
+      escapeHtml(notifType) +
+    '</div>' +
+    '<h3 style="margin:8px 0 12px;font-size:16px;font-weight:600;color:var(--text)">' + escapeHtml(item.Title || 'Notification') + '</h3>' +
+    '<div class="dash-notif-modal-detail-grid">' +
+      '<div class="dash-notif-modal-detail-item"><span class="dash-notif-modal-label">Priority</span><span class="dash-notif-modal-value" style="color:' + pc + ';font-weight:600">' + escapeHtml(item.Priority || '-') + '</span></div>' +
+      '<div class="dash-notif-modal-detail-item"><span class="dash-notif-modal-label">Module</span><span class="dash-notif-modal-value">' + escapeHtml(item.Module || '-') + '</span></div>' +
+      '<div class="dash-notif-modal-detail-item"><span class="dash-notif-modal-label">Date & Time</span><span class="dash-notif-modal-value">' + escapeHtml(createdDt) + '</span></div>' +
+      '<div class="dash-notif-modal-detail-item"><span class="dash-notif-modal-label">Created By</span><span class="dash-notif-modal-value">' + escapeHtml(item.CreatedBy || '-') + '</span></div>' +
+    '</div>' +
+    (item.AssignedTo ? '<div style="margin-top:8px"><span class="dash-notif-modal-label">Assigned To</span><span class="dash-notif-modal-value">' + escapeHtml(item.AssignedTo) + '</span></div>' : '') +
+    '<div class="dash-notif-modal-message">' +
+      '<span class="dash-notif-modal-label">Message</span>' +
+      '<p>' + escapeHtml(item.Message || 'No details available.') + '</p>' +
+    '</div>';
+  showModal('dashNotifModal');
+  API.call('markNotificationRead', { id: notifId }).then(function() {
+    loadBadgeCounts();
+    loadDashboardNotifications(_dashNotifPage);
+  }).catch(function() {});
+}
+
+function closeDashNotifModal() {
+  hideModal('dashNotifModal');
+  _dashNotifCurrentActionUrl = '';
+}
+
+function dashNotifModalGoTo() {
+  closeDashNotifModal();
+  if (_dashNotifCurrentActionUrl) {
+    try { eval(_dashNotifCurrentActionUrl); } catch(e) { navigateTo('notifications'); }
+  } else {
+    navigateTo('notifications');
+  }
 }
 
 function loadDashboardRecentActivities() {

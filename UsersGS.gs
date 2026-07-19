@@ -25,7 +25,6 @@ function ensureUserCols() {
   if (missing.length > 0) {
     sheet.getRange(1, headers.length + 1, 1, missing.length).setValues([missing]);
   }
-  SpreadsheetApp.flush();
 }
 
 function initUserSheet() {

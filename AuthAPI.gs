@@ -109,10 +109,13 @@ function invalidateAllUserTokens(email) {
 /* ---- Login ---- */
 
 function apiLogin(email, password) {
+  var _t0 = Date.now();
   if (!email || !password) {
     return { success: false, message: 'Email and password are required.' };
   }
+  console.log('[LOGIN-API] apiLogin() start: ' + email);
   var result = loginUser(email, password);
+  console.log('[LOGIN-API] loginUser() returned in ' + (Date.now() - _t0) + 'ms, success=' + result.success);
   if (result.success) {
     var token = generateApiToken(
       email,
@@ -123,6 +126,7 @@ function apiLogin(email, password) {
     result.token = token;
     result.expires = new Date(Date.now() + AUTH_CONFIG.TOKEN_EXPIRY_HOURS * 3600000).toISOString();
   }
+  console.log('[LOGIN-API] apiLogin() total: ' + (Date.now() - _t0) + 'ms');
   return result;
 }
 
