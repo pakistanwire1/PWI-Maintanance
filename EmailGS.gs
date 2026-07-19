@@ -790,7 +790,7 @@ function emailTemplateGoodsReceipt(data) {
     emailTableRow('PO No', data.poNo) +
     emailTableRow('Received By', data.receivedBy) +
     emailTableRow('Received Date', data.receivedDate) +
-    emailTableRow('Total Cost', data.totalCost ? '$' + data.totalCost : '-') +
+    emailTableRow('Total Cost', data.totalCost ? 'PKR ' + Number(data.totalCost).toLocaleString('en-PK') : '-') +
     '</table>';
   return { subject: '[CMMS] Goods Receipt: ' + (data.grnNo || ''), html: emailWrapHtml(body) };
 }
@@ -882,7 +882,7 @@ function emailTemplateMonthlySummary(data) {
     emailTableRow('Purchase Requests', data.purchaseRequests || '0') +
     emailTableRow('Goods Receipts', data.goodsReceipts || '0') +
     emailTableRow('Spare Parts Issued', data.partsIssued || '0') +
-    emailTableRow('Total Stock Value', data.totalStockValue ? '$' + data.totalStockValue : '$0') +
+    emailTableRow('Total Stock Value', data.totalStockValue ? 'PKR ' + Number(data.totalStockValue).toLocaleString('en-PK') : 'PKR 0') +
     '</table>';
   return { subject: '[CMMS] Monthly Summary - ' + (data.month || ''), html: emailWrapHtml(body) };
 }

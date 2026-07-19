@@ -595,11 +595,11 @@
   .email-badge {
     position: absolute; top: -4px; right: -4px;
     min-width: 16px; height: 16px;
-    background: var(--warning);
-    color: #000;
+    background: var(--danger);
+    color: #fff;
     font-size: 9px; font-weight: 700;
     border-radius: 10px;
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     padding: 0 4px;
@@ -617,7 +617,7 @@
     color: #fff;
     font-size: 9px; font-weight: 700;
     border-radius: 10px;
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     padding: 0 4px;
@@ -649,6 +649,7 @@
   .sidebar-badge.status-pending { background: var(--status-pending); color: #fff; }
   .sidebar-badge.status-approved { background: var(--status-approved); color: #fff; }
   .sidebar-badge.status-all { background: var(--status-all); color: #fff; }
+  .sidebar-badge.status-email { background: var(--danger); color: #fff; }
 
   .email-panel {
     position: absolute;

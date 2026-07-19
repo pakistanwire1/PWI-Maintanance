@@ -26,6 +26,26 @@
   var _formPhotoBase64 = '';
   var _profileViewUserId = '';
 
+  function photoOnerror(el, name) {
+    var initial = (name || '?').charAt(0).toUpperCase();
+    var sz = el.style.width || '32px';
+    el.onerror = null;
+    el.style.display = 'none';
+    var fallback = document.createElement('div');
+    fallback.style.cssText = 'width:' + sz + ';height:' + sz + ';border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:' + (parseInt(sz) * 0.44) + 'px;font-weight:600;margin:0 auto;flex-shrink:0';
+    fallback.textContent = initial;
+    el.parentNode.insertBefore(fallback, el);
+  }
+
+  function userPhotoHtml(photoUrl, name, size) {
+    size = size || '32px';
+    if (photoUrl) {
+      return '<img src="' + escHtml(photoUrl) + '" style="width:' + size + ';height:' + size + ';border-radius:50%;object-fit:cover" onerror="this.onerror=null;var s=\'' + size + '\';var i=\'' + escHtml((name||'?').charAt(0).toUpperCase()) + '\';this.style.display=\'none\';var d=document.createElement(\'div\');d.style.cssText=\'width:\'+s+\';height:\'+s+\';border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:\'+(parseInt(s)*0.44)+\'px;font-weight:600;margin:0 auto;flex-shrink:0\';d.textContent=i;this.parentNode.insertBefore(d,this)">';
+    }
+    var initial = (name || '?').charAt(0).toUpperCase();
+    return '<div style="width:' + size + ';height:' + size + ';border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:' + (parseInt(size) * 0.44) + 'px;font-weight:600;margin:0 auto">' + initial + '</div>';
+  }
+
   App.registerPage('users', render, load);
 
   function render() {
@@ -285,9 +305,7 @@
     pageData.forEach(function(row) {
       var initial = (row.Name || '?').charAt(0).toUpperCase();
       var isSelected = selectedUserId === row.UserID;
-      var photoHtml = row.PhotoURL
-        ? '<img src="' + escHtml(row.PhotoURL) + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover">'
-        : '<div style="width:32px;height:32px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;margin:0 auto">' + initial + '</div>';
+      var photoHtml = userPhotoHtml(row.PhotoURL, row.Name, '32px');
 
       var roleBadge = 'primary';
       if (row.Role === 'Administrator') roleBadge = 'danger';
@@ -433,7 +451,7 @@
     if (url) {
       var fpp = document.getElementById('formPhotoPlaceholder'); if (fpp) fpp.style.display = 'none';
       var img = document.getElementById('formPhotoImg');
-      if (img) { img.src = url; img.style.display = 'block'; }
+      if (img) { img.src = url; img.style.display = 'block'; img.onerror = function() { this.onerror = null; this.style.display = 'none'; var fpp2 = document.getElementById('formPhotoPlaceholder'); if (fpp2) fpp2.style.display = ''; }; }
       var rmb = document.getElementById('formRemovePhotoBtn'); if (rmb) rmb.style.display = '';
     } else {
       clearFormPhoto();
@@ -444,7 +462,7 @@
     var initial = (item.Name || '?').charAt(0).toUpperCase();
     var photoUrl = item.PhotoURL;
     var photoHtml = photoUrl
-      ? '<img src="' + escHtml(photoUrl) + '" id="profileCardPhoto" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);display:block;box-shadow:0 0 0 4px var(--primary-light)">'
+      ? '<img src="' + escHtml(photoUrl) + '" id="profileCardPhoto" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);display:block;box-shadow:0 0 0 4px var(--primary-light)" onerror="this.onerror=null;this.style.display=\'none\';var d=document.createElement(\'div\');d.id=\'profileCardPhoto\';d.style.cssText=\'width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;box-shadow:0 0 0 4px var(--primary-light)\';d.textContent=\'' + escHtml(initial) + '\';this.parentNode.insertBefore(d,this)">'
       : '<div id="profileCardPhoto" style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;box-shadow:0 0 0 4px var(--primary-light)">' + initial + '</div>';
 
     var roleBadge = 'primary';
@@ -762,7 +780,15 @@
   window.removeProfilePhoto = function(userId) {
     showConfirm('Remove Photo', 'Are you sure you want to remove this user\'s photo?', function() {
       showLoading(true);
-      API.call('updateUser', { id: userId, PhotoURL: '', PhotoDriveID: '' })
+      var item = usersData.find(function(r) { return r.UserID === userId; });
+      var driveId = item ? item.PhotoDriveID : '';
+      var chain = Promise.resolve();
+      if (driveId) {
+        chain = API.call('deleteUserPhoto', { driveId: driveId }).catch(function() {});
+      }
+      chain.then(function() {
+        return API.call('updateUser', { id: userId, PhotoURL: '', PhotoDriveID: '' });
+      })
         .then(function(result) {
           usersData = result;
           showLoading(false);

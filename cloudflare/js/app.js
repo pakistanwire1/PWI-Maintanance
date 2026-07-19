@@ -129,15 +129,22 @@ var App = (function() {
     function setAv(elId, size) {
       var el = document.getElementById(elId);
       if (!el) return;
-      if (photoUrl) { el.innerHTML = '<img src="' + photoUrl.replace(/"/g, '&quot;') + '" style="width:' + size + ';height:' + size + ';border-radius:50%;object-fit:cover">'; }
-      else { el.textContent = initial; }
+      el.textContent = '';
+      if (!photoUrl) { el.textContent = initial; return; }
+      var img = document.createElement('img');
+      img.src = photoUrl;
+      img.style.cssText = 'width:' + size + ';height:' + size + ';border-radius:50%;object-fit:cover;flex-shrink:0';
+      img.onerror = function() { el.textContent = initial; };
+      el.appendChild(img);
     }
     setAv('userAvatar', '34px');
     setAv('topbarAvatar', '28px');
     setText('userName', user.name || '');
-    setText('userRole', user.role + (user.department ? ' - ' + user.department : ''));
+    var roleLine = user.role || '';
+    if (user.department) roleLine += ' - ' + user.department;
+    setText('userRole', roleLine);
     setText('topbarName', user.name || '');
-    setText('topbarRole', user.role + (user.department ? ' - ' + user.department : ''));
+    setText('topbarRole', roleLine);
     var isAdminUser = user.role === 'Admin' || user.isSystemAdmin === true || user.IsAdmin === true;
     document.querySelectorAll('.sidebar-item[data-page]').forEach(function(el) {
       var page = el.dataset.page;

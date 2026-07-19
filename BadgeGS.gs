@@ -34,7 +34,7 @@ function getSidebarCounts(email) {
   var pendingEmails = 0;
   for (var ei = 0; ei < emailData.length; ei++) {
     var es = (emailData[ei].Status || '').toLowerCase();
-    if (es === 'pending') pendingEmails++;
+    if (es === 'pending' || es === 'failed') pendingEmails++;
   }
 
   var today = new Date();
@@ -160,13 +160,13 @@ function getBadgeCounts() {
     for (var i = 0; i < jcData.length; i++) {
       var jc = jcData[i];
       var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
+      var as = (jc.ApprovalStatus || '').toLowerCase();
       if (s === 'open') openJobs++;
-      else if (s === 'running' || s === 'in progress') runningJobs++;
-      else if (s === 'waiting' || s === 'waiting for parts') waitingJobs++;
+      else if ((s === 'running' || s === 'in progress') && as !== 'returned') runningJobs++;
+      else if ((s === 'running' || s === 'in progress') && as === 'returned') waitingJobs++;
 
-      if (s === 'closed' || s === 'completed') {
-        var as = (jc.ApprovalStatus || '').toLowerCase();
-        if (as !== 'approved') pendingApproval++;
+      if (s === 'pending' || ((s === 'closed' || s === 'completed') && as !== 'approved')) {
+        pendingApproval++;
         var dt = jc.CloseDateTime || jc.CloseTime || '';
         if (dt.indexOf(todayStr) === 0) completedToday++;
       }

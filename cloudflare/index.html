@@ -421,9 +421,10 @@
               <span class="sidebar-item-label">Approved Job Cards</span>
               <span class="sidebar-badge" id="badge-approvejobcard" data-status="approved">0</span>
             </div>
-            <div class="sidebar-item" onclick="navigateTo('jobcards')" data-page="jobcards" data-tooltip="All Job Cards" style="display:none">
+            <div class="sidebar-item" onclick="navigateTo('jobcards')" data-page="jobcards" data-tooltip="All Job Cards">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
               <span class="sidebar-item-label">All Job Cards</span>
+              <span class="sidebar-badge" id="badge-alljc" data-status="all" style="display:none"></span>
             </div>
             <div class="sidebar-item" onclick="navigateTo('pm')" data-page="pm" data-tooltip="PM Schedule">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -501,6 +502,7 @@
             <div class="sidebar-item" onclick="navigateTo('email')" data-page="email" data-tooltip="Email Notifications">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
               <span class="sidebar-item-label">Email Notifications</span>
+              <span class="sidebar-badge" id="sidebarEmailBadge" data-status="email" style="display:none">0</span>
             </div>
             <div class="sidebar-item" onclick="navigateTo('whatsapp')" data-page="whatsapp" data-tooltip="WhatsApp Notifications">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
@@ -704,6 +706,12 @@
         <div class="stat-info"><h3 id="statTotalJobs">0</h3><p>Total Job Cards</p></div>
       </div>
     </div>
+    <div class="stat-card stat-info">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+        <div class="stat-info"><h3 id="statAssets">0</h3><p>Total Assets</p></div>
+      </div>
+    </div>
     <div class="stat-card stat-success">
       <div class="stat-inner">
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
@@ -815,7 +823,32 @@
     <div class="stat-card stat-success">
       <div class="stat-inner">
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
-        <div class="stat-info"><h3 id="statStockValue">$0</h3><p>Inventory Value</p></div>
+        <div class="stat-info"><h3 id="statStockValue">PKR 0</h3><p>Inventory Value</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="dashboardFooter" style="margin-bottom:16px;padding:14px 20px">
+    <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--danger);flex-shrink:0"></div>
+        <span style="font-size:12px;color:var(--text-muted)">Unread Notifications</span>
+        <span style="font-size:18px;font-weight:700;color:var(--danger)" id="dashFooterUnread">0</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0"></div>
+        <span style="font-size:12px;color:var(--text-muted)">Critical</span>
+        <span style="font-size:18px;font-weight:700;color:#ef4444" id="dashFooterCritical">0</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--purple);flex-shrink:0"></div>
+        <span style="font-size:12px;color:var(--text-muted)">Pending Approval</span>
+        <span style="font-size:18px;font-weight:700;color:var(--purple)" id="dashFooterApproval">0</span>
+      </div>
+      <div style="flex:1"></div>
+      <div style="display:flex;align-items:center;gap:8px;border-left:1px solid var(--border);padding-left:20px">
+        <span style="font-size:12px;color:var(--text-muted)">Total Job Cards</span>
+        <span style="font-size:18px;font-weight:700;color:var(--primary)" id="dashFooterTotalJC">0</span>
       </div>
     </div>
   </div>
@@ -827,10 +860,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
           Recent Notifications
         </div>
-        <div class="card-actions" style="display:flex;gap:10px;align-items:center">
-          <span class="dash-notif-counter" id="dashNotifUnread" style="color:var(--danger)"><span class="counter-num" id="dashNotifUnreadNum">0</span> Unread</span>
-          <span class="dash-notif-counter" id="dashNotifCritical" style="color:var(--danger)"><span class="counter-num" id="dashNotifCriticalNum">0</span> Critical</span>
-          <span class="dash-notif-counter" id="dashNotifApproval" style="color:var(--purple)"><span class="counter-num" id="dashNotifApprovalNum">0</span> Pending Approval</span>
+        <div class="card-actions">
           <button class="btn btn-xs btn-primary" onclick="navigateTo('notifications')">View All</button>
         </div>
       </div>
@@ -881,6 +911,14 @@
     <div class="chart-card">
       <div class="card-title">Breakdown Trend <span class="chart-badge" id="breakdownBadge">6 Months</span></div>
       <div id="chartBreakdown" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">Machine Status <span class="chart-badge" id="machineStatusBadge">Current</span></div>
+      <div id="chartMachineStatus" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">Department Distribution <span class="chart-badge" id="deptBadge">Jobs</span></div>
+      <div id="chartDepartment" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
     </div>
   </div>
 </div>
@@ -1244,15 +1282,22 @@ function updateUserInfo() {
   function setAvatar(elId, size) {
     var el = document.getElementById(elId);
     if (!el) return;
-    if (photoUrl) { el.innerHTML = '<img src="' + photoUrl.replace(/"/g, '&quot;') + '" style="width:' + size + ';height:' + size + ';border-radius:50%;object-fit:cover">'; }
-    else { el.textContent = initial; }
+    el.textContent = '';
+    if (!photoUrl) { el.textContent = initial; return; }
+    var img = document.createElement('img');
+    img.src = photoUrl;
+    img.style.cssText = 'width:' + size + ';height:' + size + ';border-radius:50%;object-fit:cover;flex-shrink:0';
+    img.onerror = function() { el.textContent = initial; };
+    el.appendChild(img);
   }
   setAvatar('userAvatar', '34px');
   setAvatar('topbarAvatar', '28px');
   setText('userName', currentUser.name || '');
-  setText('userRole', currentUser.role + (currentUser.department ? ' - ' + currentUser.department : ''));
+  var roleLine = currentUser.role || '';
+  if (currentUser.department) roleLine += ' - ' + currentUser.department;
+  setText('userRole', roleLine);
   setText('topbarName', currentUser.name || '');
-  setText('topbarRole', currentUser.role + (currentUser.department ? ' - ' + currentUser.department : ''));
+  setText('topbarRole', roleLine);
   var isAdminUser = isAdmin();
   document.querySelectorAll('.sidebar-item[data-page]').forEach(function(el) {
     var page = el.dataset.page;
@@ -1337,6 +1382,7 @@ function navigateTo(page) {
   if (qrPages.indexOf(page) > -1) page = 'qr';
   if (page === 'inventorytransactions' || page === 'stockhistory') page = 'inventory';
   currentPage = page;
+  if (page !== 'dashboard') stopDashboardAutoRefresh();
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
   document.querySelectorAll('.sidebar-item').forEach(function(i) { i.classList.remove('active'); });
   var mc = document.querySelector('.main-content');
@@ -1641,7 +1687,7 @@ function loadBadgeCounts() {
         if (!el) return;
         var n = forceZero ? 0 : (parseInt(val) || 0);
         var status = el.getAttribute('data-status');
-        el.classList.remove('status-open','status-running','status-closed','status-pending','status-approved','status-all');
+        el.classList.remove('status-open','status-running','status-closed','status-pending','status-approved','status-all','status-email');
         if (n > 0 && status) el.classList.add('status-' + status);
         if (n > 0) { el.textContent = n > 99 ? '99+' : n; el.style.display = ''; }
         else { el.textContent = ''; el.style.display = 'none'; }
@@ -1651,9 +1697,12 @@ function loadBadgeCounts() {
       setBadge('badge-closejc', data.startedJobCards);
       setBadge('badge-pendingjc', data.pendingJobCards);
       setBadge('badge-approvejobcard', data.approvedJobCards);
+      var _totalJC = (data.openJobCards||0)+(data.startedJobCards||0)+(data.closedJobCards||0)+(data.pendingJobCards||0)+(data.approvedJobCards||0);
+      setBadge('badge-alljc', _totalJC);
       setBadge('badge-pm', data.pendingPM);
       setBadge('badge-inventory', data.inventoryAlerts);
       setBadge('badge-goodsreceipt', data.pendingGR);
+      setBadge('sidebarEmailBadge', data.pendingEmails);
       var nb = document.getElementById('notificationBadge');
       if (nb) {
         var un = data.unreadNotifications || 0;
@@ -1688,6 +1737,17 @@ function startBadgeRefresh() {
 
 function stopBadgeRefresh() {
   if (_badgeRefreshTimer) { clearInterval(_badgeRefreshTimer); _badgeRefreshTimer = null; }
+}
+
+var _dashboardRefreshTimer = null;
+function startDashboardAutoRefresh() {
+  stopDashboardAutoRefresh();
+  _dashboardRefreshTimer = setInterval(function() {
+    if (currentPage === 'dashboard') loadDashboardData();
+  }, 60000);
+}
+function stopDashboardAutoRefresh() {
+  if (_dashboardRefreshTimer) { clearInterval(_dashboardRefreshTimer); _dashboardRefreshTimer = null; }
 }
 
 /* ==================== NOTIFICATION PANEL ==================== */
@@ -1763,7 +1823,7 @@ function loadEmailPanelData() {
       setText('emailDropdownPending', stats.pendingToday || 0);
       var eb = document.getElementById('emailBadge');
       if (eb) {
-        var pending = stats.pendingToday || 0;
+        var pending = (stats.pendingToday || 0) + (stats.failedToday || 0);
         if (pending > 0) { eb.textContent = pending > 99 ? '99+' : pending; eb.style.display = ''; }
         else { eb.style.display = 'none'; }
       }
@@ -1839,7 +1899,7 @@ function loadDashboardData() {
   showLoading(true);
   var cards = document.querySelectorAll('#dashboardCards .stat-info');
   cards.forEach(function(el) { el.classList.add('loading'); });
-  API.call('getDashboardData', { filter: globalDashboardFilter, department: currentUser && currentUser.department ? currentUser.department : '' })
+  API.call('getDashboardData', { filter: globalDashboardFilter, department: currentUser && currentUser.department ? currentUser.department : '', email: currentUser && currentUser.email ? currentUser.email : '' })
     .then(function(data) {
       cards.forEach(function(el) { el.classList.remove('loading'); });
       showLoading(false);
@@ -1847,29 +1907,34 @@ function loadDashboardData() {
       setText('statRunningMachines', data.runningMachines);
       setText('statUnderMaintenance', data.breakdownMachines);
       setText('statTotalJobs', data.totalJobCards);
+      setText('statAssets', data.totalAssets || 0);
       setText('statOpenJobs', data.openJobs);
       setText('statRunningJobs', data.runningJobs);
       setText('statClosedJobs', data.closedJobs);
       setText('statApprovedJobs', data.approvedJobs);
-      setText('statPendingJobs', data.pendingJobs);
+      setText('statPendingJobs', data.pendingApprovalJobs || 0);
       setText('statWaitingJobs', data.waitingJobs);
-      setText('statBreakdownHours', displayDuration(Math.round((data.breakdownHours || 0) * 60)));
-      setText('statMTTR', data.mttr !== null && data.mttr !== undefined ? data.mttr : 'N/A');
-      setText('statMTBF', data.mtbf !== null && data.mtbf !== undefined ? data.mtbf : 'N/A');
-      setText('statAvailability', (data.availability || 0) + '%');
+      setText('statBreakdownHours', fmtDurationDays(data.totalDowntimeMinutes || Math.round((data.breakdownHours || 0) * 60)));
+      setText('statMTTR', data.mttr !== null && data.mttr !== undefined ? parseFloat(data.mttr).toFixed(2) + ' hrs' : 'N/A');
+      setText('statMTBF', data.mtbf !== null && data.mtbf !== undefined ? parseFloat(data.mtbf).toFixed(2) + ' hrs' : 'N/A');
+      setText('statAvailability', (data.availability || 0).toFixed(2) + '%');
       setText('statPMDue', data.pmDue);
       setText('statPMOverdue', data.pmOverdue);
       setText('statLowStock', data.lowStockParts);
       setText('statOutOfStock', data.outOfStockParts);
       setText('statPMCompliance', (data.pmCompliance || 0) + '%');
       setText('statQRGenerated', data.qrGenerated);
-      setText('statStockValue', '$' + (data.totalStockValue || 0).toFixed(2));
+      setText('statStockValue', 'PKR ' + Number(data.totalStockValue || 0).toLocaleString('en-PK'));
+      setText('dashFooterUnread', data.notifUnread || 0);
+      setText('dashFooterCritical', data.notifCritical || 0);
+      setText('dashFooterApproval', data.pendingApprovalJobs || 0);
+      setText('dashFooterTotalJC', data.totalJobCards || 0);
       try { drawDashboardCharts(data); } catch(e) { console.log('Chart draw error:', e); }
     })
     .catch(function(err) {
       cards.forEach(function(el) { el.classList.remove('loading'); });
       showLoading(false);
-      var chartIds = ['chartJobStatus','chartPriority','chartMTTR','chartMTBF','chartMonthlyJobs','chartBreakdown'];
+      var chartIds = ['chartJobStatus','chartPriority','chartMTTR','chartMTBF','chartMonthlyJobs','chartBreakdown','chartMachineStatus','chartDepartment'];
       chartIds.forEach(function(id) {
         var el = document.getElementById(id);
         if (el && el.textContent.indexOf('Loading') > -1) el.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px">Failed to load chart data</div>';
@@ -1877,6 +1942,7 @@ function loadDashboardData() {
     });
   loadDashboardNotifications();
   loadDashboardRecentActivities();
+  startDashboardAutoRefresh();
 }
 
 function loadDashboardNotifications() {
@@ -1886,9 +1952,6 @@ function loadDashboardNotifications() {
       var items = (result && result.records) ? result.records : (result && result.data ? result.data : (result || []));
       renderDashboardNotifications(items);
       checkForNewNotifications({ data: items });
-      if (result) {
-        setText('dashNotifUnreadNum', result.unreadCount || 0);
-      }
     })
     .catch(function() {
       var el = document.getElementById('dashboardNotifications');
@@ -2083,7 +2146,7 @@ function doDrawCharts(data) {
         var mttrRows = [['Period', 'MTTR (hrs)', { role: 'tooltip', type: 'string', p: { html: true } }]];
         for (var mi = 0; mi < months.length; mi++) {
           var val = (mt[mi] !== null && mt[mi] !== undefined) ? mt[mi] : null;
-          var tip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#3B82F6">MTTR</div><div>Period: <b>' + months[mi] + '</b></div><div>MTTR: <b>' + (val !== null ? val.toFixed(1) + ' hrs' : 'N/A') + '</b></div>' + (stats.avg > 0 ? '<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:11px;color:#888">Avg: ' + stats.avg.toFixed(1) + 'h &middot; Max: ' + stats.max.toFixed(1) + 'h &middot; Min: ' + stats.min.toFixed(1) + 'h</div>' : '') + '</div>';
+          var tip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#3B82F6">MTTR</div><div>Period: <b>' + months[mi] + '</b></div><div>MTTR: <b>' + (val !== null ? val.toFixed(2) + ' hrs' : 'N/A') + '</b></div>' + (stats.avg > 0 ? '<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:11px;color:#888">Avg: ' + stats.avg.toFixed(2) + ' hrs &middot; Max: ' + stats.max.toFixed(2) + ' hrs &middot; Min: ' + stats.min.toFixed(2) + ' hrs</div>' : '') + '</div>';
           mttrRows.push([months[mi], val, tip]);
         }
         var mttrData = new google.visualization.arrayToDataTable(mttrRows);
@@ -2092,7 +2155,7 @@ function doDrawCharts(data) {
           mttrData.addColumn('number', 'Average');
           mttrData.addColumn({ type: 'string', role: 'tooltip', p: { html: true } });
           for (var mi2 = 0; mi2 < months.length; mi2++) {
-            var avgTip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;color:#94A3B8">Average MTTR</div><div>' + stats.avg.toFixed(1) + ' hours</div></div>';
+            var avgTip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;color:#94A3B8">Average MTTR</div><div>' + stats.avg.toFixed(2) + ' hours</div></div>';
             mttrData.setCell(mi2, 2, stats.avg, avgTip);
           }
           mttrOptions.colors.push('#94A3B8');
@@ -2105,8 +2168,8 @@ function doDrawCharts(data) {
       var mttrBadge = document.getElementById('mttrBadge');
       if (mttrBadge) {
         var lastMttr = mt[mt.length - 1];
-        if (lastMttr !== null && lastMttr !== undefined) mttrBadge.textContent = lastMttr.toFixed(1) + 'h';
-        else if (data.mttr) mttrBadge.textContent = data.mttr + 'h';
+        if (lastMttr !== null && lastMttr !== undefined) mttrBadge.textContent = lastMttr.toFixed(2) + ' hrs';
+        else if (data.mttr) mttrBadge.textContent = parseFloat(data.mttr).toFixed(2) + ' hrs';
         else mttrBadge.textContent = 'N/A';
       }
     }
@@ -2118,10 +2181,10 @@ function doDrawCharts(data) {
         mtbfDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;margin-bottom:8px;opacity:0.4"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><div>Not enough maintenance history</div><div style="font-size:11px;margin-top:4px;opacity:0.6">MTBF data will appear after multiple breakdowns are recorded</div></div>';
       } else {
         mtbfDiv.innerHTML = '';
-        var mtbfRows = [['Period', 'MTBF (days)', { role: 'tooltip', type: 'string', p: { html: true } }]];
+        var mtbfRows = [['Period', 'MTBF (hrs)', { role: 'tooltip', type: 'string', p: { html: true } }]];
         for (var mi3 = 0; mi3 < months.length; mi3++) {
           var mfVal = (mf[mi3] !== null && mf[mi3] !== undefined) ? mf[mi3] : null;
-          var mfTip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#22C55E">MTBF</div><div>Period: <b>' + months[mi3] + '</b></div><div>MTBF: <b>' + (mfVal !== null ? mfVal.toFixed(1) + ' days' : 'N/A') + '</b></div></div>';
+          var mfTip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#22C55E">MTBF</div><div>Period: <b>' + months[mi3] + '</b></div><div>MTBF: <b>' + (mfVal !== null ? mfVal.toFixed(2) + ' hrs' : 'N/A') + '</b></div></div>';
           mtbfRows.push([months[mi3], mfVal, mfTip]);
         }
         var mtbfData = new google.visualization.arrayToDataTable(mtbfRows);
@@ -2132,8 +2195,8 @@ function doDrawCharts(data) {
       var mtbfBadge = document.getElementById('mtbfBadge');
       if (mtbfBadge) {
         var lastMtbf = mf[mf.length - 1];
-        if (lastMtbf !== null && lastMtbf !== undefined) mtbfBadge.textContent = lastMtbf.toFixed(1) + 'd';
-        else if (data.mtbf) mtbfBadge.textContent = data.mtbf + 'd';
+        if (lastMtbf !== null && lastMtbf !== undefined) mtbfBadge.textContent = lastMtbf.toFixed(2) + ' hrs';
+        else if (data.mtbf) mtbfBadge.textContent = parseFloat(data.mtbf).toFixed(2) + ' hrs';
         else mtbfBadge.textContent = 'N/A';
       }
     }
@@ -2177,6 +2240,56 @@ function doDrawCharts(data) {
         breakdownChart.draw(breakdownData, areaOptions);
       }
     }
+
+    var msDiv = document.getElementById('chartMachineStatus');
+    if (msDiv) {
+      var msRunning = data.runningMachines || 0;
+      var msBreakdown = data.breakdownMachines || 0;
+      var msIdle = data.idleMachines || 0;
+      var msTotal = msRunning + msBreakdown + msIdle;
+      if (msTotal === 0) {
+        msDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px">No machine data</div>';
+      } else {
+        var msRows = [['Status', 'Count', { role: 'style' }, { role: 'tooltip', type: 'string', p: { html: true } }]];
+        if (msRunning > 0) msRows.push(['Running', msRunning, '#22C55E', '<div style="' + tooltipStyle + '"><div style="font-weight:700;color:#22C55E">Running</div><div>Count: <b>' + msRunning + '</b></div><div>Share: <b>' + Math.round((msRunning / msTotal) * 100) + '%</b></div></div>']);
+        if (msBreakdown > 0) msRows.push(['Breakdown', msBreakdown, '#EF4444', '<div style="' + tooltipStyle + '"><div style="font-weight:700;color:#EF4444">Breakdown</div><div>Count: <b>' + msBreakdown + '</b></div><div>Share: <b>' + Math.round((msBreakdown / msTotal) * 100) + '%</b></div></div>']);
+        if (msIdle > 0) msRows.push(['Idle', msIdle, '#64748b', '<div style="' + tooltipStyle + '"><div style="font-weight:700;color:#64748b">Idle</div><div>Count: <b>' + msIdle + '</b></div><div>Share: <b>' + Math.round((msIdle / msTotal) * 100) + '%</b></div></div>']);
+        var msData = new google.visualization.arrayToDataTable(msRows);
+        var msOptions = { backgroundColor: 'transparent', chartArea: { left: 10, right: 10, top: 10, bottom: 40, width: '90%', height: '70%' }, legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 11 } }, colors: ['#22C55E', '#EF4444', '#64748b'], pieHole: 0.45, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, pieSliceText: 'none', animation: animCfg };
+        var msChart = new google.visualization.PieChart(msDiv);
+        msChart.draw(msData, msOptions);
+      }
+      var msBadge = document.getElementById('machineStatusBadge');
+      if (msBadge) msBadge.textContent = msTotal + ' machines';
+    }
+
+    var deptDiv = document.getElementById('chartDepartment');
+    if (deptDiv) {
+      var deptJobs = (data.charts && data.charts.departmentJobs) || {};
+      var deptKeys = Object.keys(deptJobs).sort(function(a, b) { return deptJobs[b] - deptJobs[a]; });
+      if (deptKeys.length === 0) {
+        deptDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px">No department data</div>';
+      } else {
+        var deptRows = [['Department', 'Job Cards', { role: 'tooltip', type: 'string', p: { html: true } }]];
+        var deptColors = ['#3B82F6', '#22C55E', '#F97316', '#A855F7', '#EF4444', '#06B6D4', '#F59E0B', '#64748b'];
+        var deptTotal = 0;
+        deptKeys.forEach(function(k) { deptTotal += deptJobs[k]; });
+        for (var di = 0; di < deptKeys.length; di++) {
+          var dName = deptKeys[di];
+          var dCount = deptJobs[dName];
+          var dPct = deptTotal > 0 ? Math.round((dCount / deptTotal) * 100) : 0;
+          var dTip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#3B82F6">' + dName + '</div><div>Job Cards: <b>' + dCount + '</b></div><div>Share: <b>' + dPct + '%</b> of ' + deptTotal + ' total</div></div>';
+          deptRows.push([dName, dCount, dTip]);
+        }
+        var deptData = new google.visualization.arrayToDataTable(deptRows);
+        var deptOptions = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 50, width: '90%', height: '60%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' }, slantedText: deptKeys.length > 5, slantedTextAngle: 45 }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: deptColors.slice(0, deptKeys.length), bar: { groupWidth: '65%' }, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg };
+        var deptChart = new google.visualization.ColumnChart(deptDiv);
+        deptChart.draw(deptData, deptOptions);
+      }
+      var deptBadge = document.getElementById('deptBadge');
+      if (deptBadge) deptBadge.textContent = deptKeys.length + ' depts';
+    }
+
   } catch (e) {
     console.log('Chart error:', e);
   }

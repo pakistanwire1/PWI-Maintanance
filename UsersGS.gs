@@ -79,8 +79,13 @@ function normalizeUser(u) {
   out.JoiningDate = out.JoiningDate || '';
   out.PhotoDriveID = out.PhotoDriveID || '';
   out.PhotoURL = out.PhotoURL || '';
-  var m = String(out.PhotoURL).match(/\/file\/d\/([^/]+)/);
-  if (m) out.PhotoURL = 'https://drive.google.com/uc?export=view&id=' + m[1];
+  if (!out.PhotoURL && out.PhotoDriveID) {
+    out.PhotoURL = drivePhotoUrl(out.PhotoDriveID);
+  }
+  var m = String(out.PhotoURL).match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m && out.PhotoURL.indexOf('lh3.googleusercontent.com') === -1) {
+    out.PhotoURL = drivePhotoUrl(m[1]);
+  }
   ['CanOpenJobCard','CanStartJobCard','CanCloseJobCard','CanApproveJobCard',
    'CanReviewPendingJobCard','CanViewAllJobCards',
    'CanManageSections','CanManageDepartments','CanManageMachines','CanManageAssets','CanManageTechnicians','CanManageSpareParts',
@@ -511,6 +516,10 @@ function getUserSections(department) {
   }
 }
 
+function drivePhotoUrl(fileId) {
+  return 'https://lh3.googleusercontent.com/d/' + fileId;
+}
+
 function uploadUserPhoto(base64Data, employeeId) {
   if (!base64Data) return '';
   var folderName = 'CMMS';
@@ -550,8 +559,18 @@ function uploadUserPhoto(base64Data, employeeId) {
   var file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   var fileId = file.getId();
-  var directUrl = 'https://drive.google.com/uc?export=view&id=' + fileId;
+  var directUrl = drivePhotoUrl(fileId);
   return JSON.stringify({ driveId: fileId, url: directUrl });
+}
+
+function deleteUserPhoto(driveId) {
+  if (!driveId) return;
+  try {
+    var file = DriveApp.getFileById(driveId);
+    if (file) file.setTrashed(true);
+  } catch(e) {
+    Logger.log('deleteUserPhoto: could not trash file ' + driveId + ': ' + e.message);
+  }
 }
 
 function exportUsersToExcel() {

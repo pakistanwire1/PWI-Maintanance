@@ -130,9 +130,17 @@ function loginUser(email, password) {
     Logger.log('loginUser() found ' + users.length + ' users');
     console.log('loginUser() found ' + users.length + ' users');
     for (var i = 0; i < users.length; i++) {
-      if (users[i].Email === email && users[i].Password === password) {
+        if (users[i].Email === email && users[i].Password === password) {
         if (users[i].Status === CONFIG.STATUS.ACTIVE) {
           var user = users[i];
+          var photoURL = user.PhotoURL || '';
+          if (!photoURL && user.PhotoDriveID) {
+            photoURL = drivePhotoUrl(user.PhotoDriveID);
+          }
+          var driveIdMatch = String(photoURL).match(/[?&]id=([a-zA-Z0-9_-]+)/);
+          if (driveIdMatch && photoURL.indexOf('lh3.googleusercontent.com') === -1) {
+            photoURL = drivePhotoUrl(driveIdMatch[1]);
+          }
           Logger.log('loginUser(): raw user keys=' + Object.keys(user).join(','));
           console.log('loginUser(): raw user keys=' + Object.keys(user).join(','));
           try { createAuditLog(CONFIG.AUDIT_MODULES.LOGIN, CONFIG.AUDIT_ACTIONS.LOGIN, '', user.Name || email, '', 'Role: ' + (user.Role || ''), 'Success', 'User logged in'); } catch(e) {}
@@ -149,7 +157,7 @@ function loginUser(email, password) {
               role: user.Role,
               department: user.Department || '',
               designation: user.Designation || '',
-              photoURL: user.PhotoURL || '',
+              photoURL: photoURL,
               canOpenJobCard: getPermValue(user.CanOpenJobCard),
               canStartJobCard: getPermValue(user.CanStartJobCard),
               canCloseJobCard: getPermValue(user.CanCloseJobCard),

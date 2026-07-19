@@ -98,6 +98,7 @@ var API_ROUTES = {
   'searchUsers':           { auth: true,  handler: function(d) { return searchUsers(d.query); } },
   'resetUserPassword':     { auth: true,  handler: function(d) { return resetUserPassword(d.id, d.tempPassword, d.forceChange); } },
   'uploadUserPhoto':       { auth: true,  handler: function(d) { return uploadUserPhoto(d.photo || d.base64Data, d.employeeId); } },
+  'deleteUserPhoto':       { auth: true,  handler: function(d) { deleteUserPhoto(d.driveId); return { success: true }; } },
   'getUserDepartments':    { auth: true,  handler: function(d) { return getUserDepartments(); } },
   'getUserSections':       { auth: true,  handler: function(d) { return getUserSections(d.department); } },
   'exportUsersToExcel':    { auth: true,  handler: function(d) { return exportUsersToExcel(); } },
@@ -214,7 +215,7 @@ var API_ROUTES = {
   'getPMHistory':          { auth: true,  handler: function(d) { return getPMHistory(); } },
 
   /* ---- Dashboard ---- */
-  'getDashboardData':      { auth: true,  handler: function(d) { return getDashboardData(d.filter, d.department); } },
+  'getDashboardData': { auth: true, handler: function(d) { return getDashboardData(d.filter, d.department, d.email); } },
 
   /* ---- Notifications ---- */
   'getNotifications':      { auth: true,  handler: function(d) { return apiGetNotifications(d); } },
