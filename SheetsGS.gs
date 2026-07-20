@@ -159,10 +159,6 @@ function getRowCount(sheetName) {
 }
 
 function sanitizeSheetValue(key, val) {
-  var durationFields = ['WaitingTime', 'WorkingTime', 'Downtime', 'TotalDuration'];
-  if (durationFields.indexOf(key) !== -1 && typeof val === 'number') {
-    return durationToDisplay(val);
-  }
   return val;
 }
 
@@ -188,16 +184,12 @@ function updateRow(sheetName, idField, idValue, data) {
   var headers = values[0];
   var idCol = headers.indexOf(idField);
   if (idCol === -1) return getAllData(sheetName);
-  var durationFields = ['WaitingTime', 'WorkingTime', 'Downtime', 'TotalDuration'];
   for (var r = 1; r < values.length; r++) {
     if (String(values[r][idCol]) === String(idValue)) {
       var updates = [];
       for (var j = 0; j < headers.length; j++) {
         if (data.hasOwnProperty(headers[j])) {
           var val = data[headers[j]];
-          if (durationFields.indexOf(headers[j]) !== -1 && typeof val === 'number') {
-            val = durationToDisplay(val);
-          }
           updates.push({ row: r + 1, col: j + 1, val: val });
         }
       }

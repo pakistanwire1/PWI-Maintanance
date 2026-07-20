@@ -72,12 +72,10 @@ var App = (function() {
   };
 
   function loadPage(page) {
-    showLoading(true);
-    var safetyTimer = setTimeout(function() { showLoading(false); }, 15000);
     var entry = _pages[page];
     if (entry) {
-      try { if (entry.render) entry.render(); } catch(e) { console.error('Render error:', page, e); showLoading(false); clearTimeout(safetyTimer); return; }
-      try { if (entry.load) entry.load(); } catch(e) { console.error('Load error:', page, e); showLoading(false); clearTimeout(safetyTimer); return; }
+      try { if (entry.render) entry.render(); } catch(e) { console.error('Render error:', page, e); return; }
+      try { if (entry.load) entry.load(); } catch(e) { console.error('Load error:', page, e); return; }
       return;
     }
     var scriptName = _scriptMap[page] || page;
@@ -85,18 +83,14 @@ var App = (function() {
       var entry2 = _pages[page];
       if (!entry2) entry2 = _pages[scriptName];
       if (entry2) {
-        try { if (entry2.render) entry2.render(); } catch(e) { console.error('Render error:', page, e); showLoading(false); clearTimeout(safetyTimer); return; }
-        try { if (entry2.load) entry2.load(); } catch(e) { console.error('Load error:', page, e); showLoading(false); clearTimeout(safetyTimer); return; }
+        try { if (entry2.render) entry2.render(); } catch(e) { console.error('Render error:', page, e); return; }
+        try { if (entry2.load) entry2.load(); } catch(e) { console.error('Load error:', page, e); return; }
       } else {
         showPagePlaceholder(page);
-        showLoading(false);
-        clearTimeout(safetyTimer);
       }
     }).catch(function(e) {
       console.error('Script load error:', page, e);
       showPagePlaceholder(page);
-      showLoading(false);
-      clearTimeout(safetyTimer);
     });
   }
 

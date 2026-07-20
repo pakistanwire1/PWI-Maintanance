@@ -57,26 +57,79 @@ function formatDurationHours(hours) {
   return durationToDisplay(Math.round(h * 60));
 }
 
-function normalizeDuration(val) {
-  if (!val && val !== 0) return 0;
-  if (val instanceof Date) return Math.round(val.getTime() / 60000);
-  if (typeof val === 'number') return Math.floor(val);
-  if (typeof val === 'string') {
-    if (val.indexOf(':') === -1 && val.indexOf('Day') === -1) {
-      var h = parseFloat(val);
-      return isNaN(h) ? 0 : Math.round(h * 60);
-    }
-    var daysMatch = val.match(/(\d+)\s*Days?\s*/);
-    var timeMatch = val.match(/(\d+):(\d+)/);
-    var m = 0;
-    if (daysMatch) m += parseInt(daysMatch[1]) * 1440;
-    if (timeMatch) {
-      m += parseInt(timeMatch[1]) * 60;
-      m += parseInt(timeMatch[2]);
-    }
-    return m;
+function normalizeDuration(value) {
+  if (value === null || value === undefined || value === '') return 0;
+  if (typeof value === 'boolean') return 0;
+
+  if (typeof value === 'number') {
+    if (value <= 0) return 0;
+    return Math.floor(value);
   }
+
+  if (value instanceof Date) {
+    value = value.toISOString();
+  }
+
+  var s = String(value).trim();
+  if (s === '' || s === '0' || s === '00:00' || s === '00:00:00') return 0;
+
+  var daysTimeMatch = s.match(/(\d+)\s+Days?\s+(\d{1,2}):(\d{2})/i);
+  if (daysTimeMatch) {
+    return parseInt(daysTimeMatch[1]) * 1440 + parseInt(daysTimeMatch[2]) * 60 + parseInt(daysTimeMatch[3]);
+  }
+
+  if (s.indexOf('T') !== -1 && s.match(/^\d{4}-\d{2}-\d{2}T/)) {
+    var d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      var sheetDateMs = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+      var epochMs = Date.UTC(1899, 11, 30);
+      var totalDays = Math.round((sheetDateMs - epochMs) / 86400000);
+      if (totalDays < 0) totalDays = 0;
+      return totalDays * 1440 + d.getUTCHours() * 60 + d.getUTCMinutes() + Math.round(d.getUTCSeconds() / 60);
+    }
+    return 0;
+  }
+
+  var dMatch = s.match(/(\d+)\s*d\b/i);
+  var hMatch = s.match(/(\d+)\s*h\b/i);
+  var mMatch = s.match(/(\d+)\s*m\b/i);
+  if (dMatch || hMatch || mMatch) {
+    return (Number(dMatch ? dMatch[1] : 0) * 1440) +
+           (Number(hMatch ? hMatch[1] : 0) * 60) +
+           Number(mMatch ? mMatch[1] : 0);
+  }
+
+  if (s.indexOf(':') !== -1) {
+    var parts = s.split(':');
+    if (parts.length === 3) {
+      return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0) + Math.round((parseInt(parts[2]) || 0) / 60);
+    }
+    if (parts.length === 2) {
+      return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+    }
+  }
+
+  var num = parseFloat(s);
+  if (!isNaN(num) && num > 0) return Math.round(num);
+
   return 0;
+}
+
+function legacyToMinutes(raw) {
+  if (raw === null || raw === undefined || raw === '') return 0;
+  if (typeof raw === 'number') {
+    if (raw <= 0) return 0;
+    if (raw < 1) return Math.round(raw * 24 * 60);
+    if (raw === Math.floor(raw)) return raw;
+    return Math.round(raw * 24 * 60);
+  }
+  if (raw instanceof Date) {
+    var epochMs = Date.UTC(1899, 11, 30);
+    var diffMs = raw.getTime() - epochMs;
+    if (diffMs >= 0) return Math.round(diffMs / 60000);
+    return raw.getHours() * 60 + raw.getMinutes();
+  }
+  return normalizeDuration(raw);
 }
 
 function pad(n) {

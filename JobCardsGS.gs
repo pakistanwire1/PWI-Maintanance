@@ -92,7 +92,7 @@ function normalizeJobCard(jc) {
   jc.OpenTime = jc.OpenDateTime;
   jc.StartTime = jc.StartDateTime;
   jc.CloseTime = jc.CloseDateTime;
-  jc.BreakdownTime = normalizeDuration(jc.Downtime || jc.TotalDuration || 0);
+  jc.BreakdownTime = jc.Downtime || jc.TotalDuration || 0;
   jc.DateCreated = jc.OpenDateTime;
   jc.Remarks = jc.FinalRemarks || jc.InitialRemarks || '';
   jc.PartsUsed = jc.SpareParts;
@@ -394,6 +394,74 @@ function searchJobCards(query) {
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
 
+function migrateJobCardDurations() {
+  var sheet = getSheet(CONFIG.SHEET_NAMES.JOBCARDS);
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var headers = values[0];
+
+  var wtCol = headers.indexOf('WaitingTime');
+  var wkCol = headers.indexOf('WorkingTime');
+  var dtCol = headers.indexOf('Downtime');
+  var tdCol = headers.indexOf('TotalDuration');
+  var jcNoCol = headers.indexOf('JobCardNo');
+
+  if (wtCol === -1 && wkCol === -1 && dtCol === -1 && tdCol === -1) {
+    return { updated: 0, message: 'Duration columns not found.' };
+  }
+
+  var durationCols = [];
+  if (wtCol !== -1) durationCols.push({ name: 'WaitingTime', col: wtCol });
+  if (wkCol !== -1) durationCols.push({ name: 'WorkingTime', col: wkCol });
+  if (dtCol !== -1) durationCols.push({ name: 'Downtime', col: dtCol });
+  if (tdCol !== -1) durationCols.push({ name: 'TotalDuration', col: tdCol });
+
+  var updated = 0;
+  var skipped = 0;
+  var log = [];
+
+  for (var r = 1; r < values.length; r++) {
+    var jcNo = values[r][jcNoCol] || '';
+    if (!jcNo) continue;
+
+    var needsUpdate = false;
+    var newValues = values[r].slice();
+
+    for (var c = 0; c < durationCols.length; c++) {
+      var dc = durationCols[c];
+      var raw = values[r][dc.col];
+
+      if (typeof raw === 'number' && raw === Math.floor(raw) && raw >= 0) {
+        continue;
+      }
+
+      var mins = legacyToMinutes(raw);
+      newValues[dc.col] = mins;
+      needsUpdate = true;
+      log.push(jcNo + '.' + dc.name + ': ' + JSON.stringify(raw) + '(' + typeof raw + ') -> ' + mins);
+    }
+
+    if (needsUpdate) {
+      var rowRange = sheet.getRange(r + 1, 1, 1, headers.length);
+      rowRange.setValues([newValues]);
+      updated++;
+    } else {
+      skipped++;
+    }
+  }
+
+  SpreadsheetApp.flush();
+  invalidateCache(CONFIG.SHEET_NAMES.JOBCARDS);
+
+  return {
+    updated: updated,
+    skipped: skipped,
+    total: values.length - 1,
+    log: log.slice(0, 50),
+    message: 'Migrated ' + updated + ' rows, skipped ' + skipped + ' rows (already integer minutes).'
+  };
+}
+
 function restructureJobCardsSheet() {
   var sheet = getSheet(CONFIG.SHEET_NAMES.JOBCARDS);
   var range = sheet.getDataRange();
@@ -424,9 +492,9 @@ function restructureJobCardsSheet() {
     var openDt = val(r, 'OpenDateTime') || val(r, 'OpenTime') || val(r, 'DateTime') || val(r, 'DateCreated') || '';
     var startDt = val(r, 'StartDateTime') || val(r, 'StartTime') || '';
     var closeDt = val(r, 'CloseDateTime') || val(r, 'CloseTime') || '';
-    var waitingStr = durationToDisplay(normalizeDuration(val(r, 'WaitingTime')));
-    var workingStr = durationToDisplay(normalizeDuration(val(r, 'WorkingTime')));
-    var downtimeStr = durationToDisplay(normalizeDuration(val(r, 'Downtime') || val(r, 'BreakdownTime') || val(r, 'TotalDuration')));
+    var waitingMins = legacyToMinutes(val(r, 'WaitingTime'));
+    var workingMins = legacyToMinutes(val(r, 'WorkingTime'));
+    var downtimeMins = legacyToMinutes(val(r, 'Downtime') || val(r, 'BreakdownTime') || val(r, 'TotalDuration'));
     var statusRaw = val(r, 'Status') || val(r, 'CurrentStatus') || 'OPEN';
     var status = statusRaw.toUpperCase();
     if (['OPEN', 'RUNNING', 'CLOSED', 'APPROVED'].indexOf(status) < 0) status = 'OPEN';
@@ -457,7 +525,7 @@ function restructureJobCardsSheet() {
         case 'AssignedTechnician': row.push(val(r, 'AssignedTechnician')); break;
         case 'StartedBy': row.push(val(r, 'StartedBy')); break;
         case 'StartDateTime': row.push(startDt); break;
-        case 'WaitingTime': row.push(waitingStr); break;
+        case 'WaitingTime': row.push(waitingMins); break;
         case 'InitialRemarks': row.push(initialRemarksVal); break;
         case 'MaintenanceTeam': row.push(val(r, 'MaintenanceTeam')); break;
         // SECTION 3 - JOB CLOSE INFORMATION
@@ -468,9 +536,9 @@ function restructureJobCardsSheet() {
         case 'FinalRemarks': row.push(finalRemarksVal); break;
         case 'ClosedBy': row.push(val(r, 'ClosedBy')); break;
         case 'CloseDateTime': row.push(closeDt); break;
-        case 'WorkingTime': row.push(workingStr); break;
-        case 'Downtime': row.push(downtimeStr); break;
-        case 'TotalDuration': row.push(downtimeStr); break;
+        case 'WorkingTime': row.push(workingMins); break;
+        case 'Downtime': row.push(downtimeMins); break;
+        case 'TotalDuration': row.push(downtimeMins); break;
         case 'BreakdownType': row.push(val(r, 'BreakdownType')); break;
         // SECTION 3b - JOB PENDING INFORMATION
         case 'PendingDateTime': row.push(val(r, 'PendingDateTime')); break;

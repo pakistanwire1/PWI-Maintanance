@@ -216,6 +216,8 @@ var API_ROUTES = {
 
   /* ---- Dashboard ---- */
   'getDashboardData': { auth: true, handler: function(d) { return getDashboardData(d.filter, d.department, d.email); } },
+  'inspectJobCards':  { auth: true, handler: function(d) { return inspectJobCards(); } },
+  'migrateJobCardDurations': { auth: true, handler: function(d) { return migrateJobCardDurations(); } },
 
   /* ---- Notifications ---- */
   'getNotifications':      { auth: true,  handler: function(d) { return apiGetNotifications(d); } },

@@ -1,4 +1,4 @@
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbxnHhUFAgj4VCq3J95zXcbEo35jL3tjh4L5lXhjdKuobAj96Cyh4_JkRlf-k9k54CTi/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzc5UYYtXVvmG9weuSx1zUhwRgIuPIJGm5TSL1QCmbRFP1w_wZzC8m6SCk8iGFYMIJG/exec';
 
 var CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
