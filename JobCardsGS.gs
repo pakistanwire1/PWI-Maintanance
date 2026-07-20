@@ -394,11 +394,52 @@ function searchJobCards(query) {
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
 
+function legacyToMinutes(raw) {
+  if (raw === null || raw === undefined || raw === '') return 0;
+  if (typeof raw === 'number') {
+    if (raw <= 0) return 0;
+    if (raw < 1) return Math.round(raw * 24 * 60);
+    if (raw === Math.floor(raw)) return raw;
+    return Math.round(raw * 24 * 60);
+  }
+  if (raw instanceof Date) {
+    var epochMs = Date.UTC(1899, 11, 30);
+    var diffMs = raw.getTime() - epochMs;
+    if (diffMs >= 0) return Math.round(diffMs / 60000);
+    return raw.getHours() * 60 + raw.getMinutes();
+  }
+  var s = String(raw).trim();
+  if (s === '') return 0;
+  var dtMatch = s.match(/(\d+)\s+Days?\s+(\d{1,2}):(\d{2})/i);
+  if (dtMatch) return parseInt(dtMatch[1]) * 1440 + parseInt(dtMatch[2]) * 60 + parseInt(dtMatch[3]);
+  if (s.indexOf('T') !== -1 && s.match(/^\d{4}-\d{2}-\d{2}T/)) {
+    var d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      var sheetDateMs = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+      var baseMs = Date.UTC(1899, 11, 30);
+      var totalDays = Math.round((sheetDateMs - baseMs) / 86400000);
+      if (totalDays < 0) totalDays = 0;
+      return totalDays * 1440 + d.getUTCHours() * 60 + d.getUTCMinutes() + Math.round(d.getUTCSeconds() / 60);
+    }
+    return 0;
+  }
+  if (s.indexOf(':') !== -1) {
+    var parts = s.split(':');
+    if (parts.length === 3) return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0) + Math.round((parseInt(parts[2]) || 0) / 60);
+    if (parts.length === 2) return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+  }
+  var num = parseFloat(s);
+  if (!isNaN(num) && num > 0) return Math.round(num);
+  return 0;
+}
+
 function migrateJobCardDurations() {
   var sheet = getSheet(CONFIG.SHEET_NAMES.JOBCARDS);
   var range = sheet.getDataRange();
   var values = range.getValues();
   var headers = values[0];
+  var lastRow = sheet.getLastRow();
+  var lastCol = headers.length;
 
   var wtCol = headers.indexOf('WaitingTime');
   var wkCol = headers.indexOf('WorkingTime');
@@ -406,45 +447,91 @@ function migrateJobCardDurations() {
   var tdCol = headers.indexOf('TotalDuration');
   var jcNoCol = headers.indexOf('JobCardNo');
 
-  if (wtCol === -1 && wkCol === -1 && dtCol === -1 && tdCol === -1) {
-    return { updated: 0, message: 'Duration columns not found.' };
+  console.log('[MIGRATE] Sheet rows: ' + lastRow + ', cols: ' + lastCol);
+
+  var durationColIndices = [];
+  if (wtCol !== -1) durationColIndices.push({ name: 'WaitingTime', col: wtCol });
+  if (wkCol !== -1) durationColIndices.push({ name: 'WorkingTime', col: wkCol });
+  if (dtCol !== -1) durationColIndices.push({ name: 'Downtime', col: dtCol });
+  if (tdCol !== -1) durationColIndices.push({ name: 'TotalDuration', col: tdCol });
+
+  if (durationColIndices.length === 0) {
+    return { updated: 0, message: 'Duration columns not found in headers: ' + headers.join(', ') };
   }
 
-  var durationCols = [];
-  if (wtCol !== -1) durationCols.push({ name: 'WaitingTime', col: wtCol });
-  if (wkCol !== -1) durationCols.push({ name: 'WorkingTime', col: wkCol });
-  if (dtCol !== -1) durationCols.push({ name: 'Downtime', col: dtCol });
-  if (tdCol !== -1) durationCols.push({ name: 'TotalDuration', col: tdCol });
+  for (var c = 0; c < durationColIndices.length; c++) {
+    var dc = durationColIndices[c];
+    var oneBasedCol = dc.col + 1;
+    var colRange = sheet.getRange(1, oneBasedCol, lastRow, 1);
+    var validations = colRange.getDataValidations();
+    var formats = colRange.getNumberFormats();
+    var sampleVal = lastRow > 1 ? values[1][dc.col] : '';
+    var hasValidation = false;
+    for (var v = 0; v < validations.length; v++) {
+      if (validations[v][0] !== null) { hasValidation = true; break; }
+    }
+    console.log('[MIGRATE] ' + dc.name + ' -> col ' + oneBasedCol +
+      ' | validation=' + hasValidation +
+      ' | format=' + formats[0][0] +
+      ' | sample=' + JSON.stringify(sampleVal) + '(' + typeof sampleVal + ')');
+  }
+
+  for (var c = 0; c < durationColIndices.length; c++) {
+    var dc = durationColIndices[c];
+    var oneBasedCol = dc.col + 1;
+    var colRange = sheet.getRange(1, oneBasedCol, lastRow, 1);
+    try { colRange.clearDataValidations(); } catch (e) {
+      console.log('[MIGRATE] clearDataValidations failed for ' + dc.name + ': ' + e.message);
+    }
+    colRange.setNumberFormat('0');
+    var colProtections = sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+    for (var p = 0; p < colProtections.length; p++) {
+      if (colProtections[p].getRange().getColumn() === oneBasedCol) {
+        console.log('[MIGRATE] PROTECTION found on ' + dc.name + ': ' + colProtections[p].getDescription());
+        colProtections[p].remove();
+      }
+    }
+  }
+  SpreadsheetApp.flush();
+
+  console.log('[MIGRATE] Validations cleared. Starting row-by-row migration...');
 
   var updated = 0;
   var skipped = 0;
+  var errors = 0;
   var log = [];
 
   for (var r = 1; r < values.length; r++) {
     var jcNo = values[r][jcNoCol] || '';
-    if (!jcNo) continue;
+    if (!jcNo) { skipped++; continue; }
 
     var needsUpdate = false;
-    var newValues = values[r].slice();
+    var rowLog = [];
 
-    for (var c = 0; c < durationCols.length; c++) {
-      var dc = durationCols[c];
+    for (var c = 0; c < durationColIndices.length; c++) {
+      var dc = durationColIndices[c];
       var raw = values[r][dc.col];
+      var asNum = Number(raw);
 
       if (typeof raw === 'number' && raw === Math.floor(raw) && raw >= 0) {
         continue;
       }
 
       var mins = legacyToMinutes(raw);
-      newValues[dc.col] = mins;
-      needsUpdate = true;
-      log.push(jcNo + '.' + dc.name + ': ' + JSON.stringify(raw) + '(' + typeof raw + ') -> ' + mins);
+      try {
+        sheet.getRange(r + 1, dc.col + 1).setValue(mins);
+        needsUpdate = true;
+        rowLog.push(dc.name + ': ' + JSON.stringify(raw) + '(' + typeof raw + ') -> ' + mins);
+      } catch (e) {
+        errors++;
+        console.log('[MIGRATE ERROR] ' + jcNo + ' ' + dc.name + ': ' + e.message + ' | cell=' + (r + 1) + ',' + (dc.col + 1) + ' value=' + mins);
+      }
     }
 
     if (needsUpdate) {
-      var rowRange = sheet.getRange(r + 1, 1, 1, headers.length);
-      rowRange.setValues([newValues]);
       updated++;
+      log.push(jcNo + ': ' + rowLog.join(', '));
+      if (updated % 10 === 0) console.log('[MIGRATE] Progress: ' + updated + ' rows updated...');
     } else {
       skipped++;
     }
@@ -453,12 +540,15 @@ function migrateJobCardDurations() {
   SpreadsheetApp.flush();
   invalidateCache(CONFIG.SHEET_NAMES.JOBCARDS);
 
+  console.log('[MIGRATE] Done. updated=' + updated + ' skipped=' + skipped + ' errors=' + errors);
+
   return {
     updated: updated,
     skipped: skipped,
+    errors: errors,
     total: values.length - 1,
     log: log.slice(0, 50),
-    message: 'Migrated ' + updated + ' rows, skipped ' + skipped + ' rows (already integer minutes).'
+    message: 'Migrated ' + updated + ' rows, skipped ' + skipped + ', errors ' + errors + '.'
   };
 }
 
