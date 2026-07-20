@@ -230,9 +230,69 @@
   </div>
 </div>
 
+<style>
+  .kpi-toggle-value {
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+  .kpi-toggle-value.kpi-fade-out {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  .kpi-toggle-value.kpi-fade-in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+
 <script src="https://www.gstatic.com/charts/loader.js"></script>
 <script>
 var dashboardChartsLoaded = false;
+var _kpiTimer = null;
+var _kpiToggleState = 0;
+var _kpiCards = {};
+function _kpiFormatHours(minutes) {
+  if (!minutes && minutes !== 0) return '0h 0m';
+  var m = Math.round(minutes);
+  var h = Math.floor(m / 60);
+  var rm = m % 60;
+  return h + 'h ' + rm + 'm';
+}
+function _kpiFormatDays(minutes) {
+  if (!minutes && minutes !== 0) return '0 Days 00:00';
+  var m = Math.round(minutes);
+  var d = Math.floor(m / 1440);
+  var h = Math.floor((m % 1440) / 60);
+  var rm = m % 60;
+  if (d > 0) return d + ' Days ' + String(h).padStart(2,'0') + ':' + String(rm).padStart(2,'0');
+  return h + 'h ' + rm + 'm';
+}
+function _kpiTick() {
+  _kpiToggleState = _kpiToggleState === 0 ? 1 : 0;
+  var ids = ['statTotalWaitingTime', 'statTotalWorkingTime', 'statTotalRepairTime', 'statBreakdownHours'];
+  ids.forEach(function(id) {
+    var card = _kpiCards[id];
+    if (!card || card.minutes == null) return;
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('kpi-fade-out');
+    setTimeout(function() {
+      el.textContent = _kpiToggleState === 0 ? _kpiFormatDays(card.minutes) : _kpiFormatHours(card.minutes);
+      el.classList.remove('kpi-fade-out');
+      el.classList.add('kpi-fade-in');
+      setTimeout(function() { el.classList.remove('kpi-fade-in'); }, 360);
+    }, 350);
+  });
+}
+function _kpiStartToggle() {
+  if (_kpiTimer) clearInterval(_kpiTimer);
+  _kpiToggleState = 0;
+  _kpiTimer = setInterval(_kpiTick, 3000);
+}
+function _kpiSetCard(id, minutes) {
+  _kpiCards[id] = { minutes: minutes };
+  var el = document.getElementById(id);
+  if (el) el.textContent = _kpiFormatDays(minutes);
+}
 
 function loadDashboardData() {
   console.log('loadDashboardData() called, filter:', globalDashboardFilter);
@@ -243,6 +303,16 @@ function loadDashboardData() {
       console.log('loadDashboardData() received:', data);
       cards.forEach(function(el) { el.classList.remove('loading'); });
 
+      console.log('Dashboard Response', JSON.stringify(data, null, 2));
+      console.log('DashboardPage Fields check:', {
+        totalWaitingTimeMinutes: data.totalWaitingTimeMinutes,
+        totalWorkingTimeMinutes: data.totalWorkingTimeMinutes,
+        totalRepairTimeMinutes: data.totalRepairTimeMinutes,
+        totalDowntimeMinutes: data.totalDowntimeMinutes,
+        mttr: data.mttr,
+        mtbf: data.mtbf,
+        availability: data.availability
+      });
       setText('statMachines', data.totalMachines);
       setText('statRunningMachines', data.runningMachines);
       setText('statUnderMaintenance', data.breakdownMachines);
@@ -252,10 +322,11 @@ function loadDashboardData() {
       setText('statApprovedJobs', data.approvedJobs);
       setText('statPendingJobs', data.pendingJobs);
       setText('statWaitingJobs', data.waitingJobs);
-      setText('statTotalWaitingTime', (typeof displayDuration === 'function' ? displayDuration(Math.round(data.totalWaitingTimeMinutes || 0)) : Math.round((data.totalWaitingTimeMinutes || 0) / 60 * 10) / 10 + 'h'));
-      setText('statTotalWorkingTime', (typeof displayDuration === 'function' ? displayDuration(Math.round(data.totalWorkingTimeMinutes || 0)) : Math.round((data.totalWorkingTimeMinutes || 0) / 60 * 10) / 10 + 'h'));
-      setText('statTotalRepairTime', (typeof displayDuration === 'function' ? displayDuration(Math.round(data.totalRepairTimeMinutes || 0)) : Math.round((data.totalRepairTimeMinutes || 0) / 60 * 10) / 10 + 'h'));
-      setText('statBreakdownHours', (typeof displayDuration === 'function' ? displayDuration(Math.round(data.totalDowntimeMinutes != null ? data.totalDowntimeMinutes : (data.breakdownHours || 0) * 60)) : ((data.totalDowntimeMinutes != null ? data.totalDowntimeMinutes : (data.breakdownHours || 0) * 60) / 60).toFixed(1) + 'h'));
+      _kpiSetCard('statTotalWaitingTime', Math.round(data.totalWaitingTimeMinutes || 0));
+      _kpiSetCard('statTotalWorkingTime', Math.round(data.totalWorkingTimeMinutes || 0));
+      _kpiSetCard('statTotalRepairTime', Math.round(data.totalRepairTimeMinutes || 0));
+      _kpiSetCard('statBreakdownHours', Math.round(data.totalDowntimeMinutes != null ? data.totalDowntimeMinutes : (data.breakdownHours || 0) * 60));
+      _kpiStartToggle();
       setText('statMTTR', data.mttr !== null && data.mttr !== undefined ? data.mttr : 'N/A');
       setText('statMTBF', data.mtbf !== null && data.mtbf !== undefined ? data.mtbf : 'N/A');
       setText('statAvailability', (data.availability || 0) + '%');

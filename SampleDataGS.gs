@@ -740,18 +740,21 @@ function initializeNotifications() {
   sampleData.forEach(function(n) {
     var d = new Date();
     d.setDate(d.getDate() - n.days);
+    var moduleMap = { PM: 'PM', SparePart: 'SPARE_PART', JobCard: 'JOBCARD', GRN: 'INVENTORY', Transfer: 'INVENTORY', Adjustment: 'INVENTORY' };
+    var actionUrl = '';
+    if (n.refType && n.refNo) actionUrl = '#/list/' + n.refType.toLowerCase() + '?highlight=' + encodeURIComponent(n.refNo);
     sampleRows.push({
       NotificationID: n.notif,
-      Type: n.type,
       Title: n.title,
       Message: n.message,
-      ReferenceType: n.refType,
-      ReferenceNo: n.refNo,
+      Module: moduleMap[n.refType] || 'SYSTEM',
+      NotificationType: n.type,
       Priority: n.priority,
-      Status: n.status,
-      RecipientEmail: n.email,
+      CreatedBy: n.email,
+      AssignedTo: n.email,
+      CreatedDateTime: ts(d),
       ReadStatus: n.read,
-      CreatedAt: ts(d)
+      ActionURL: actionUrl
     });
   });
   insertRows(sheet, fields, sampleRows);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cmms-v20';
+const CACHE_NAME = 'cmms-v21';
 const STATIC_ASSETS = [
   '/', '/index.html', '/css/styles.css', '/css/login.css', '/css/welcome.css',
   '/js/api.js', '/js/auth.js', '/js/app.js',
@@ -34,14 +34,23 @@ self.addEventListener('activate', function(e) {
   );
 });
 
+var EXTERNAL_HOSTS = [
+  'script.google.com',
+  'googleapis.com',
+  'gstatic.com',
+  'unpkg.com',
+  'lh3.googleusercontent.com',
+  'fonts.googleapis.com',
+  'fonts.gstatic.com',
+  'images.unsplash.com'
+];
+
 self.addEventListener('fetch', function(e) {
   if (e.request.method !== 'GET') return;
   if (e.request.url.indexOf('/api/') > -1) return;
-  if (e.request.url.indexOf('script.google.com') > -1 ||
-      e.request.url.indexOf('googleapis.com') > -1 ||
-      e.request.url.indexOf('gstatic.com') > -1 ||
-      e.request.url.indexOf('unpkg.com') > -1) {
-    return;
+
+  for (var i = 0; i < EXTERNAL_HOSTS.length; i++) {
+    if (e.request.url.indexOf(EXTERNAL_HOSTS[i]) > -1) return;
   }
 
   if (e.request.destination === 'document') {
@@ -52,7 +61,9 @@ self.addEventListener('fetch', function(e) {
         return resp;
       }).catch(function() {
         return caches.match(e.request).then(function(r) {
-          return r || caches.match('/index.html');
+          return r || caches.match('/index.html').then(function(fallback) {
+            return fallback || new Response('<h1>Offline</h1>', { headers: { 'Content-Type': 'text/html' } });
+          });
         });
       })
     );
@@ -61,14 +72,16 @@ self.addEventListener('fetch', function(e) {
 
   e.respondWith(
     caches.match(e.request).then(function(r) {
-      var fetchPromise = fetch(e.request).then(function(resp) {
-        if (resp.status === 200 && resp.type === 'basic') {
+      if (r) return r;
+      return fetch(e.request).then(function(resp) {
+        if (resp && resp.status === 200 && resp.type === 'basic') {
           var clone = resp.clone();
           caches.open(CACHE_NAME).then(function(c) { c.put(e.request, clone); });
         }
-        return resp;
-      }).catch(function() { return r; });
-      return r || fetchPromise;
+        return resp || new Response('', { status: 408, statusText: 'Request Timeout' });
+      }).catch(function() {
+        return new Response('', { status: 503, statusText: 'Service Unavailable' });
+      });
     })
   );
 });

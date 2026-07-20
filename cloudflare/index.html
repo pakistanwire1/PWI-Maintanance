@@ -1573,6 +1573,26 @@ function displayDuration(val) {
   return fmtDurationDays(totalMinutes);
 }
 
+function toIntMinutes(val) {
+  if (val === null || val === undefined || val === '') return 0;
+  if (typeof val === 'number') return Math.floor(val);
+  if (typeof val !== 'string') return 0;
+  var s = val.trim();
+  if (s === '' || s.toLowerCase() === 'n/a' || s.toLowerCase() === 'text') return 0;
+  var daysTimeMatch = s.match(/(\d+)\s+[Dd]ays?\s+(\d{1,2}):(\d{2})/);
+  if (daysTimeMatch) return parseInt(daysTimeMatch[1]) * 1440 + parseInt(daysTimeMatch[2]) * 60 + parseInt(daysTimeMatch[3]);
+  var hmMatch = s.match(/^(\d+):(\d{2})$/);
+  if (hmMatch) return parseInt(hmMatch[1]) * 60 + parseInt(hmMatch[2]);
+  var hmsMatch = s.match(/^(\d+):(\d{2}):(\d{2})$/);
+  if (hmsMatch) return parseInt(hmsMatch[1]) * 60 + parseInt(hmsMatch[2]);
+  var num = parseFloat(s);
+  if (!isNaN(num)) {
+    if (num > 0 && num < 100) return Math.round(num * 1440);
+    return Math.floor(num);
+  }
+  return 0;
+}
+
 function fmtDurationHours(minutes) {
   if (!minutes && minutes !== 0) return '0h 0m';
   minutes = Math.floor(minutes);
@@ -1949,6 +1969,16 @@ function loadDashboardData() {
   API.call('getDashboardData', { filter: globalDashboardFilter, department: currentUser && currentUser.department ? currentUser.department : '', email: currentUser && currentUser.email ? currentUser.email : '' })
     .then(function(data) {
       cards.forEach(function(el) { el.classList.remove('loading'); });
+      console.log('Dashboard Response', JSON.stringify(data, null, 2));
+      console.log('[DASHBOARD] Fields check:', {
+        totalWaitingTimeMinutes: data.totalWaitingTimeMinutes,
+        totalWorkingTimeMinutes: data.totalWorkingTimeMinutes,
+        totalRepairTimeMinutes: data.totalRepairTimeMinutes,
+        totalDowntimeMinutes: data.totalDowntimeMinutes,
+        mttr: data.mttr,
+        mtbf: data.mtbf,
+        availability: data.availability
+      });
       setText('statMachines', data.totalMachines);
       setText('statRunningMachines', data.runningMachines);
       setText('statUnderMaintenance', data.breakdownMachines);
@@ -1960,10 +1990,15 @@ function loadDashboardData() {
       setText('statApprovedJobs', data.approvedJobs);
       setText('statPendingJobs', data.pendingApprovalJobs || 0);
       setText('statWaitingJobs', data.waitingJobs);
-      setText('statTotalWaitingTime', fmtDurationDays(data.totalWaitingTimeMinutes || 0));
-      setText('statTotalWorkingTime', fmtDurationDays(data.totalWorkingTimeMinutes || 0));
-      setText('statTotalRepairTime', fmtDurationDays(data.totalRepairTimeMinutes || 0));
-      setText('statBreakdownHours', fmtDurationDays(data.totalDowntimeMinutes != null ? data.totalDowntimeMinutes : Math.round((data.breakdownHours || 0) * 60)));
+      var wMin = toIntMinutes(data.totalWaitingTimeMinutes);
+      var wkMin = toIntMinutes(data.totalWorkingTimeMinutes);
+      var rMin = toIntMinutes(data.totalRepairTimeMinutes);
+      var dMin = toIntMinutes(data.totalDowntimeMinutes != null ? data.totalDowntimeMinutes : Math.round((data.breakdownHours || 0) * 60));
+      console.log('[DASHBOARD] After toIntMinutes: waiting=' + wMin + ' working=' + wkMin + ' repair=' + rMin + ' downtime=' + dMin);
+      setText('statTotalWaitingTime', fmtDurationDays(wMin));
+      setText('statTotalWorkingTime', fmtDurationDays(wkMin));
+      setText('statTotalRepairTime', fmtDurationDays(rMin));
+      setText('statBreakdownHours', fmtDurationDays(dMin));
       setText('statMTTR', data.mttr !== null && data.mttr !== undefined ? parseFloat(data.mttr).toFixed(2) + ' hrs' : 'N/A');
       setText('statMTBF', data.mtbf !== null && data.mtbf !== undefined ? parseFloat(data.mtbf).toFixed(2) + ' hrs' : 'N/A');
       setText('statAvailability', (data.availability || 0).toFixed(2) + '%');
@@ -1982,6 +2017,7 @@ function loadDashboardData() {
       try { drawDashboardCharts(data); } catch(e) { console.log('Chart draw error:', e); }
     })
     .catch(function(err) {
+      console.error('[DASHBOARD] Failed to load:', err);
       cards.forEach(function(el) { el.classList.remove('loading'); });
       var chartIds = ['chartJobStatus','chartPriority','chartMTTR','chartMTBF','chartMonthlyJobs','chartBreakdown','chartMachineStatus','chartDepartment'];
       chartIds.forEach(function(id) {

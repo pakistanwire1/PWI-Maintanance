@@ -394,45 +394,6 @@ function searchJobCards(query) {
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
 
-function legacyToMinutes(raw) {
-  if (raw === null || raw === undefined || raw === '') return 0;
-  if (typeof raw === 'number') {
-    if (raw <= 0) return 0;
-    if (raw < 1) return Math.round(raw * 24 * 60);
-    if (raw === Math.floor(raw)) return raw;
-    return Math.round(raw * 24 * 60);
-  }
-  if (raw instanceof Date) {
-    var epochMs = Date.UTC(1899, 11, 30);
-    var diffMs = raw.getTime() - epochMs;
-    if (diffMs >= 0) return Math.round(diffMs / 60000);
-    return raw.getHours() * 60 + raw.getMinutes();
-  }
-  var s = String(raw).trim();
-  if (s === '') return 0;
-  var dtMatch = s.match(/(\d+)\s+Days?\s+(\d{1,2}):(\d{2})/i);
-  if (dtMatch) return parseInt(dtMatch[1]) * 1440 + parseInt(dtMatch[2]) * 60 + parseInt(dtMatch[3]);
-  if (s.indexOf('T') !== -1 && s.match(/^\d{4}-\d{2}-\d{2}T/)) {
-    var d = new Date(s);
-    if (!isNaN(d.getTime())) {
-      var sheetDateMs = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-      var baseMs = Date.UTC(1899, 11, 30);
-      var totalDays = Math.round((sheetDateMs - baseMs) / 86400000);
-      if (totalDays < 0) totalDays = 0;
-      return totalDays * 1440 + d.getUTCHours() * 60 + d.getUTCMinutes() + Math.round(d.getUTCSeconds() / 60);
-    }
-    return 0;
-  }
-  if (s.indexOf(':') !== -1) {
-    var parts = s.split(':');
-    if (parts.length === 3) return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0) + Math.round((parseInt(parts[2]) || 0) / 60);
-    if (parts.length === 2) return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
-  }
-  var num = parseFloat(s);
-  if (!isNaN(num) && num > 0) return Math.round(num);
-  return 0;
-}
-
 function migrateJobCardDurations() {
   var sheet = getSheet(CONFIG.SHEET_NAMES.JOBCARDS);
   var range = sheet.getDataRange();
@@ -736,7 +697,8 @@ function formatJobCardsSheet() {
     { start: 20, end: 30, bg: '#1b5e20', font: '#ffffff' },  // GROUP 3 - JOB CLOSE (Green)
     { start: 31, end: 33, bg: '#f9a825', font: '#000000' },  // GROUP 4 - JOB PENDING (Amber)
     { start: 34, end: 43, bg: '#4a148c', font: '#ffffff' },  // GROUP 5 - JOB APPROVAL (Purple)
-    { start: 44, end: 46, bg: '#37474f', font: '#ffffff' }   // SUPPLEMENTARY (Dark Grey)
+    { start: 44, end: 46, bg: '#37474f', font: '#ffffff' },  // SUPPLEMENTARY (Dark Grey)
+    { start: 47, end: 49, bg: '#006064', font: '#ffffff' }   // QR/BARCODE (Teal)
   ];
 
   for (var g = 0; g < groups.length; g++) {
@@ -825,7 +787,8 @@ function formatJobCardsSheet() {
     34: 110, 35: 130, 36: 165, 37: 220,
     38: 130, 39: 165, 40: 220,
     41: 130, 42: 165, 43: 110,
-    44: 120, 45: 200, 46: 160
+    44: 120, 45: 200, 46: 160,
+    47: 300, 48: 300, 49: 160
   };
   for (var c = 1; c <= lastCol; c++) {
     if (minWidths[c]) {

@@ -185,16 +185,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
     var totalAssets = assets.length;
     var idleMachines = totalMachines - runningMachines - breakdownMachines;
 
-    var totalWaitingMinutes = 0, totalWorkingMinutes = 0, totalDowntimeMinutes = 0;
-    for (var ki = 0; ki < rawJobCards.length; ki++) {
-      var kd = jcDate(rawJobCards[ki]);
-      if (isAll || inRange(kd, range)) {
-        totalWaitingMinutes += normalizeDuration(rawJobCards[ki].WaitingTime);
-        totalWorkingMinutes += normalizeDuration(rawJobCards[ki].WorkingTime);
-        totalDowntimeMinutes += normalizeDuration(rawJobCards[ki].Downtime);
-      }
-    }
-    var totalRepairMinutes = totalWorkingMinutes;
+    var totalWaitingMinutes = 0, totalWorkingMinutes = 0, totalRepairMinutes = 0, totalDowntimeMinutes = 0;
 
     var earliestDate = null;
     var normalized = [];
@@ -282,6 +273,11 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
     for (var i = 0; i < filtered.length; i++) {
       var n = filtered[i];
+
+      totalWaitingMinutes += n.waitingMins;
+      totalWorkingMinutes += n.workingMins;
+      totalRepairMinutes += n.repairMins;
+      totalDowntimeMinutes += n.downtimeMins;
 
       if (n.isApproved) { approvedJobs++; }
       else if (n.isPendingApproval) { pendingApprovalJobs++; }
@@ -545,6 +541,9 @@ function getDashboardData(filter, userDepartment, userEmail) {
     }
     console.log('=================================');
     console.log('');
+
+    console.log('===== RETURN VALUES =====');
+    console.log('totalWaitingTimeMinutes=' + totalWaitingMinutes + ' totalWorkingTimeMinutes=' + totalWorkingMinutes + ' totalRepairTimeMinutes=' + totalRepairMinutes + ' totalDowntimeMinutes=' + totalDowntimeMinutes);
 
     return {
       totalMachines: totalMachines,
