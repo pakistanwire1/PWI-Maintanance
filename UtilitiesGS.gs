@@ -63,7 +63,9 @@ function normalizeDuration(value) {
 
   if (typeof value === 'number') {
     if (value <= 0) return 0;
-    return Math.floor(value);
+    if (value < 1) return Math.round(value * 24 * 60);
+    if (value === Math.floor(value)) return value;
+    return Math.round(value * 24 * 60);
   }
 
   if (value instanceof Date) {

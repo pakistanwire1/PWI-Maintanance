@@ -212,13 +212,14 @@ function getDashboardData(filter, userDepartment, userEmail) {
       jc = normalizeJobCard(jc);
 
       var status = (jc.CurrentStatus || jc.Status || '').toLowerCase();
-      var isClosed = (status === 'closed' || status === 'completed');
+      var isClosed = (status === 'closed');
       var isOpen = (status === 'open');
       var isReturned = (status === 'returned' || status === 'return');
-      var isRunning = (status === 'running' || status === 'in progress');
+      var isRunning = (status === 'running');
       var isPending = (status === 'pending');
       var approvalStatus = (jc.ApprovalStatus || '').toLowerCase();
       var isApproved = (approvalStatus === 'approved');
+      var isPendingApproval = (approvalStatus === 'pending');
       var hasBreakdownType = jc.BreakdownType && jc.BreakdownType !== '';
       var waitingMins = resolveMinutes(jc, 'WaitingTime');
       var workingMins = resolveMinutes(jc, 'WorkingTime');
@@ -248,7 +249,8 @@ function getDashboardData(filter, userDepartment, userEmail) {
         isRunning: isRunning,
         isPending: isPending,
         isApproved: isApproved,
-        isWaiting: isOpen || isReturned,
+        isPendingApproval: isPendingApproval,
+        isWaiting: isOpen,
         hasBreakdownType: hasBreakdownType,
         priority: (jc.Priority || '').toLowerCase(),
         dept: jc.Department || 'Unknown',
@@ -270,27 +272,22 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
     var filteredJobCount = filtered.length;
     var openJobs = 0, runningJobs = 0, closedJobs = 0;
-    var waitingJobs = 0, pendingJobs = 0, approvedJobs = 0, pendingApprovalJobs = 0;
+    var waitingJobs = 0, approvedJobs = 0, pendingApprovalJobs = 0;
     var criticalJobs = 0, highJobs = 0, mediumJobs = 0, lowJobs = 0;
     var deptJobCounts = {};
 
     var closedJobCount = 0;
-
+    var closedWorkingMinutes = 0;
     var bdBreakdownCount = 0;
 
     for (var i = 0; i < filtered.length; i++) {
       var n = filtered[i];
+
       if (n.isApproved) { approvedJobs++; }
-      else if (n.isOpen) { openJobs++; }
+      else if (n.isPendingApproval) { pendingApprovalJobs++; }
+      else if (n.isOpen) { openJobs++; waitingJobs++; }
       else if (n.isRunning) { runningJobs++; }
-      else if (n.isPending) { pendingJobs++; }
       else if (n.isClosed) { closedJobs++; }
-
-      if (n.isWaiting) { waitingJobs++; }
-
-      if (n.isPending || (n.isClosed && !n.isApproved)) {
-        pendingApprovalJobs++;
-      }
 
       if (n.priority === 'critical') criticalJobs++;
       else if (n.priority === 'high') highJobs++;
@@ -301,7 +298,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
       if (n.isClosed) {
         closedJobCount++;
-
+        closedWorkingMinutes += n.workingMins;
         if (n.hasBreakdownType) {
           bdBreakdownCount++;
         }
@@ -321,12 +318,27 @@ function getDashboardData(filter, userDepartment, userEmail) {
     var totalWorkingHours = totalWorkingMinutes / 60;
     var totalWaitingHours = totalWaitingMinutes / 60;
 
-    var mttr = bdBreakdownCount > 0 ? Math.round((totalRepairHours / bdBreakdownCount) * 100) / 100 : null;
+    var mttr = closedJobCount > 0 ? Math.round((closedWorkingMinutes / closedJobCount / 60) * 100) / 100 : null;
 
-    var totalMachineAvailableHours = rangeHours * effectiveMachines;
-    var totalMachineRunningHours = Math.max(0, totalMachineAvailableHours - totalDowntimeHours);
-    var mtbf = bdBreakdownCount > 0 ? Math.round((totalMachineRunningHours / bdBreakdownCount) * 100) / 100 : null;
-    var availability = totalMachineAvailableHours > 0 ? Math.round((totalMachineRunningHours / totalMachineAvailableHours) * 10000) / 100 : 0;
+    var closedCards = [];
+    for (var ci = 0; ci < filtered.length; ci++) {
+      if (filtered[ci].isClosed && filtered[ci].closeDate) {
+        var cdt = new Date(filtered[ci].closeDate);
+        if (!isNaN(cdt.getTime())) {
+          closedCards.push({ closeDate: cdt, workingMins: filtered[ci].workingMins });
+        }
+      }
+    }
+    closedCards.sort(function(a, b) { return a.closeDate - b.closeDate; });
+    var mtbfIntervals = [];
+    for (var ci2 = 1; ci2 < closedCards.length; ci2++) {
+      var diffMs = closedCards[ci2].closeDate.getTime() - closedCards[ci2 - 1].closeDate.getTime();
+      var diffHours = diffMs / 3600000;
+      if (diffHours > 0) mtbfIntervals.push(diffHours);
+    }
+    var mtbf = closedCards.length >= 2 && mtbfIntervals.length > 0 ? Math.round((mtbfIntervals.reduce(function(a, b) { return a + b; }, 0) / mtbfIntervals.length) * 100) / 100 : null;
+
+    var availability = (mtbf !== null && mttr !== null && (mtbf + mttr) > 0) ? Math.round((mtbf / (mtbf + mttr)) * 10000) / 100 : 0;
 
     var pmDue = 0, pmOverdue = 0, pmCompleted = 0, pmScheduled = 0, pmInProgress = 0, pmMissed = 0, pmSkipped = 0;
     pms.forEach(function(pm) {
@@ -391,12 +403,13 @@ function getDashboardData(filter, userDepartment, userEmail) {
         chartMonths.push(Utilities.formatDate(pStart, tz, 'MMM'));
       }
 
-      var co = 0, cr = 0, cc = 0, cp = 0, ca = 0, cb = 0;
+      var co = 0, cr = 0, cc = 0, cp = 0, ca = 0;
       var periodWaitMins = 0, periodDownMins = 0, periodWorkMins = 0;
-      var periodRepairHours = 0, periodClosedCount = 0, periodBdCount = 0;
+      var periodClosedCount = 0;
+      var periodClosedCloseDates = [];
 
-      for (var j = 0; j < normalized.length; j++) {
-        var n = normalized[j];
+      for (var j = 0; j < filtered.length; j++) {
+        var n = filtered[j];
         var inPeriod = n.jd && (function() {
           var jdt = new Date(n.jd);
           return !isNaN(jdt.getTime()) && jdt >= pStart && jdt < pEnd;
@@ -420,11 +433,8 @@ function getDashboardData(filter, userDepartment, userEmail) {
             periodWaitMins += n.waitingMins;
             periodWorkMins += n.workingMins;
             periodDownMins += n.downtimeMins;
-            periodRepairHours += n.repairMins / 60;
-            if (n.hasBreakdownType) {
-              periodBdCount++;
-              cb++;
-            }
+            var closeDt = new Date(n.closeDate);
+            if (!isNaN(closeDt.getTime())) periodClosedCloseDates.push(closeDt);
           }
         }
       }
@@ -434,17 +444,22 @@ function getDashboardData(filter, userDepartment, userEmail) {
       chartClosed.push(cc);
       chartPending.push(cp);
       chartApproved.push(ca);
-      chartBreakdowns.push(cb);
+
+      chartBreakdowns.push(Math.round(periodDownMins / 60 * 100) / 100);
       chartWaitingTime.push(Math.round(periodWaitMins / 60 * 100) / 100);
       chartDowntime.push(Math.round(periodDownMins / 60 * 100) / 100);
       chartWorkingTime.push(Math.round(periodWorkMins / 60 * 100) / 100);
 
-      var monthMttrVal = periodBdCount > 0 ? Math.round((periodRepairHours / periodBdCount) * 100) / 100 : null;
-      var periodHours = periodMs / 3600000;
-      var monthOperatingHours = periodHours * effectiveMachines;
-      var monthDownHours = periodDownMins / 60;
-      var monthRunningHours = Math.max(0, monthOperatingHours - monthDownHours);
-      var monthMtbfVal = periodBdCount > 0 ? Math.round((monthRunningHours / periodBdCount) * 100) / 100 : null;
+      var monthMttrVal = periodClosedCount > 0 ? Math.round((periodWorkMins / periodClosedCount / 60) * 100) / 100 : null;
+
+      periodClosedCloseDates.sort(function(a, b) { return a - b; });
+      var periodMtbfIntervals = [];
+      for (var ci3 = 1; ci3 < periodClosedCloseDates.length; ci3++) {
+        var intDiff = (periodClosedCloseDates[ci3].getTime() - periodClosedCloseDates[ci3 - 1].getTime()) / 3600000;
+        if (intDiff > 0) periodMtbfIntervals.push(intDiff);
+      }
+      var monthMtbfVal = periodMtbfIntervals.length > 0 ? Math.round((periodMtbfIntervals.reduce(function(a, b) { return a + b; }, 0) / periodMtbfIntervals.length) * 100) / 100 : null;
+
       chartMttr.push(monthMttrVal);
       chartMtbf.push(monthMtbfVal);
       chartMonthlyMaint.push(co + cr + cc + cp + ca);
@@ -466,35 +481,67 @@ function getDashboardData(filter, userDepartment, userEmail) {
       notifStats.pendingApproval = ns.pendingApproval || 0;
     } catch(e) {}
 
-    var totalStatusJobs = openJobs + runningJobs + closedJobs + pendingJobs + approvedJobs;
+    var totalStatusJobs = openJobs + runningJobs + closedJobs + pendingApprovalJobs + approvedJobs;
     var totalPriorityJobs = criticalJobs + highJobs + mediumJobs + lowJobs;
 
     console.log('');
     console.log('===== DASHBOARD RAW TOTALS =====');
     console.log('Total JobCards in sheet: ' + rawJobCards.length);
     console.log('Filtered JobCards (' + (filter || 'all') + '): ' + filteredJobCount);
-    console.log('Status: Open=' + openJobs + ' Running=' + runningJobs + ' Closed=' + closedJobs + ' Pending=' + pendingJobs + ' Approved=' + approvedJobs + ' Waiting=' + waitingJobs);
+    console.log('Status: Open=' + openJobs + ' Running=' + runningJobs + ' Closed=' + closedJobs + ' PendingApproval=' + pendingApprovalJobs + ' Approved=' + approvedJobs + ' Waiting=' + waitingJobs);
+    console.log('ClosedJobCount=' + closedJobCount + ' BdBreakdownCount=' + bdBreakdownCount);
+    console.log('ClosedWorkingMinutes=' + closedWorkingMinutes + ' min  (' + durationToDisplay(closedWorkingMinutes) + ')');
     console.log('SUM WaitingTime  = ' + totalWaitingMinutes + ' min  (' + durationToDisplay(totalWaitingMinutes) + ')');
     console.log('SUM WorkingTime  = ' + totalWorkingMinutes + ' min  (' + durationToDisplay(totalWorkingMinutes) + ')');
     console.log('SUM RepairTime   = ' + totalRepairMinutes + ' min  (' + durationToDisplay(totalRepairMinutes) + ')');
     console.log('SUM Downtime     = ' + totalDowntimeMinutes + ' min  (' + durationToDisplay(totalDowntimeMinutes) + ')');
+    console.log('MTTR = ' + (mttr !== null ? mttr + ' hrs' : 'N/A') + ' (closedJobCount=' + closedJobCount + ', closedWorkingMinutes=' + closedWorkingMinutes + ')');
+    console.log('MTBF = ' + (mtbf !== null ? mtbf + ' hrs' : 'N/A') + ' (closedCards=' + closedCards.length + ', intervals=' + mtbfIntervals.length + ')');
+    console.log('Availability = ' + availability + '%');
     if (totalWaitingMinutes === 0 && filteredJobCount > 0) {
-      console.log('[DASHBOARD WARNING] WaitingTime SUM is 0 but there are ' + filteredJobCount + ' filtered records. Possible reasons:');
-      console.log('  - WaitingTime column values are empty or not populated in the sheet');
-      console.log('  - WaitingTime values are being read as wrong type by getAllData()');
-      console.log('  - normalizeDuration() is returning 0 for the actual sheet values');
+      console.log('[DASHBOARD WARNING] WaitingTime SUM is 0 but there are ' + filteredJobCount + ' filtered records.');
+      console.log('  Possible reasons: WaitingTime column empty, wrong type, or normalizeDuration() returning 0');
       for (var di = 0; di < filtered.length && di < 5; di++) {
         var fd = filtered[di];
         console.log('  Record ' + di + ': ' + (fd.raw.JobCardNo || 'N/A') + ' status=' + fd.status +
-          ' WaitingTime_raw=' + JSON.stringify(rawJobCards[di].WaitingTime) +
-          ' type=' + typeof rawJobCards[di].WaitingTime);
+          ' WaitingTime_resolved=' + fd.waitingMins +
+          ' normalized=' + fd.raw.WaitingTime);
       }
     }
     if (totalWorkingMinutes === 0 && filteredJobCount > 0) {
       console.log('[DASHBOARD WARNING] WorkingTime SUM is 0 but there are ' + filteredJobCount + ' filtered records.');
+      console.log('  Possible reasons: WorkingTime column empty, wrong type, or normalizeDuration() returning 0');
+      for (var di = 0; di < filtered.length && di < 5; di++) {
+        var fd = filtered[di];
+        console.log('  Record ' + di + ': ' + (fd.raw.JobCardNo || 'N/A') + ' status=' + fd.status +
+          ' WorkingTime_resolved=' + fd.workingMins +
+          ' normalized=' + fd.raw.WorkingTime);
+      }
     }
     if (totalDowntimeMinutes === 0 && filteredJobCount > 0) {
       console.log('[DASHBOARD WARNING] Downtime SUM is 0 but there are ' + filteredJobCount + ' filtered records.');
+      console.log('  Possible reasons: Downtime column empty, wrong type, or normalizeDuration() returning 0');
+      for (var di = 0; di < filtered.length && di < 5; di++) {
+        var fd = filtered[di];
+        console.log('  Record ' + di + ': ' + (fd.raw.JobCardNo || 'N/A') + ' status=' + fd.status +
+          ' Downtime_resolved=' + fd.downtimeMins +
+          ' normalized=' + fd.raw.Downtime);
+      }
+    }
+    if (closedJobCount === 0 && filteredJobCount > 0) {
+      console.log('[DASHBOARD WARNING] No closed job cards found. MTTR=N/A, MTBF=N/A, Availability=0%.');
+      console.log('  Filtered cards by status:');
+      for (var di = 0; di < filtered.length && di < 5; di++) {
+        console.log('  Record ' + di + ': ' + (filtered[di].raw.JobCardNo || 'N/A') + ' CurrentStatus=' + JSON.stringify(filtered[di].raw.CurrentStatus));
+      }
+    }
+    if (mttr === 0 && closedJobCount > 0) {
+      console.log('[DASHBOARD WARNING] MTTR=0 but ' + closedJobCount + ' closed cards exist.');
+      console.log('  closedWorkingMinutes=' + closedWorkingMinutes + '. All closed cards have WorkingTime=0.');
+    }
+    if (mtbf === null && closedCards.length >= 2) {
+      console.log('[DASHBOARD WARNING] MTBF=null but ' + closedCards.length + ' closed cards with CloseDateTime exist.');
+      console.log('  All intervals between consecutive CloseDateTime are <= 0.');
     }
     console.log('=================================');
     console.log('');
@@ -510,7 +557,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
       runningJobs: runningJobs,
       waitingJobs: waitingJobs,
       closedJobs: closedJobs,
-      pendingJobs: pendingJobs,
+      pendingJobs: pendingApprovalJobs,
       approvedJobs: approvedJobs,
       criticalPriority: criticalJobs,
       highPriority: highJobs,

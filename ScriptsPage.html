@@ -597,23 +597,42 @@ function formatDurationFromDates(startStr, endStr) {
 }
 
 function displayDuration(val) {
-  if (!val && val !== 0 && val !== '0') return '00:00';
-  if (typeof val === 'string' && (val.indexOf(':') > -1 || val.indexOf('Day') > -1)) return val;
+  if (!val && val !== 0 && val !== '0') return '0m';
+  if (typeof val === 'string' && val.indexOf('h ') > -1) return val;
   var totalMinutes;
   if (val instanceof Date) {
     totalMinutes = Math.round(val.getTime() / 60000);
   } else if (typeof val === 'number') {
     totalMinutes = Math.floor(val);
+  } else if (typeof val === 'string') {
+    var s = val.trim();
+    if (s === '') return '0m';
+    var daysTimeMatch = s.match(/(\d+)\s+Days?\s+(\d{1,2}):(\d{2})/i);
+    if (daysTimeMatch) {
+      totalMinutes = parseInt(daysTimeMatch[1]) * 1440 + parseInt(daysTimeMatch[2]) * 60 + parseInt(daysTimeMatch[3]);
+    } else if (s.indexOf(':') > -1) {
+      var parts = s.split(':');
+      if (parts.length === 3) {
+        totalMinutes = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0) + Math.round((parseInt(parts[2]) || 0) / 60);
+      } else if (parts.length === 2) {
+        totalMinutes = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+      } else {
+        totalMinutes = 0;
+      }
+    } else {
+      var num = parseFloat(s);
+      totalMinutes = isNaN(num) ? 0 : Math.round(num);
+    }
   } else {
-    var hours = parseFloat(val);
-    totalMinutes = isNaN(hours) ? 0 : Math.round(hours * 60);
+    totalMinutes = 0;
   }
   if (totalMinutes < 0) totalMinutes = 0;
   var d = Math.floor(totalMinutes / 1440);
   var h = Math.floor((totalMinutes % 1440) / 60);
   var m = totalMinutes % 60;
-  if (d > 0) return d + ' Day' + (d > 1 ? 's ' : ' ') + pad(h) + ':' + pad(m);
-  return pad(h) + ':' + pad(m);
+  if (d > 0) return d + ' Days ' + h + 'h ' + m + 'm';
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + 'm';
 }
 
 function parseDurationToHours(val) {
