@@ -3,90 +3,856 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#6366f1">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="PWI Computerized Maintenance Management System">
-  <title>PWI CMMS</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="assets/icons/icon-192.svg">
+  <meta name="apple-mobile-web-app-title" content="CMMS">
+  <meta name="mobile-web-app-capable" content="yes">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/welcome.css">
+  <link rel="stylesheet" href="css/login.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <title>PWI CMMS</title>
 </head>
 <body>
-  <div id="app" class="app">
-    <aside id="sidebar" class="sidebar"></aside>
-    <div class="main-wrapper">
-      <header id="topbar" class="topbar"></header>
-      <main id="mainContent" class="main-content">
-        <div class="login-container">
-          <div class="login-card">
-            <div class="login-logo"><img src="logo.svg" alt="CMMS" onerror="this.style.display='none'"></div>
-            <h1 class="login-title">PWI CMMS</h1>
-            <p class="login-subtitle">Loading...</p>
-            <div class="spinner"></div>
+  <div id="welcomePage">
+    <div class="ws-bg-base"></div>
+    <div class="ws-bg-drift"></div>
+    <div class="ws-slideshow">
+      <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=1920&q=80')"></div>
+      <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1513828583688-c52646db42da?w=1920&q=80')"></div>
+      <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1565043666747-69f6646db940?w=1920&q=80')"></div>
+      <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&q=80')"></div>
+      <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1920&q=80')"></div>
+      <div class="ws-slide" style="background-image:url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1920&q=80')"></div>
+    </div>
+    <div class="ws-bg-grid"></div>
+    <div class="ws-bg-factory"></div>
+    <div class="ws-particles">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="ws-sparks">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span>
+    </div>
+    <div class="ws-glow-lines"></div>
+    <div class="ws-overlay"></div>
+    <div class="ws-watermark">Pakistan Wires Industries (Pvt.) Ltd.</div>
+    <div class="ws-scroll-banner">
+      <div class="ws-scroll-track">
+        <span class="ws-scroll-item">Quality Manufacturing</span>
+        <span class="ws-scroll-sep">&#9679;</span>
+        <span class="ws-scroll-item">Hydraulic &amp; Mechanical Maintenance</span>
+        <span class="ws-scroll-sep">&#9679;</span>
+        <span class="ws-scroll-item">Pakistan Wire Industries Pvt. Ltd.</span>
+        <span class="ws-scroll-sep">&#9679;</span>
+        <span class="ws-scroll-item">Engineering Excellence</span>
+        <span class="ws-scroll-sep">&#9679;</span>
+        <span class="ws-scroll-item">World Class Maintenance</span>
+        <span class="ws-scroll-sep">&#9679;</span>
+        <span class="ws-scroll-item">Continuous Improvement</span>
+        <span class="ws-scroll-sep">&#9679;</span>
+        <span class="ws-scroll-item">Quality Manufacturing</span>
+        <span class="ws-scroll-sep">&#9679;</span>
+        <span class="ws-scroll-item">Hydraulic &amp; Mechanical Maintenance</span>
+        <span class="ws-scroll-sep">&#9679;</span>
+        <span class="ws-scroll-item">Pakistan Wire Industries Pvt. Ltd.</span>
+        <span class="ws-scroll-sep">&#9679;</span>
+        <span class="ws-scroll-item">Engineering Excellence</span>
+        <span class="ws-scroll-sep">&#9679;</span>
+        <span class="ws-scroll-item">World Class Maintenance</span>
+        <span class="ws-scroll-sep">&#9679;</span>
+        <span class="ws-scroll-item">Continuous Improvement</span>
+        <span class="ws-scroll-sep">&#9679;</span>
+      </div>
+    </div>
+    <button class="ws-theme-toggle" id="wsThemeBtn" onclick="wsToggleTheme()" title="Toggle theme">
+      <svg id="wsThemeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </button>
+    <div class="ws-wrapper">
+      <div class="ws-card">
+        <div class="ws-logo-area" id="wsLogoArea">
+          <div class="ws-glow-ring"></div>
+          <img class="logo-img" id="wsLogoImg" alt="Pakistan Wires Industries" src="logo.svg" style="display:none" onload="this.style.display='block';var el=document.getElementById('wsLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('wsLogoFallback');el&&(el.style.display='flex')">
+          <div class="logo-fallback" id="wsLogoFallback">
+            <svg class="logo-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
+              <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
+              <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
+              <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+            </svg>
+            <span class="logo-letter">PWI</span>
           </div>
         </div>
-      </main>
+        <div class="ws-welcome-label">WELCOME TO</div>
+        <div class="ws-company-name">
+          <span class="ws-co-primary">Pakistan Wires Industries</span>
+          <span class="ws-co-bracket">(Private) Limited</span>
+        </div>
+        <div class="ws-subtitle">CMMS Maintenance Management System</div>
+        <div class="ws-divisions">
+          <div class="ws-div-card ws-div-blue">
+            <div class="ws-div-icon">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+              </svg>
+            </div>
+            <div class="ws-div-name">Spoke Division</div>
+            <div class="ws-div-desc">Manufacturing &amp; Production</div>
+          </div>
+          <div class="ws-div-card ws-div-orange">
+            <div class="ws-div-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+              </svg>
+            </div>
+            <div class="ws-div-name">Control Cable Division</div>
+            <div class="ws-div-desc">Cable &amp; Wire Production</div>
+          </div>
+        </div>
+        <div class="ws-company">Maintenance &amp; Engineering Excellence</div>
+        <div class="ws-sep"></div>
+        <div class="ws-loading-text" id="wsLoadingText">Initializing system...</div>
+        <div class="ws-progress">
+          <div class="ws-progress-bar" id="wsProgressBar"></div>
+        </div>
+        <button class="ws-btn" id="wsBtn" onclick="wsEnter()">
+          ENTER CMMS
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <div class="ws-error" id="wsError">
+          <span id="wsErrorText">Connection error. Please try again.</span>
+        </div>
+        <button class="ws-retry-btn" id="wsRetryBtn" onclick="wsEnter()">Retry</button>
+      </div>
     </div>
   </div>
-  <div id="notifPanel" class="notif-panel"></div>
-  <div id="loadingOverlay" class="loading-overlay" style="display:none"><div class="spinner"></div></div>
-  <div id="confirmOverlay" class="modal-overlay" style="display:none">
-    <div class="modal">
-      <div class="modal-header"><h3 id="confirmTitle"></h3></div>
-      <div class="modal-body"><p id="confirmMessage"></p></div>
-      <div class="modal-footer" id="confirmButtons"></div>
+
+  <div id="loginPage" style="display:none">
+    <div class="login-wrapper">
+      <div class="login-bg-base"></div>
+      <div class="login-bg-drift"></div>
+      <div class="login-slideshow">
+        <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=1920&q=80')"></div>
+        <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1513828583688-c52646db42da?w=1920&q=80')"></div>
+        <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1565043666747-69f6646db940?w=1920&q=80')"></div>
+        <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&q=80')"></div>
+        <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1920&q=80')"></div>
+        <div class="login-slide" style="background-image:url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1920&q=80')"></div>
+      </div>
+      <div class="login-bg-grid"></div>
+      <div class="login-bg-factory"></div>
+      <div class="login-particles">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="login-sparks">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span>
+      </div>
+      <div class="login-glow-lines"></div>
+      <div class="login-overlay"></div>
+      <div class="login-watermark">Pakistan Wires Industries (Pvt.) Ltd.</div>
+      <button class="login-theme-toggle" onclick="loginToggleTheme()" title="Toggle theme">
+        <svg id="loginThemeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <div class="lw-scroll-banner">
+        <div class="lw-scroll-track">
+          <span class="lw-scroll-item">Quality Manufacturing</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Hydraulic &amp; Mechanical Maintenance</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Pakistan Wire Industries Pvt. Ltd.</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Engineering Excellence</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">World Class Maintenance</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Continuous Improvement</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Quality Manufacturing</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Hydraulic &amp; Mechanical Maintenance</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Pakistan Wire Industries Pvt. Ltd.</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Engineering Excellence</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">World Class Maintenance</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+          <span class="lw-scroll-item">Continuous Improvement</span>
+          <span class="lw-scroll-sep">&#9679;</span>
+        </div>
+      </div>
+      <div class="lw-main-container">
+        <div class="lw-hero">
+          <div class="lw-hero-content">
+            <div class="lw-greeting fade-in-up">Welcome</div>
+            <h1 class="lw-company fade-in-up" style="animation-delay:0.15s">
+              <span class="lw-co-primary">Pakistan Wires Industries</span>
+              <span class="lw-co-bracket">(Private) Limited</span>
+            </h1>
+            <p class="lw-subtitle fade-in-up" style="animation-delay:0.3s">Computerized Maintenance Management System</p>
+          </div>
+          <div class="lw-division-cards fade-in-up" style="animation-delay:0.45s">
+            <div class="lw-dcard lw-dcard-spoke">
+              <div class="lw-dcard-shine"></div>
+              <div class="lw-dcard-icon">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <circle cx="32" cy="32" r="14"/>
+                  <circle cx="32" cy="32" r="22" stroke-dasharray="8 6"/>
+                  <circle cx="32" cy="32" r="5"/>
+                  <line x1="32" y1="10" x2="32" y2="6"/>
+                  <line x1="32" y1="54" x2="32" y2="58"/>
+                  <line x1="10" y1="32" x2="6" y2="32"/>
+                  <line x1="54" y1="32" x2="58" y2="32"/>
+                  <line x1="16.4" y1="16.4" x2="13.2" y2="13.2"/>
+                  <line x1="47.6" y1="47.6" x2="50.8" y2="50.8"/>
+                  <line x1="47.6" y1="16.4" x2="50.8" y2="13.2"/>
+                  <line x1="16.4" y1="47.6" x2="13.2" y2="50.8"/>
+                </svg>
+              </div>
+              <h3>Spoke Division</h3>
+              <p>Industrial Manufacturing</p>
+            </div>
+            <div class="lw-dcard lw-dcard-cable">
+              <div class="lw-dcard-shine"></div>
+              <div class="lw-dcard-icon">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M12 52 L12 12 Q12 6 18 6 L46 6 Q52 6 52 12 L52 52" stroke-linejoin="round"/>
+                  <line x1="20" y1="6" x2="20" y2="52"/>
+                  <line x1="28" y1="6" x2="28" y2="52"/>
+                  <line x1="36" y1="6" x2="36" y2="52"/>
+                  <line x1="44" y1="6" x2="44" y2="52"/>
+                  <path d="M16 20 L48 20" opacity="0.4"/>
+                  <path d="M16 28 L48 28" opacity="0.4"/>
+                  <path d="M16 36 L48 36" opacity="0.4"/>
+                  <path d="M16 44 L48 44" opacity="0.4"/>
+                  <circle cx="20" cy="52" r="2.5" fill="currentColor" opacity="0.6"/>
+                  <circle cx="28" cy="52" r="2.5" fill="currentColor" opacity="0.6"/>
+                  <circle cx="36" cy="52" r="2.5" fill="currentColor" opacity="0.6"/>
+                  <circle cx="44" cy="52" r="2.5" fill="currentColor" opacity="0.6"/>
+                </svg>
+              </div>
+              <h3>Control Cable Division</h3>
+              <p>Cable Manufacturing</p>
+            </div>
+          </div>
+        </div>
+        <div class="lw-login-section">
+          <div class="login-card">
+            <div class="login-card-glow"></div>
+            <div class="login-header">
+              <div class="login-logo-area">
+                <img class="login-logo-img" id="loginLogoImg" alt="Pakistan Wires Industries" src="logo.svg" style="display:none" onload="this.style.display='block';var el=document.getElementById('loginLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('loginLogoFallback');el&&(el.style.display='flex')">
+                <div class="login-logo-fallback" id="loginLogoFallback">
+                  <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="50" height="50">
+                    <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
+                    <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
+                    <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
+                    <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+                  </svg>
+                </div>
+              </div>
+              <h1 class="login-title">
+                <span class="lt-primary">Pakistan Wires Industries</span>
+                <span class="lt-bracket">(Private) Limited</span>
+              </h1>
+              <p class="login-subtitle">Computerized Maintenance Management System</p>
+            </div>
+            <form id="loginForm" onsubmit="return handleLogin(event)">
+              <div class="login-form-group">
+                <label for="loginEmail">Email</label>
+                <div class="login-input-wrap">
+                  <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                  <input type="email" id="loginEmail" class="login-input" placeholder="Enter your email" required>
+                </div>
+              </div>
+              <div class="login-form-group">
+                <label for="loginPassword">Password</label>
+                <div class="login-input-wrap">
+                  <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                  </svg>
+                  <input type="password" id="loginPassword" class="login-input login-input-pass" placeholder="Enter your password" required>
+                  <button type="button" class="login-eye-btn" id="loginEyeBtn" onclick="togglePasswordVisibility()" title="Show/Hide password" tabindex="-1">
+                    <svg id="eyeIconOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <svg id="eyeIconClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="display:none">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="login-options">
+                <label class="login-checkbox">
+                  <input type="checkbox" id="loginRemember" checked>
+                  <span class="login-checkmark"></span>
+                  <span class="login-checkbox-label">Remember Me</span>
+                </label>
+                <a href="#" class="login-forgot" onclick="showForgotPassword();return false">Forgot Password?</a>
+              </div>
+              <button type="submit" class="login-btn" id="loginBtn">
+                <span class="login-btn-text">Sign In</span>
+                <span class="spinner" style="display:none"></span>
+              </button>
+              <div id="loginError" class="login-error" style="display:none"></div>
+            </form>
+            <div class="login-version">Maintenance Management System v2.0</div>
+          </div>
+        </div>
+      </div>
+      <div class="login-forgot-modal" id="forgotPasswordModal" style="display:none">
+        <div class="login-forgot-overlay" onclick="closeForgotPassword()"></div>
+        <div class="login-forgot-dialog">
+          <div class="login-forgot-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color:var(--lw-accent)">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            <h3>Reset Password</h3>
+            <button class="login-forgot-close" onclick="closeForgotPassword()">&times;</button>
+          </div>
+          <div class="login-forgot-body">
+            <p id="forgotStep1">Enter your registered email address. If the email exists, a password reset token will be sent.</p>
+            <div class="login-form-group" style="margin-top:16px">
+              <label for="forgotEmail">Email Address</label>
+              <div class="login-input-wrap">
+                <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <input type="email" id="forgotEmail" class="login-input" placeholder="Enter your registered email">
+              </div>
+            </div>
+            <div id="forgotStep2" style="display:none;margin-top:16px">
+              <p style="color:var(--lw-text-sec);font-size:13px;margin-bottom:12px">A reset token has been sent to your email. Enter the token and your new password below.</p>
+              <div class="login-form-group">
+                <label for="resetToken">Reset Token</label>
+                <input type="text" id="resetToken" class="login-input" placeholder="Enter reset token from email">
+              </div>
+              <div class="login-form-group">
+                <label for="resetNewPassword">New Password</label>
+                <div class="login-input-wrap">
+                  <input type="password" id="resetNewPassword" class="login-input login-input-pass" placeholder="Enter new password">
+                  <button type="button" class="login-eye-btn" onclick="toggleResetPasswordVisibility()" title="Show/Hide" tabindex="-1">
+                    <svg id="resetEyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <svg id="resetEyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="display:none">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div id="forgotResult" class="login-forgot-result" style="display:none"></div>
+          </div>
+          <div class="login-forgot-footer">
+            <button class="login-forgot-cancel" onclick="closeForgotPassword()">Cancel</button>
+            <button class="login-forgot-submit" id="forgotSubmitBtn" onclick="submitForgotPassword()">Send Token</button>
+            <button class="login-forgot-submit" id="resetPasswordBtn" style="display:none" onclick="submitResetPassword()">Reset Password</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-  <script src="https://www.gstatic.com/charts/loader.js"></script>
+
+  <div id="appContainer" class="app-container" style="display:none">
+    <div class="sidebar" id="mainSidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-logo-wrapper">
+          <img class="sidebar-logo-img" id="sidebarLogoImg" alt="PWI" src="logo.svg" style="display:none" onload="this.style.display='block'" onerror="this.style.display='none'">
+          <svg class="sidebar-logo-fallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="30" height="30">
+            <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
+            <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
+            <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
+            <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+          </svg>
+        </div>
+        <div class="sidebar-brand-text">
+          <h2>CMMS</h2>
+          <small>Maintenance Management</small>
+        </div>
+      </div>
+      <div class="sidebar-menu" id="sidebarMenu">
+        <div class="sidebar-item active" onclick="navigateTo('dashboard')" data-page="dashboard" data-tooltip="Dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          <span class="sidebar-item-label">Dashboard</span>
+        </div>
+
+        <div class="sidebar-group" data-group="masterData">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span>
+            <span class="sidebar-group-title">Master Data</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('sections')" data-page="sections" data-tooltip="Sections">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+              <span class="sidebar-item-label">Sections</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('departments')" data-page="departments" data-tooltip="Departments">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span class="sidebar-item-label">Departments</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('machines')" data-page="machines" data-tooltip="Machines">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+              <span class="sidebar-item-label">Machines</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('assets')" data-page="assets" data-tooltip="Assets">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              <span class="sidebar-item-label">Assets</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('technicians')" data-page="technicians" data-tooltip="Technicians">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span class="sidebar-item-label">Technicians</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('users')" data-page="users" data-tooltip="Users">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+              <span class="sidebar-item-label">Users</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-group" data-group="maintenance">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></span>
+            <span class="sidebar-group-title">Maintenance</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('openjobcard')" data-page="openjobcard" data-tooltip="Open Job Card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              <span class="sidebar-item-label">Open Job Cards</span>
+              <span class="sidebar-badge" id="badge-openjobcard" data-status="open">0</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('startjobcard')" data-page="startjobcard" data-tooltip="Start Job Card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+              <span class="sidebar-item-label">Started Job Cards</span>
+              <span class="sidebar-badge" id="badge-startjobcard" data-status="running">0</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('closejobcard')" data-page="closejobcard" data-tooltip="Close Job Card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span class="sidebar-item-label">Closed Job Cards</span>
+              <span class="sidebar-badge" id="badge-closejobcard" data-status="closed">0</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('pendingjobcard')" data-page="pendingjobcard" data-tooltip="Pending Review">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="sidebar-item-label">Pending Review</span>
+              <span class="sidebar-badge" id="badge-pendingjobcard" data-status="pending">0</span>
+            </div>
+            <div class="sidebar-item" onclick="openApproveJobCard()" data-page="approvejobcard" data-tooltip="Approve Job Card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+              <span class="sidebar-item-label">Approved Job Cards</span>
+              <span class="sidebar-badge" id="badge-approvejobcard" data-status="approved">0</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('jobcards')" data-page="jobcards" data-tooltip="All Job Cards" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span class="sidebar-item-label">All Job Cards</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('pm')" data-page="pm" data-tooltip="PM Schedule">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="sidebar-item-label">PM Schedule</span>
+              <span class="sidebar-badge" id="badge-pm" data-status="all">0</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('checklists')" data-page="checklists" data-tooltip="Checklists">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+              <span class="sidebar-item-label">Checklists</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('spareparts')" data-page="spareparts" data-tooltip="Spare Parts">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+              <span class="sidebar-item-label">Spare Parts</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('inventory')" data-page="inventory" data-tooltip="Inventory">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              <span class="sidebar-item-label">Inventory</span>
+              <span class="sidebar-badge" id="badge-inventory">0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-group" data-group="history">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+            <span class="sidebar-group-title">History</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('breakdown')" data-page="breakdown" data-tooltip="Breakdown History">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+              <span class="sidebar-item-label">Breakdown History</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('pmhistory')" data-page="pmhistory" data-tooltip="PM History">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="sidebar-item-label">PM History</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('stockhistory')" data-page="stockhistory" data-tooltip="Stock History">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span class="sidebar-item-label">Stock History</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('inventorytransactions')" data-page="inventorytransactions" data-tooltip="Inventory Transactions">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              <span class="sidebar-item-label">Inventory Transactions</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('goodsreceipt')" data-page="goodsreceipt" data-tooltip="Goods Receipt">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <span class="sidebar-item-label">Goods Receipt</span>
+              <span class="sidebar-badge" id="badge-goodsreceipt" data-status="all">0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-group" data-group="reports">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+            <span class="sidebar-group-title">Reports</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('reports')" data-page="reports" data-tooltip="Reports">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span class="sidebar-item-label">Reports</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-group" data-group="communication">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+            <span class="sidebar-group-title">Communication</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('notifications')" data-page="notifications" data-tooltip="Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+              <span class="sidebar-item-label">Notifications</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('email')" data-page="email" data-tooltip="Email Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span class="sidebar-item-label">Email Notifications</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('whatsapp')" data-page="whatsapp" data-tooltip="WhatsApp Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+              <span class="sidebar-item-label">WhatsApp Notifications</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-group" data-group="qrBarcode">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg></span>
+            <span class="sidebar-group-title">QR / Barcode Management</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('qr')" data-page="qr" data-tooltip="QR Overview">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+              <span class="sidebar-item-label">QR Overview</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('qrmachines')" data-page="qrmachines" data-tooltip="Machine QR">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+              <span class="sidebar-item-label">Machine QR</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('qrassets')" data-page="qrassets" data-tooltip="Asset QR">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              <span class="sidebar-item-label">Asset QR</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('qrspareparts')" data-page="qrspareparts" data-tooltip="Spare Parts QR">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+              <span class="sidebar-item-label">Spare Parts QR</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('qrjobcards')" data-page="qrjobcards" data-tooltip="Job Card QR">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span class="sidebar-item-label">Job Card QR</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('qrprint')" data-page="qrprint" data-tooltip="Print QR Labels">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span class="sidebar-item-label">Print QR Labels</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('qrhistory')" data-page="qrhistory" data-tooltip="QR History">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="sidebar-item-label">QR History</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-group" data-group="administration">
+          <div class="sidebar-group-header" onclick="toggleSidebarGroup(this)">
+            <span class="sidebar-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+            <span class="sidebar-group-title">Administration</span>
+            <span class="sidebar-group-arrow">&#9654;</span>
+          </div>
+          <div class="sidebar-group-content">
+            <div class="sidebar-item" onclick="navigateTo('settings')" data-page="settings" data-tooltip="Settings">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+              <span class="sidebar-item-label">Settings</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('audit')" data-page="audit" data-tooltip="Audit Trail">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+              <span class="sidebar-item-label">Audit Trail</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('backuprestore')" data-page="backuprestore" data-tooltip="Backup &amp; Restore">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span class="sidebar-item-label">Backup &amp; Restore</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">User</div>
+            <div class="user-role" id="userRole">Role</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="hamburger" onclick="toggleSidebar()" title="Toggle sidebar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="topbar-brand" onclick="navigateTo('dashboard')" style="cursor:pointer" title="Go to Dashboard">
+            <div class="topbar-logo-mini">
+              <img class="topbar-logo-img" id="topbarLogoImg" alt="PWI" src="logo.svg" style="display:none" onload="this.style.display='block';var el=document.getElementById('topbarLogoFallback');el&&(el.style.display='none')" onerror="var el=document.getElementById('topbarLogoFallback');el&&(el.style.display='block')">
+              <svg class="topbar-logo-fallback" id="topbarLogoFallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="24" height="24">
+                <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
+                <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
+                <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
+                <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+              </svg>
+            </div>
+            <span>CMMS</span>
+          </div>
+          <div class="breadcrumb">
+            <span id="pageTitle">Dashboard</span>
+          </div>
+        </div>
+        <div class="topbar-center">
+          <div class="topbar-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="globalSearch" placeholder="Search machines, job cards, parts..." oninput="onGlobalSearch(this.value)">
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-datetime">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <div id="topbarClock" class="time" style="font-size:12px;color:var(--text-secondary);font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap">00 Jan 0000 | 00:00 AM</div>
+          </div>
+          <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Switch to Light Mode">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          </button>
+          <div class="email-dropdown-container">
+            <button class="topbar-btn email-btn" onclick="toggleEmailPanel()" title="Email Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span class="email-badge" id="emailBadge" style="display:none">0</span>
+            </button>
+            <div class="email-panel" id="emailPanel">
+              <div class="email-panel-header">
+                <h3>Email Queue</h3>
+              </div>
+              <div class="email-panel-stats">
+                <div class="email-stat-item" style="color:var(--success)">
+                  <span class="email-stat-value" id="emailDropdownSent">0</span>
+                  <span class="email-stat-label">Sent</span>
+                </div>
+                <div class="email-stat-item" style="color:var(--danger)">
+                  <span class="email-stat-value" id="emailDropdownFailed">0</span>
+                  <span class="email-stat-label">Failed</span>
+                </div>
+                <div class="email-stat-item" style="color:var(--warning)">
+                  <span class="email-stat-value" id="emailDropdownPending">0</span>
+                  <span class="email-stat-label">Pending</span>
+                </div>
+              </div>
+              <div class="email-panel-list" id="emailPanelList">
+                <div class="email-panel-empty">Loading...</div>
+              </div>
+              <div class="email-panel-footer">
+                <button class="btn btn-xs btn-primary" onclick="navigateTo('email');closeEmailPanel()">View All Emails</button>
+                <button class="btn btn-xs btn-secondary" onclick="emailRetryFailed();closeEmailPanel()">Retry Failed</button>
+              </div>
+            </div>
+          </div>
+          <button class="topbar-btn wa-btn" onclick="navigateTo('whatsapp')" title="WhatsApp Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+            <span class="wa-badge" id="waBadge" style="display:none">0</span>
+          </button>
+          <button class="topbar-btn notification-btn" onclick="toggleNotificationPanel()" title="Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <span class="notification-badge" id="notificationBadge" style="display:none">0</span>
+          </button>
+          <button class="topbar-btn" id="topbarRefreshBtn" onclick="refreshCurrentPage()" title="Refresh Data">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px" id="refreshIcon"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg>
+          </button>
+          <button class="topbar-btn" onclick="navigateTo('settings')" title="Settings" id="topbarSettingsBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </button>
+          <button class="topbar-btn topbar-logout" onclick="handleLogout()" title="Sign Out">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+          <div class="topbar-user" onclick="toggleUserMenu(event)" style="position:relative">
+            <div class="user-avatar-sm" id="topbarAvatar">A</div>
+            <div>
+              <div class="user-name-display" id="topbarName">User</div>
+              <div class="user-role-display" id="topbarRole">Role</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="user-menu-dropdown" id="userMenuDropdown">
+        <button class="menu-item" onclick="navigateTo('settings'); closeUserMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          Settings
+        </button>
+        <div class="menu-divider"></div>
+        <button class="menu-item danger" onclick="handleLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign Out
+        </button>
+      </div>
+      <div class="page-content" id="pageContent">
+      </div>
+    </div>
+  </div>
+  <div class="notification-overlay" id="notificationOverlay" onclick="toggleNotificationPanel()"></div>
+  <div class="notification-panel" id="notificationPanel">
+    <div class="notification-panel-header">
+      <h3>Notification Center</h3>
+      <button class="close-btn" onclick="toggleNotificationPanel()">&times;</button>
+    </div>
+    <div class="notification-panel-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="notifSearchInput" placeholder="Search notifications..." oninput="onNotifSearchInput()">
+    </div>
+    <div class="notification-panel-filters">
+      <div class="notif-filter-tabs" id="notifFilterTabs">
+        <button class="notif-filter-tab active" data-filter="all" onclick="setNotifListFilter('all')">All</button>
+        <button class="notif-filter-tab" data-filter="unread" onclick="setNotifListFilter('unread')">Unread</button>
+        <button class="notif-filter-tab" data-filter="read" onclick="setNotifListFilter('read')">Read</button>
+      </div>
+      <div class="notif-filter-dropdowns">
+        <select class="notif-filter-select" id="notifFilterPriority" onchange="applyNotifListFilters()">
+          <option value="">All Priority</option>
+          <option value="Critical">Critical</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <select class="notif-filter-select" id="notifFilterModule" onchange="applyNotifListFilters()">
+          <option value="">All Modules</option>
+          <option value="Job Card">Job Card</option>
+          <option value="Preventive Maintenance">PM</option>
+          <option value="Spare Part">Spare Part</option>
+          <option value="Inventory">Inventory</option>
+          <option value="Goods Receipt">Goods Receipt</option>
+          <option value="Breakdown">Breakdown</option>
+          <option value="Machine">Machine</option>
+          <option value="Asset">Asset</option>
+          <option value="User">User</option>
+          <option value="System">System</option>
+        </select>
+        <select class="notif-filter-select" id="notifFilterType" onchange="applyNotifListFilters()">
+          <option value="">All Types</option>
+          <option value="Information">Information</option>
+          <option value="Success">Success</option>
+          <option value="Warning">Warning</option>
+          <option value="Critical">Critical</option>
+          <option value="Approval">Approval</option>
+          <option value="Reminder">Reminder</option>
+          <option value="System">System</option>
+        </select>
+      </div>
+    </div>
+    <div class="notification-panel-toolbar">
+      <button class="btn btn-xs btn-success" onclick="markAllNotifRead()" title="Mark All as Read">&#10003; Mark Read</button>
+      <button class="btn btn-xs btn-danger" onclick="deleteAllNotifications()" title="Clear All">&#10005; Clear All</button>
+      <span class="notif-count-badge" id="notifPanelCount">0 notifications</span>
+    </div>
+    <div class="notification-list" id="notificationList">
+      <div class="notification-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <p>No notifications</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-logo-area">
+      <img class="loading-logo-img" id="loadingLogoImg" alt="Pakistan Wire Industries" src="logo.svg" style="display:none" onload="this.style.display='block'" onerror="this.style.display='none'">
+      <svg class="loading-logo-fallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="44" height="44">
+        <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
+        <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
+        <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
+        <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+      </svg>
+    </div>
+    <div class="spinner spinner-dark"></div>
+    <div style="color:var(--text-light)">Loading...</div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContainer">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Modal</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer" id="modalFooter"></div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div id="offlineBanner" class="offline-banner" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.56 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+    You are offline. Changes will sync when connected.
+  </div>
+
+  <div id="installBanner" class="install-banner" style="display:none">
+    <div class="install-banner-content">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Install CMMS App</span>
+      <button class="btn btn-xs btn-primary" onclick="installPWA()">Install</button>
+      <button class="btn btn-xs btn-secondary" onclick="dismissInstall()">Later</button>
+    </div>
+  </div>
+
   <script src="js/core/utils.js"></script>
   <script src="js/core/icons.js"></script>
   <script src="js/core/api.js"></script>
   <script src="js/core/session.js"></script>
-  <script src="js/core/router.js"></script>
-  <script src="js/core/theme.js"></script>
-  <script src="js/core/nav.js"></script>
-  <script src="js/core/notify.js"></script>
   <script src="js/core/loader.js"></script>
-  <script src="js/core/dashboard.js"></script>
-  <script src="js/pages/machines.js"></script>
-  <script src="js/pages/assets.js"></script>
-  <script src="js/pages/users.js"></script>
-  <script src="js/pages/technicians.js"></script>
-  <script src="js/pages/departments.js"></script>
-  <script src="js/pages/sections.js"></script>
-  <script src="js/pages/checklists.js"></script>
-  <script src="js/pages/jobcards.js"></script>
-  <script src="js/pages/openjc.js"></script>
-  <script src="js/pages/startjc.js"></script>
-  <script src="js/pages/closejc.js"></script>
-  <script src="js/pages/pendingjc.js"></script>
-  <script src="js/pages/approvejc.js"></script>
-  <script src="js/pages/pm.js"></script>
-  <script src="js/pages/pmhistory.js"></script>
-  <script src="js/pages/spareparts.js"></script>
-  <script src="js/pages/inventory.js"></script>
-  <script src="js/pages/inventorytxns.js"></script>
-  <script src="js/pages/stockhistory.js"></script>
-  <script src="js/pages/goodsreceipt.js"></script>
-  <script src="js/pages/breakdownhistory.js"></script>
-  <script src="js/pages/notifications.js"></script>
-  <script src="js/pages/qr.js"></script>
-  <script src="js/pages/email.js"></script>
-  <script src="js/pages/whatsapp.js"></script>
-  <script src="js/pages/reports.js"></script>
-  <script src="js/pages/audit.js"></script>
-  <script src="js/pages/backup.js"></script>
-  <script src="js/pages/settings.js"></script>
+  <script src="js/core/theme.js"></script>
+  <script src="js/core/notify.js"></script>
+  <script src="js/core/nav.js"></script>
+  <script src="js/core/router.js"></script>
+  <script src="js/pages/welcome.js"></script>
+  <script src="js/pages/login.js"></script>
+  <script src="js/pages/dashboard.js"></script>
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
   <script src="js/app.js"></script>
-  <script>
-    if('serviceWorker' in navigator){
-      navigator.serviceWorker.register('sw.js').catch(function(){});
-    }
-  </script>
 </body>
 </html>

@@ -1,0 +1,12 @@
+/* Dashboard-specific styles — KPI toggle animation */
+.kpi-toggle-value {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.kpi-toggle-value.kpi-fade-out {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.kpi-toggle-value.kpi-fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}

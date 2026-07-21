@@ -1,20 +1,11 @@
-const CACHE_NAME = 'cmms-v23';
+const CACHE_NAME = 'cmms-v30';
 const STATIC_ASSETS = [
-  '/', '/index.html', '/css/styles.css',
+  '/', '/index.html', '/css/styles.css', '/css/welcome.css', '/css/login.css', '/css/dashboard.css',
   '/js/app.js',
   '/js/core/utils.js', '/js/core/icons.js', '/js/core/api.js', '/js/core/session.js',
   '/js/core/router.js', '/js/core/nav.js', '/js/core/loader.js', '/js/core/theme.js',
-  '/js/core/notify.js', '/js/core/dashboard.js',
-  '/js/pages/machines.js', '/js/pages/assets.js', '/js/pages/users.js',
-  '/js/pages/technicians.js', '/js/pages/departments.js', '/js/pages/sections.js',
-  '/js/pages/checklists.js', '/js/pages/jobcards.js', '/js/pages/openjc.js',
-  '/js/pages/startjc.js', '/js/pages/closejc.js', '/js/pages/pendingjc.js',
-  '/js/pages/approvejc.js', '/js/pages/pm.js', '/js/pages/pmhistory.js',
-  '/js/pages/spareparts.js', '/js/pages/inventory.js', '/js/pages/inventorytxns.js',
-  '/js/pages/stockhistory.js', '/js/pages/goodsreceipt.js', '/js/pages/breakdownhistory.js',
-  '/js/pages/notifications.js', '/js/pages/qr.js', '/js/pages/email.js',
-  '/js/pages/whatsapp.js', '/js/pages/reports.js', '/js/pages/audit.js',
-  '/js/pages/backup.js', '/js/pages/settings.js',
+  '/js/core/notify.js',
+  '/js/pages/welcome.js', '/js/pages/login.js', '/js/pages/dashboard.js',
   '/logo.svg', '/favicon.svg'
 ];
 

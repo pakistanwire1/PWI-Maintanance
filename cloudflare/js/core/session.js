@@ -1,87 +1,60 @@
-(function(){
-  var C=window.CMMS=window.CMMS||{};
-  var u=C.utils;
-  var currentUser=null;
+var Session = {
+  TOKEN_KEY: 'cmms_token',
+  USER_KEY: 'cmms_user',
 
-  function storeUser(user){
-    localStorage.setItem('cmms_user',JSON.stringify(user));
-  }
-  function getStoredUser(){
-    try{return JSON.parse(localStorage.getItem('cmms_user'));}
-    catch(e){return null;}
-  }
-  function clearSession(){
-    localStorage.removeItem('cmms_token');
-    localStorage.removeItem('cmms_user');
-    localStorage.removeItem('cmms_session');
-    currentUser=null;
-  }
+  getToken: function() {
+    try { return localStorage.getItem(Session.TOKEN_KEY) || ''; } catch(e) { return ''; }
+  },
 
-  function login(email,password){
-    return C.api.mutate('login',{email:email,password:password}).then(function(data){
-      var user=data.user||data;
-      if(data.token)C.api.set(data.token);
-      storeUser(user);
-      currentUser=user;
-      return user;
-    });
-  }
+  setToken: function(token) {
+    try { localStorage.setItem(Session.TOKEN_KEY, token); } catch(e) {}
+  },
 
-  function logout(silent){
-    if(!silent){
-      C.api.mutate('logout').catch(function(){});
-    }
-    clearSession();
-    window.location.hash='#page-login';
-  }
+  getUser: function() {
+    try {
+      var raw = localStorage.getItem(Session.USER_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
+  },
 
-  function restore(){
-    var stored=getStoredUser();
-    if(!stored)return Promise.resolve(null);
-    return C.api.call('validateSession').then(function(data){
-      var user=data.user||data;
-      storeUser(user);
-      currentUser=user;
-      return user;
-    }).catch(function(){
-      logout(true);
-      return null;
-    });
-  }
+  setUser: function(user) {
+    try { localStorage.setItem(Session.USER_KEY, JSON.stringify(user)); } catch(e) {}
+  },
 
-  function isLoggedIn(){
-    var token=C.api.get();
-    return!!token&&!!currentUser;
-  }
+  isLoggedIn: function() {
+    return !!Session.getToken() && !!Session.getUser();
+  },
 
-  function getUser(){
-    return currentUser;
-  }
+  clear: function() {
+    try {
+      localStorage.removeItem(Session.TOKEN_KEY);
+      localStorage.removeItem(Session.USER_KEY);
+    } catch(e) {}
+  },
 
-  function hasPermission(perm){
-    if(!currentUser)return false;
-    if(currentUser.isSystemAdmin||currentUser.role==='Admin'||currentUser.role==='Administrator')return true;
-    if(currentUser.permissions&&currentUser.permissions[perm]!==undefined)return!!currentUser.permissions[perm];
-    return!!currentUser[perm];
-  }
+  getPermission: function(perm) {
+    var user = Session.getUser();
+    if (!user) return false;
+    if (user.isSystemAdmin) return true;
+    return !!user[perm];
+  },
 
-  function isAdmin(){
-    if(!currentUser)return false;
-    return currentUser.isSystemAdmin||currentUser.role==='Admin'||currentUser.role==='Administrator';
-  }
+  getUserName: function() {
+    var user = Session.getUser();
+    return user ? (user.name || user.email || 'User') : 'User';
+  },
 
-  function getToken(){
-    return C.api.get();
-  }
+  getUserRole: function() {
+    var user = Session.getUser();
+    return user ? (user.role || '') : '';
+  },
 
-  C.session={
-    login:login,
-    logout:logout,
-    restore:restore,
-    isLoggedIn:isLoggedIn,
-    getUser:getUser,
-    hasPermission:hasPermission,
-    isAdmin:isAdmin,
-    getToken:getToken
-  };
-})();
+  getUserEmail: function() {
+    var user = Session.getUser();
+    return user ? (user.email || '') : '';
+  },
+
+  getUserInitials: function() {
+    return Utils.getInitials(Session.getUserName());
+  }
+};

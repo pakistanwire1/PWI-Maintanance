@@ -1,105 +1,75 @@
-(function(){
-  var C=window.CMMS=window.CMMS||{};
-  var u=C.utils;
-  var pages={};
-  var currentPage=null;
-  var currentConfig=null;
-  var contentEl=null;
+var Router = {
+  pages: {},
+  current: null,
 
-  function getContentEl(){
-    if(!contentEl)contentEl=document.getElementById('mainContent')||document.querySelector('.main-content');
-    return contentEl;
-  }
+  register: function(name, handler) {
+    Router.pages[name] = handler;
+  },
 
-  function registerPage(name,config){
-    pages[name]=config;
-  }
-
-  function getCurrentPage(){
-    return currentPage;
-  }
-
-  function parseHash(){
-    var hash=window.location.hash.replace(/^#/,'');
-    if(hash.indexOf('page-')===0)return hash.substring(5);
-    return null;
-  }
-
-  function destroyPage(){
-    if(currentConfig&&currentConfig.destroy){
-      try{currentConfig.destroy();}catch(e){}
+  navigate: function(page) {
+    if (!page) page = 'dashboard';
+    var handler = Router.pages[page];
+    if (!handler) {
+      page = 'dashboard';
+      handler = Router.pages['dashboard'];
     }
-    var el=getContentEl();
-    if(el)el.innerHTML='';
-    currentPage=null;
-    currentConfig=null;
-  }
+    if (!handler) return;
 
-  function loadPage(name){
-    var config=pages[name];
-    if(!config){
-      navigateTo('dashboard');
-      return;
+    Nav.setActivePage(page);
+    Router.current = page;
+
+    var content = document.getElementById('pageContent');
+    if (!content) return;
+
+    try { history.pushState({ page: page }, '', '#' + page); } catch(e) {}
+
+    content.innerHTML = '<div class="empty-state"><div class="spinner" style="width:36px;height:36px;margin:0 auto 14px"></div><p>Loading...</p></div>';
+
+    try {
+      handler(content, page);
+    } catch(e) {
+      console.error('Router error:', e);
+      content.innerHTML = '<div class="empty-state"><h3>Error loading page</h3><p>' + Utils.escapeHtml(e.message) + '</p></div>';
     }
-    if(config.requiresAuth&&!C.session.isLoggedIn()){
-      navigateTo('login');
-      return;
-    }
-    destroyPage();
-    currentPage=name;
-    currentConfig=config;
-    document.title=config.title?(config.title+' - CMMS'):'CMMS';
-    var el=getContentEl();
-    if(el){
-      el.innerHTML='';
-      if(config.init){
-        try{config.init(el);}catch(e){console.error('Page init error:',e);}
+  },
+
+  handleHash: function() {
+    var hash = window.location.hash.replace('#', '') || 'dashboard';
+    Router.navigate(hash);
+  },
+
+  init: function() {
+    window.addEventListener('popstate', function(e) {
+      if (e.state && e.state.page) {
+        Router.navigate(e.state.page);
+      } else {
+        Router.handleHash();
       }
-      if(config.load){
-        try{config.load(el);}catch(e){console.error('Page load error:',e);}
-      }
-    }
+    });
+    Router.handleHash();
   }
+};
 
-  function navigateTo(page){
-    var target='#page-'+page;
-    if(window.location.hash===target){
-      loadPage(page);
-    }else{
-      window.location.hash=target;
-    }
+function navigateTo(page) { Router.navigate(page); }
+function refreshCurrentPage() { Router.navigate(Router.current || 'dashboard'); }
+function onGlobalSearch(val) { /* placeholder for global search */ }
+function onNotifSearchInput() { /* placeholder */ }
+function setNotifListFilter(f) { /* placeholder */ }
+function applyNotifListFilters() { /* placeholder */ }
+function markAllNotifRead() { /* placeholder */ }
+function deleteAllNotifications() { /* placeholder */ }
+function emailRetryFailed() { /* placeholder */ }
+function openApproveJobCard() { navigateTo('approvejobcard'); }
+function installPWA() {
+  var banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+  if (window._deferredPrompt) {
+    window._deferredPrompt.prompt();
+    window._deferredPrompt = null;
   }
-
-  function handleHashChange(){
-    var page=parseHash();
-    if(!page||!pages[page]){
-      page=C.session.isLoggedIn()?'dashboard':'login';
-      window.location.hash='#page-'+page;
-      return;
-    }
-    loadPage(page);
-  }
-
-  function init(){
-    window.addEventListener('hashchange',handleHashChange);
-    handleHashChange();
-  }
-
-  function hasPage(name){
-    return !!pages[name];
-  }
-
-  function getPageConfig(name){
-    return pages[name]||null;
-  }
-
-  C.router={
-    registerPage:registerPage,
-    navigateTo:navigateTo,
-    getCurrentPage:getCurrentPage,
-    hasPage:hasPage,
-    getPageConfig:getPageConfig,
-    handleHashChange:handleHashChange,
-    init:init
-  };
-})();
+}
+function dismissInstall() {
+  var banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+  try { localStorage.setItem('cmms_install_dismissed', '1'); } catch(e) {}
+}
