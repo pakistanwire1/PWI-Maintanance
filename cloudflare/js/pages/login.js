@@ -263,6 +263,7 @@
     API.post('login', { email: email, password: password })
       .then(function(result) {
         setLoginLoading(false);
+        console.log('[LOGIN] API.post login result:', JSON.stringify(result).slice(0, 300));
         if (result && result.success) {
           Session.setToken(result.token);
           Session.setUser(result.user);
@@ -273,6 +274,7 @@
       })
       .catch(function(err) {
         setLoginLoading(false);
+        console.error('[LOGIN] API.post login failed:', err.message || err);
         showLoginError('Invalid Email or Password.');
       });
 
