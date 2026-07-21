@@ -1,285 +1,226 @@
-/* ============================================================
-   technicians.js — Technicians Page Module
-   GAS-identical: TechniciansPage.html
-   ============================================================ */
+(function(){
+  var C=window.CMMS=window.CMMS||{};
+  var u=C.utils;
+  var _data=[];
+  var _state={page:1,perPage:25,search:'',editId:null};
 
-(function() {
-  var techniciansData = [];
-  var techniciansPage = 1;
-
-  App.registerPage('technicians', render, load);
-
-  function render() {
-    var el = document.getElementById('page-technicians');
-    el.innerHTML =
-      '<div id="techniciansPage">' +
-        '<div class="card">' +
-          '<div class="card-header">' +
-            '<div class="card-title">Technician Master</div>' +
-            '<div class="card-actions">' +
-              '<div class="search-box">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
-                '<input type="text" class="form-control" id="technicianSearch" placeholder="Search technicians..." onkeyup="searchTechniciansTable()">' +
-              '</div>' +
-              '<button class="btn btn-primary" onclick="openTechnicianForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add Technician</button>' +
-            '</div>' +
-          '</div>' +
-          '<div id="techniciansTableContainer"></div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="modal-overlay" id="technicianFormModal" style="display:none">' +
-        '<div class="modal">' +
-          '<div class="modal-header">' +
-            '<div class="modal-title" id="technicianFormTitle">Add Technician</div>' +
-            '<button class="modal-close" onclick="hideModal(\'technicianFormModal\')">&times;</button>' +
-          '</div>' +
-          '<form id="technicianForm" onsubmit="return saveTechnician(event)">' +
-            '<div class="modal-body">' +
-              '<input type="hidden" name="originalId" id="editTechId">' +
-              '<div class="form-row">' +
-                '<div class="form-group">' +
-                  '<label>Employee ID *</label>' +
-                  '<input type="text" name="EmployeeID" class="form-control" required id="techEmpId">' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Employee Code</label>' +
-                  '<input type="text" name="EmployeeCode" class="form-control">' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-group">' +
-                '<label>Technician Name *</label>' +
-                '<input type="text" name="TechnicianName" class="form-control" required>' +
-              '</div>' +
-              '<div class="form-group">' +
-                '<label>Designation</label>' +
-                '<input type="text" name="Designation" class="form-control" placeholder="e.g. Senior Technician">' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group">' +
-                  '<label>Department</label>' +
-                  '<select name="Department" class="form-control" id="techDept" onchange="onTechDeptChange()">' +
-                    '<option value="">Select Department</option>' +
-                  '</select>' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Section</label>' +
-                  '<select name="Section" class="form-control" id="techSection">' +
-                    '<option value="">Select Section</option>' +
-                  '</select>' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group">' +
-                  '<label>Skill</label>' +
-                  '<select name="Skill" class="form-control" id="techSkill"></select>' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Shift</label>' +
-                  '<select name="Shift" class="form-control" id="techShift"></select>' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group">' +
-                  '<label>Mobile</label>' +
-                  '<input type="text" name="Mobile" class="form-control">' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Email</label>' +
-                  '<input type="email" name="Email" class="form-control">' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group">' +
-                  '<label>Joining Date</label>' +
-                  '<input type="date" name="JoiningDate" class="form-control">' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Status</label>' +
-                  '<select name="Status" class="form-control">' +
-                    '<option value="Active">Active</option>' +
-                    '<option value="Inactive">Inactive</option>' +
-                  '</select>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
-            '<div class="modal-footer">' +
-              '<button type="button" class="btn btn-secondary" onclick="hideModal(\'technicianFormModal\')">Cancel</button>' +
-              '<button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>' +
-            '</div>' +
-          '</form>' +
-        '</div>' +
-      '</div>';
+  function init(){
+    var mc=C.loader.getContainer();
+    mc.innerHTML=[
+      '<div class="page-header">',
+        '<h2>Technician Master</h2>',
+        '<div class="header-actions">',
+          '<div class="search-box">',
+            '<span class="search-icon">'+u.icons.search+'</span>',
+            '<input type="text" id="techSearch" placeholder="Search technicians..." />',
+          '</div>',
+          '<button class="btn btn-primary" id="btnAddTech">'+u.icons.plus+' Add Technician</button>',
+        '</div>',
+      '</div>',
+      '<div id="techTable" class="table-container"></div>',
+      '<div id="techModal" class="modal-overlay" style="display:none;">',
+        '<div class="modal">',
+          '<div class="modal-header">',
+            '<h3 id="techModalTitle">Add Technician</h3>',
+            '<button class="modal-close" id="btnCloseTechModal">&times;</button>',
+          '</div>',
+          '<div class="modal-body">',
+            '<form id="techForm" autocomplete="off">',
+              '<input type="hidden" id="tTechId" />',
+              '<div class="form-row">',
+                '<div class="form-group">',
+                  '<label>Employee ID <span class="req">*</span></label>',
+                  '<input type="text" id="tEmployeeId" required />',
+                '</div>',
+                '<div class="form-group">',
+                  '<label>Technician Name <span class="req">*</span></label>',
+                  '<input type="text" id="tName" required />',
+                '</div>',
+              '</div>',
+              '<div class="form-row">',
+                '<div class="form-group">',
+                  '<label>Skill <span class="req">*</span></label>',
+                  '<select id="tSkill" required>',
+                    '<option value="">Select</option>',
+                    '<option value="Mechanical">Mechanical</option>',
+                    '<option value="Electrical">Electrical</option>',
+                    '<option value="PLC">PLC</option>',
+                    '<option value="Hydraulic">Hydraulic</option>',
+                    '<option value="Pneumatic">Pneumatic</option>',
+                    '<option value="Utility">Utility</option>',
+                    '<option value="Instrumentation">Instrumentation</option>',
+                  '</select>',
+                '</div>',
+                '<div class="form-group">',
+                  '<label>Shift <span class="req">*</span></label>',
+                  '<select id="tShift" required>',
+                    '<option value="">Select</option>',
+                    '<option value="General">General</option>',
+                    '<option value="A">A</option>',
+                    '<option value="B">B</option>',
+                    '<option value="C">C</option>',
+                  '</select>',
+                '</div>',
+              '</div>',
+              '<div class="form-row">',
+                '<div class="form-group">',
+                  '<label>Status <span class="req">*</span></label>',
+                  '<select id="tStatus" required>',
+                    '<option value="Active">Active</option>',
+                    '<option value="Inactive">Inactive</option>',
+                  '</select>',
+                '</div>',
+                '<div class="form-group"></div>',
+              '</div>',
+            '</form>',
+          '</div>',
+          '<div class="modal-footer">',
+            '<button class="btn btn-secondary" id="btnCancelTech">Cancel</button>',
+            '<button class="btn btn-primary" id="btnSaveTech">Save</button>',
+          '</div>',
+        '</div>',
+      '</div>'
+    ].join('');
+    bindEvents();
   }
 
-  function load() {
-    App.showLoading(true);
-    API.call('getTechnicians')
-      .then(function(data) {
-        techniciansData = data || [];
-        App.showLoading(false);
-        renderTechniciansTable();
-      })
-      .catch(function(err) {
-        App.showLoading(false);
-        App.showToast('Failed to load technicians', 'error');
-      });
-  }
-
-  function renderTechniciansTable() {
-    renderTable(techniciansData, [
-      { key: 'EmployeeID', label: 'Emp ID' },
-      { key: 'EmployeeCode', label: 'Code' },
-      { key: 'TechnicianName', label: 'Name' },
-      { key: 'Designation', label: 'Designation' },
-      { key: 'Department', label: 'Department' },
-      { key: 'Section', label: 'Section' },
-      { key: 'Skill', label: 'Skill' },
-      { key: 'Shift', label: 'Shift' },
-      { key: 'Mobile', label: 'Mobile' },
-      { key: 'Email', label: 'Email' },
-      { key: 'JoiningDate', label: 'Joining Date' },
-      { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Active': 'success', 'Inactive': 'secondary' } }
-    ], [
-      { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editTechnician('{id}')", idField: 'EmployeeID' },
-      { label: 'Del', icon: 'trash', color: 'danger', onclick: "deleteTechnician('{id}')", idField: 'EmployeeID' }
-    ], techniciansPage, PAGE_SIZE, 'techniciansTableContainer');
-    registerPageState('techniciansTableContainer', function(p) { techniciansPage = p; renderTechniciansTable(); });
-  }
-
-  function loadTechDepartments() {
-    API.call('getDepartmentList')
-      .then(function(depts) {
-        var sel = document.getElementById('techDept');
-        if (sel) {
-          sel.innerHTML = '<option value="">Select Department</option>';
-          (depts || []).forEach(function(d) {
-            var opt = document.createElement('option');
-            opt.value = d.Department;
-            opt.textContent = d.Department || '';
-            sel.appendChild(opt);
-          });
-        }
-      })
-      .catch(function() {});
-  }
-
-  window.onTechDeptChange = function() {
-    var deptSel = document.getElementById('techDept');
-    var dept = deptSel ? deptSel.value : '';
-    var secSel = document.getElementById('techSection');
-    if (secSel) secSel.innerHTML = '<option value="">Select Section</option>';
-    if (!dept) return;
-    API.call('getSectionList')
-      .then(function(sections) {
-        if (secSel) {
-          (sections || []).forEach(function(s) {
-            var opt = document.createElement('option');
-            opt.value = s.Section;
-            opt.textContent = s.Section || '';
-            secSel.appendChild(opt);
-          });
-        }
-      })
-      .catch(function() {});
-  };
-
-  window.openTechnicianForm = function() {
-    var eti = document.getElementById('editTechId'); if (eti) eti.value = '';
-    var el = document.getElementById('techEmpId'); if (el) el.disabled = false;
-    resetForm('technicianForm');
-    loadTechDepartments();
-    var ts = document.getElementById('techSection'); if (ts) ts.innerHTML = '<option value="">Select Section</option>';
-    populateSelectFromList('techSkill', CONSTANTS.TECH_SKILLS, 'Select Skill');
-    populateSelectFromList('techShift', CONSTANTS.TECH_SHIFTS, 'Select Shift');
-    openModalForm('technicianForm', 'Add Technician');
-  };
-
-  window.editTechnician = function(id) {
-    var item = techniciansData.find(function(r) { return r.EmployeeID === id; });
-    if (!item) return;
-    loadTechDepartments();
-    populateSelectFromList('techSkill', CONSTANTS.TECH_SKILLS, 'Select Skill');
-    populateSelectFromList('techShift', CONSTANTS.TECH_SHIFTS, 'Select Shift');
-    setFormData('technicianForm', item);
-    var eti = document.getElementById('editTechId'); if (eti) eti.value = id;
-    var el = document.getElementById('techEmpId'); if (el) el.disabled = true;
-    onTechDeptChange();
-    setTimeout(function() {
-      if (item.Section) {
-        var ts = document.getElementById('techSection'); if (ts) ts.value = item.Section;
-      }
-    }, 300);
-    openModalForm('technicianForm', 'Edit Technician - ' + id);
-  };
-
-  window.saveTechnician = function(e) {
-    e.preventDefault();
-    var data = getFormData('technicianForm');
-    var id = document.getElementById('editTechId').value;
-    App.showLoading(true);
-
-    if (id) {
-      data.id = id;
-      API.call('updateTechnician', data)
-        .then(function(result) {
-          techniciansData = result || techniciansData;
-          App.showLoading(false);
-          hideModal('technicianFormModal');
-          App.showToast('Technician updated successfully');
-          renderTechniciansTable();
-        })
-        .catch(function(err) {
-          App.showLoading(false);
-          App.showToast(err.message || 'Failed to update technician', 'error');
-        });
-    } else {
-      API.call('addTechnician', data)
-        .then(function(result) {
-          techniciansData = result || techniciansData;
-          App.showLoading(false);
-          hideModal('technicianFormModal');
-          App.showToast('Technician added successfully');
-          renderTechniciansTable();
-        })
-        .catch(function(err) {
-          App.showLoading(false);
-          App.showToast(err.message || 'Failed to add technician', 'error');
-        });
-    }
-    return false;
-  };
-
-  window.deleteTechnician = function(id) {
-    showConfirm('Delete Technician', 'Are you sure you want to delete this technician?', function() {
-      App.showLoading(true);
-      API.call('deleteTechnician', { id: id })
-        .then(function(result) {
-          techniciansData = result || techniciansData;
-          App.showLoading(false);
-          App.showToast('Technician deleted successfully');
-          renderTechniciansTable();
-        })
-        .catch(function(err) {
-          App.showLoading(false);
-          App.showToast('Failed to delete technician', 'error');
-        });
+  function bindEvents(){
+    u.$('#btnAddTech').addEventListener('click',function(){
+      _state.editId=null;
+      u.resetForm(u.$('#techForm'));
+      u.$('#techModalTitle').textContent='Add Technician';
+      u.$('#techModal').style.display='flex';
     });
-  };
+    u.$('#btnCloseTechModal').addEventListener('click',function(){
+      u.$('#techModal').style.display='none';
+    });
+    u.$('#btnCancelTech').addEventListener('click',function(){
+      u.$('#techModal').style.display='none';
+    });
+    u.$('#btnSaveTech').addEventListener('click',function(){
+      saveTech();
+    });
+    var searchInput=u.$('#techSearch');
+    searchInput.addEventListener('input',u.debounce(function(){
+      _state.search=searchInput.value.trim();
+      load();
+    },400));
+    u.$('#techTable').addEventListener('click',function(e){
+      var btn=e.target.closest('[data-action]');
+      if(!btn)return;
+      var id=parseInt(btn.closest('tr').dataset.id);
+      if(btn.dataset.action==='edit')editTech(id);
+      else if(btn.dataset.action==='delete')deleteTech(id);
+    });
+  }
 
-  window.searchTechniciansTable = function() {
-    var query = document.getElementById('technicianSearch').value;
-    if (!query) { renderTechniciansTable(); return; }
-    App.showLoading(true);
-    API.call('searchTechnicians', { query: query })
-      .then(function(result) {
-        techniciansData = result;
-        App.showLoading(false);
-        techniciansPage = 1;
-        renderTechniciansTable();
-      })
-      .catch(function(err) {
-        App.showLoading(false);
-        App.showToast('Search failed', 'error');
+  function load(){
+    u.showLoading(true);
+    var params={};
+    if(_state.search)params.Search=_state.search;
+    C.api.call('getTechnicians',params).then(function(data){
+      _data=data||[];
+      render();
+    }).catch(function(){
+      _data=[];
+      render();
+    }).finally(function(){u.showLoading(false);});
+  }
+
+  function render(){
+    var rows=[];
+    for(var i=0;i<_data.length;i++){
+      var t=_data[i];
+      rows.push(
+        '<tr data-id="'+(t.TechnicianID||t.EmployeeID)+'">',
+          '<td>'+u.escHtml(t.EmployeeID)+'</td>',
+          '<td>'+u.escHtml(t.TechnicianName||t.Name||'')+'</td>',
+          '<td>'+u.badge(t.Skill||'','info')+'</td>',
+          '<td>'+u.escHtml(t.Shift||'')+'</td>',
+          '<td>'+u.statusBadge(t.Status)+'</td>',
+          '<td class="actions">',
+            '<button class="btn-icon" data-action="edit" title="Edit">'+u.icons.edit+'</button>',
+            '<button class="btn-icon btn-danger" data-action="delete" title="Delete">'+u.icons.trash+'</button>',
+          '</td>',
+        '</tr>'
+      );
+    }
+    u.renderTable(u.$('#techTable'),{
+      headers:['Employee ID','Name','Skill','Shift','Status','Actions'],
+      rows:rows,
+      emptyMsg:'No technicians found'
+    });
+  }
+
+  function getFormData(){
+    return{
+      EmployeeID:u.getVal('#tEmployeeId'),
+      TechnicianName:u.getVal('#tName'),
+      Skill:u.getVal('#tSkill'),
+      Shift:u.getVal('#tShift'),
+      Status:u.getVal('#tStatus')
+    };
+  }
+
+  function saveTech(){
+    var d=getFormData();
+    if(!d.EmployeeID||!d.TechnicianName||!d.Skill||!d.Shift||!d.Status){
+      u.showToast('Please fill all required fields','error');
+      return;
+    }
+    u.showLoading(true);
+    var action=_state.editId?'updateTechnician':'addTechnician';
+    if(_state.editId)d.TechnicianID=_state.editId;
+    C.api.call(action,d).then(function(){
+      u.showToast('Technician saved successfully','success');
+      u.$('#techModal').style.display='none';
+      load();
+    }).catch(function(e){
+      u.showToast('Error saving technician: '+(e.message||e),'error');
+      u.showLoading(false);
+    });
+  }
+
+  function editTech(id){
+    var t=null;
+    for(var i=0;i<_data.length;i++){
+      var tid=_data[i].TechnicianID||_data[i].EmployeeID;
+      if(tid===id){t=_data[i];break;}
+    }
+    if(!t)return;
+    _state.editId=id;
+    u.$('#techModalTitle').textContent='Edit Technician';
+    u.$('#tTechId').value=t.TechnicianID||'';
+    u.$('#tEmployeeId').value=t.EmployeeID||'';
+    u.$('#tName').value=t.TechnicianName||t.Name||'';
+    u.$('#tSkill').value=t.Skill||'';
+    u.$('#tShift').value=t.Shift||'';
+    u.$('#tStatus').value=t.Status||'Active';
+    u.$('#techModal').style.display='flex';
+  }
+
+  function deleteTech(id){
+    u.showConfirm('Are you sure you want to delete this technician?',function(){
+      u.showLoading(true);
+      C.api.call('deleteTechnician',{TechnicianID:id}).then(function(){
+        u.showToast('Technician deleted','success');
+        load();
+      }).catch(function(e){
+        u.showToast('Error deleting: '+(e.message||e),'error');
+        u.showLoading(false);
       });
-  };
+    });
+  }
+
+  function destroy(){
+    _data=[];
+    _state={page:1,perPage:25,search:'',editId:null};
+  }
+
+  C.router.registerPage('technicians',{
+    title:'Technician Master',
+    init:init,
+    load:load,
+    destroy:destroy
+  });
 })();

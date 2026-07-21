@@ -1,460 +1,462 @@
-/* ============================================================
-   spareparts.js — Spare Parts Page Module
-   GAS-identical: SparePartsPage.html
-   ============================================================ */
+(function () {
+  const $ = CMMS.utils.$;
+  const qs = CMMS.utils.qs;
+  const qsa = CMMS.utils.qsa;
+  const escHtml = CMMS.utils.escHtml;
+  const setText = CMMS.utils.setText;
+  const setHtml = CMMS.utils.setHtml;
+  const getVal = CMMS.utils.getVal;
+  const setVal = CMMS.utils.setVal;
+  const showEl = CMMS.utils.showEl;
+  const hideEl = CMMS.utils.hideEl;
+  const formatDate = CMMS.utils.formatDate;
+  const getFormData = CMMS.utils.getFormData;
+  const resetForm = CMMS.utils.resetForm;
+  const renderTable = CMMS.utils.renderTable;
+  const badge = CMMS.utils.badge;
+  const statusBadge = CMMS.utils.statusBadge;
+  const debounce = CMMS.utils.debounce;
+  const showToast = CMMS.utils.showToast;
+  const showConfirm = CMMS.utils.showConfirm;
+  const showModal = CMMS.utils.showModal;
+  const hideModal = CMMS.utils.hideModal;
+  const showLoading = CMMS.utils.showLoading;
+  const api = CMMS.api;
 
-(function() {
-  var spData = [];
-  var spPage = 1;
-  var spFilter = { category: '', status: '', manufacturer: '', supplier: '' };
-  var spLowStockOnly = false;
-  var spSearchDebounce = null;
+  let state = {
+    parts: [],
+    filtered: [],
+    lowStock: [],
+    categories: [],
+    manufacturers: [],
+    suppliers: [],
+    searchQuery: '',
+    filterCategory: '',
+    filterStatus: '',
+    filterManufacturer: '',
+    filterSupplier: '',
+    formMode: 'add',
+    editingId: null,
+    currentPage: 1,
+    perPage: 20
+  };
 
-  App.registerPage('spareparts', render, load);
+  function getContainer() {
+    return CMMS.loader.getContainer();
+  }
+
+  async function loadData() {
+    showLoading(true);
+    try {
+      const [parts, lowStock] = await Promise.all([
+        api.call('getSpareParts'),
+        api.call('getLowStockParts')
+      ]);
+      state.parts = parts || [];
+      state.filtered = [...state.parts];
+      state.lowStock = lowStock || [];
+      state.categories = [...new Set(state.parts.map(p => p.Category).filter(Boolean))];
+      state.manufacturers = [...new Set(state.parts.map(p => p.Manufacturer).filter(Boolean))];
+      state.suppliers = [...new Set(state.parts.map(p => p.Supplier).filter(Boolean))];
+    } catch (e) {
+      showToast('Error loading spare parts: ' + e.message, 'error');
+    }
+    showLoading(false);
+  }
+
+  function formatCurrency(val) {
+    return '$' + (parseFloat(val) || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
 
   function render() {
-    var el = document.getElementById('page-spareparts');
-    el.innerHTML =
-      '<div id="sparepartsPage">' +
-        '<div id="lowStockAlertBar" style="display:none;margin-bottom:12px">' +
-          '<div class="card" style="border-left:4px solid var(--warning);margin-bottom:0">' +
-            '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px">' +
-              '<span class="badge badge-warning" id="lowStockCountBadge">0</span>' +
-              '<span style="color:var(--text-primary);font-weight:500">Low Stock Parts Alert</span>' +
-              '<button class="btn btn-sm btn-warning" onclick="toggleLowStockView()">View Low Stock</button>' +
-              '<button class="btn btn-sm btn-secondary" onclick="var el=document.getElementById(\'lowStockAlertBar\');el&&(el.style.display=\'none\')">Dismiss</button>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="filter-bar" id="spFilterBar">' +
-          '<div class="form-group">' +
-            '<label>Category</label>' +
-            '<select class="form-control" id="spFilterCategory">' +
-              '<option value="">All Categories</option>' +
-            '</select>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label>Status</label>' +
-            '<select class="form-control" id="spFilterStatus">' +
-              '<option value="">All Status</option>' +
-              '<option value="Active">Active</option>' +
-              '<option value="Inactive">Inactive</option>' +
-            '</select>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label>Manufacturer</label>' +
-            '<input type="text" class="form-control" id="spFilterManufacturer" placeholder="Manufacturer">' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label>Supplier</label>' +
-            '<input type="text" class="form-control" id="spFilterSupplier" placeholder="Supplier">' +
-          '</div>' +
-          '<div class="form-group" style="align-self:flex-end">' +
-            '<button class="btn btn-primary btn-sm" onclick="applyFilter()">Apply</button>' +
-            '<button class="btn btn-secondary btn-sm" onclick="clearFilter()">Clear</button>' +
-          '</div>' +
-        '</div>' +
-        '<div class="card">' +
-          '<div class="card-header">' +
-            '<div class="card-title">Spare Parts Inventory</div>' +
-            '<div class="card-actions">' +
-              '<div class="search-box">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
-                '<input type="text" class="form-control" id="spSearch" placeholder="Search parts..." onkeyup="searchSPTable()">' +
-              '</div>' +
-              '<button class="btn btn-primary" onclick="openSPForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add Part</button>' +
-              '<button class="btn btn-secondary" onclick="exportCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>' +
-              '<button class="btn btn-warning" id="lowStockToggle" onclick="toggleLowStockView()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2L2 18h16L10 2z"/><line x1="10" y1="8" x2="10" y2="12"/><line x1="10" y1="14" x2="10.01" y2="14"/></svg> Low Stock</button>' +
-            '</div>' +
-          '</div>' +
-          '<div id="spTableContainer"></div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="modal-overlay" id="spFormModal" style="display:none">' +
-        '<div class="modal modal-wide" style="max-width:900px">' +
-          '<div class="modal-header">' +
-            '<div class="modal-title" id="spFormTitle">Add Spare Part</div>' +
-            '<button class="modal-close" onclick="hideModal(\'spFormModal\')">&times;</button>' +
-          '</div>' +
-          '<form id="spForm" onsubmit="return saveSP(event)">' +
-            '<div class="modal-body">' +
-              '<input type="hidden" name="PartCode" id="editSpId">' +
-              '<div class="form-row">' +
-                '<div class="form-group">' +
-                  '<label>Part Code</label>' +
-                  '<input type="text" name="PartCode" class="form-control" id="spPartCode" placeholder="Auto-generated">' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Part Name *</label>' +
-                  '<input type="text" name="PartName" class="form-control" required>' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group">' +
-                  '<label>Category</label>' +
-                  '<input type="text" name="Category" class="form-control">' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Manufacturer</label>' +
-                  '<input type="text" name="Manufacturer" class="form-control">' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group">' +
-                  '<label>Machine Compatibility</label>' +
-                  '<input type="text" name="MachineCompatibility" class="form-control">' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Asset Compatibility</label>' +
-                  '<input type="text" name="AssetCompatibility" class="form-control">' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-row-3">' +
-                '<div class="form-group">' +
-                  '<label>Unit</label>' +
-                  '<select name="Unit" class="form-control" id="spFormUnit"></select>' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Store Location</label>' +
-                  '<input type="text" name="StoreLocation" class="form-control">' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Bin Number</label>' +
-                  '<input type="text" name="BinNumber" class="form-control">' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-row-4">' +
-                '<div class="form-group">' +
-                  '<label>Current Stock</label>' +
-                  '<input type="number" name="CurrentStock" class="form-control" min="0" step="0.01">' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Minimum Stock</label>' +
-                  '<input type="number" name="MinimumStock" class="form-control" min="0" step="0.01">' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Maximum Stock</label>' +
-                  '<input type="number" name="MaximumStock" class="form-control" min="0" step="0.01">' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Reorder Level</label>' +
-                  '<input type="number" name="ReorderLevel" class="form-control" min="0" step="0.01">' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-row-3">' +
-                '<div class="form-group">' +
-                  '<label>Supplier</label>' +
-                  '<input type="text" name="Supplier" class="form-control">' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Unit Cost</label>' +
-                  '<input type="number" name="UnitCost" class="form-control" min="0" step="0.01">' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Barcode</label>' +
-                  '<input type="text" name="Barcode" class="form-control">' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group" style="flex:1">' +
-                  '<label>Status</label>' +
-                  '<select name="Status" class="form-control">' +
-                    '<option value="Active">Active</option>' +
-                    '<option value="Inactive">Inactive</option>' +
-                  '</select>' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-group">' +
-                '<label>Remarks</label>' +
-                '<textarea name="Remarks" class="form-control" rows="3"></textarea>' +
-              '</div>' +
-            '</div>' +
-            '<div class="modal-footer">' +
-              '<button type="button" class="btn btn-secondary" onclick="hideModal(\'spFormModal\')">Cancel</button>' +
-              '<button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>' +
-            '</div>' +
-          '</form>' +
-        '</div>' +
-      '</div>' +
-      '<div class="modal-overlay" id="spHistoryModal" style="display:none">' +
-        '<div class="modal modal-wide" style="max-width:800px">' +
-          '<div class="modal-header">' +
-            '<div class="modal-title">Stock History - <span id="spHistoryPartCode"></span></div>' +
-            '<button class="modal-close" onclick="hideModal(\'spHistoryModal\')">&times;</button>' +
-          '</div>' +
-          '<div class="modal-body">' +
-            '<div id="spHistoryContainer"></div>' +
-          '</div>' +
-          '<div class="modal-footer">' +
-            '<button type="button" class="btn btn-secondary" onclick="hideModal(\'spHistoryModal\')">Close</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
+    const c = getContainer();
+    const lowStockAlert = state.lowStock.length > 0 ? `
+      <div class="alert alert-warning">
+        <span class="icon-alert"></span>
+        <strong>Low Stock Alert:</strong> ${state.lowStock.length} item(s) below minimum stock level.
+        <button class="btn btn-sm btn-warning" id="btnShowLowStock">View</button>
+      </div>
+    ` : '';
+
+    const categoryOptions = state.categories.map(c => `<option value="${escHtml(c)}" ${state.filterCategory === c ? 'selected' : ''}>${escHtml(c)}</option>`).join('');
+    const manufacturerOptions = state.manufacturers.map(m => `<option value="${escHtml(m)}" ${state.filterManufacturer === m ? 'selected' : ''}>${escHtml(m)}</option>`).join('');
+    const supplierOptions = state.suppliers.map(s => `<option value="${escHtml(s)}" ${state.filterSupplier === s ? 'selected' : ''}>${escHtml(s)}</option>`).join('');
+
+    c.innerHTML = `
+      ${lowStockAlert}
+      <div class="page-header">
+        <h2>Spare Parts</h2>
+        <div class="page-actions">
+          <button class="btn btn-primary" id="btnAddPart"><span class="icon-plus"></span> Add Part</button>
+          <button class="btn btn-secondary" id="btnExportPartsCSV"><span class="icon-download"></span> Export CSV</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <input type="text" class="form-control" id="spSearch" placeholder="Search parts..." value="${escHtml(state.searchQuery)}">
+        <select class="form-control" id="spFilterCategory">
+          <option value="">All Categories</option>
+          ${categoryOptions}
+        </select>
+        <select class="form-control" id="spFilterStatus">
+          <option value="">All Status</option>
+          <option value="Active" ${state.filterStatus === 'Active' ? 'selected' : ''}>Active</option>
+          <option value="Inactive" ${state.filterStatus === 'Inactive' ? 'selected' : ''}>Inactive</option>
+        </select>
+        <select class="form-control" id="spFilterManufacturer">
+          <option value="">All Manufacturers</option>
+          ${manufacturerOptions}
+        </select>
+        <select class="form-control" id="spFilterSupplier">
+          <option value="">All Suppliers</option>
+          ${supplierOptions}
+        </select>
+      </div>
+      <div class="table-container" id="spTableContainer"></div>
+      <div class="pagination" id="spPagination"></div>
+    `;
+    renderTableData();
+    bindEvents();
   }
 
-  function load() {
-    App.showLoading(true);
-    API.call('getSpareParts')
-      .then(function(data) {
-        spData = data || [];
-        App.showLoading(false);
-        renderSPTable();
-        populateFilterCategory();
-        checkLowStockAlert();
-      })
-      .catch(function(err) {
-        App.showLoading(false);
-        App.showToast('Failed to load spare parts', 'error');
+  function bindEvents() {
+    qs('#btnAddPart').addEventListener('click', () => openAddForm());
+    qs('#btnExportPartsCSV').addEventListener('click', exportCSV);
+    qs('#spSearch').addEventListener('input', debounce(() => {
+      state.searchQuery = qs('#spSearch').value;
+      filterRecords();
+    }, 300));
+    qs('#spFilterCategory').addEventListener('change', () => {
+      state.filterCategory = qs('#spFilterCategory').value;
+      filterRecords();
+    });
+    qs('#spFilterStatus').addEventListener('change', () => {
+      state.filterStatus = qs('#spFilterStatus').value;
+      filterRecords();
+    });
+    qs('#spFilterManufacturer').addEventListener('change', () => {
+      state.filterManufacturer = qs('#spFilterManufacturer').value;
+      filterRecords();
+    });
+    qs('#spFilterSupplier').addEventListener('change', () => {
+      state.filterSupplier = qs('#spFilterSupplier').value;
+      filterRecords();
+    });
+
+    const lowStockBtn = qs('#btnShowLowStock');
+    if (lowStockBtn) {
+      lowStockBtn.addEventListener('click', () => {
+        showModal('Low Stock Parts', `
+          <table class="data-table">
+            <thead><tr><th>Part Code</th><th>Part Name</th><th>Current Stock</th><th>Min Stock</th></tr></thead>
+            <tbody>
+              ${state.lowStock.map(p => `<tr>
+                <td>${escHtml(p.PartCode || '')}</td>
+                <td>${escHtml(p.PartName || '')}</td>
+                <td>${p.CurrentStock || 0}</td>
+                <td>${p.MinimumStock || 0}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        `, [{ text: 'Close', class: 'btn-secondary', action: () => hideModal() }]);
       });
-  }
-
-  function checkLowStockAlert() {
-    API.call('getLowStockParts')
-      .then(function(data) {
-        var count = data ? data.length : 0;
-        var bar = document.getElementById('lowStockAlertBar');
-        var badge = document.getElementById('lowStockCountBadge');
-        if (count > 0) {
-          if (bar) bar.style.display = 'block';
-          if (badge) badge.textContent = count + ' part' + (count > 1 ? 's' : '') + ' below reorder level';
-        } else {
-          if (bar) bar.style.display = 'none';
-        }
-      })
-      .catch(function() {});
-  }
-
-  function populateFilterCategory() {
-    var cats = getUniqueValues(spData, 'Category');
-    var sel = document.getElementById('spFilterCategory');
-    if (sel) sel.innerHTML = '<option value="">All Categories</option>';
-    cats.forEach(function(c) {
-      var opt = document.createElement('option');
-      opt.value = c;
-      opt.textContent = c;
-      if (sel) sel.appendChild(opt);
-    });
-  }
-
-  function getUniqueValues(data, field) {
-    var map = {};
-    data.forEach(function(row) {
-      if (row[field]) map[row[field]] = true;
-    });
-    return Object.keys(map).sort();
-  }
-
-  function renderSPTable() {
-    renderTable(spData, [
-      { key: 'PartCode', label: 'Part Code' },
-      { key: 'PartName', label: 'Part Name' },
-      { key: 'Category', label: 'Category' },
-      { key: 'Unit', label: 'Unit' },
-      { key: 'CurrentStock', label: 'Stock' },
-      { key: 'MinimumStock', label: 'Min Stock' },
-      { key: 'UnitCost', label: 'Unit Cost', format: function(v) { return parseFloat(v || 0).toFixed(2); } },
-      { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Active': 'success', 'Inactive': 'danger' } }
-    ], [
-      { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editSP('{id}')", idField: 'PartCode' },
-      { label: 'History', icon: 'view', color: 'primary', onclick: "showStockHistory('{id}')", idField: 'PartCode' },
-      { label: 'Del', icon: 'trash', color: 'danger', onclick: "deleteSP('{id}')", idField: 'PartCode' }
-    ], spPage, PAGE_SIZE, 'spTableContainer');
-    registerPageState('spTableContainer', function(p) { spPage = p; renderSPTable(); });
-  }
-
-  window.openSPForm = function() {
-    var el = document.getElementById('editSpId'); if (el) el.value = '';
-    resetForm('spForm');
-    var el2 = document.getElementById('spPartCode'); if (el2) el2.readOnly = false;
-    populateSelectFromList('spFormUnit', CONSTANTS.UNITS, 'Select Unit');
-    openModalForm('spForm', 'Add Spare Part');
-  };
-
-  window.editSP = function(id) {
-    var item = spData.find(function(r) { return r.PartCode === id; });
-    if (!item) return;
-    populateSelectFromList('spFormUnit', CONSTANTS.UNITS, 'Select Unit');
-    setFormData('spForm', item);
-    var el = document.getElementById('editSpId'); if (el) el.value = id;
-    var el2 = document.getElementById('spPartCode'); if (el2) el2.readOnly = true;
-    openModalForm('spForm', 'Edit Part - ' + id);
-  };
-
-  window.saveSP = function(e) {
-    e.preventDefault();
-    var data = getFormData('spForm');
-    var id = document.getElementById('editSpId').value;
-    App.showLoading(true);
-    if (id) {
-      API.call('updateSparePart', { id: id, data: data })
-        .then(function(result) {
-          spData = result || spData;
-          App.showLoading(false);
-          hideModal('spFormModal');
-          App.showToast('Part updated successfully', 'success');
-          renderSPTable();
-          if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters();
-          if (typeof notifyQRDataChanged === 'function') notifyQRDataChanged();
-        })
-        .catch(function(err) {
-          App.showLoading(false);
-          App.showToast(err.message || 'Failed to update part', 'error');
-        });
-    } else {
-      API.call('addSparePart', data)
-        .then(function(result) {
-          spData = result || spData;
-          App.showLoading(false);
-          hideModal('spFormModal');
-          App.showToast('Part added successfully', 'success');
-          renderSPTable();
-          if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters();
-          if (typeof notifyQRDataChanged === 'function') notifyQRDataChanged();
-        })
-        .catch(function(err) {
-          App.showLoading(false);
-          App.showToast(err.message || 'Failed to add part', 'error');
-        });
     }
-  };
+  }
 
-  window.deleteSP = function(id) {
-    showConfirm('Delete Part', 'Are you sure you want to delete this spare part?', function() {
-      App.showLoading(true);
-      API.call('deleteSparePart', { id: id })
-        .then(function(result) {
-          spData = result || spData;
-          App.showLoading(false);
-          App.showToast('Part deleted successfully', 'success');
-          renderSPTable();
-          if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters();
-          if (typeof notifyQRDataChanged === 'function') notifyQRDataChanged();
-        })
-        .catch(function(err) {
-          App.showLoading(false);
-          App.showToast(err.message || 'Failed to delete part', 'error');
-        });
+  function filterRecords() {
+    const q = (state.searchQuery || '').toLowerCase();
+    state.filtered = state.parts.filter(p => {
+      const matchSearch = !q ||
+        (p.PartCode || '').toLowerCase().includes(q) ||
+        (p.PartName || '').toLowerCase().includes(q) ||
+        (p.Category || '').toLowerCase().includes(q) ||
+        (p.Manufacturer || '').toLowerCase().includes(q) ||
+        (p.Supplier || '').toLowerCase().includes(q) ||
+        (p.Barcode || '').toLowerCase().includes(q);
+      const matchCategory = !state.filterCategory || p.Category === state.filterCategory;
+      const matchStatus = !state.filterStatus || p.Status === state.filterStatus;
+      const matchMfr = !state.filterManufacturer || p.Manufacturer === state.filterManufacturer;
+      const matchSup = !state.filterSupplier || p.Supplier === state.filterSupplier;
+      return matchSearch && matchCategory && matchStatus && matchMfr && matchSup;
     });
-  };
+    state.currentPage = 1;
+    renderTableData();
+  }
 
-  window.searchSPTable = function() {
-    var query = document.getElementById('spSearch').value;
-    if (!query) { renderSPTable(); return; }
-    if (spSearchDebounce) clearTimeout(spSearchDebounce);
-    spSearchDebounce = setTimeout(function() {
-      App.showLoading(true);
-      API.call('searchSpareParts', { query: query })
-        .then(function(result) {
-          spData = result;
-          App.showLoading(false);
-          spPage = 1;
-          renderSPTable();
-        })
-        .catch(function(err) {
-          App.showLoading(false);
-          App.showToast('Search failed', 'error');
-        });
-    }, 300);
-  };
+  function renderTableData() {
+    const start = (state.currentPage - 1) * state.perPage;
+    const paged = state.filtered.slice(start, start + state.perPage);
+    const totalPages = Math.ceil(state.filtered.length / state.perPage);
 
-  window.applyFilter = function() {
-    spFilter.category = document.getElementById('spFilterCategory').value;
-    spFilter.status = document.getElementById('spFilterStatus').value;
-    spFilter.manufacturer = document.getElementById('spFilterManufacturer').value;
-    spFilter.supplier = document.getElementById('spFilterSupplier').value;
-    App.showLoading(true);
-    API.call('filterSpareParts', spFilter)
-      .then(function(data) {
-        spData = data || [];
-        App.showLoading(false);
-        spPage = 1;
-        renderSPTable();
-      })
-      .catch(function(err) {
-        App.showLoading(false);
-        App.showToast('Filter failed', 'error');
-      });
-  };
+    const rows = paged.map(p => `
+      <tr>
+        <td>${escHtml(p.PartCode || '')}</td>
+        <td>${escHtml(p.PartName || '')}</td>
+        <td>${escHtml(p.Category || '')}</td>
+        <td>${escHtml(p.Unit || '')}</td>
+        <td class="${(p.CurrentStock || 0) <= (p.MinimumStock || 0) ? 'text-danger fw-bold' : ''}">${p.CurrentStock || 0}</td>
+        <td>${p.MinimumStock || 0}</td>
+        <td>${formatCurrency(p.UnitCost)}</td>
+        <td>${statusBadge(p.Status)}</td>
+        <td class="actions-cell">
+          <button class="btn btn-sm btn-primary btn-edit-part" data-id="${p.PartID || p.ID}" title="Edit"><span class="icon-edit"></span></button>
+          <button class="btn btn-sm btn-info btn-stock-history" data-id="${p.PartID || p.ID}" data-code="${escHtml(p.PartCode || '')}" title="Stock History"><span class="icon-history"></span></button>
+          <button class="btn btn-sm btn-danger btn-delete-part" data-id="${p.PartID || p.ID}" title="Delete"><span class="icon-trash"></span></button>
+        </td>
+      </tr>
+    `).join('');
 
-  window.clearFilter = function() {
-    var el = document.getElementById('spFilterCategory'); if (el) el.value = '';
-    var el2 = document.getElementById('spFilterStatus'); if (el2) el2.value = '';
-    var el3 = document.getElementById('spFilterManufacturer'); if (el3) el3.value = '';
-    var el4 = document.getElementById('spFilterSupplier'); if (el4) el4.value = '';
-    spFilter = { category: '', status: '', manufacturer: '', supplier: '' };
-    load();
-  };
+    setHtml('#spTableContainer', `
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Part Code</th><th>Part Name</th><th>Category</th><th>Unit</th>
+            <th>Current Stock</th><th>Min Stock</th><th>Unit Cost</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>${rows || '<tr><td colspan="9" class="text-center">No spare parts found</td></tr>'}</tbody>
+      </table>
+    `);
 
-  window.showStockHistory = function(partCode) {
-    var el = document.getElementById('spHistoryPartCode'); if (el) el.textContent = partCode;
-    var el2 = document.getElementById('spHistoryContainer'); if (el2) el2.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg><h3>Loading...</h3></div>';
-    showModal('spHistoryModal');
-    API.call('getStockHistory', { partCode: partCode })
-      .then(function(data) {
-        if (!data || data.length === 0) {
-          var spc = document.getElementById('spHistoryContainer'); if (spc) spc.innerHTML =
-            '<div class="empty-state">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>' +
-              '<h3>No History Found</h3>' +
-              '<p>No stock movements recorded for this part.</p>' +
-            '</div>';
-        } else {
-          renderTable(data, [
-            { key: 'Date', label: 'Date', datetime: true },
-            { key: 'TransactionType', label: 'Type' },
-            { key: 'Quantity', label: 'Qty' },
-            { key: 'BalanceBefore', label: 'Before' },
-            { key: 'BalanceAfter', label: 'After' },
-            { key: 'ReferenceNo', label: 'Reference' }
-          ], null, 1, 10, 'spHistoryContainer');
-        }
-      })
-      .catch(function(err) {
-        App.showToast('Failed to load stock history', 'error');
-      });
-  };
+    renderPagination(totalPages);
 
-  window.exportCSV = function() {
-    App.showLoading(true);
-    API.call('exportSparePartsCSV')
-      .then(function(csvData) {
-        App.showLoading(false);
-        if (!csvData) { App.showToast('No data to export', 'warning'); return; }
-        var blob = new Blob([csvData], { type: 'text/csv' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'SpareParts_' + new Date().toISOString().slice(0, 10) + '.csv';
-        a.click();
-        URL.revokeObjectURL(url);
-        App.showToast('Export completed', 'success');
-      })
-      .catch(function(err) {
-        App.showLoading(false);
-        App.showToast('Export failed', 'error');
-      });
-  };
+    qsa('.btn-edit-part').forEach(btn => btn.addEventListener('click', () => openEditForm(btn.dataset.id)));
+    qsa('.btn-stock-history').forEach(btn => btn.addEventListener('click', () => showStockHistory(btn.dataset.code)));
+    qsa('.btn-delete-part').forEach(btn => btn.addEventListener('click', () => deletePart(btn.dataset.id)));
+  }
 
-  window.toggleLowStockView = function() {
-    spLowStockOnly = !spLowStockOnly;
-    var btn = document.getElementById('lowStockToggle');
-    if (spLowStockOnly) {
-      if (btn) btn.classList.add('active');
-      App.showLoading(true);
-      API.call('getLowStockParts')
-        .then(function(data) {
-          spData = data || [];
-          App.showLoading(false);
-          spPage = 1;
-          renderSPTable();
-        })
-        .catch(function(err) {
-          App.showLoading(false);
-          App.showToast('Failed to load low stock parts', 'error');
-        });
-    } else {
-      if (btn) btn.classList.remove('active');
-      load();
+  function renderPagination(totalPages) {
+    const pag = qs('#spPagination');
+    if (!pag || totalPages <= 1) { if (pag) pag.innerHTML = ''; return; }
+    let html = `<span class="page-info">Page ${state.currentPage} of ${totalPages}</span><div class="page-buttons">`;
+    if (state.currentPage > 1) html += `<button class="btn btn-sm btn-page" data-page="${state.currentPage - 1}">&laquo; Prev</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || Math.abs(i - state.currentPage) <= 2) {
+        html += `<button class="btn btn-sm btn-page ${i === state.currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+      } else if (Math.abs(i - state.currentPage) === 3) {
+        html += '<span class="page-ellipsis">...</span>';
+      }
     }
-  };
+    if (state.currentPage < totalPages) html += `<button class="btn btn-sm btn-page" data-page="${state.currentPage + 1}">Next &raquo;</button>`;
+    html += '</div>';
+    pag.innerHTML = html;
+    qsa('.btn-page', pag).forEach(btn => btn.addEventListener('click', () => {
+      state.currentPage = parseInt(btn.dataset.page);
+      renderTableData();
+    }));
+  }
+
+  function openAddForm() {
+    state.formMode = 'add';
+    state.editingId = null;
+    showPartForm();
+  }
+
+  function openEditForm(id) {
+    const part = state.parts.find(p => (p.PartID || p.ID) == id);
+    if (!part) return;
+    state.formMode = 'edit';
+    state.editingId = id;
+    showPartForm(part);
+  }
+
+  function showPartForm(part) {
+    const p = part || {};
+    const isEdit = state.formMode === 'edit';
+
+    showModal(isEdit ? 'Edit Spare Part' : 'Add Spare Part', `
+      <form id="spForm" class="modal-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Part Name *</label>
+            <input type="text" class="form-control" name="PartName" value="${escHtml(p.PartName || '')}" required>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <input type="text" class="form-control" name="Category" value="${escHtml(p.Category || '')}" list="categoryList">
+            <datalist id="categoryList">
+              ${state.categories.map(c => `<option value="${escHtml(c)}">`).join('')}
+            </datalist>
+          </div>
+          <div class="form-group">
+            <label>Manufacturer</label>
+            <input type="text" class="form-control" name="Manufacturer" value="${escHtml(p.Manufacturer || '')}">
+          </div>
+          <div class="form-group">
+            <label>Machine Compatibility</label>
+            <input type="text" class="form-control" name="MachineCompatibility" value="${escHtml(p.MachineCompatibility || '')}">
+          </div>
+          <div class="form-group">
+            <label>Asset Compatibility</label>
+            <input type="text" class="form-control" name="AssetCompatibility" value="${escHtml(p.AssetCompatibility || '')}">
+          </div>
+          <div class="form-group">
+            <label>Unit *</label>
+            <select class="form-control" name="Unit" required>
+              <option value="">Select</option>
+              <option value="Pcs" ${p.Unit === 'Pcs' ? 'selected' : ''}>Pcs</option>
+              <option value="Kg" ${p.Unit === 'Kg' ? 'selected' : ''}>Kg</option>
+              <option value="Liter" ${p.Unit === 'Liter' ? 'selected' : ''}>Liter</option>
+              <option value="Meter" ${p.Unit === 'Meter' ? 'selected' : ''}>Meter</option>
+              <option value="Set" ${p.Unit === 'Set' ? 'selected' : ''}>Set</option>
+              <option value="Box" ${p.Unit === 'Box' ? 'selected' : ''}>Box</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Store Location</label>
+            <input type="text" class="form-control" name="StoreLocation" value="${escHtml(p.StoreLocation || '')}">
+          </div>
+          <div class="form-group">
+            <label>Bin Number</label>
+            <input type="text" class="form-control" name="BinNumber" value="${escHtml(p.BinNumber || '')}">
+          </div>
+          <div class="form-group">
+            <label>Current Stock</label>
+            <input type="number" class="form-control" name="CurrentStock" value="${p.CurrentStock || 0}" min="0" ${isEdit ? '' : ''}>
+          </div>
+          <div class="form-group">
+            <label>Minimum Stock</label>
+            <input type="number" class="form-control" name="MinimumStock" value="${p.MinimumStock || 0}" min="0">
+          </div>
+          <div class="form-group">
+            <label>Maximum Stock</label>
+            <input type="number" class="form-control" name="MaximumStock" value="${p.MaximumStock || 0}" min="0">
+          </div>
+          <div class="form-group">
+            <label>Reorder Level</label>
+            <input type="number" class="form-control" name="ReorderLevel" value="${p.ReorderLevel || 0}" min="0">
+          </div>
+          <div class="form-group">
+            <label>Supplier</label>
+            <input type="text" class="form-control" name="Supplier" value="${escHtml(p.Supplier || '')}">
+          </div>
+          <div class="form-group">
+            <label>Unit Cost</label>
+            <input type="number" class="form-control" name="UnitCost" value="${p.UnitCost || ''}" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Barcode</label>
+            <input type="text" class="form-control" name="Barcode" value="${escHtml(p.Barcode || '')}">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select class="form-control" name="Status">
+              <option value="Active" ${(!p.Status || p.Status === 'Active') ? 'selected' : ''}>Active</option>
+              <option value="Inactive" ${p.Status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label>Remarks</label>
+            <textarea class="form-control" name="Remarks" rows="2">${escHtml(p.Remarks || '')}</textarea>
+          </div>
+        </div>
+      </form>
+    `, [
+      { text: isEdit ? 'Update' : 'Save', class: 'btn-primary', action: () => savePart() },
+      { text: 'Cancel', class: 'btn-secondary', action: () => hideModal() }
+    ]);
+  }
+
+  async function savePart() {
+    const data = getFormData('#spForm');
+    if (!data.PartName || !data.Unit) {
+      showToast('Please fill all required fields', 'error');
+      return;
+    }
+    showLoading(true);
+    try {
+      if (state.formMode === 'edit') {
+        await api.mutate('updateSparePart', { PartID: state.editingId, ...data });
+        showToast('Part updated successfully', 'success');
+      } else {
+        await api.mutate('addSparePart', data);
+        showToast('Part added successfully', 'success');
+      }
+      hideModal();
+      await refreshAll();
+    } catch (e) {
+      showToast('Error saving part: ' + e.message, 'error');
+    }
+    showLoading(false);
+  }
+
+  async function deletePart(id) {
+    const confirmed = await showConfirm('Are you sure you want to delete this spare part?');
+    if (!confirmed) return;
+    showLoading(true);
+    try {
+      await api.mutate('deleteSparePart', { PartID: id });
+      showToast('Part deleted', 'success');
+      await refreshAll();
+    } catch (e) {
+      showToast('Error deleting part: ' + e.message, 'error');
+    }
+    showLoading(false);
+  }
+
+  async function showStockHistory(partCode) {
+    showLoading(true);
+    try {
+      const history = await api.call('getStockHistory', { PartCode: partCode }) || [];
+      showModal('Stock History - ' + partCode, `
+        <table class="data-table">
+          <thead>
+            <tr><th>Date</th><th>Type</th><th>Quantity</th><th>Balance Before</th><th>Balance After</th><th>Reference</th><th>Remarks</th></tr>
+          </thead>
+          <tbody>
+            ${history.map(h => `<tr>
+              <td>${formatDate(h.CreatedAt || h.TransactionDate)}</td>
+              <td>${badge(h.TransactionType)}</td>
+              <td>${h.Quantity || 0}</td>
+              <td>${h.BalanceBefore || 0}</td>
+              <td>${h.BalanceAfter || 0}</td>
+              <td>${escHtml(h.ReferenceNo || '')}</td>
+              <td>${escHtml(h.Remarks || '')}</td>
+            </tr>`).join('') || '<tr><td colspan="7" class="text-center">No history</td></tr>'}
+          </tbody>
+        </table>
+      `, [{ text: 'Close', class: 'btn-secondary', action: () => hideModal() }]);
+    } catch (e) {
+      showToast('Error loading stock history: ' + e.message, 'error');
+    }
+    showLoading(false);
+  }
+
+  async function exportCSV() {
+    try {
+      await api.call('exportSparePartsCSV');
+      showToast('CSV export initiated', 'success');
+    } catch (e) {
+      const headers = ['PartCode', 'PartName', 'Category', 'Unit', 'CurrentStock', 'MinimumStock', 'UnitCost', 'Status'];
+      const csvRows = [headers.join(',')];
+      state.filtered.forEach(p => {
+        csvRows.push(headers.map(h => `"${(p[h] || '').toString().replace(/"/g, '""')}"`).join(','));
+      });
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'spare_parts.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('CSV exported', 'success');
+    }
+  }
+
+  async function refreshAll() {
+    await loadData();
+    render();
+  }
+
+  CMMS.router.registerPage('spareparts', {
+    init: async function () {
+      await loadData();
+      render();
+    },
+    render: function () {
+      render();
+    },
+    destroy: function () {
+      state = { parts: [], filtered: [], lowStock: [], categories: [], manufacturers: [], suppliers: [], searchQuery: '', filterCategory: '', filterStatus: '', filterManufacturer: '', filterSupplier: '', formMode: 'add', editingId: null, currentPage: 1, perPage: 20 };
+    }
+  });
 })();

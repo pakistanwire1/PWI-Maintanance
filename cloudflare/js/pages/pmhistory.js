@@ -1,104 +1,170 @@
-/* ============================================================
-   pmhistory.js — PM History Page Module
-   Cloudflare Pages Frontend
-   ============================================================ */
-(function() {
-  var _records = [];
-  var _filtered = [];
-  var _machines = [];
+(function () {
+  const $ = CMMS.utils.$;
+  const qs = CMMS.utils.qs;
+  const qsa = CMMS.utils.qsa;
+  const escHtml = CMMS.utils.escHtml;
+  const formatDate = CMMS.utils.formatDate;
+  const formatDateTime = CMMS.utils.formatDateTime;
+  const getFormData = CMMS.utils.getFormData;
+  const setHtml = CMMS.utils.setHtml;
+  const renderTable = CMMS.utils.renderTable;
+  const statusBadge = CMMS.utils.statusBadge;
+  const debounce = CMMS.utils.debounce;
+  const showToast = CMMS.utils.showToast;
+  const showModal = CMMS.utils.showModal;
+  const hideModal = CMMS.utils.hideModal;
+  const showLoading = CMMS.utils.showLoading;
+  const api = CMMS.api;
 
-  App.registerPage('pmhistory', render, load);
-
-  function render() {
-    document.getElementById('page-pmhistory').innerHTML = '' +
-      '<div class="page-header"><h2>PM History</h2></div>' +
-      '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">' +
-        '<input type="text" class="form-input" placeholder="Search..." id="pmh-search" oninput="PMHFilter()" style="flex:1;min-width:150px">' +
-        '<select class="form-select" id="pmh-machine" onchange="PMHFilter()" style="max-width:200px"><option value="">All Machines</option></select>' +
-        '<select class="form-select" id="pmh-status" onchange="PMHFilter()" style="max-width:140px"><option value="">All Status</option>' +
-          ['Completed','Overdue','Scheduled','In Progress','Missed','Skipped'].map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('') +
-        '</select>' +
-      '</div>' +
-      '<div id="pmh-stats" class="qr-stats-row" style="margin-bottom:16px"></div>' +
-      '<div class="card"><div class="table-container" id="pmh-table"></div></div>';
-  }
-
-  function load() {
-    App.showLoading(true);
-    API.call('getPMHistory')
-      .then(function(data) { _records = data || []; _filtered = _records; App.showLoading(false); renderStats(); renderTable(); loadMachineFilter(); })
-      .catch(function(e) { App.showLoading(false); App.showToast('Error: '+e.message,'error'); });
-  }
-
-  function loadMachineFilter() {
-    API.call('getMachineList')
-      .then(function(machines) {
-        _machines = machines || [];
-        var sel = document.getElementById('pmh-machine');
-        if (!sel) return;
-        var h = '<option value="">All Machines</option>';
-        _machines.forEach(function(m){ h+='<option value="'+App.escHtml(m.MachineName||m.MachineID||'')+'">'+App.escHtml(m.MachineName||m.MachineID||'')+'</option>'; });
-        sel.innerHTML = h;
-      })
-      .catch(function(){});
-  }
-
-  function renderStats() {
-    var el = document.getElementById('pmh-stats');
-    if (!el) return;
-    var total = _records.length;
-    var completed = _records.filter(function(r){return (r.Status||'').toLowerCase()==='completed';}).length;
-    var overdue = _records.filter(function(r){return (r.Status||'').toLowerCase()==='overdue';}).length;
-    var now = new Date().toISOString().substring(0,7);
-    var thisMonth = _records.filter(function(r){return (r.CompletionDate||r.CreatedAt||'').indexOf(now)===0;}).length;
-    el.innerHTML =
-      '<div class="qr-stat-card"><div class="stat-icon">&#128197;</div><div class="stat-num">'+total+'</div><div class="stat-lbl">Total</div></div>' +
-      '<div class="qr-stat-card"><div class="stat-icon">&#9989;</div><div class="stat-num" style="color:var(--success)">'+completed+'</div><div class="stat-lbl">Completed</div></div>' +
-      '<div class="qr-stat-card"><div class="stat-icon">&#9888;</div><div class="stat-num" style="color:var(--danger)">'+overdue+'</div><div class="stat-lbl">Overdue</div></div>' +
-      '<div class="qr-stat-card"><div class="stat-icon">&#128197;</div><div class="stat-num" style="color:var(--info)">'+thisMonth+'</div><div class="stat-lbl">This Month</div></div>';
-  }
-
-  function renderTable() {
-    var el = document.getElementById('pmh-table');
-    if (!el) return;
-    if (!_filtered.length) { el.innerHTML='<div class="empty-state"><div class="empty-state-icon">&#128197;</div><div class="empty-state-text">No PM history found</div></div>'; return; }
-    var h = '<table><thead><tr><th>PM Number</th><th>Title</th><th>Machine</th><th>Completion Date</th><th>Next Due</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
-    _filtered.forEach(function(r) {
-      var sc = (r.Status||'').toLowerCase()==='completed'?'badge-success':(r.Status||'').toLowerCase()==='overdue'?'badge-danger':(r.Status||'').toLowerCase()==='in progress'?'badge-info':'badge-secondary';
-      h += '<tr><td>'+App.escHtml(r.PMNumber||'')+'</td><td>'+App.escHtml(r.Title||'')+'</td><td>'+App.escHtml(r.MachineName||r.Machine||'')+'</td><td>'+App.escHtml(r.CompletionDate||'-')+'</td><td>'+App.escHtml(r.NextDueDate||'-')+'</td><td><span class="badge '+sc+'">'+App.escHtml(r.Status||'')+'</span></td><td><button class="btn btn-sm btn-secondary" onclick="PMHView(\''+App.escHtml(r.PMNumber||r.id||'')+'\')">View</button></td></tr>';
-    });
-    el.innerHTML = h + '</tbody></table>';
-  }
-
-  function applyFilters() {
-    var q = (document.getElementById('pmh-search')||{}).value.toLowerCase();
-    var machine = (document.getElementById('pmh-machine')||{}).value;
-    var status = (document.getElementById('pmh-status')||{}).value;
-    _filtered = _records.filter(function(r) {
-      var mq = !q || (r.Title||'').toLowerCase().indexOf(q)>-1 || (r.PMNumber||'').toLowerCase().indexOf(q)>-1 || (r.MachineName||'').toLowerCase().indexOf(q)>-1;
-      var mm = !machine || (r.MachineName||r.Machine||'')===machine;
-      var ms = !status || (r.Status||'')===status;
-      return mq && mm && ms;
-    });
-    renderTable();
-  }
-
-  window.PMHFilter = function() { applyFilters(); };
-  window.PMHView = function(id) {
-    var r = _records.find(function(x){return (x.PMNumber||x.id)===id;});
-    if (!r) return;
-    var ov = document.createElement('div');
-    ov.className = 'modal-overlay';
-    ov.innerHTML = '<div class="modal"><div class="modal-header"><h3>PM Detail</h3><button class="btn-icon" onclick="this.closest(\'.modal-overlay\').remove()">&#10005;</button></div><div class="modal-body">' +
-      '<div class="qr-detail-grid">' +
-        ff('PM Number',r.PMNumber) + ff('Title',r.Title) + ff('Machine',r.MachineName||r.Machine) +
-        ff('Status',r.Status) + ff('Completion Date',r.CompletionDate) + ff('Next Due Date',r.NextDueDate) +
-        ff('Technician',r.TechnicianName||r.AssignedTechnician) + ff('Remarks',r.Remarks) +
-        ff('Created',r.CreatedAt) + ff('Created By',r.CreatedBy) +
-      '</div></div></div>';
-    document.body.appendChild(ov);
-    ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+  let state = {
+    records: [],
+    filtered: [],
+    searchQuery: '',
+    dateFrom: '',
+    dateTo: ''
   };
 
-  function ff(l,v){return '<div class="qr-detail-field"><div class="qr-detail-field-label">'+App.escHtml(l)+'</div><div class="qr-detail-field-value">'+App.escHtml(v||'-')+'</div></div>';}
+  function getContainer() {
+    return CMMS.loader.getContainer();
+  }
+
+  async function loadData() {
+    showLoading(true);
+    try {
+      state.records = await api.call('getPMHistory') || [];
+      state.filtered = [...state.records];
+    } catch (e) {
+      showToast('Error loading PM history: ' + e.message, 'error');
+    }
+    showLoading(false);
+  }
+
+  function render() {
+    const c = getContainer();
+    c.innerHTML = `
+      <div class="page-header">
+        <h2>PM History</h2>
+      </div>
+      <div class="filter-bar">
+        <input type="text" class="form-control" id="pmHistSearch" placeholder="Search PM history..." value="${escHtml(state.searchQuery)}">
+        <input type="date" class="form-control" id="pmHistDateFrom" value="${state.dateFrom}" placeholder="From Date">
+        <input type="date" class="form-control" id="pmHistDateTo" value="${state.dateTo}" placeholder="To Date">
+        <button class="btn btn-secondary" id="pmHistClearFilters">Clear Filters</button>
+      </div>
+      <div class="table-container" id="pmHistTableContainer"></div>
+      <div class="pagination" id="pmHistPagination"></div>
+    `;
+    renderTableData();
+
+    qs('#pmHistSearch').addEventListener('input', debounce(() => {
+      state.searchQuery = qs('#pmHistSearch').value;
+      filterRecords();
+    }, 300));
+    qs('#pmHistDateFrom').addEventListener('change', () => {
+      state.dateFrom = qs('#pmHistDateFrom').value;
+      filterRecords();
+    });
+    qs('#pmHistDateTo').addEventListener('change', () => {
+      state.dateTo = qs('#pmHistDateTo').value;
+      filterRecords();
+    });
+    qs('#pmHistClearFilters').addEventListener('click', () => {
+      state.searchQuery = '';
+      state.dateFrom = '';
+      state.dateTo = '';
+      qs('#pmHistSearch').value = '';
+      qs('#pmHistDateFrom').value = '';
+      qs('#pmHistDateTo').value = '';
+      state.filtered = [...state.records];
+      renderTableData();
+    });
+  }
+
+  function filterRecords() {
+    const query = state.searchQuery.toLowerCase();
+    const from = state.dateFrom ? new Date(state.dateFrom) : null;
+    const to = state.dateTo ? new Date(state.dateTo) : null;
+
+    state.filtered = state.records.filter(r => {
+      const matchSearch = !query ||
+        (r.PMNumber || '').toLowerCase().includes(query) ||
+        (r.Title || '').toLowerCase().includes(query) ||
+        (r.MachineName || '').toLowerCase().includes(query) ||
+        (r.TechnicianName || '').toLowerCase().includes(query) ||
+        (r.Remarks || '').toLowerCase().includes(query);
+      const matchFrom = !from || new Date(r.CompletionDate || r.CreatedAt) >= from;
+      const matchTo = !to || new Date(r.CompletionDate || r.CreatedAt) <= new Date(to.getTime() + 86400000);
+      return matchSearch && matchFrom && matchTo;
+    });
+    renderTableData();
+  }
+
+  function renderTableData() {
+    const rows = state.filtered.map(r => `
+      <tr>
+        <td>${escHtml(r.PMNumber || '')}</td>
+        <td>${escHtml(r.Title || '')}</td>
+        <td>${escHtml(r.MachineName || '')}</td>
+        <td>${formatDate(r.CompletionDate)}</td>
+        <td>${formatDate(r.NextDueDate)}</td>
+        <td>${escHtml(r.TechnicianName || r.AssignedTechnicianName || '')}</td>
+        <td>${statusBadge(r.Status)}</td>
+        <td>${escHtml(r.Remarks || '')}</td>
+        <td>${escHtml(r.CreatedBy || '')}</td>
+        <td>${formatDateTime(r.CreatedAt)}</td>
+        <td><button class="btn btn-sm btn-info btn-pmhist-detail" data-idx="${state.filtered.indexOf(r)}" title="View Detail"><span class="icon-eye"></span></button></td>
+      </tr>
+    `).join('');
+
+    setHtml('#pmHistTableContainer', `
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>PM Number</th><th>Title</th><th>Machine</th><th>Completion Date</th>
+            <th>Next Due Date</th><th>Technician</th><th>Status</th><th>Remarks</th>
+            <th>Created By</th><th>Created At</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>${rows || '<tr><td colspan="11" class="text-center">No PM history records found</td></tr>'}</tbody>
+      </table>
+    `);
+
+    qsa('.btn-pmhist-detail').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx);
+        showDetailModal(state.filtered[idx]);
+      });
+    });
+  }
+
+  function showDetailModal(record) {
+    if (!record) return;
+    showModal('PM History Detail', `
+      <div class="detail-grid">
+        <div class="detail-row"><label>PM Number:</label><span>${escHtml(record.PMNumber || '')}</span></div>
+        <div class="detail-row"><label>Title:</label><span>${escHtml(record.Title || '')}</span></div>
+        <div class="detail-row"><label>Machine:</label><span>${escHtml(record.MachineName || '')}</span></div>
+        <div class="detail-row"><label>Completion Date:</label><span>${formatDate(record.CompletionDate)}</span></div>
+        <div class="detail-row"><label>Next Due Date:</label><span>${formatDate(record.NextDueDate)}</span></div>
+        <div class="detail-row"><label>Technician:</label><span>${escHtml(record.TechnicianName || record.AssignedTechnicianName || '')}</span></div>
+        <div class="detail-row"><label>Status:</label><span>${statusBadge(record.Status)}</span></div>
+        <div class="detail-row"><label>Remarks:</label><span>${escHtml(record.Remarks || 'N/A')}</span></div>
+        <div class="detail-row"><label>Created By:</label><span>${escHtml(record.CreatedBy || '')}</span></div>
+        <div class="detail-row"><label>Created At:</label><span>${formatDateTime(record.CreatedAt)}</span></div>
+      </div>
+    `, [{ text: 'Close', class: 'btn-secondary', action: () => hideModal() }]);
+  }
+
+  CMMS.router.registerPage('pmhistory', {
+    init: async function () {
+      await loadData();
+      render();
+    },
+    render: function () {
+      render();
+    },
+    destroy: function () {
+      state = { records: [], filtered: [], searchQuery: '', dateFrom: '', dateTo: '' };
+    }
+  });
 })();

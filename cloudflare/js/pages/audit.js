@@ -1,560 +1,292 @@
-/* ============================================================
-   audit.js — Audit Trail Page Module
-   Cloudflare Pages Frontend — GAS-identical rewrite
-   ============================================================ */
-(function() {
-  var _logs = [];
-  var _filtered = [];
-  var _page = 1;
-  var _pageSize = 20;
+CMMS.router.registerPage("audit", {
+  title: "Audit Trail",
+  icon: CMMS.icons.clipboard,
 
-  App.registerPage('audit', render, load);
+  state: {
+    logs: [],
+    filtered: [],
+    page: 1,
+    perPage: 20,
+    filters: {
+      startDate: "", endDate: "", user: "", department: "",
+      module: "", action: "", status: "", role: "", search: ""
+    },
+    selectedLog: null
+  },
 
-  function render() {
-    var el = document.getElementById('page-audit');
-    el.innerHTML = '' +
-      '<div class="dashboard-grid" id="auditSummaryCards" style="margin-bottom:16px;grid-template-columns:repeat(4,1fr)">' +
-        '<div class="stat-card stat-primary" style="cursor:pointer">' +
-          '<div class="stat-inner">' +
-            '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M9 18l3 3 3-3"/><path d="M4 12h2l3-9 3 9h2"/></svg></div>' +
-            '<div class="stat-info"><h3 id="auditTotalCount">0</h3><p>Total Activities</p></div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="stat-card stat-success" style="cursor:pointer">' +
-          '<div class="stat-inner">' +
-            '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>' +
-            '<div class="stat-info"><h3 id="auditTodayCount">0</h3><p>Today</p></div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="stat-card stat-info" style="cursor:pointer">' +
-          '<div class="stat-inner">' +
-            '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>' +
-            '<div class="stat-info"><h3 id="auditModuleCount">0</h3><p>Modules</p></div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="stat-card stat-warning" style="cursor:pointer">' +
-          '<div class="stat-inner">' +
-            '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>' +
-            '<div class="stat-info"><h3 id="auditUserCount">0</h3><p>Users Active</p></div>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
+  async render() {
+    const container = CMMS.loader.getContainer();
+    container.innerHTML = `
+      <div class="page-header">
+        <h2>Audit Trail</h2>
+        <div class="page-actions">
+          <button class="btn btn-outline" id="exportAuditCsv">${CMMS.icons.download} Export CSV</button>
+          <button class="btn btn-outline" id="printAudit">${CMMS.icons.print} Print</button>
+        </div>
+      </div>
+      <div class="summary-cards" id="auditSummaryCards"></div>
+      <div class="card">
+        <div class="card-header">
+          <div class="filters-row">
+            <input type="date" id="auditStartDate" class="form-control form-control-sm" placeholder="Start Date">
+            <input type="date" id="auditEndDate" class="form-control form-control-sm" placeholder="End Date">
+            <select id="auditUser" class="form-control form-control-sm"><option value="">All Users</option></select>
+            <select id="auditDept" class="form-control form-control-sm"><option value="">All Departments</option></select>
+            <select id="auditModule" class="form-control form-control-sm"><option value="">All Modules</option></select>
+            <select id="auditAction" class="form-control form-control-sm">
+              <option value="">All Actions</option>
+              <option value="Create">Create</option><option value="Update">Update</option>
+              <option value="Delete">Delete</option><option value="View">View</option>
+            </select>
+            <select id="auditStatus" class="form-control form-control-sm">
+              <option value="">All Status</option>
+              <option value="Success">Success</option><option value="Failed">Failed</option>
+            </select>
+            <select id="auditRole" class="form-control form-control-sm"><option value="">All Roles</option></select>
+            <input type="text" id="auditSearch" class="form-control form-control-sm" placeholder="Search...">
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>ID</th><th>DateTime</th><th>User</th><th>Role</th><th>Department</th>
+                  <th>Module</th><th>Action</th><th>Record ID</th><th>Record Name</th>
+                  <th>Status</th><th>Remarks</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="auditTableBody"></tbody>
+            </table>
+          </div>
+          <div id="auditPagination" class="pagination-controls"></div>
+        </div>
+      </div>
+    `;
+    this.bindEvents();
+    await this.loadData();
+  },
 
-      '<div class="filter-bar" id="auditFilterBar">' +
-        '<div class="form-group">' +
-          '<label>Search</label>' +
-          '<div class="search-box">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
-            '<input type="text" class="form-control" id="auditSearch" placeholder="Search audit log...">' +
-          '</div>' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label>From</label>' +
-          '<input type="date" class="form-control" id="auditDateFrom">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label>To</label>' +
-          '<input type="date" class="form-control" id="auditDateTo">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label>User</label>' +
-          '<select class="form-control" id="auditFilterUser"><option value="">All Users</option></select>' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label>Department</label>' +
-          '<select class="form-control" id="auditFilterDept"><option value="">All Departments</option></select>' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label>Module</label>' +
-          '<select class="form-control" id="auditFilterModule"><option value="">All Modules</option>' +
-            '<option value="Login">Login</option><option value="Logout">Logout</option><option value="Job Card">Job Card</option>' +
-            '<option value="Machine">Machine</option><option value="Asset">Asset</option><option value="Department">Department</option>' +
-            '<option value="Section">Section</option><option value="Technician">Technician</option><option value="User">User</option>' +
-            '<option value="Spare Part">Spare Part</option><option value="Inventory">Inventory</option><option value="Goods Receipt">Goods Receipt</option>' +
-            '<option value="Preventive Maintenance">Preventive Maintenance</option><option value="Settings">Settings</option><option value="Permission">Permission</option>' +
-          '</select>' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label>Action</label>' +
-          '<select class="form-control" id="auditFilterAction"><option value="">All Actions</option>' +
-            '<option value="Login">Login</option><option value="Logout">Logout</option><option value="Create">Create</option>' +
-            '<option value="Update">Update</option><option value="Delete">Delete</option><option value="Approve">Approve</option>' +
-            '<option value="Reject">Reject</option><option value="Open">Open</option><option value="Start">Start</option>' +
-            '<option value="Close">Close</option><option value="Complete">Complete</option><option value="Cancel">Cancel</option>' +
-            '<option value="Stock In">Stock In</option><option value="Stock Out">Stock Out</option><option value="Goods Receipt">Goods Receipt</option>' +
-            '<option value="Permission Changed">Permission Changed</option><option value="Settings Changed">Settings Changed</option>' +
-          '</select>' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label>Status</label>' +
-          '<select class="form-control" id="auditFilterStatus"><option value="">All</option>' +
-            '<option value="Success">Success</option><option value="Failure">Failure</option><option value="Warning">Warning</option>' +
-          '</select>' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label>Role</label>' +
-          '<select class="form-control" id="auditFilterRole"><option value="">All Roles</option>' +
-            '<option value="Admin">Admin</option><option value="Department Manager">Department Manager</option>' +
-            '<option value="Maintenance Manager">Maintenance Manager</option><option value="Supervisor">Supervisor</option>' +
-            '<option value="Technician">Technician</option><option value="Operator">Operator</option>' +
-            '<option value="Store">Store</option><option value="Viewer">Viewer</option>' +
-          '</select>' +
-        '</div>' +
-        '<div class="form-group" style="align-self:flex-end">' +
-          '<button class="btn btn-secondary btn-sm" onclick="auditClearFilters()">Clear</button>' +
-        '</div>' +
-      '</div>' +
-
-      '<div class="card">' +
-        '<div class="card-header">' +
-          '<div class="card-title">Audit Trail Log</div>' +
-          '<div class="card-actions">' +
-            '<button class="btn btn-secondary" onclick="auditExportCSV()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>' +
-            '<button class="btn btn-secondary" onclick="auditExportPDF()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg> Export PDF</button>' +
-            '<button class="btn btn-secondary" onclick="auditPrint()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg> Print</button>' +
-            '<button class="btn btn-secondary" onclick="auditDiagnose()" title="Run audit pipeline diagnostic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v4"/><path d="M10 14h.01"/></svg> Diagnose</button>' +
-            '<button class="btn btn-secondary" onclick="auditRefresh()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg> Refresh</button>' +
-          '</div>' +
-        '</div>' +
-        '<div class="table-container">' +
-          '<table class="table" id="auditTable">' +
-            '<thead><tr>' +
-              '<th>Audit ID</th><th>Date & Time</th><th>User</th><th>Role</th>' +
-              '<th>Department</th><th>Module</th><th>Action</th><th>Record ID</th>' +
-              '<th>Record Name</th><th>Status</th><th>Remarks</th>' +
-            '</tr></thead>' +
-            '<tbody id="auditTableBody">' +
-              '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:30px">Loading audit logs...</td></tr>' +
-            '</tbody>' +
-          '</table>' +
-        '</div>' +
-        '<div class="table-footer" id="auditPagination">' +
-          '<div class="pagination-info" id="auditPaginationInfo">Showing 0-0 of 0</div>' +
-          '<div class="pagination-controls" id="auditPaginationControls"></div>' +
-        '</div>' +
-      '</div>';
-
-    _attachFilterListeners();
-  }
-
-  function load() {
-    _loadData();
-  }
-
-  function _attachFilterListeners() {
-    var fields = ['auditSearch', 'auditDateFrom', 'auditDateTo', 'auditFilterUser', 'auditFilterDept', 'auditFilterModule', 'auditFilterAction', 'auditFilterStatus', 'auditFilterRole'];
-    fields.forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el && !el._auditBound) {
-        el._auditBound = true;
-        el.addEventListener('input', function() { _applyFilter(); });
-        el.addEventListener('change', function() { _applyFilter(); });
-      }
+  bindEvents() {
+    const fields = ["startDate", "endDate", "module", "action", "status"];
+    fields.forEach(f => {
+      CMMS.utils.$(`#audit${f.charAt(0).toUpperCase() + f.slice(1)}`).addEventListener("change", (e) => {
+        this.state.filters[f] = e.target.value;
+        this.applyFilters();
+      });
     });
-  }
-
-  function _loadData() {
-    var el = document.getElementById('auditTableBody');
-    if (el) el.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:30px"><div class="spinner" style="margin:0 auto"></div></td></tr>';
-
-    showLoading(true);
-    var user = Auth.getUser();
-    var email = (user && user.email) || '';
-
-    API.call('getAuditLogs', { email: email })
-      .then(function(data) {
-        if (data && data.length > 0) {
-          _logs = data;
-          _init();
-          showLoading(false);
-          return;
-        }
-        console.warn('getUserAuditLogs returned empty, trying getAuditLogs fallback');
-        API.call('getAuditLogs')
-          .then(function(fallbackData) {
-            _logs = fallbackData || [];
-            if (_logs.length === 0) {
-              console.warn('getAuditLogs also returned empty');
-            }
-            _init();
-            showLoading(false);
-          })
-          .catch(function(err) {
-            showToast('Failed to load audit logs: ' + err.message, 'error');
-            showLoading(false);
-          });
-      })
-      .catch(function(err) {
-        showToast('Failed to load audit logs: ' + err.message, 'error');
-        showLoading(false);
+    ["User", "Dept", "Role"].forEach(f => {
+      CMMS.utils.$(`#audit${f}`).addEventListener("change", (e) => {
+        const key = f === "User" ? "user" : f === "Dept" ? "department" : "role";
+        this.state.filters[key] = e.target.value;
+        this.applyFilters();
       });
-  }
-
-  function _init() {
-    _populateFilterDropdowns();
-    _applyFilter();
-    _updateSummaryCards();
-  }
-
-  function _populateFilterDropdowns() {
-    var userSet = {};
-    var deptSet = {};
-    _logs.forEach(function(r) {
-      if (r.UserName) userSet[r.UserName] = (r.UserEmail || '');
-      if (r.Department) deptSet[r.Department] = true;
     });
+    CMMS.utils.$("#auditSearch").addEventListener("input", CMMS.utils.debounce((e) => {
+      this.state.filters.search = e.target.value.toLowerCase();
+      this.applyFilters();
+    }, 300));
+    CMMS.utils.$("#exportAuditCsv").addEventListener("click", () => this.exportCsv());
+    CMMS.utils.$("#printAudit").addEventListener("click", () => window.print());
+  },
 
-    var userSel = document.getElementById('auditFilterUser');
-    if (userSel) {
-      var currentVal = userSel.value;
-      userSel.innerHTML = '<option value="">All Users</option>';
-      Object.keys(userSet).sort().forEach(function(u) {
-        var opt = document.createElement('option');
-        opt.value = userSet[u];
-        opt.textContent = u;
-        if (userSet[u] === currentVal) opt.selected = true;
-        userSel.appendChild(opt);
-      });
+  async loadData() {
+    CMMS.utils.showLoading(true);
+    try {
+      const data = await CMMS.api.call("getAuditLogs");
+      this.state.logs = Array.isArray(data) ? data : (data?.result || []);
+      this.populateDropdowns();
+      this.renderSummary();
+      this.applyFilters();
+    } catch (err) {
+      CMMS.utils.showToast("Failed to load audit logs: " + err.message, "error");
+    } finally {
+      CMMS.utils.showLoading(false);
     }
+  },
 
-    var deptSel = document.getElementById('auditFilterDept');
-    if (deptSel) {
-      var currentDept = deptSel.value;
-      deptSel.innerHTML = '<option value="">All Departments</option>';
-      Object.keys(deptSet).sort().forEach(function(d) {
-        var opt = document.createElement('option');
-        opt.value = d;
-        opt.textContent = d;
-        if (d === currentDept) opt.selected = true;
-        deptSel.appendChild(opt);
-      });
-    }
-  }
+  populateDropdowns() {
+    const users = [...new Set(this.state.logs.map(l => l.UserName || l.User).filter(Boolean))];
+    const depts = [...new Set(this.state.logs.map(l => l.Department).filter(Boolean))];
+    const modules = [...new Set(this.state.logs.map(l => l.Module).filter(Boolean))];
+    const roles = [...new Set(this.state.logs.map(l => l.Role).filter(Boolean))];
 
-  function _applyFilter() {
-    var search = ((document.getElementById('auditSearch') || {}).value || '').trim();
-    var dateFrom = ((document.getElementById('auditDateFrom') || {}).value || '');
-    var dateTo = ((document.getElementById('auditDateTo') || {}).value || '');
-    var user = ((document.getElementById('auditFilterUser') || {}).value || '');
-    var dept = ((document.getElementById('auditFilterDept') || {}).value || '');
-    var mod = ((document.getElementById('auditFilterModule') || {}).value || '');
-    var action = ((document.getElementById('auditFilterAction') || {}).value || '');
-    var status = ((document.getElementById('auditFilterStatus') || {}).value || '');
-    var role = ((document.getElementById('auditFilterRole') || {}).value || '');
+    const populate = (elId, values) => {
+      const sel = CMMS.utils.$(`#${elId}`);
+      const current = sel.value;
+      const firstOpt = sel.querySelector("option:first-child").outerHTML;
+      sel.innerHTML = firstOpt + values.sort().map(v => `<option value="${CMMS.utils.escHtml(v)}" ${v === current ? "selected" : ""}>${CMMS.utils.escHtml(v)}</option>`).join("");
+    };
+    populate("auditUser", users);
+    populate("auditDept", depts);
+    populate("auditModule", modules);
+    populate("auditRole", roles);
+  },
 
-    _filtered = _logs.filter(function(r) {
-      if (search) {
-        var q = search.toLowerCase();
-        var found = false;
-        for (var k in r) { if (String(r[k]).toLowerCase().indexOf(q) > -1) { found = true; break; } }
-        if (!found) return false;
+  renderSummary() {
+    const logs = this.state.logs;
+    const today = CMMS.utils.nowISO().split("T")[0];
+    const todayLogs = logs.filter(l => (l.DateTime || l.CreatedAt || "").startsWith(today)).length;
+    const uniqueModules = new Set(logs.map(l => l.Module).filter(Boolean)).size;
+    const uniqueUsers = new Set(logs.map(l => l.UserName || l.User).filter(Boolean)).size;
+
+    CMMS.utils.$("#auditSummaryCards").innerHTML = `
+      <div class="summary-card"><div class="summary-icon">${CMMS.icons.clipboard}</div><div class="summary-info"><span class="summary-value">${logs.length}</span><span class="summary-label">Total Logs</span></div></div>
+      <div class="summary-card info"><div class="summary-icon">${CMMS.icons.calendar}</div><div class="summary-info"><span class="summary-value">${todayLogs}</span><span class="summary-label">Today's Logs</span></div></div>
+      <div class="summary-card success"><div class="summary-icon">${CMMS.icons.tag}</div><div class="summary-info"><span class="summary-value">${uniqueModules}</span><span class="summary-label">Unique Modules</span></div></div>
+      <div class="summary-card warning"><div class="summary-icon">${CMMS.icons.users}</div><div class="summary-info"><span class="summary-value">${uniqueUsers}</span><span class="summary-label">Unique Users</span></div></div>
+    `;
+  },
+
+  applyFilters() {
+    const f = this.state.filters;
+    this.state.filtered = this.state.logs.filter(l => {
+      if (f.startDate && (l.DateTime || l.CreatedAt || "") < f.startDate) return false;
+      if (f.endDate && (l.DateTime || l.CreatedAt || "").substring(0, 10) > f.endDate) return false;
+      if (f.user && (l.UserName || l.User || "") !== f.user) return false;
+      if (f.department && (l.Department || "") !== f.department) return false;
+      if (f.module && (l.Module || "") !== f.module) return false;
+      if (f.action && (l.Action || "") !== f.action) return false;
+      if (f.status && (l.Status || "") !== f.status) return false;
+      if (f.role && (l.Role || "") !== f.role) return false;
+      if (f.search) {
+        const hay = [l.UserName, l.User, l.Module, l.Action, l.RecordID, l.RecordName, l.Remarks, l.Department, l.Role].join(" ").toLowerCase();
+        if (!hay.includes(f.search)) return false;
       }
-      if (dateFrom && r.DateTime) {
-        var d = new Date(r.DateTime);
-        var f = new Date(dateFrom);
-        if (!isNaN(d.getTime()) && d < f) return false;
-      }
-      if (dateTo && r.DateTime) {
-        var d2 = new Date(r.DateTime);
-        var t = new Date(dateTo);
-        t.setHours(23, 59, 59, 999);
-        if (!isNaN(d2.getTime()) && d2 > t) return false;
-      }
-      if (user && r.UserEmail !== user) return false;
-      if (dept && r.Department !== dept) return false;
-      if (mod && r.Module !== mod) return false;
-      if (action && r.Action !== action) return false;
-      if (status && r.Status !== status) return false;
-      if (role && r.Role !== role) return false;
       return true;
     });
+    this.state.page = 1;
+    this.renderTable();
+  },
 
-    _page = 1;
-    _renderTable();
-    _renderPagination();
-  }
+  renderTable() {
+    const { filtered, page, perPage } = this.state;
+    const start = (page - 1) * perPage;
+    const paged = filtered.slice(start, start + perPage);
+    const tbody = CMMS.utils.$("#auditTableBody");
 
-  function _renderTable() {
-    var tbody = document.getElementById('auditTableBody');
-    if (!tbody) return;
-    var start = (_page - 1) * _pageSize;
-    var end = Math.min(start + _pageSize, _filtered.length);
-    var pageData = _filtered.slice(start, end);
+    tbody.innerHTML = paged.length === 0 ?
+      '<tr><td colspan="12" class="text-center text-muted">No audit logs found</td></tr>' :
+      paged.map(l => `
+        <tr>
+          <td>${CMMS.utils.escHtml(l.AuditID || l.id || "")}</td>
+          <td>${CMMS.utils.formatDateTime(l.DateTime || l.CreatedAt || "")}</td>
+          <td>${CMMS.utils.escHtml(l.UserName || l.User || "")}</td>
+          <td>${CMMS.utils.badge(l.Role || "", "secondary")}</td>
+          <td>${CMMS.utils.escHtml(l.Department || "")}</td>
+          <td>${CMMS.utils.badge(l.Module || "", "info")}</td>
+          <td>${CMMS.utils.badge(l.Action || "", l.Action === "Delete" ? "danger" : l.Action === "Create" ? "success" : "warning")}</td>
+          <td>${CMMS.utils.escHtml(l.RecordID || "")}</td>
+          <td>${CMMS.utils.escHtml(l.RecordName || "")}</td>
+          <td>${CMMS.utils.statusBadge(l.Status || "Success")}</td>
+          <td class="text-truncate" style="max-width:150px">${CMMS.utils.escHtml(l.Remarks || "")}</td>
+          <td><button class="btn btn-sm btn-outline" data-action="viewDetail" data-id="${l.AuditID || l.id}" title="View Detail">${CMMS.icons.eye}</button></td>
+        </tr>
+      `).join("");
 
-    if (pageData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:30px">No audit logs found.</td></tr>';
-      return;
-    }
+    tbody.querySelectorAll("button[data-action='viewDetail']").forEach(btn => {
+      btn.addEventListener("click", () => this.viewDetail(btn.dataset.id));
+    });
 
-    var actionIcons = {
-      'Login': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"><path d="M9 3H5a2 2 0 00-2 2v10a2 2 0 002 2h4"/><polyline points="13 7 17 11 13 15"/><line x1="9" y1="11" x2="17" y2="11"/></svg>',
-      'Logout': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"><path d="M11 3H7a2 2 0 00-2 2v10a2 2 0 002 2h4"/><polyline points="17 7 13 11 17 15"/><line x1="13" y1="11" x2="5" y2="11"/></svg>',
-      'Create': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg>',
-      'Update': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"><path d="M14.5 2.5a1.5 1.5 0 012 2L7 14l-3 1 1-3 9.5-9.5z"/></svg>',
-      'Delete': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"><path d="M3 5h14"/><path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M16 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5"/></svg>',
-      'Approve': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>',
-      'Reject': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"><circle cx="10" cy="10" r="9"/><path d="M7 7l6 6"/><path d="M13 7l-6 6"/></svg>',
-      'Open': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>',
-      'Start': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"><circle cx="10" cy="10" r="9"/><path d="M8 6l6 4-6 4V6z"/></svg>',
-      'Close': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
-      'Complete': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"><circle cx="10" cy="10" r="9"/><path d="M7 10l2 2 4-4"/></svg>',
-      'Cancel': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:3px"><circle cx="10" cy="10" r="9"/><line x1="15" y1="5" x2="5" y2="15"/></svg>'
-    };
+    this.renderPagination();
+  },
 
-    var statusBadges = {
-      'Success': 'badge-success',
-      'Failure': 'badge-danger',
-      'Warning': 'badge-warning'
-    };
+  renderPagination() {
+    const { filtered, page, perPage } = this.state;
+    const totalPages = Math.ceil(filtered.length / perPage);
+    const el = CMMS.utils.$("#auditPagination");
+    if (totalPages <= 1) { el.innerHTML = ""; return; }
 
-    var moduleColors = {
-      'Login': '--info', 'Logout': '--info',
-      'Job Card': '--primary', 'Machine': '--success',
-      'Asset': '--purple', 'Department': '--orange',
-      'Section': '--warning', 'Technician': '--danger',
-      'User': '--info', 'Spare Part': '--success',
-      'Inventory': '--warning', 'Goods Receipt': '--success',
-      'Preventive Maintenance': '--orange', 'Settings': '--primary',
-      'Permission': '--danger'
-    };
-
-    var html = '';
-    pageData.forEach(function(r) {
-      var actionIcon = actionIcons[r.Action] || '';
-      var actionLabel = r.Action || '';
-      var statusBadge = statusBadges[r.Status] || 'badge-secondary';
-      var modColor = moduleColors[r.Module] || 'var(--text-muted)';
-      var dt = r.DateTime || '';
-      var displayDt = '';
-      if (dt) {
-        var d = new Date(dt);
-        if (!isNaN(d.getTime())) displayDt = formatDateTime(d);
+    let html = `<span class="pagination-info">Showing ${(page - 1) * perPage + 1}-${Math.min(page * perPage, filtered.length)} of ${filtered.length}</span><div class="pagination-buttons">`;
+    html += `<button class="btn btn-sm btn-outline" data-page="prev" ${page === 1 ? "disabled" : ""}>&laquo; Prev</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (totalPages > 7 && i > 3 && i < totalPages - 2 && Math.abs(i - page) > 1) {
+        if (i === 4 || i === totalPages - 3) html += `<span class="pagination-ellipsis">...</span>`;
+        continue;
       }
-      html += '<tr>' +
-        '<td><span class="badge badge-secondary" style="font-size:9px">' + escapeHtml(r.AuditID || '') + '</span></td>' +
-        '<td style="white-space:nowrap;font-size:12px">' + escapeHtml(displayDt) + '</td>' +
-        '<td><strong>' + escapeHtml(r.UserName || '') + '</strong><br><span style="font-size:10px;color:var(--text-muted)">' + escapeHtml(r.UserEmail || '') + '</span></td>' +
-        '<td><span class="badge badge-secondary" style="font-size:9px">' + escapeHtml(r.Role || '') + '</span></td>' +
-        '<td>' + escapeHtml(r.Department || '-') + '</td>' +
-        '<td><span class="badge" style="font-size:9px;background:color-mix(in srgb, ' + modColor + ' 15%, transparent);color:' + modColor + '">' + escapeHtml(r.Module || '') + '</span></td>' +
-        '<td>' + actionIcon + '<span class="badge badge-secondary" style="font-size:9px">' + escapeHtml(actionLabel) + '</span></td>' +
-        '<td style="font-size:12px">' + escapeHtml(r.RecordID || '-') + '</td>' +
-        '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escapeHtml(r.RecordName || '') + '">' + escapeHtml(r.RecordName || '-') + '</td>' +
-        '<td><span class="badge ' + statusBadge + '" style="font-size:9px">' + escapeHtml(r.Status || '') + '</span></td>' +
-        '<td style="max-width:200px;font-size:12px;color:var(--text-muted)">' +
-          (r.Remarks ? escapeHtml(r.Remarks) : (r.OldValue || r.NewValue ? 'Old: ' + escapeHtml(String(r.OldValue || '').substring(0, 50)) + (r.NewValue ? ' \u2192 New: ' + escapeHtml(String(r.NewValue || '').substring(0, 50)) : '') : '-')) +
-        '</td>' +
-      '</tr>';
-    });
-    tbody.innerHTML = html;
-  }
+      html += `<button class="btn btn-sm ${i === page ? "btn-primary" : "btn-outline"}" data-page="${i}">${i}</button>`;
+    }
+    html += `<button class="btn btn-sm btn-outline" data-page="next" ${page === totalPages ? "disabled" : ""}>Next &raquo;</button></div>`;
+    el.innerHTML = html;
 
-  function _renderPagination() {
-    var info = document.getElementById('auditPaginationInfo');
-    var controls = document.getElementById('auditPaginationControls');
-    if (!info || !controls) return;
-    var total = _filtered.length;
-    var totalPages = Math.max(1, Math.ceil(total / _pageSize));
-    var start = (_page - 1) * _pageSize + 1;
-    var end = Math.min(_page * _pageSize, total);
-    info.textContent = total > 0 ? 'Showing ' + start + '-' + end + ' of ' + total : 'Showing 0-0 of 0';
-
-    var html = '';
-    html += '<button class="btn btn-xs btn-secondary" onclick="auditGoPage(1)" ' + (_page <= 1 ? 'disabled' : '') + '>&#171;</button>';
-    html += '<button class="btn btn-xs btn-secondary" onclick="auditGoPage(' + (_page - 1) + ')" ' + (_page <= 1 ? 'disabled' : '') + '>&#8249;</button>';
-    html += '<span style="margin:0 8px;font-size:12px;color:var(--text-muted)">Page ' + _page + ' of ' + totalPages + '</span>';
-    html += '<button class="btn btn-xs btn-secondary" onclick="auditGoPage(' + (_page + 1) + ')" ' + (_page >= totalPages ? 'disabled' : '') + '>&#8250;</button>';
-    html += '<button class="btn btn-xs btn-secondary" onclick="auditGoPage(' + totalPages + ')" ' + (_page >= totalPages ? 'disabled' : '') + '>&#187;</button>';
-    controls.innerHTML = html;
-  }
-
-  function _updateSummaryCards() {
-    var total = _logs.length;
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
-    var todayCount = 0;
-    var moduleSet = {};
-    var userSet = {};
-    _logs.forEach(function(r) {
-      var dt = new Date(r.DateTime);
-      if (!isNaN(dt.getTime()) && dt >= today) todayCount++;
-      if (r.Module) moduleSet[r.Module] = true;
-      if (r.UserEmail) userSet[r.UserEmail] = true;
-    });
-    var el;
-    el = document.getElementById('auditTotalCount'); if (el) el.textContent = total;
-    el = document.getElementById('auditTodayCount'); if (el) el.textContent = todayCount;
-    el = document.getElementById('auditModuleCount'); if (el) el.textContent = Object.keys(moduleSet).length;
-    el = document.getElementById('auditUserCount'); if (el) el.textContent = Object.keys(userSet).length;
-  }
-
-  function _downloadCSV(csv, filename) {
-    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    var link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename || 'export.csv';
-    link.click();
-    URL.revokeObjectURL(link.href);
-  }
-
-  function _showDynamicModal(title, html) {
-    var overlay = document.getElementById('auditDynamicModal');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'auditDynamicModal';
-      overlay.className = 'modal-overlay';
-      overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) _hideDynamicModal();
+    el.querySelectorAll("button[data-page]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const val = btn.dataset.page;
+        if (val === "prev") this.state.page = Math.max(1, page - 1);
+        else if (val === "next") this.state.page = Math.min(totalPages, page + 1);
+        else this.state.page = parseInt(val);
+        this.renderTable();
       });
-      document.body.appendChild(overlay);
-    }
-    overlay.innerHTML =
-      '<div class="modal" style="max-width:700px">' +
-        '<div class="modal-header">' +
-          '<div class="modal-title">' + escapeHtml(title) + '</div>' +
-          '<button class="modal-close" onclick="auditCloseModal()">&times;</button>' +
-        '</div>' +
-        '<div class="modal-body" style="max-height:70vh;overflow-y:auto">' + html + '</div>' +
-        '<div class="modal-footer">' +
-          '<button class="btn btn-secondary" onclick="auditCloseModal()">Close</button>' +
-        '</div>' +
-      '</div>';
-    overlay.style.display = 'flex';
+    });
+  },
+
+  viewDetail(id) {
+    const log = this.state.logs.find(l => (l.AuditID || l.id) == id);
+    if (!log) return;
+
+    const formatValue = (val) => {
+      if (!val) return '<span class="text-muted">N/A</span>';
+      try {
+        const obj = typeof val === "string" ? JSON.parse(val) : val;
+        if (typeof obj === "object") {
+          return `<pre class="code-block">${CMMS.utils.escHtml(JSON.stringify(obj, null, 2))}</pre>`;
+        }
+      } catch (e) { /* not json */ }
+      return CMMS.utils.escHtml(String(val));
+    };
+
+    CMMS.utils.showModal(`
+      <div class="modal-header"><h3>Audit Log Detail</h3><button class="modal-close" id="auditModalClose">&times;</button></div>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item"><label>Audit ID</label><span>${CMMS.utils.escHtml(log.AuditID || log.id || "")}</span></div>
+          <div class="detail-item"><label>DateTime</label><span>${CMMS.utils.formatDateTime(log.DateTime || log.CreatedAt || "")}</span></div>
+          <div class="detail-item"><label>User</label><span>${CMMS.utils.escHtml(log.UserName || log.User || "")}</span></div>
+          <div class="detail-item"><label>Role</label>${CMMS.utils.badge(log.Role || "", "secondary")}</div>
+          <div class="detail-item"><label>Department</label><span>${CMMS.utils.escHtml(log.Department || "")}</span></div>
+          <div class="detail-item"><label>Module</label>${CMMS.utils.badge(log.Module || "", "info")}</div>
+          <div class="detail-item"><label>Action</label>${CMMS.utils.badge(log.Action || "", "warning")}</div>
+          <div class="detail-item"><label>Record ID</label><span>${CMMS.utils.escHtml(log.RecordID || "")}</span></div>
+          <div class="detail-item"><label>Record Name</label><span>${CMMS.utils.escHtml(log.RecordName || "")}</span></div>
+          <div class="detail-item"><label>Status</label>${CMMS.utils.statusBadge(log.Status || "Success")}</div>
+          <div class="detail-item"><label>Remarks</label><span>${CMMS.utils.escHtml(log.Remarks || "")}</span></div>
+        </div>
+        <div class="detail-section mt-3">
+          <h4>Old Value</h4>
+          <div class="detail-content">${formatValue(log.OldValue)}</div>
+        </div>
+        <div class="detail-section mt-3">
+          <h4>New Value</h4>
+          <div class="detail-content">${formatValue(log.NewValue)}</div>
+        </div>
+      </div>
+    `);
+    CMMS.utils.$("#auditModalClose").addEventListener("click", () => CMMS.utils.hideModal());
+  },
+
+  exportCsv() {
+    const headers = ["ID", "DateTime", "User", "Role", "Department", "Module", "Action", "RecordID", "RecordName", "Status", "Remarks"];
+    const rows = this.state.filtered.map(l => [
+      l.AuditID || l.id || "",
+      l.DateTime || l.CreatedAt || "",
+      l.UserName || l.User || "",
+      l.Role || "",
+      l.Department || "",
+      l.Module || "",
+      l.Action || "",
+      l.RecordID || "",
+      l.RecordName || "",
+      l.Status || "",
+      (l.Remarks || "").replace(/,/g, ";")
+    ]);
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "audit_trail.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    CMMS.utils.showToast("CSV exported", "success");
   }
-
-  function _hideDynamicModal() {
-    var overlay = document.getElementById('auditDynamicModal');
-    if (overlay) overlay.style.display = 'none';
-  }
-
-  /* ---- Global event handlers ---- */
-
-  window.auditRefresh = function() {
-    _loadData();
-  };
-
-  window.auditGoPage = function(page) {
-    var totalPages = Math.max(1, Math.ceil(_filtered.length / _pageSize));
-    if (page < 1) page = 1;
-    if (page > totalPages) page = totalPages;
-    _page = page;
-    _renderTable();
-    _renderPagination();
-  };
-
-  window.auditClearFilters = function() {
-    var ids = ['auditSearch', 'auditDateFrom', 'auditDateTo', 'auditFilterUser', 'auditFilterDept', 'auditFilterModule', 'auditFilterAction', 'auditFilterStatus', 'auditFilterRole'];
-    ids.forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-    _applyFilter();
-  };
-
-  window.auditViewDetail = function(id) {
-    var record = _logs.find(function(r) { return r.AuditID === id; });
-    if (!record) return;
-    var html = '<div style="padding:4px 0">';
-    html += '<div class="form-group"><label>Audit ID</label><div style="padding:8px 0">' + escapeHtml(record.AuditID || '') + '</div></div>';
-    html += '<div class="form-group"><label>Date & Time</label><div style="padding:8px 0">' + escapeHtml(record.DateTime || '') + '</div></div>';
-    html += '<div class="form-group"><label>User</label><div style="padding:8px 0">' + escapeHtml(record.UserName || '') + ' (' + escapeHtml(record.UserEmail || '') + ')</div></div>';
-    html += '<div class="form-group"><label>Role / Department</label><div style="padding:8px 0">' + escapeHtml(record.Role || '') + ' / ' + escapeHtml(record.Department || '') + '</div></div>';
-    html += '<div class="form-group"><label>Module</label><div style="padding:8px 0">' + escapeHtml(record.Module || '') + '</div></div>';
-    html += '<div class="form-group"><label>Action</label><div style="padding:8px 0">' + escapeHtml(record.Action || '') + '</div></div>';
-    html += '<div class="form-group"><label>Record ID</label><div style="padding:8px 0">' + escapeHtml(record.RecordID || '-') + '</div></div>';
-    html += '<div class="form-group"><label>Record Name</label><div style="padding:8px 0">' + escapeHtml(record.RecordName || '-') + '</div></div>';
-    if (record.OldValue) {
-      html += '<div class="form-group"><label>Old Value</label><div style="padding:8px 0;color:var(--danger)">' + escapeHtml(record.OldValue) + '</div></div>';
-    }
-    if (record.NewValue) {
-      html += '<div class="form-group"><label>New Value</label><div style="padding:8px 0;color:var(--success)">' + escapeHtml(record.NewValue) + '</div></div>';
-    }
-    html += '<div class="form-group"><label>Status</label><div style="padding:8px 0">' + escapeHtml(record.Status || '') + '</div></div>';
-    if (record.Remarks) {
-      html += '<div class="form-group"><label>Remarks</label><div style="padding:8px 0">' + escapeHtml(record.Remarks) + '</div></div>';
-    }
-    html += '</div>';
-    _showDynamicModal('Audit Log Details', html);
-  };
-
-  window.auditCloseModal = function() {
-    _hideDynamicModal();
-  };
-
-  window.auditExportCSV = function() {
-    if (_filtered.length === 0) { showToast('No data to export', 'warning'); return; }
-    var headers = ['AuditID', 'DateTime', 'UserEmail', 'UserName', 'Role', 'Department', 'Module', 'Action', 'RecordID', 'RecordName', 'OldValue', 'NewValue', 'Status', 'Remarks'];
-    var csv = headers.join(',') + '\n';
-    _filtered.forEach(function(r) {
-      var row = headers.map(function(h) {
-        var v = r[h] || '';
-        return '"' + String(v).replace(/"/g, '""') + '"';
-      });
-      csv += row.join(',') + '\n';
-    });
-    _downloadCSV(csv, 'audit_trail_export.csv');
-  };
-
-  window.auditExportPDF = function() {
-    if (_filtered.length === 0) { showToast('No data to export', 'warning'); return; }
-    var printContent = '<html><head><style>body{font-family:Arial;font-size:11px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:4px 6px;text-align:left;}th{background:#1F4E78;color:#fff;}tr:nth-child(even){background:#f2f2f2;}</style></head><body>';
-    printContent += '<h2>Audit Trail Report</h2><p>Generated: ' + new Date().toLocaleString() + '</p>';
-    printContent += '<table><thead><tr><th>DateTime</th><th>User</th><th>Role</th><th>Department</th><th>Module</th><th>Action</th><th>RecordID</th><th>Remarks</th></tr></thead><tbody>';
-    _filtered.forEach(function(r) {
-      printContent += '<tr><td>' + escapeHtml(r.DateTime || '') + '</td><td>' + escapeHtml(r.UserName || '') + '</td><td>' + escapeHtml(r.Role || '') + '</td><td>' + escapeHtml(r.Department || '') + '</td><td>' + escapeHtml(r.Module || '') + '</td><td>' + escapeHtml(r.Action || '') + '</td><td>' + escapeHtml(r.RecordID || '') + '</td><td>' + escapeHtml(r.Remarks || '') + '</td></tr>';
-    });
-    printContent += '</tbody></table></body></html>';
-    var win = window.open('', '_blank');
-    if (win) {
-      win.document.write(printContent);
-      win.document.close();
-      win.focus();
-      win.print();
-    }
-  };
-
-  window.auditPrint = function() {
-    if (_filtered.length === 0) { showToast('No data to print', 'warning'); return; }
-    var printContent = '<html><head><style>body{font-family:Arial;font-size:10px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:3px 5px;text-align:left;font-size:10px}th{background:#1F4E78;color:#fff;}</style></head><body>';
-    printContent += '<h3>Audit Trail</h3><p>' + new Date().toLocaleString() + '</p>';
-    printContent += '<table><thead><tr><th>DateTime</th><th>User</th><th>Role</th><th>Module</th><th>Action</th><th>RecordID</th><th>Status</th><th>Remarks</th></tr></thead><tbody>';
-    _filtered.forEach(function(r) {
-      printContent += '<tr><td>' + escapeHtml(r.DateTime || '') + '</td><td>' + escapeHtml(r.UserName || '') + '</td><td>' + escapeHtml(r.Role || '') + '</td><td>' + escapeHtml(r.Module || '') + '</td><td>' + escapeHtml(r.Action || '') + '</td><td>' + escapeHtml(r.RecordID || '') + '</td><td>' + escapeHtml(r.Status || '') + '</td><td>' + escapeHtml(r.Remarks || '') + '</td></tr>';
-    });
-    printContent += '</tbody></table></body></html>';
-    var win = window.open('', '_blank');
-    if (win) {
-      win.document.write(printContent);
-      win.document.close();
-      win.focus();
-      win.print();
-    }
-  };
-
-  window.auditDiagnose = function() {
-    showLoading(true);
-    var user = Auth.getUser();
-    var email = (user && user.email) || '';
-    API.call('testAuditPipeline', { email: email })
-      .then(function(steps) {
-        showLoading(false);
-        var html = '<div style="padding:12px;font-family:monospace;font-size:12px;line-height:1.6">';
-        html += '<h3 style="margin:0 0 12px 0">Audit Pipeline Diagnostic</h3>';
-        steps.forEach(function(s) {
-          var color = s.step.indexOf('ERROR') >= 0 || (s.detail && s.detail.indexOf('NO DATA') >= 0) ? 'var(--danger)' :
-                      s.step.indexOf('OK') >= 0 ? 'var(--success)' : 'inherit';
-          html += '<div style="margin-bottom:6px;padding:6px 8px;background:var(--bg-input);border-radius:4px">';
-          html += '<strong style="color:' + color + '">' + escapeHtml(s.step) + '</strong>';
-          html += '<div style="margin-top:2px;color:var(--text-muted);word-break:break-all">' + escapeHtml(s.detail) + '</div>';
-          html += '</div>';
-        });
-        html += '</div>';
-        _showDynamicModal('Audit Diagnostics', html);
-      })
-      .catch(function(err) {
-        showLoading(false);
-        showToast('Diagnostic failed: ' + err.message, 'error');
-      });
-  };
-
-})();
+});

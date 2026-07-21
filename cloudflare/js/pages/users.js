@@ -1,1004 +1,471 @@
-/* ============================================================
-   users.js — Users Management Page Module
-   Cloudflare Pages Frontend — GAS-identical rewrite
-   ============================================================ */
-(function() {
-  var usersData = [];
-  var usersPage = 1;
-  var PAGE_SIZE = 15;
-  var sortColumn = '';
-  var sortDirection = 'asc';
-  var selectedUserId = '';
-  var USER_PERM_FIELDS = [
-    'CanOpenJobCard','CanStartJobCard','CanCloseJobCard','CanReviewPendingJobCard','CanViewAllJobCards','CanApproveJobCard',
-    'CanManageSections','CanManageDepartments','CanManageMachines','CanManageAssets','CanManageTechnicians','CanManageSpareParts',
-    'CanManagePM','CanManageBreakdown','CanManageInventory',
-    'CanViewDashboard','CanViewReports','CanExportReports',
-    'CanManageUsers','CanManageSettings','CanViewAudit','CanManageQR','CanManageEmail','CanManageWhatsApp','CanBackupRestore','CanSystemConfig',
-    'IsAdmin'
+(function(){
+  var C=window.CMMS=window.CMMS||{};
+  var u=C.utils;
+  var _data=[];
+  var _state={page:1,perPage:25,search:'',editId:null};
+
+  var _perms=[
+    'CanOpenJobCard','CanStartJobCard','CanCloseJobCard','CanApproveJobCard',
+    'CanReviewPendingJobCard','CanViewAllJobCards','CanBackupRestore',
+    'CanManageMachines','CanManageAssets','CanManageSpareParts','CanManagePM',
+    'CanManageTechnicians','CanManageDepartments','CanManageSections',
+    'CanManageUsers','CanViewDashboard','CanViewReports','CanManageInventory',
+    'IsAdmin','CanManageBreakdown','CanExportReports','CanManageSettings',
+    'CanViewAudit','CanManageQR','CanManageEmail','CanManageWhatsApp',
+    'CanSystemConfig'
   ];
-  var KEY_SVG = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M15 7a4 4 0 11-7.5 2L3 5v3l-2-2 2-2h3l4.5 4.5A4 4 0 0115 7z"/><circle cx="14" cy="6" r="1" fill="currentColor"/></svg>';
-  var ICONS = {
-    view: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M1 10s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z"/><circle cx="10" cy="10" r="3"/></svg>',
-    edit: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M14.5 2.5a1.5 1.5 0 012 2L7 14l-3 1 1-3 9.5-9.5z"/></svg>',
-    trash: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M3 5h14"/><path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M16 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5"/><path d="M8 8v6"/><path d="M12 8v6"/></svg>'
+
+  var _permLabels={
+    CanOpenJobCard:'Open Job Card',CanStartJobCard:'Start Job Card',CanCloseJobCard:'Close Job Card',
+    CanApproveJobCard:'Approve Job Card',CanReviewPendingJobCard:'Review Pending Job Cards',
+    CanViewAllJobCards:'View All Job Cards',CanBackupRestore:'Backup/Restore',
+    CanManageMachines:'Manage Machines',CanManageAssets:'Manage Assets',
+    CanManageSpareParts:'Manage Spare Parts',CanManagePM:'Manage PM',
+    CanManageTechnicians:'Manage Technicians',CanManageDepartments:'Manage Departments',
+    CanManageSections:'Manage Sections',CanManageUsers:'Manage Users',
+    CanViewDashboard:'View Dashboard',CanViewReports:'View Reports',
+    CanManageInventory:'Manage Inventory',IsAdmin:'Administrator',
+    CanManageBreakdown:'Manage Breakdown',CanExportReports:'Export Reports',
+    CanManageSettings:'Manage Settings',CanViewAudit:'View Audit',
+    CanManageQR:'Manage QR',CanManageEmail:'Manage Email',
+    CanManageWhatsApp:'Manage WhatsApp',CanSystemConfig:'System Config'
   };
-  var _formPhotoBase64 = '';
-  var _profileViewUserId = '';
 
-  function photoOnerror(el, name) {
-    var initial = (name || '?').charAt(0).toUpperCase();
-    var sz = el.style.width || '32px';
-    el.onerror = null;
-    el.style.display = 'none';
-    var fallback = document.createElement('div');
-    fallback.style.cssText = 'width:' + sz + ';height:' + sz + ';border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:' + (parseInt(sz) * 0.44) + 'px;font-weight:600;margin:0 auto;flex-shrink:0';
-    fallback.textContent = initial;
-    el.parentNode.insertBefore(fallback, el);
+  function init(){
+    var mc=C.loader.getContainer();
+    mc.innerHTML=[
+      '<div class="page-header">',
+        '<h2>User Management</h2>',
+        '<div class="header-actions">',
+          '<div class="search-box">',
+            '<span class="search-icon">'+u.icons.search+'</span>',
+            '<input type="text" id="userSearch" placeholder="Search users..." />',
+          '</div>',
+          '<button class="btn btn-secondary" id="btnExportUsers">'+u.icons.plus+' Export</button>',
+          '<button class="btn btn-primary" id="btnAddUser">'+u.icons.plus+' Add User</button>',
+        '</div>',
+      '</div>',
+      '<div id="userTable" class="table-container"></div>',
+      '<div id="userModal" class="modal-overlay" style="display:none;">',
+        '<div class="modal modal-lg">',
+          '<div class="modal-header">',
+            '<h3 id="userModalTitle">Add User</h3>',
+            '<button class="modal-close" id="btnCloseUserModal">&times;</button>',
+          '</div>',
+          '<div class="modal-body">',
+            '<form id="userForm" autocomplete="off">',
+              '<input type="hidden" id="uUserId" />',
+              '<div class="form-row">',
+                '<div class="form-group">',
+                  '<label>Employee ID <span class="req">*</span></label>',
+                  '<input type="text" id="uEmployeeId" required />',
+                '</div>',
+                '<div class="form-group">',
+                  '<label>Name <span class="req">*</span></label>',
+                  '<input type="text" id="uName" required />',
+                '</div>',
+              '</div>',
+              '<div class="form-row">',
+                '<div class="form-group">',
+                  '<label>Email <span class="req">*</span></label>',
+                  '<input type="email" id="uEmail" required />',
+                '</div>',
+                '<div class="form-group">',
+                  '<label>Password</label>',
+                  '<input type="password" id="uPassword" '+( (_state.editId)?'placeholder="Leave blank to keep current"':'required' )+' />',
+                '</div>',
+              '</div>',
+              '<div class="form-row">',
+                '<div class="form-group">',
+                  '<label>Mobile</label>',
+                  '<input type="text" id="uMobile" />',
+                '</div>',
+                '<div class="form-group">',
+                  '<label>Designation</label>',
+                  '<input type="text" id="uDesignation" />',
+                '</div>',
+              '</div>',
+              '<div class="form-row">',
+                '<div class="form-group">',
+                  '<label>Department</label>',
+                  '<select id="uDeptId"><option value="">Select</option></select>',
+                '</div>',
+                '<div class="form-group">',
+                  '<label>Section</label>',
+                  '<select id="uSectionId"><option value="">Select</option></select>',
+                '</div>',
+              '</div>',
+              '<div class="form-row">',
+                '<div class="form-group">',
+                  '<label>Role <span class="req">*</span></label>',
+                  '<select id="uRole" required>',
+                    '<option value="">Select</option>',
+                    '<option value="Administrator">Administrator</option>',
+                    '<option value="Manager">Manager</option>',
+                    '<option value="Supervisor">Supervisor</option>',
+                    '<option value="Engineer">Engineer</option>',
+                    '<option value="Technician">Technician</option>',
+                    '<option value="Operator">Operator</option>',
+                    '<option value="Viewer">Viewer</option>',
+                  '</select>',
+                '</div>',
+                '<div class="form-group">',
+                  '<label>Joining Date</label>',
+                  '<input type="date" id="uJoiningDate" />',
+                '</div>',
+              '</div>',
+              '<div class="form-row">',
+                '<div class="form-group">',
+                  '<label>Status <span class="req">*</span></label>',
+                  '<select id="uStatus" required>',
+                    '<option value="Active">Active</option>',
+                    '<option value="Inactive">Inactive</option>',
+                  '</select>',
+                '</div>',
+                '<div class="form-group">',
+                  '<label>Photo</label>',
+                  '<input type="file" id="uPhoto" accept="image/*" />',
+                  '<img id="uPhotoPreview" style="display:none;width:60px;height:60px;border-radius:50%;margin-top:5px;" />',
+                '</div>',
+              '</div>',
+              '<div class="permissions-section">',
+                '<h4>Permissions</h4>',
+                '<div class="form-row">',
+                  '<div class="form-group full-width">',
+                    '<label class="checkbox-label"><input type="checkbox" id="uIsAdminPerm" /> Grant All Permissions (Admin)</label>',
+                  '</div>',
+                '</div>',
+                '<div class="permissions-grid" id="permissionsGrid">',
+                '</div>',
+              '</div>',
+            '</form>',
+          '</div>',
+          '<div class="modal-footer">',
+            '<button class="btn btn-secondary" id="btnCancelUser">Cancel</button>',
+            '<button class="btn btn-primary" id="btnSaveUser">Save</button>',
+          '</div>',
+        '</div>',
+      '</div>',
+      '<div id="resetPasswordModal" class="modal-overlay" style="display:none;">',
+        '<div class="modal">',
+          '<div class="modal-header">',
+            '<h3>Reset Password</h3>',
+            '<button class="modal-close" id="btnCloseResetModal">&times;</button>',
+          '</div>',
+          '<div class="modal-body">',
+            '<input type="hidden" id="rpUserId" />',
+            '<div class="form-group">',
+              '<label>Temporary Password</label>',
+              '<input type="text" id="rpTempPassword" value="" />',
+              '<button class="btn btn-sm" id="btnGenTempPw" style="margin-top:5px;">Generate</button>',
+            '</div>',
+            '<div class="form-group">',
+              '<label class="checkbox-label"><input type="checkbox" id="rpForceChange" checked /> Force password change on login</label>',
+            '</div>',
+          '</div>',
+          '<div class="modal-footer">',
+            '<button class="btn btn-secondary" id="btnCancelReset">Cancel</button>',
+            '<button class="btn btn-primary" id="btnDoReset">Reset</button>',
+          '</div>',
+        '</div>',
+      '</div>'
+    ].join('');
+    renderPermGrid();
+    bindEvents();
   }
 
-  function userPhotoHtml(photoUrl, name, size) {
-    size = size || '32px';
-    if (photoUrl) {
-      return '<img src="' + escHtml(photoUrl) + '" style="width:' + size + ';height:' + size + ';border-radius:50%;object-fit:cover" onerror="this.onerror=null;var s=\'' + size + '\';var i=\'' + escHtml((name||'?').charAt(0).toUpperCase()) + '\';this.style.display=\'none\';var d=document.createElement(\'div\');d.style.cssText=\'width:\'+s+\';height:\'+s+\';border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:\'+(parseInt(s)*0.44)+\'px;font-weight:600;margin:0 auto;flex-shrink:0\';d.textContent=i;this.parentNode.insertBefore(d,this)">';
+  function renderPermGrid(){
+    var grid=u.$('#permissionsGrid');
+    var html='';
+    for(var i=0;i<_perms.length;i++){
+      html+='<div class="perm-item"><label class="checkbox-label"><input type="checkbox" class="perm-cb" data-perm="'+_perms[i]+'" /> '+u.escHtml(_permLabels[_perms[i]])+'</label></div>';
     }
-    var initial = (name || '?').charAt(0).toUpperCase();
-    return '<div style="width:' + size + ';height:' + size + ';border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:' + (parseInt(size) * 0.44) + 'px;font-weight:600;margin:0 auto">' + initial + '</div>';
+    grid.innerHTML=html;
   }
 
-  App.registerPage('users', render, load);
-
-  function render() {
-    var el = document.getElementById('page-users');
-    el.innerHTML = '' +
-      '<style>' +
-        '#usersTable tr.row-selected { background: var(--primary-light) !important; outline: 2px solid var(--primary); outline-offset: -2px; }' +
-        '#usersTable tr.row-selected td:first-child { border-left: 3px solid var(--primary); }' +
-        '#usersTable tbody tr { cursor: pointer; transition: background 0.15s; }' +
-        '#usersTable tbody tr:hover { background: var(--bg-hover); }' +
-      '</style>' +
-      '<div class="card">' +
-        '<div class="card-header">' +
-          '<div class="card-title">Users Management</div>' +
-          '<div class="card-actions">' +
-            '<div class="search-box">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
-              '<input type="text" class="form-control" id="userSearch" placeholder="Search users...">' +
-            '</div>' +
-            '<button class="btn btn-primary" onclick="usrmgmtOpenForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add User</button>' +
-            '<button class="btn btn-secondary" onclick="editSelectedUser()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M14.5 2.5a1.5 1.5 0 012 2L7 14l-3 1 1-3 9.5-9.5z"/></svg> Edit</button>' +
-            '<button class="btn btn-secondary" onclick="deleteSelectedUser()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M3 5h14"/><path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M16 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5"/><path d="M8 8v6"/><path d="M12 8v6"/></svg> Delete</button>' +
-            '<button class="btn btn-secondary" onclick="resetPwdSelectedUser()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><rect x="3" y="11" width="14" height="7" rx="1"/><path d="M7 11V7a3 3 0 016 0v4"/></svg> Reset Pwd</button>' +
-            '<button class="btn btn-secondary" onclick="refreshUsersTable()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg> Refresh</button>' +
-            '<button class="btn btn-secondary" onclick="exportUsersExcel()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export Excel</button>' +
-          '</div>' +
-        '</div>' +
-        '<div id="usersTableContainer"></div>' +
-      '</div>';
-
-    renderFormModal();
-    renderPasswordResetModal();
-    renderViewUserModal();
+  function setAllPerms(val){
+    var cbs=u.$$('.perm-cb');
+    for(var i=0;i<cbs.length;i++)cbs[i].checked=val;
   }
 
-  function renderFormModal() {
-    var h = '' +
-      '<div class="modal-overlay" id="userFormModal">' +
-        '<div class="modal modal-wide" style="max-width:900px">' +
-          '<div class="modal-header">' +
-            '<div class="modal-title" id="userFormTitle">Add User</div>' +
-            '<button class="modal-close" onclick="hideModal(\'userFormModal\')">&times;</button>' +
-          '</div>' +
-          '<form id="userForm" onsubmit="return usrmgmtSaveUser(event)">' +
-            '<div class="modal-body">' +
-              '<input type="hidden" name="UserID" id="editUserId">' +
-              '<div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">' +
-                '<div style="width:72px;height:72px;border-radius:50%;overflow:hidden;border:2px solid var(--border);flex-shrink:0;background:var(--bg-card);display:flex;align-items:center;justify-content:center">' +
-                  '<div id="formPhotoPlaceholder" style="color:var(--text-muted);font-size:11px;text-align:center;padding:4px">No Photo</div>' +
-                  '<img id="formPhotoImg" style="width:100%;height:100%;object-fit:cover;display:none">' +
-                '</div>' +
-                '<div>' +
-                  '<input type="file" id="formPhotoInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="onFormPhotoSelected(event)">' +
-                  '<button type="button" class="btn btn-secondary btn-sm" onclick="var el=document.getElementById(\'formPhotoInput\');el&&el.click()">Upload Photo</button>' +
-                  '<button type="button" class="btn btn-secondary btn-sm" id="formRemovePhotoBtn" onclick="removeFormPhoto()" style="display:none;margin-left:4px">Remove</button>' +
-                  '<div style="font-size:10px;color:var(--text-muted);margin-top:4px">JPG/PNG/WEBP, max 2MB</div>' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group"><label>Employee ID *</label><input type="text" name="EmployeeID" class="form-control" id="uEmpId" required placeholder="e.g. EMP-001"></div>' +
-                '<div class="form-group"><label>Employee Name *</label><input type="text" name="Name" class="form-control" id="uName" required></div>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group"><label>Email *</label><input type="email" name="Email" class="form-control" id="uEmail" required></div>' +
-                '<div class="form-group"><label>Mobile</label><input type="text" name="Mobile" class="form-control" id="uMobile" placeholder="e.g. 9876543210"></div>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group"><label>Password</label><input type="password" name="Password" class="form-control" id="uPassword" autocomplete="new-password"></div>' +
-                '<div class="form-group"><label>Confirm Password</label><input type="password" name="ConfirmPassword" class="form-control" id="uConfirmPassword"></div>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group"><label>Department *</label><select name="Department" class="form-control" id="uDept" required onchange="onDepartmentChange(this.value)"><option value="">Select Department</option></select></div>' +
-                '<div class="form-group"><label>Section</label><select name="Section" class="form-control" id="uSection"><option value="">Select Section</option></select></div>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group"><label>Designation</label><input type="text" name="Designation" class="form-control" id="uDesignation" placeholder="e.g. Maintenance Engineer"></div>' +
-                '<div class="form-group"><label>Role *</label><select name="Role" class="form-control" id="uRole" required><option value="">Select Role</option><option value="Administrator">Administrator</option><option value="Manager">Manager</option><option value="Supervisor">Supervisor</option><option value="Engineer">Engineer</option><option value="Technician">Technician</option><option value="Operator">Operator</option><option value="Viewer">Viewer</option></select></div>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group"><label>Status</label><select name="Status" class="form-control"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>' +
-                '<div class="form-group"><label>Joining Date</label><input type="date" name="JoiningDate" class="form-control" id="uJoiningDate"></div>' +
-              '</div>' +
-              buildPermissionsHtml() +
-            '</div>' +
-            '<div class="modal-footer">' +
-              '<button type="button" class="btn btn-secondary" onclick="hideModal(\'userFormModal\')">Cancel</button>' +
-              '<button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>' +
-            '</div>' +
-          '</form>' +
-        '</div>' +
-      '</div>';
-    document.body.insertAdjacentHTML('beforeend', h);
+  function getPermValues(){
+    var result={};
+    var cbs=u.$$('.perm-cb');
+    for(var i=0;i<cbs.length;i++){
+      result[cbs[i].dataset.perm]=cbs[i].checked;
+    }
+    return result;
   }
 
-  function buildPermissionsHtml() {
-    return '' +
-      '<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">' +
-        '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">Permissions</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">' +
-          '<div>' +
-            '<div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Job Cards</div>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanOpenJobCard" value="TRUE"> Open</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanStartJobCard" value="TRUE"> Start</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanCloseJobCard" value="TRUE"> Close</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanReviewPendingJobCard" value="TRUE"> Review Pending</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanViewAllJobCards" value="TRUE"> View All Cards</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanApproveJobCard" value="TRUE"> Approve</label>' +
-          '</div>' +
-          '<div>' +
-            '<div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Masters</div>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManageSections" value="TRUE"> Sections</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManageDepartments" value="TRUE"> Departments</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManageMachines" value="TRUE"> Machines</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManageAssets" value="TRUE"> Assets</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManageTechnicians" value="TRUE"> Technicians</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManageSpareParts" value="TRUE"> Spare Parts</label>' +
-          '</div>' +
-          '<div>' +
-            '<div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Maintenance</div>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManagePM" value="TRUE"> Manage PM</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManageBreakdown" value="TRUE"> Breakdown Entry</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManageInventory" value="TRUE"> Inventory</label>' +
-          '</div>' +
-          '<div>' +
-            '<div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Dashboard</div>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanViewDashboard" value="TRUE"> View Dashboard</label>' +
-          '</div>' +
-          '<div>' +
-            '<div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Reports</div>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanViewReports" value="TRUE"> View Reports</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanExportReports" value="TRUE"> Export Reports</label>' +
-          '</div>' +
-          '<div>' +
-            '<div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Administration</div>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManageUsers" value="TRUE"> Manage Users</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManageSettings" value="TRUE"> Manage Settings</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanViewAudit" value="TRUE"> Audit Trail</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManageQR" value="TRUE"> QR Barcode</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManageEmail" value="TRUE"> Email Notifications</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanManageWhatsApp" value="TRUE"> WhatsApp Notifications</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanBackupRestore" value="TRUE"> Backup & Restore</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="CanSystemConfig" value="TRUE"> System Configuration</label>' +
-            '<label class="perm-checkbox"><input type="checkbox" name="IsAdmin" value="TRUE" id="uIsAdmin" onchange="onAdminCheckChange()"> Is Administrator</label>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-  }
-
-  function renderPasswordResetModal() {
-    var h = '' +
-      '<div class="modal-overlay" id="passwordResetModal">' +
-        '<div class="modal" style="max-width:480px">' +
-          '<div class="modal-header">' +
-            '<div class="modal-title">Reset Password</div>' +
-            '<button class="modal-close" onclick="hideModal(\'passwordResetModal\')">&times;</button>' +
-          '</div>' +
-          '<div class="modal-body">' +
-            '<input type="hidden" id="resetPwUserId">' +
-            '<div class="form-group"><label>Temporary Password *</label>' +
-              '<div style="display:flex;gap:6px">' +
-                '<input type="text" class="form-control" id="resetTempPassword" style="font-family:monospace" required>' +
-                '<button type="button" class="btn btn-secondary" onclick="generateTempPassword()" style="white-space:nowrap">Generate</button>' +
-              '</div>' +
-            '</div>' +
-            '<div class="form-group"><label class="perm-checkbox" style="margin-top:8px"><input type="checkbox" id="resetForceChange" checked> Force password change on next login</label></div>' +
-          '</div>' +
-          '<div class="modal-footer">' +
-            '<button type="button" class="btn btn-secondary" onclick="hideModal(\'passwordResetModal\')">Cancel</button>' +
-            '<button type="button" class="btn btn-primary" onclick="confirmResetPassword()">Reset Password</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    document.body.insertAdjacentHTML('beforeend', h);
-  }
-
-  function renderViewUserModal() {
-    var h = '' +
-      '<div class="modal-overlay" id="viewUserModal">' +
-        '<div class="modal" style="max-width:620px">' +
-          '<div class="modal-header">' +
-            '<div class="modal-title">User Profile</div>' +
-            '<button class="modal-close" onclick="hideModal(\'viewUserModal\')">&times;</button>' +
-          '</div>' +
-          '<div class="modal-body" id="viewUserContent" style="padding:0">' +
-            '<input type="file" id="profilePhotoInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="onProfilePhotoSelected(event)">' +
-          '</div>' +
-          '<div class="modal-footer" id="profileCardFooter">' +
-            '<button type="button" class="btn btn-secondary" onclick="hideModal(\'viewUserModal\')">Close</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    document.body.insertAdjacentHTML('beforeend', h);
-  }
-
-  function load() {
-    showLoading(true);
-    API.call('getUsers')
-      .then(function(data) {
-        usersData = data || [];
-        showLoading(false);
-        usersPage = 1;
-        sortColumn = '';
-        sortDirection = 'asc';
-        usrmgmtRenderTable();
-        attachSearchListener();
-      })
-      .catch(function(err) {
-        showLoading(false);
-        showToast('Failed to load users', 'error');
-      });
-  }
-
-  function attachSearchListener() {
-    var searchEl = document.getElementById('userSearch');
-    if (searchEl && !searchEl._bound) {
-      searchEl._bound = true;
-      searchEl.addEventListener('keyup', function() {
-        searchUsersTable();
-      });
+  function setPermValues(perms){
+    var cbs=u.$$('.perm-cb');
+    for(var i=0;i<cbs.length;i++){
+      cbs[i].checked=!!perms[cbs[i].dataset.perm];
     }
   }
 
-  function usrmgmtRenderTable() {
-    var data = usersData;
-    if (sortColumn) {
-      data = data.slice().sort(function(a, b) {
-        var va = (a[sortColumn] || '').toString().toLowerCase();
-        var vb = (b[sortColumn] || '').toString().toLowerCase();
-        if (va < vb) return sortDirection === 'asc' ? -1 : 1;
-        if (va > vb) return sortDirection === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-    var totalPages = Math.ceil(data.length / PAGE_SIZE);
-    var start = (usersPage - 1) * PAGE_SIZE;
-    var end = Math.min(start + PAGE_SIZE, data.length);
-    var pageData = data.slice(start, end);
+  function bindEvents(){
+    u.$('#btnAddUser').addEventListener('click',function(){
+      _state.editId=null;
+      u.resetForm(u.$('#userForm'));
+      u.$('#uPassword').required=true;
+      u.$('#uPassword').placeholder='';
+      u.$('#userModalTitle').textContent='Add User';
+      u.$('#uPhotoPreview').style.display='none';
+      setAllPerms(false);
+      u.$('#uIsAdminPerm').checked=false;
+      u.$('#userModal').style.display='flex';
+    });
+    u.$('#btnCloseUserModal').addEventListener('click',function(){
+      u.$('#userModal').style.display='none';
+    });
+    u.$('#btnCancelUser').addEventListener('click',function(){
+      u.$('#userModal').style.display='none';
+    });
+    u.$('#uIsAdminPerm').addEventListener('change',function(){
+      setAllPerms(this.checked);
+    });
+    u.$('#uDeptId').addEventListener('change',function(){
+      loadSections(this.value);
+    });
+    u.$('#uPhoto').addEventListener('change',function(e){
+      var file=e.target.files[0];
+      if(!file)return;
+      var reader=new FileReader();
+      reader.onload=function(ev){
+        u.$('#uPhotoPreview').src=ev.target.result;
+        u.$('#uPhotoPreview').style.display='block';
+      };
+      reader.readAsDataURL(file);
+    });
+    u.$('#btnSaveUser').addEventListener('click',function(){
+      saveUser();
+    });
+    u.$('#btnExportUsers').addEventListener('click',function(){
+      C.api.call('exportUsersToExcel').then(function(r){
+        if(r&&r.url){window.open(r.url,'_blank');}
+        else{u.showToast('Export complete','success');}
+      }).catch(function(e){u.showToast('Export failed','error');});
+    });
+    var searchInput=u.$('#userSearch');
+    searchInput.addEventListener('input',u.debounce(function(){
+      _state.search=searchInput.value.trim();
+      load();
+    },400));
+    u.$('#userTable').addEventListener('click',function(e){
+      var btn=e.target.closest('[data-action]');
+      if(!btn)return;
+      var id=parseInt(btn.closest('tr').dataset.id);
+      if(btn.dataset.action==='edit')editUser(id);
+      else if(btn.dataset.action==='delete')deleteUser(id);
+      else if(btn.dataset.action==='reset')openResetModal(id);
+    });
+    u.$('#btnCloseResetModal').addEventListener('click',function(){
+      u.$('#resetPasswordModal').style.display='none';
+    });
+    u.$('#btnCancelReset').addEventListener('click',function(){
+      u.$('#resetPasswordModal').style.display='none';
+    });
+    u.$('#btnGenTempPw').addEventListener('click',function(){
+      var chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+      var pw='';
+      for(var i=0;i<10;i++)pw+=chars.charAt(Math.floor(Math.random()*chars.length));
+      u.$('#rpTempPassword').value=pw;
+    });
+    u.$('#btnDoReset').addEventListener('click',function(){
+      doResetPassword();
+    });
+  }
 
-    var sortArrow = function(col) {
-      if (sortColumn === col) return sortDirection === 'asc' ? ' &#9650;' : ' &#9660;';
-      return '';
+  function loadMeta(){
+    return C.api.call('getUserDepartments').then(function(d){
+      u.populateSelect(u.$('#uDeptId'),d||[],'DeptID','Department');
+    }).catch(function(){});
+  }
+
+  function loadSections(deptId){
+    var sel=u.$('#uSectionId');
+    sel.innerHTML='<option value="">Select</option>';
+    if(!deptId)return;
+    C.api.call('getUserSections',{DeptID:deptId}).then(function(d){
+      u.populateSelect(sel,d||[],'SectionID','Section');
+    }).catch(function(){});
+  }
+
+  function load(){
+    u.showLoading(true);
+    var params={};
+    if(_state.search)params.Search=_state.search;
+    C.api.call('getUsers',params).then(function(data){
+      _data=data||[];
+      render();
+    }).catch(function(){
+      _data=[];
+      render();
+    }).finally(function(){u.showLoading(false);});
+  }
+
+  function render(){
+    var rows=[];
+    for(var i=0;i<_data.length;i++){
+      var u2=_data[i];
+      var photoHtml=u2.Photo?'<img src="'+u2.Photo+'" class="user-avatar-sm" />':'<div class="user-avatar-placeholder">'+u.escHtml((u2.Name||'?')[0])+'</div>';
+      rows.push(
+        '<tr data-id="'+u2.UserID+'">',
+          '<td>'+u.escHtml(u2.UserID)+'</td>',
+          '<td>'+u.escHtml(u2.EmployeeID)+'</td>',
+          '<td><div class="user-cell">'+photoHtml+'<span>'+u.escHtml(u2.Name)+'</span></div></td>',
+          '<td>'+u.escHtml(u2.Email)+'</td>',
+          '<td>'+u.escHtml(u2.Department||'')+'</td>',
+          '<td>'+u.badge(u2.Role,u2.Role==='Administrator'?'danger':'info')+'</td>',
+          '<td>'+u.statusBadge(u2.Status)+'</td>',
+          '<td>'+(u2.LastLogin?u.timeAgo(u2.LastLogin):'-')+'</td>',
+          '<td class="actions">',
+            '<button class="btn-icon" data-action="edit" title="Edit">'+u.icons.edit+'</button>',
+            '<button class="btn-icon" data-action="reset" title="Reset Password">🔑</button>',
+            '<button class="btn-icon btn-danger" data-action="delete" title="Delete">'+u.icons.trash+'</button>',
+          '</td>',
+        '</tr>'
+      );
+    }
+    u.renderTable(u.$('#userTable'),{
+      headers:['ID','Emp ID','Name','Email','Department','Role','Status','Last Login','Actions'],
+      rows:rows,
+      emptyMsg:'No users found'
+    });
+  }
+
+  function getFormData(){
+    var photoPreview=u.$('#uPhotoPreview');
+    var photoSrc=(photoPreview.style.display!=='none')?photoPreview.src:'';
+    return{
+      EmployeeID:u.getVal('#uEmployeeId'),
+      Name:u.getVal('#uName'),
+      Email:u.getVal('#uEmail'),
+      Password:u.getVal('#uPassword')||undefined,
+      Mobile:u.getVal('#uMobile'),
+      DeptID:u.getVal('#uDeptId'),
+      SectionID:u.getVal('#uSectionId'),
+      Designation:u.getVal('#uDesignation'),
+      Role:u.getVal('#uRole'),
+      Status:u.getVal('#uStatus'),
+      JoiningDate:u.getVal('#uJoiningDate'),
+      Photo:photoSrc||undefined,
+      Permissions:getPermValues()
     };
-
-    var html = '<div class="table-container"><table id="usersTable"><thead><tr>' +
-      '<th onclick="sortUsersTable(\'EmployeeID\')" style="cursor:pointer">Employee ID' + sortArrow('EmployeeID') + '</th>' +
-      '<th onclick="sortUsersTable(\'Name\')" style="cursor:pointer">Employee Name' + sortArrow('Name') + '</th>' +
-      '<th onclick="sortUsersTable(\'Email\')" style="cursor:pointer">Email' + sortArrow('Email') + '</th>' +
-      '<th onclick="sortUsersTable(\'Department\')" style="cursor:pointer">Department' + sortArrow('Department') + '</th>' +
-      '<th onclick="sortUsersTable(\'Designation\')" style="cursor:pointer">Designation' + sortArrow('Designation') + '</th>' +
-      '<th onclick="sortUsersTable(\'Role\')" style="cursor:pointer">Role' + sortArrow('Role') + '</th>' +
-      '<th onclick="sortUsersTable(\'Status\')" style="cursor:pointer">Status' + sortArrow('Status') + '</th>' +
-      '<th onclick="sortUsersTable(\'LastLoginDate\')" style="cursor:pointer">Last Login' + sortArrow('LastLoginDate') + '</th>' +
-      '<th onclick="sortUsersTable(\'CreatedAt\')" style="cursor:pointer">Created Date' + sortArrow('CreatedAt') + '</th>' +
-      '<th style="width:180px">Actions</th>' +
-      '</tr></thead><tbody>';
-
-    pageData.forEach(function(row) {
-      var initial = (row.Name || '?').charAt(0).toUpperCase();
-      var isSelected = selectedUserId === row.UserID;
-      var photoHtml = userPhotoHtml(row.PhotoURL, row.Name, '32px');
-
-      var roleBadge = 'primary';
-      if (row.Role === 'Administrator') roleBadge = 'danger';
-      else if (row.Role === 'Manager') roleBadge = 'warning';
-      else if (row.Role === 'Supervisor') roleBadge = 'primary';
-      else if (row.Role === 'Engineer') roleBadge = 'info';
-      else if (row.Role === 'Technician') roleBadge = 'success';
-      else if (row.Role === 'Operator') roleBadge = 'secondary';
-      else if (row.Role === 'Viewer') roleBadge = 'secondary';
-
-      var statusBadge = row.Status === 'Active' ? 'success' : 'danger';
-
-      html += '<tr class="' + (isSelected ? 'row-selected' : '') + '" onclick="selectUserRow(\'' + row.UserID + '\')" data-userid="' + row.UserID + '">' +
-        '<td><span style="display:inline-flex;align-items:center;gap:8px">' + photoHtml + '<span>' + escHtml(row.EmployeeID) + '</span></span></td>' +
-        '<td><strong>' + escHtml(row.Name) + '</strong></td>' +
-        '<td>' + escHtml(row.Email) + '</td>' +
-        '<td>' + escHtml(row.Department) + '</td>' +
-        '<td>' + escHtml(row.Designation) + '</td>' +
-        '<td><span class="badge badge-' + roleBadge + '">' + escHtml(row.Role) + '</span></td>' +
-        '<td><span class="badge badge-' + statusBadge + '">' + escHtml(row.Status) + '</span></td>' +
-        '<td style="font-size:11px;color:var(--text-muted)">' + (row.LastLogin || row.LastLoginDate || '-') + '</td>' +
-        '<td style="font-size:11px;color:var(--text-muted)">' + (row.CreatedAt ? formatDateShort(row.CreatedAt) : '-') + '</td>' +
-        '<td><div class="actions-cell">' +
-          '<button class="icon-btn icon-btn-primary" onclick="event.stopPropagation();viewUser(\'' + row.UserID + '\')" title="View User">' + ICONS.view + '</button>' +
-          '<button class="icon-btn icon-btn-primary" onclick="event.stopPropagation();usrmgmtEditUser(\'' + row.UserID + '\')" title="Edit User">' + ICONS.edit + '</button>' +
-          '<button class="icon-btn icon-btn-warning" onclick="event.stopPropagation();openResetPassword(\'' + row.UserID + '\')" title="Reset Password">' + KEY_SVG + '</button>' +
-          '<button class="icon-btn icon-btn-danger" onclick="event.stopPropagation();usrmgmtDeleteUser(\'' + row.UserID + '\')" title="Delete User">' + ICONS.trash + '</button>' +
-        '</div></td>' +
-      '</tr>';
-    });
-    html += '</tbody></table></div>';
-
-    if (totalPages > 1) {
-      html += '<div class="pagination">' +
-        '<div class="pagination-info">Showing ' + (start + 1) + ' to ' + end + ' of ' + data.length + ' entries</div>' +
-        '<div class="pagination-btns">' +
-        '<button onclick="usersTablePage(' + (usersPage - 1) + ')" ' + (usersPage <= 1 ? 'disabled' : '') + '>Prev</button>';
-      for (var p = 1; p <= totalPages; p++) {
-        html += '<button class="' + (p === usersPage ? 'active' : '') + '" onclick="usersTablePage(' + p + ')">' + p + '</button>';
-      }
-      html += '<button onclick="usersTablePage(' + (usersPage + 1) + ')" ' + (usersPage >= totalPages ? 'disabled' : '') + '>Next</button>' +
-        '</div></div>';
-    } else if (data.length > PAGE_SIZE && totalPages <= 1) {
-      html += '<div class="pagination"><div class="pagination-info">Showing all ' + data.length + ' entries</div></div>';
-    }
-    var container = document.getElementById('usersTableContainer');
-    if (container) container.innerHTML = html;
   }
 
-  function formatDateShort(dateVal) {
-    if (!dateVal) return '';
-    var d = new Date(dateVal);
-    if (isNaN(d.getTime())) return String(dateVal).substring(0, 10);
-    var day = String(d.getDate()).padStart(2, '0');
-    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var month = months[d.getMonth()];
-    var year = d.getFullYear();
-    return day + ' ' + month + ' ' + year;
-  }
-
-  function loadUserDepartmentOptions(selected) {
-    API.call('getUserDepartments')
-      .then(function(depts) {
-        var sel = document.getElementById('uDept');
-        if (sel) {
-          sel.innerHTML = '<option value="">Select Department</option>';
-          (depts || []).forEach(function(d) {
-            var opt = document.createElement('option');
-            opt.value = d.name;
-            opt.textContent = d.name;
-            if (selected && d.name === selected) opt.selected = true;
-            sel.appendChild(opt);
-          });
-        }
-      })
-      .catch(function(err) {
-        console.error('loadUserDepartments failed:', err);
-        showToast('Failed to load departments', 'error');
-      });
-  }
-
-  function loadUserSectionOptions(selected, department) {
-    var params = {};
-    if (department) params.department = department;
-    API.call('getUserSections', params)
-      .then(function(sections) {
-        var sel = document.getElementById('uSection');
-        if (sel) {
-          sel.innerHTML = '<option value="">Select Section</option>';
-          (sections || []).forEach(function(s) {
-            var opt = document.createElement('option');
-            opt.value = s.name;
-            opt.textContent = s.name;
-            if (selected && s.name === selected) opt.selected = true;
-            sel.appendChild(opt);
-          });
-        }
-      })
-      .catch(function(err) {
-        console.error('loadUserSections failed:', err);
-      });
-  }
-
-  window.onDepartmentChange = function(deptValue) {
-    var sectionSel = document.getElementById('uSection');
-    if (sectionSel) sectionSel.value = '';
-    loadUserSectionOptions('', deptValue);
-  };
-
-  function resetUserPermissions() {
-    document.querySelectorAll('#userForm input[type="checkbox"]').forEach(function(cb) {
-      cb.checked = false;
-    });
-  }
-
-  function setUserPermissionCheckboxes(item) {
-    document.querySelectorAll('#userForm input[type="checkbox"]').forEach(function(cb) {
-      if (cb.name) {
-        cb.checked = item[cb.name] === 'TRUE';
-      }
-    });
-    onAdminCheckChange();
-  }
-
-  function processUserPermissions(data) {
-    USER_PERM_FIELDS.forEach(function(p) {
-      data[p] = 'FALSE';
-    });
-    document.querySelectorAll('#userForm input[type="checkbox"]:checked').forEach(function(cb) {
-      if (cb.name) data[cb.name] = 'TRUE';
-    });
-  }
-
-  function clearFormPhoto() {
-    _formPhotoBase64 = '';
-    var fpi = document.getElementById('formPhotoInput'); if (fpi) fpi.value = '';
-    var fpp = document.getElementById('formPhotoPlaceholder'); if (fpp) fpp.style.display = '';
-    var fim = document.getElementById('formPhotoImg'); if (fim) { fim.style.display = 'none'; fim.src = ''; }
-    var rmb = document.getElementById('formRemovePhotoBtn'); if (rmb) rmb.style.display = 'none';
-  }
-
-  function setFormPhotoPreview(url) {
-    if (url) {
-      var fpp = document.getElementById('formPhotoPlaceholder'); if (fpp) fpp.style.display = 'none';
-      var img = document.getElementById('formPhotoImg');
-      if (img) { img.src = url; img.style.display = 'block'; img.onerror = function() { this.onerror = null; this.style.display = 'none'; var fpp2 = document.getElementById('formPhotoPlaceholder'); if (fpp2) fpp2.style.display = ''; }; }
-      var rmb = document.getElementById('formRemovePhotoBtn'); if (rmb) rmb.style.display = '';
-    } else {
-      clearFormPhoto();
-    }
-  }
-
-  function buildProfileCardHtml(item) {
-    var initial = (item.Name || '?').charAt(0).toUpperCase();
-    var photoUrl = item.PhotoURL;
-    var photoHtml = photoUrl
-      ? '<img src="' + escHtml(photoUrl) + '" id="profileCardPhoto" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);display:block;box-shadow:0 0 0 4px var(--primary-light)" onerror="this.onerror=null;this.style.display=\'none\';var d=document.createElement(\'div\');d.id=\'profileCardPhoto\';d.style.cssText=\'width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;box-shadow:0 0 0 4px var(--primary-light)\';d.textContent=\'' + escHtml(initial) + '\';this.parentNode.insertBefore(d,this)">'
-      : '<div id="profileCardPhoto" style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;box-shadow:0 0 0 4px var(--primary-light)">' + initial + '</div>';
-
-    var roleBadge = 'primary';
-    if (item.Role === 'Administrator') roleBadge = 'danger';
-    else if (item.Role === 'Manager') roleBadge = 'warning';
-    else if (item.Role === 'Supervisor') roleBadge = 'primary';
-    else if (item.Role === 'Engineer') roleBadge = 'info';
-    else if (item.Role === 'Technician') roleBadge = 'success';
-    else if (item.Role === 'Operator') roleBadge = 'secondary';
-    else if (item.Role === 'Viewer') roleBadge = 'secondary';
-
-    var grantedPerms = USER_PERM_FIELDS.filter(function(p) { return item[p] === 'TRUE' || item[p] === true; });
-    var shortPermLabels = {
-      CanOpenJobCard: 'Open Job Card', CanStartJobCard: 'Start Job Card',
-      CanCloseJobCard: 'Close Job Card', CanReviewPendingJobCard: 'Review Pending', CanViewAllJobCards: 'All Cards', CanApproveJobCard: 'Approve Job Card',
-      CanManageSections: 'Sections', CanManageDepartments: 'Departments',
-      CanManageMachines: 'Machines', CanManageAssets: 'Assets',
-      CanManageTechnicians: 'Technicians', CanManageSpareParts: 'Spare Parts',
-      CanManagePM: 'PM', CanManageBreakdown: 'Breakdown',
-      CanManageInventory: 'Inventory',
-      CanViewDashboard: 'Dashboard', CanViewReports: 'Reports',
-      CanExportReports: 'Export',
-      CanManageUsers: 'Users', CanManageSettings: 'Settings',
-      CanViewAudit: 'Audit', CanManageQR: 'QR/Barcode',
-      CanManageEmail: 'Email', CanManageWhatsApp: 'WhatsApp',
-      CanBackupRestore: 'Backup', CanSystemConfig: 'System Config',
-      IsAdmin: 'Admin'
-    };
-    var permHtml = grantedPerms.length > 0
-      ? grantedPerms.map(function(p) { return '<span class="badge badge-success" style="margin:2px 3px">' + (shortPermLabels[p] || p) + '</span>'; }).join('')
-      : '<span style="color:var(--text-muted);font-size:12px">No permissions granted</span>';
-
-    function infoRow(label, value) {
-      return '<div style="display:flex;flex-direction:column;gap:1px"><div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px">' + label + '</div><div style="font-weight:500;color:var(--text);font-size:13px">' + (value || '-') + '</div></div>';
-    }
-
-    var joinedDate = item.JoiningDate ? formatDateShort(item.JoiningDate) : '-';
-    var lastLogin = item.LastLogin || item.LastLoginDate || '-';
-    var createdDate = item.CreatedAt ? formatDateShort(item.CreatedAt) : '-';
-    var forcePwdChange = item.ForcePasswordChange === 'TRUE' ? '<span class="badge badge-warning">Change Required</span>' : '<span class="badge badge-success">OK</span>';
-
-    var hasPhoto = !!photoUrl;
-    var statusBadgeHtml = item.Status === 'Active'
-      ? '<span class="badge badge-success">Active</span>'
-      : '<span class="badge badge-danger">Inactive</span>';
-
-    return '' +
-      '<div style="text-align:center;padding:28px 24px 20px;border-bottom:1px solid var(--border)">' +
-        '<div style="position:relative;display:inline-block">' +
-          photoHtml +
-          '<div style="margin-top:8px;display:flex;gap:8px;justify-content:center;font-size:11px">' +
-            '<span style="color:var(--primary);cursor:pointer" onclick="var el=document.getElementById(\'profilePhotoInput\');el&&el.click()">' + (hasPhoto ? 'Change Photo' : 'Upload Photo') + '</span>' +
-            (hasPhoto ? '<span style="color:var(--text-muted)">|</span><span style="color:var(--danger);cursor:pointer" onclick="removeProfilePhoto(\'' + item.UserID + '\')">Remove</span>' : '') +
-          '</div>' +
-        '</div>' +
-        '<div style="font-size:20px;font-weight:700;color:var(--text);margin-top:10px">' + escHtml(item.Name) + '</div>' +
-        (item.Designation ? '<div style="font-size:13px;color:var(--text-muted);margin-top:2px">' + escHtml(item.Designation) + '</div>' : '') +
-        '<div style="margin-top:8px;display:flex;gap:6px;justify-content:center">' +
-          '<span class="badge badge-' + roleBadge + '">' + escHtml(item.Role) + '</span>' + statusBadgeHtml +
-        '</div>' +
-      '</div>' +
-      '<div style="padding:20px 24px 12px">' +
-        '<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid var(--border)">Personal Information</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 28px">' +
-          infoRow('Employee ID', escHtml(item.EmployeeID)) +
-          infoRow('Mobile', escHtml(item.Mobile || '-')) +
-          infoRow('Email', escHtml(item.Email)) +
-          infoRow('Joining Date', joinedDate) +
-        '</div>' +
-      '</div>' +
-      '<div style="padding:0 24px 12px">' +
-        '<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid var(--border)">Organization</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 28px">' +
-          infoRow('Department', escHtml(item.Department || '-')) +
-          infoRow('Section', escHtml(item.Section || '-')) +
-          infoRow('Designation', escHtml(item.Designation || '-')) +
-          infoRow('Role', escHtml(item.Role || '-')) +
-        '</div>' +
-      '</div>' +
-      '<div style="padding:0 24px 12px">' +
-        '<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid var(--border)">Account Information</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 28px">' +
-          infoRow('Status', statusBadgeHtml) +
-          infoRow('Created', createdDate) +
-          infoRow('Last Login', lastLogin) +
-          infoRow('Password', forcePwdChange) +
-        '</div>' +
-      '</div>' +
-      '<div style="padding:0 24px 20px">' +
-        '<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)">Permissions</div>' +
-        '<div>' + permHtml + '</div>' +
-      '</div>';
-  }
-
-  function buildProfileCardFooter(item) {
-    return '' +
-      '<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();hideModal(\'viewUserModal\');usrmgmtEditUser(\'' + item.UserID + '\')">' +
-        '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M14.5 2.5a1.5 1.5 0 012 2L7 14l-3 1 1-3 9.5-9.5z"/></svg> Edit User</button>' +
-      '<button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();hideModal(\'viewUserModal\');openResetPassword(\'' + item.UserID + '\')">' +
-        '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><rect x="3" y="11" width="14" height="7" rx="1"/><path d="M7 11V7a3 3 0 016 0v4"/></svg> Reset Password</button>' +
-      '<button type="button" class="btn btn-secondary" onclick="hideModal(\'viewUserModal\')">Close</button>';
-  }
-
-  /* ---- Global event handlers ---- */
-
-  window.refreshUsersTable = function() {
-    load();
-  };
-
-  window.sortUsersTable = function(col) {
-    if (sortColumn === col) {
-      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      sortColumn = col;
-      sortDirection = 'asc';
-    }
-    usersPage = 1;
-    usrmgmtRenderTable();
-  };
-
-  window.usersTablePage = function(p) {
-    usersPage = p;
-    usrmgmtRenderTable();
-  };
-
-  window.selectUserRow = function(userId) {
-    selectedUserId = selectedUserId === userId ? '' : userId;
-    usrmgmtRenderTable();
-  };
-
-  function getSelectedUser() {
-    if (!selectedUserId) return null;
-    return usersData.find(function(r) { return r.UserID === selectedUserId; });
-  }
-
-  window.editSelectedUser = function() {
-    var item = getSelectedUser();
-    if (!item) { showToast('Please select a user from the table first', 'warning'); return; }
-    usrmgmtEditUser(item.UserID);
-  };
-
-  window.deleteSelectedUser = function() {
-    var item = getSelectedUser();
-    if (!item) { showToast('Please select a user from the table first', 'warning'); return; }
-    usrmgmtDeleteUser(item.UserID);
-  };
-
-  window.resetPwdSelectedUser = function() {
-    var item = getSelectedUser();
-    if (!item) { showToast('Please select a user from the table first', 'warning'); return; }
-    openResetPassword(item.UserID);
-  };
-
-  window.usrmgmtOpenForm = function() {
-    var eu = document.getElementById('editUserId'); if (eu) eu.value = '';
-    resetForm('userForm');
-    _formPhotoBase64 = '';
-    clearFormPhoto();
-    var pw = document.getElementById('uPassword'); if (pw) { pw.required = true; pw.placeholder = 'Enter password'; }
-    var cpw = document.getElementById('uConfirmPassword'); if (cpw) cpw.required = true;
-    resetUserPermissions();
-    loadUserDepartmentOptions('');
-    loadUserSectionOptions('', '');
-    openModalForm('userForm', 'Add User');
-  };
-
-  window.usrmgmtEditUser = function(id) {
-    var item = usersData.find(function(r) { return r.UserID === id; });
-    if (!item) return;
-    setFormData('userForm', item);
-    var eu = document.getElementById('editUserId'); if (eu) eu.value = id;
-    var pw = document.getElementById('uPassword'); if (pw) { pw.required = false; pw.placeholder = 'Leave blank to keep current'; pw.value = ''; }
-    var cpw = document.getElementById('uConfirmPassword'); if (cpw) { cpw.required = false; cpw.value = ''; }
-    setFormPhotoPreview(item.PhotoURL || '');
-    _formPhotoBase64 = '';
-    setUserPermissionCheckboxes(item);
-    loadUserDepartmentOptions(item.Department || '');
-    loadUserSectionOptions(item.Section || '', item.Department || '');
-    openModalForm('userForm', 'Edit User - ' + (item.Name || item.EmployeeID));
-  };
-
-  window.usrmgmtSaveUser = function(e) {
-    e.preventDefault();
-    var data = getFormData('userForm');
-    var id = document.getElementById('editUserId').value;
-
-    if (!data.EmployeeID) { showToast('Employee ID is required', 'warning'); return; }
-    if (!data.Name) { showToast('Employee Name is required', 'warning'); return; }
-    if (!data.Email) { showToast('Email is required', 'warning'); return; }
-    if (!data.Department) { showToast('Department is required', 'warning'); return; }
-
-    if (!id) {
-      if (!data.Password) { showToast('Password is required for new users', 'warning'); return; }
-      if (data.Password !== data.ConfirmPassword) { showToast('Passwords do not match', 'warning'); return; }
-    } else {
-      if (data.Password && data.Password !== data.ConfirmPassword) {
-        showToast('Passwords do not match', 'warning'); return;
-      }
-    }
-
-    processUserPermissions(data);
-    showLoading(true);
-
-    function saveUserData(photoUrl, photoDriveId) {
-      if (photoUrl) data.PhotoURL = photoUrl;
-      if (photoDriveId) data.PhotoDriveID = photoDriveId;
-      var action = id ? 'updateUser' : 'addUser';
-      if (id) data.id = id;
-      API.call(action, data)
-        .then(function(result) {
-          usersData = result;
-          showLoading(false);
-          hideModal('userFormModal');
-          selectedUserId = '';
-          showToast(id ? 'User updated successfully' : 'User added successfully');
-          usrmgmtRenderTable();
-        })
-        .catch(function(err) {
-          showLoading(false);
-          showToast(err.message || 'Failed to save user', 'error');
-        });
-    }
-
-    if (_formPhotoBase64) {
-      API.call('uploadUserPhoto', { photo: _formPhotoBase64, employeeId: data.EmployeeID })
-        .then(function(photoResult) {
-          var pr = typeof photoResult === 'string' ? JSON.parse(photoResult) : photoResult;
-          saveUserData(pr.url, pr.driveId);
-        })
-        .catch(function(err) {
-          showLoading(false);
-          showToast('Photo upload failed: ' + err.message, 'warning');
-        });
-    } else {
-      saveUserData();
-    }
-  };
-
-  window.onAdminCheckChange = function() {
-    var isAdmin = document.getElementById('uIsAdmin');
-    if (!isAdmin) return;
-    if (isAdmin.checked) {
-      document.querySelectorAll('#userForm input[type="checkbox"]').forEach(function(cb) {
-        if (cb.name) cb.checked = true;
-      });
-    }
-  };
-
-  window.onFormPhotoSelected = function(e) {
-    var file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { showToast('Photo must be under 2MB', 'warning'); e.target.value = ''; return; }
-    var reader = new FileReader();
-    reader.onload = function(ev) {
-      _formPhotoBase64 = ev.target.result;
-      var fpp = document.getElementById('formPhotoPlaceholder'); if (fpp) fpp.style.display = 'none';
-      var img = document.getElementById('formPhotoImg');
-      if (img) { img.src = _formPhotoBase64; img.style.display = 'block'; }
-      var rmb = document.getElementById('formRemovePhotoBtn'); if (rmb) rmb.style.display = '';
-    };
-    reader.readAsDataURL(file);
-  };
-
-  window.removeFormPhoto = function() {
-    _formPhotoBase64 = '';
-    var fpi = document.getElementById('formPhotoInput'); if (fpi) fpi.value = '';
-    var fpp = document.getElementById('formPhotoPlaceholder'); if (fpp) fpp.style.display = '';
-    var fim = document.getElementById('formPhotoImg'); if (fim) { fim.style.display = 'none'; fim.src = ''; }
-    var rmb = document.getElementById('formRemovePhotoBtn'); if (rmb) rmb.style.display = 'none';
-  };
-
-  window.viewUser = function(id) {
-    var item = usersData.find(function(r) { return r.UserID === id; });
-    if (!item) return;
-    _profileViewUserId = id;
-    var vuc = document.getElementById('viewUserContent'); if (vuc) vuc.innerHTML = buildProfileCardHtml(item);
-    var pcf = document.getElementById('profileCardFooter'); if (pcf) pcf.innerHTML = buildProfileCardFooter(item);
-    showModal('viewUserModal');
-  };
-
-  window.onProfilePhotoSelected = function(e) {
-    var file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { showToast('Photo must be under 2MB', 'warning'); e.target.value = ''; return; }
-    var userId = _profileViewUserId;
-    if (!userId) return;
-    var item = usersData.find(function(r) { return r.UserID === userId; });
-    if (!item) return;
-    showLoading(true);
-    var reader = new FileReader();
-    reader.onload = function(ev) {
-      var base64 = ev.target.result;
-      API.call('uploadUserPhoto', { photo: base64, employeeId: item.EmployeeID })
-        .then(function(photoResult) {
-          var pr = typeof photoResult === 'string' ? JSON.parse(photoResult) : photoResult;
-          return API.call('updateUser', { id: userId, PhotoURL: pr.url, PhotoDriveID: pr.driveId });
-        })
-        .then(function(result) {
-          usersData = result;
-          showLoading(false);
-          var updatedItem = usersData.find(function(r) { return r.UserID === userId; });
-          var vuc2 = document.getElementById('viewUserContent'); if (vuc2) vuc2.innerHTML = buildProfileCardHtml(updatedItem || item);
-          var pcf2 = document.getElementById('profileCardFooter'); if (pcf2) pcf2.innerHTML = buildProfileCardFooter(updatedItem || item);
-          if (selectedUserId === userId) usrmgmtRenderTable();
-          showToast('Photo updated successfully');
-        })
-        .catch(function(err) {
-          showLoading(false);
-          showToast('Photo upload failed: ' + err.message, 'error');
-        });
-    };
-    reader.readAsDataURL(file);
-  };
-
-  window.removeProfilePhoto = function(userId) {
-    showConfirm('Remove Photo', 'Are you sure you want to remove this user\'s photo?', function() {
-      showLoading(true);
-      var item = usersData.find(function(r) { return r.UserID === userId; });
-      var driveId = item ? item.PhotoDriveID : '';
-      var chain = Promise.resolve();
-      if (driveId) {
-        chain = API.call('deleteUserPhoto', { driveId: driveId }).catch(function() {});
-      }
-      chain.then(function() {
-        return API.call('updateUser', { id: userId, PhotoURL: '', PhotoDriveID: '' });
-      })
-        .then(function(result) {
-          usersData = result;
-          showLoading(false);
-          var updatedItem = usersData.find(function(r) { return r.UserID === userId; });
-          var vuc3 = document.getElementById('viewUserContent'); if (vuc3) vuc3.innerHTML = buildProfileCardHtml(updatedItem);
-          var pcf3 = document.getElementById('profileCardFooter'); if (pcf3) pcf3.innerHTML = buildProfileCardFooter(updatedItem);
-          if (selectedUserId === userId) usrmgmtRenderTable();
-          showToast('Photo removed');
-        })
-        .catch(function(err) {
-          showLoading(false);
-          showToast('Failed to remove photo: ' + err.message, 'error');
-        });
-    });
-  };
-
-  function showDeleteOverlay(id) {
-    var overlay = document.getElementById('deleteConfirmOverlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.className = 'modal-overlay';
-      overlay.id = 'deleteConfirmOverlay';
-      overlay.style.display = 'none';
-      document.body.appendChild(overlay);
-    }
-    overlay.style.display = 'flex';
-    overlay.classList.add('show');
-    return overlay;
-  }
-
-  function hideDeleteOverlayFn() {
-    var overlay = document.getElementById('deleteConfirmOverlay');
-    if (overlay) {
-      overlay.style.display = 'none';
-      overlay.classList.remove('show');
-    }
-  }
-
-  window.hideDeleteOverlay = hideDeleteOverlayFn;
-
-  window.usrmgmtDeleteUser = function(id) {
-    if (!id) { showToast('Please select a user from the table first', 'warning'); return; }
-    var item = usersData.find(function(r) { return r.UserID === id; });
-    if (!item) { showToast('User not found', 'error'); return; }
-
-    var currentUser = {};
-    try { currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
-
-    if (item.Email && currentUser && item.Email === currentUser.email) {
-      showToast('You cannot delete your own account', 'warning');
+  function saveUser(){
+    var d=getFormData();
+    if(!d.EmployeeID||!d.Name||!d.Email||!d.Role||!d.Status){
+      u.showToast('Please fill all required fields','error');
       return;
     }
-
-    if (item.Role === 'Administrator' || item.IsAdmin === 'TRUE') {
-      var otherActiveAdmins = usersData.filter(function(r) {
-        return r.UserID !== id && r.Status === 'Active' && (r.Role === 'Administrator' || r.IsAdmin === 'TRUE');
-      });
-      if (otherActiveAdmins.length === 0) {
-        showToast('Cannot delete the last active Administrator account', 'warning');
-        return;
-      }
-    }
-
-    var isSuperAdmin = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Administrator' || currentUser.isSystemAdmin === true);
-    var overlay = showDeleteOverlay(id);
-    overlay.innerHTML =
-      '<div class="modal" style="max-width:400px">' +
-        '<div class="modal-header"><div class="modal-title">Delete User</div></div>' +
-        '<div class="modal-body">' +
-          '<div style="text-align:center;padding:12px 0">' +
-            '<p style="margin:12px 0 24px;font-size:14px;color:var(--text-muted)">Are you sure you want to delete this user?</p>' +
-            '<div class="btn-group" style="justify-content:center">' +
-              '<button class="btn btn-secondary" onclick="hideDeleteOverlay()">Cancel</button>' +
-              '<button class="btn btn-danger" id="usrmgmtConfirmDeleteBtn">Delete</button>' +
-            '</div>' +
-            (isSuperAdmin
-              ? '<div style="margin-top:14px;font-size:12px"><a href="#" style="color:var(--danger);text-decoration:none" onclick="event.preventDefault();hideDeleteOverlay();confirmPermanentlyDeleteUser(\'' + id + '\')">Permanently delete this user</a></div>'
-              : '') +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    var deleteBtn = document.getElementById('usrmgmtConfirmDeleteBtn');
-    if (deleteBtn) deleteBtn.onclick = function() {
-      hideDeleteOverlay();
-      showLoading(true);
-      API.call('deleteUser', { id: id, email: item.Email || '' })
-        .then(function(result) {
-          usersData = result;
-          showLoading(false);
-          if (selectedUserId === id) selectedUserId = '';
-          showToast('User deleted successfully');
-          usrmgmtRenderTable();
-        })
-        .catch(function(err) {
-          showLoading(false);
-          showToast(err.message || 'Failed to delete user', 'error');
-        });
-    };
-  };
-
-  window.confirmPermanentlyDeleteUser = function(id) {
-    var item = usersData.find(function(r) { return r.UserID === id; });
-    if (!item) return;
-    var overlay = showDeleteOverlay(id);
-    overlay.innerHTML =
-      '<div class="modal" style="max-width:400px">' +
-        '<div class="modal-header"><div class="modal-title">Permanent Delete</div></div>' +
-        '<div class="modal-body">' +
-          '<div style="text-align:center;padding:12px 0">' +
-            '<p style="margin:12px 0 24px;font-size:14px;color:var(--text-muted)">Permanently delete "' + escHtml(item.Name || item.Email) + '"? This cannot be undone.</p>' +
-            '<div class="btn-group" style="justify-content:center">' +
-              '<button class="btn btn-secondary" onclick="hideDeleteOverlay()">Cancel</button>' +
-              '<button class="btn btn-danger" id="usrmgmtConfirmPermDeleteBtn">Permanently Delete</button>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    var permDeleteBtn = document.getElementById('usrmgmtConfirmPermDeleteBtn');
-    if (permDeleteBtn) permDeleteBtn.onclick = function() {
-      hideDeleteOverlay();
-      showLoading(true);
-      API.call('permanentlyDeleteUser', { id: id, email: item.Email || '' })
-        .then(function(result) {
-          usersData = result;
-          showLoading(false);
-          if (selectedUserId === id) selectedUserId = '';
-          showToast('User permanently deleted');
-          usrmgmtRenderTable();
-        })
-        .catch(function(err) {
-          showLoading(false);
-          showToast(err.message || 'Failed to permanently delete user', 'error');
-        });
-    };
-  };
-
-  window.openResetPassword = function(id) {
-    var rpu = document.getElementById('resetPwUserId'); if (rpu) rpu.value = id;
-    var rtp = document.getElementById('resetTempPassword'); if (rtp) rtp.value = '';
-    var el = document.getElementById('resetForceChange'); if (el) el.checked = true;
-    showModal('passwordResetModal');
-  };
-
-  window.generateTempPassword = function() {
-    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-    var pw = '';
-    for (var i = 0; i < 10; i++) {
-      pw += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    var rtp = document.getElementById('resetTempPassword'); if (rtp) rtp.value = pw;
-  };
-
-  window.confirmResetPassword = function() {
-    var id = document.getElementById('resetPwUserId').value;
-    var tempPassword = document.getElementById('resetTempPassword').value.trim();
-    var forceChange = document.getElementById('resetForceChange').checked;
-
-    if (!tempPassword || tempPassword.length < 6) {
-      showToast('Password must be at least 6 characters', 'warning');
+    if(!_state.editId&&!d.Password){
+      u.showToast('Password is required for new users','error');
       return;
     }
-
-    showConfirm('Confirm Password Reset', 'Are you sure you want to reset the password for this user?', function() {
-      showLoading(true);
-      API.call('resetUserPassword', { id: id, tempPassword: tempPassword, forceChange: forceChange })
-        .then(function(result) {
-          usersData = result;
-          showLoading(false);
-          hideModal('passwordResetModal');
-          showToast('Password reset successfully');
-          usrmgmtRenderTable();
-        })
-        .catch(function(err) {
-          showLoading(false);
-          showToast(err.message || 'Failed to reset password', 'error');
-        });
+    u.showLoading(true);
+    var action=_state.editId?'updateUser':'addUser';
+    if(_state.editId)d.UserID=_state.editId;
+    C.api.call(action,d).then(function(){
+      u.showToast('User saved successfully','success');
+      u.$('#userModal').style.display='none';
+      load();
+    }).catch(function(e){
+      u.showToast('Error saving user: '+(e.message||e),'error');
+      u.showLoading(false);
     });
-  };
+  }
 
-  window.searchUsersTable = function() {
-    var query = document.getElementById('userSearch');
-    if (!query) return;
-    var q = query.value;
-    if (!q) { usrmgmtRenderTable(); return; }
-    showLoading(true);
-    API.call('searchUsers', { query: q })
-      .then(function(result) {
-        usersData = result;
-        showLoading(false);
-        usersPage = 1;
-        selectedUserId = '';
-        usrmgmtRenderTable();
-      })
-      .catch(function(err) {
-        showLoading(false);
-        showToast('Search failed', 'error');
-      });
-  };
+  function editUser(id){
+    var user=null;
+    for(var i=0;i<_data.length;i++){
+      if(_data[i].UserID===id){user=_data[i];break;}
+    }
+    if(!user)return;
+    _state.editId=id;
+    u.$('#userModalTitle').textContent='Edit User';
+    u.$('#uUserId').value=user.UserID;
+    u.$('#uEmployeeId').value=user.EmployeeID||'';
+    u.$('#uName').value=user.Name||'';
+    u.$('#uEmail').value=user.Email||'';
+    u.$('#uPassword').value='';
+    u.$('#uPassword').required=false;
+    u.$('#uPassword').placeholder='Leave blank to keep current';
+    u.$('#uMobile').value=user.Mobile||'';
+    u.$('#uDesignation').value=user.Designation||'';
+    u.$('#uRole').value=user.Role||'';
+    u.$('#uStatus').value=user.Status||'Active';
+    u.$('#uJoiningDate').value=user.JoiningDate||'';
+    u.$('#uDeptId').value=user.DeptID||'';
+    if(user.Photo){
+      u.$('#uPhotoPreview').src=user.Photo;
+      u.$('#uPhotoPreview').style.display='block';
+    }else{
+      u.$('#uPhotoPreview').style.display='none';
+    }
+    if(user.DeptID){
+      loadSections(user.DeptID);
+      setTimeout(function(){
+        u.$('#uSectionId').value=user.SectionID||'';
+      },300);
+    }
+    var perms=user.Permissions||{};
+    setPermValues(perms);
+    u.$('#uIsAdminPerm').checked=!!perms.IsAdmin;
+    u.$('#userModal').style.display='flex';
+  }
 
-  window.exportUsersExcel = function() {
-    showLoading(true);
-    API.call('exportUsersToExcel')
-      .then(function(url) {
-        showLoading(false);
-        if (url) window.open(url, '_blank');
-        else showToast('Failed to generate export', 'error');
-      })
-      .catch(function(err) {
-        showLoading(false);
-        showToast('Export failed: ' + err.message, 'error');
+  function deleteUser(id){
+    u.showConfirm('Delete this user? This action cannot be undone.',function(){
+      u.showLoading(true);
+      C.api.call('deleteUser',{UserID:id}).then(function(){
+        u.showToast('User deleted','success');
+        load();
+      }).catch(function(e){
+        u.showToast('Error deleting: '+(e.message||e),'error');
+        u.showLoading(false);
       });
-  };
+    });
+  }
+
+  function openResetModal(id){
+    u.$('#rpUserId').value=id;
+    u.$('#rpTempPassword').value='';
+    u.$('#rpForceChange').checked=true;
+    var chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    var pw='';
+    for(var i=0;i<10;i++)pw+=chars.charAt(Math.floor(Math.random()*chars.length));
+    u.$('#rpTempPassword').value=pw;
+    u.$('#resetPasswordModal').style.display='flex';
+  }
+
+  function doResetPassword(){
+    var userId=parseInt(u.$('#rpUserId').value);
+    var tempPw=u.$('#rpTempPassword').value;
+    var force=u.$('#rpForceChange').checked;
+    if(!tempPw){u.showToast('Enter a temporary password','error');return;}
+    u.showLoading(true);
+    C.api.call('resetUserPassword',{UserID:userId,TempPassword:tempPw,ForceChange:force}).then(function(){
+      u.showToast('Password reset successfully','success');
+      u.$('#resetPasswordModal').style.display='none';
+      u.showLoading(false);
+    }).catch(function(e){
+      u.showToast('Error: '+(e.message||e),'error');
+      u.showLoading(false);
+    });
+  }
+
+  function destroy(){
+    _data=[];
+    _state={page:1,perPage:25,search:'',editId:null};
+  }
+
+  C.router.registerPage('users',{
+    title:'User Management',
+    init:init,
+    load:function(){loadMeta().then(function(){load();});},
+    destroy:destroy
+  });
 })();

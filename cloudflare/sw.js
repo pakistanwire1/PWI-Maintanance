@@ -1,15 +1,21 @@
-const CACHE_NAME = 'cmms-v22';
+const CACHE_NAME = 'cmms-v23';
 const STATIC_ASSETS = [
-  '/', '/index.html', '/css/styles.css', '/css/login.css', '/css/welcome.css',
-  '/js/api.js', '/js/auth.js', '/js/app.js',
-  '/logo.svg', '/favicon.svg', '/assets/pwianimated.gif',
-  '/js/pages/dashboard.js', '/js/pages/jobcards.js', '/js/pages/openjc.js', '/js/pages/startjc.js',
-  '/js/pages/closejc.js', '/js/pages/pendingjc.js', '/js/pages/approvedjc.js', '/js/pages/machines.js', '/js/pages/assets.js',
-  '/js/pages/spareparts.js', '/js/pages/technicians.js', '/js/pages/pm.js', '/js/pages/checklists.js',
-  '/js/pages/inventory.js', '/js/pages/goodsreceipt.js', '/js/pages/reports.js', '/js/pages/settings.js',
-  '/js/pages/qr.js', '/js/pages/users.js', '/js/pages/departments.js', '/js/pages/sections.js',
-  '/js/pages/notifications.js', '/js/pages/email.js', '/js/pages/whatsapp.js', '/js/pages/backup.js',
-  '/js/pages/audit.js', '/js/pages/breakdownhistory.js', '/js/pages/pmhistory.js'
+  '/', '/index.html', '/css/styles.css',
+  '/js/app.js',
+  '/js/core/utils.js', '/js/core/icons.js', '/js/core/api.js', '/js/core/session.js',
+  '/js/core/router.js', '/js/core/nav.js', '/js/core/loader.js', '/js/core/theme.js',
+  '/js/core/notify.js', '/js/core/dashboard.js',
+  '/js/pages/machines.js', '/js/pages/assets.js', '/js/pages/users.js',
+  '/js/pages/technicians.js', '/js/pages/departments.js', '/js/pages/sections.js',
+  '/js/pages/checklists.js', '/js/pages/jobcards.js', '/js/pages/openjc.js',
+  '/js/pages/startjc.js', '/js/pages/closejc.js', '/js/pages/pendingjc.js',
+  '/js/pages/approvejc.js', '/js/pages/pm.js', '/js/pages/pmhistory.js',
+  '/js/pages/spareparts.js', '/js/pages/inventory.js', '/js/pages/inventorytxns.js',
+  '/js/pages/stockhistory.js', '/js/pages/goodsreceipt.js', '/js/pages/breakdownhistory.js',
+  '/js/pages/notifications.js', '/js/pages/qr.js', '/js/pages/email.js',
+  '/js/pages/whatsapp.js', '/js/pages/reports.js', '/js/pages/audit.js',
+  '/js/pages/backup.js', '/js/pages/settings.js',
+  '/logo.svg', '/favicon.svg'
 ];
 
 self.addEventListener('install', function(e) {

@@ -1,412 +1,266 @@
-/* ============================================================
-   jobcards.js — Job Cards Page Module (GAS-identical)
-   ============================================================ */
+(function(){
+  var C=window.CMMS=window.CMMS||{};
+  var u=C.utils;
+  var _data=[];
+  var _tab='open';
+  var _filters={priority:'',department:'',search:''};
+  var _timers=[];
 
-(function() {
-  var _jobs = [];
-  var _filtered = [];
-  var _activeTab = 'open';
-  var _page = 1;
-  var _pageSize = 25;
-  var _searchQuery = '';
+  var _tabs=[
+    {key:'open',label:'Open',filter:function(r){return r.CurrentStatus==='OPEN';}},
+    {key:'running',label:'Running',filter:function(r){return r.CurrentStatus==='RUNNING';}},
+    {key:'closed',label:'Closed',filter:function(r){return r.CurrentStatus==='CLOSED';}},
+    {key:'pending',label:'Pending',filter:function(r){return r.CurrentStatus==='PENDING';}},
+    {key:'approved',label:'Approved',filter:function(r){return r.CurrentStatus==='APPROVED';}},
+    {key:'all',label:'All',filter:function(){return true;}}
+  ];
 
-  App.registerPage('jobcards', render, load);
-
-  function render() {
-    var el = document.getElementById('page-jobcards');
-    if (!el) return;
-    el.innerHTML =
-      '<div class="card">' +
-        '<div class="card-header">' +
-          '<div class="card-title">Job Cards</div>' +
-          '<div class="card-actions">' +
-            '<div class="search-box">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
-              '<input type="text" class="form-control" id="jcSearch" placeholder="Search job cards..." oninput="JC.searchTable(this.value)">' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="workflow-tabs" id="jcWorkflowTabs">' +
-          '<button class="workflow-tab active" data-tab="open" onclick="JC.switchTab(\'open\')">' +
-            '<span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>' +
-            '<span class="tab-label">Open</span>' +
-            '<span class="tab-badge" id="openCount" data-status="open">0</span>' +
-          '</button>' +
-          '<button class="workflow-tab" data-tab="running" onclick="JC.switchTab(\'running\')">' +
-            '<span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg></span>' +
-            '<span class="tab-label">Running</span>' +
-            '<span class="tab-badge" id="runningCount" data-status="running">0</span>' +
-          '</button>' +
-          '<button class="workflow-tab" data-tab="closed" onclick="JC.switchTab(\'closed\')">' +
-            '<span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></span>' +
-            '<span class="tab-label">Closed</span>' +
-            '<span class="tab-badge" id="closedCount" data-status="closed">0</span>' +
-          '</button>' +
-          '<button class="workflow-tab" data-tab="pendingapproval" onclick="JC.switchTab(\'pendingapproval\')">' +
-            '<span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>' +
-            '<span class="tab-label">Pending</span>' +
-            '<span class="tab-badge" id="pendingApprovalCount" data-status="pending">0</span>' +
-          '</button>' +
-          '<button class="workflow-tab" data-tab="approved" onclick="JC.switchTab(\'approved\')">' +
-            '<span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></span>' +
-            '<span class="tab-label">Approved</span>' +
-            '<span class="tab-badge" id="approvedCount" data-status="approved">0</span>' +
-          '</button>' +
-          '<button class="workflow-tab" data-tab="all" onclick="JC.switchTab(\'all\')">' +
-            '<span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>' +
-            '<span class="tab-label">All</span>' +
-            '<span class="tab-badge" id="allCount" data-status="all">0</span>' +
-          '</button>' +
-        '</div>' +
-        '<div class="filter-bar">' +
-          '<div class="form-group">' +
-            '<select class="form-control" id="jcPriorityFilter" onchange="JC.filter()">' +
-              '<option value="">All Priority</option>' +
-              '<option value="Low">Low</option>' +
-              '<option value="Medium">Medium</option>' +
-              '<option value="High">High</option>' +
-              '<option value="Critical">Critical</option>' +
-            '</select>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<select class="form-control" id="jcDeptFilter" onchange="JC.filter()">' +
-              '<option value="">All Departments</option>' +
-            '</select>' +
-          '</div>' +
-        '</div>' +
-        '<div id="jcTableContainer"></div>' +
-      '</div>' +
-      '<div class="modal-overlay" id="jcViewModal" style="display:none">' +
-        '<div class="modal modal-wide">' +
-          '<div class="modal-header">' +
-            '<div class="modal-title">Job Card — <span id="jcViewRef"></span></div>' +
-            '<button class="modal-close" onclick="JC.hideModal(\'jcViewModal\')">&times;</button>' +
-          '</div>' +
-          '<div class="modal-body" id="jcViewBody"></div>' +
-          '<div class="modal-footer">' +
-            '<button type="button" class="btn btn-secondary" onclick="JC.hideModal(\'jcViewModal\')">Close</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="modal-overlay" id="jcImageModal" style="display:none">' +
-        '<div class="modal" style="max-width:90vw;max-height:90vh;background:transparent;border:none;box-shadow:none;backdrop-filter:none">' +
-          '<div style="text-align:right;margin-bottom:8px">' +
-            '<button class="modal-close" onclick="JC.hideModal(\'jcImageModal\')" style="background:rgba(0,0,0,0.5);color:#fff;border-radius:50%;width:36px;height:36px;font-size:22px;display:inline-flex;align-items:center;justify-content:center">&times;</button>' +
-          '</div>' +
-          '<img id="jcFullImage" src="" alt="Full size image" style="max-width:100%;max-height:80vh;border-radius:12px;display:block;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.6)">' +
-        '</div>' +
-      '</div>';
+  function counts(){
+    var c={open:0,running:0,closed:0,pending:0,approved:0,all:0};
+    _data.forEach(function(r){
+      var s=r.CurrentStatus;
+      if(s==='OPEN')c.open++;else if(s==='RUNNING')c.running++;else if(s==='CLOSED')c.closed++;else if(s==='PENDING')c.pending++;else if(s==='APPROVED')c.approved++;
+      c.all++;
+    });
+    return c;
   }
 
-  function load() {
-    App.showLoading(true);
-    API.call('getJobCards', {})
-      .then(function(data) {
-        _jobs = data.records || data || [];
-        App.showLoading(false);
-        populateDeptFilter();
-        renderTabs();
-      })
-      .catch(function(err) {
-        App.showLoading(false);
-        App.showToast('Failed to load job cards: ' + err.message, 'error');
+  function applyFilters(list){
+    return list.filter(function(r){
+      if(_filters.priority&&r.Priority!==_filters.priority)return false;
+      if(_filters.department&&r.Department!==_filters.department)return false;
+      if(_filters.search){
+        var s=_filters.search.toLowerCase();
+        var hay=(r.JobCardNo+' '+(r.Machine||'')+' '+(r.ComplaintDescription||'')+' '+(r.AssignedTechnician||'')).toLowerCase();
+        if(hay.indexOf(s)===-1)return false;
+      }
+      return true;
+    });
+  }
+
+  function timeSince(dt){
+    if(!dt)return '-';
+    return u.timeAgo(dt);
+  }
+
+  function init(){
+    var mc=C.loader.getContainer();
+    mc.innerHTML='<div class="jobcards-page">'+
+      '<div class="page-header"><h2>Job Cards</h2><button class="btn btn-primary" id="jc-refresh">'+CMMS.icons.refresh+' Refresh</button></div>'+
+      '<div class="tab-bar" id="jc-tabs"></div>'+
+      '<div class="filter-bar" style="display:flex;gap:12px;margin:12px 0;flex-wrap:wrap;">'+
+        '<select id="jc-priority-filter" class="form-control" style="max-width:160px"><option value="">All Priorities</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>'+
+        '<select id="jc-dept-filter" class="form-control" style="max-width:160px"><option value="">All Departments</option></select>'+
+        '<div style="position:relative;flex:1;max-width:300px">'+CMMS.icons.search+'<input type="text" id="jc-search" class="form-control" placeholder="Search job cards..." style="padding-left:32px"></div>'+
+      '</div>'+
+      '<div id="jc-table-wrap" class="table-wrap"></div>'+
+    '</div>';
+    bindEvents();
+  }
+
+  function bindEvents(){
+    document.getElementById('jc-refresh').addEventListener('click',load);
+    document.getElementById('jc-priority-filter').addEventListener('change',function(e){_filters.priority=e.target.value;render();});
+    document.getElementById('jc-dept-filter').addEventListener('change',function(e){_filters.department=e.target.value;render();});
+    document.getElementById('jc-search').addEventListener('input',u.debounce(function(e){_filters.search=e.target.value;render();},300));
+  }
+
+  function renderTabs(){
+    var cnt=counts();
+    var tb=document.getElementById('jc-tabs');
+    if(!tb)return;
+    var h='';
+    _tabs.forEach(function(t){
+      h+='<button class="tab-btn'+(_tab===t.key?' active':'')+'" data-tab="'+t.key+'">'+t.label+' <span class="badge-count">'+cnt[t.key]+'</span></button>';
+    });
+    tb.innerHTML=h;
+    tb.querySelectorAll('.tab-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        _tab=btn.getAttribute('data-tab');
+        render();
       });
-  }
-
-  function populateDeptFilter() {
-    var deptFilter = document.getElementById('jcDeptFilter');
-    if (!deptFilter) return;
-    deptFilter.innerHTML = '<option value="">All Departments</option>';
-    var depts = [];
-    _jobs.forEach(function(jc) {
-      if (jc.Department && depts.indexOf(jc.Department) === -1) depts.push(jc.Department);
-    });
-    depts.sort().forEach(function(d) {
-      deptFilter.innerHTML += '<option value="' + escapeHtml(d) + '">' + escapeHtml(d) + '</option>';
     });
   }
 
-  function getDisplayStatus(item) {
-    if (item.ApprovalStatus === 'Approved') return 'Approved';
-    return item.CurrentStatus || item.Status || '';
-  }
-
-  function getStatusBadgeClass(status) {
-    var s = (status || '').toLowerCase();
-    if (s === 'open') return 'open';
-    if (s === 'running' || s === 'in progress') return 'running';
-    if (s === 'closed' || s === 'completed') return 'closed';
-    if (s === 'pending') return 'pending';
-    if (s === 'approved') return 'approved';
-    return 'open';
-  }
-
-  function renderTabs() {
-    var open = 0, running = 0, closed = 0, pending = 0, approved = 0;
-    _jobs.forEach(function(jc) {
-      var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
-      var as = (jc.ApprovalStatus || '').toLowerCase();
-      if (as === 'approved') { approved++; }
-      else if (s === 'open') { open++; }
-      else if (s === 'running' || s === 'in progress') { running++; }
-      else if (s === 'pending') { pending++; }
-      else if (s === 'closed' || s === 'completed') { closed++; }
+  function renderDeptFilter(){
+    var depts={};
+    _data.forEach(function(r){if(r.Department)depts[r.Department]=1;});
+    var sel=document.getElementById('jc-dept-filter');
+    if(!sel)return;
+    var cur=_filters.department;
+    var h='<option value="">All Departments</option>';
+    Object.keys(depts).sort().forEach(function(d){
+      h+='<option value="'+u.escHtml(d)+'"'+(cur===d?' selected':'')+'>'+u.escHtml(d)+'</option>';
     });
-    setBadge('openCount', open);
-    setBadge('runningCount', running);
-    setBadge('closedCount', closed);
-    setBadge('pendingApprovalCount', pending);
-    setBadge('approvedCount', approved);
-    setBadge('allCount', _jobs.length);
-    renderTable();
+    sel.innerHTML=h;
   }
 
-  function setBadge(id, count) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = count;
+  function openViewModal(jc){
+    var html='<div class="modal-body">'+
+      '<table class="detail-table" style="width:100%">'+
+      '<tr><td><strong>Job Card No</strong></td><td>'+u.escHtml(jc.JobCardNo)+'</td></tr>'+
+      '<tr><td><strong>Status</strong></td><td>'+u.statusBadge(jc.CurrentStatus)+'</td></tr>'+
+      '<tr><td><strong>Open Date</strong></td><td>'+u.formatDateTime(jc.OpenDateTime)+'</td></tr>'+
+      (jc.StartedDateTime?'<tr><td><strong>Started</strong></td><td>'+u.formatDateTime(jc.StartedDateTime)+'</td></tr>':'')+
+      (jc.PendingDateTime?'<tr><td><strong>Pending</strong></td><td>'+u.formatDateTime(jc.PendingDateTime)+'</td></tr>':'')+
+      (jc.ApprovedDateTime?'<tr><td><strong>Approved</strong></td><td>'+u.formatDateTime(jc.ApprovedDateTime)+'</td></tr>':'')+
+      (jc.CloseDateTime?'<tr><td><strong>Closed</strong></td><td>'+u.formatDateTime(jc.CloseDateTime)+'</td></tr>':'')+
+      '<tr><td><strong>Section</strong></td><td>'+u.escHtml(jc.Section||'-')+'</td></tr>'+
+      '<tr><td><strong>Department</strong></td><td>'+u.escHtml(jc.Department||'-')+'</td></tr>'+
+      '<tr><td><strong>Machine</strong></td><td>'+u.escHtml(jc.Machine||jc.MachineName||'-')+'</td></tr>'+
+      '<tr><td><strong>Asset</strong></td><td>'+u.escHtml(jc.AssetID||'-')+'</td></tr>'+
+      '<tr><td><strong>Priority</strong></td><td>'+u.priorityBadge(jc.Priority)+'</td></tr>'+
+      '<tr><td><strong>Complaint Category</strong></td><td>'+u.escHtml(jc.ComplaintCategory||'-')+'</td></tr>'+
+      '<tr><td><strong>Complaint Description</strong></td><td>'+u.escHtml(jc.ComplaintDescription||'-')+'</td></tr>'+
+      '<tr><td><strong>Complaint By</strong></td><td>'+u.escHtml(jc.ComplaintBy||'-')+'</td></tr>'+
+      '<tr><td><strong>Assigned Technician</strong></td><td>'+u.escHtml(jc.AssignedTechnician||'-')+'</td></tr>'+
+      '<tr><td><strong>Maintenance Team</strong></td><td>'+u.escHtml(jc.MaintenanceTeam||'-')+'</td></tr>'+
+      '<tr><td><strong>Initial Remarks</strong></td><td>'+u.escHtml(jc.InitialRemarks||'-')+'</td></tr>'+
+      '<tr><td><strong>Breakdown Type</strong></td><td>'+u.escHtml(jc.BreakdownType||'-')+'</td></tr>'+
+      '<tr><td><strong>Root Cause</strong></td><td>'+u.escHtml(jc.RootCause||'-')+'</td></tr>'+
+      '<tr><td><strong>Corrective Action</strong></td><td>'+u.escHtml(jc.CorrectiveAction||'-')+'</td></tr>'+
+      '<tr><td><strong>Spare Parts</strong></td><td>'+u.escHtml(jc.SpareParts||'-')+'</td></tr>'+
+      '<tr><td><strong>Final Remarks</strong></td><td>'+u.escHtml(jc.FinalRemarks||'-')+'</td></tr>'+
+      '<tr><td><strong>Approval Status</strong></td><td>'+(jc.ApprovalStatus?u.statusBadge(jc.ApprovalStatus):'-')+'</td></tr>'+
+      '<tr><td><strong>Approval Remarks</strong></td><td>'+u.escHtml(jc.ApprovalRemarks||'-')+'</td></tr>'+
+      '<tr><td><strong>Return Reason</strong></td><td>'+u.escHtml(jc.ReturnReason||'-')+'</td></tr>'+
+      '<tr><td><strong>Waiting Time</strong></td><td>'+u.escHtml(jc.WaitingTime||'-')+'</td></tr>'+
+      '<tr><td><strong>Working Time</strong></td><td>'+u.escHtml(jc.WorkingTime||'-')+'</td></tr>'+
+      '<tr><td><strong>Downtime</strong></td><td>'+u.escHtml(jc.Downtime||'-')+'</td></tr>'+
+      '<tr><td><strong>Started By</strong></td><td>'+u.escHtml(jc.StartedBy||'-')+'</td></tr>'+
+      '<tr><td><strong>Closed By</strong></td><td>'+u.escHtml(jc.ClosedBy||'-')+'</td></tr>'+
+      '<tr><td><strong>Pending By</strong></td><td>'+u.escHtml(jc.PendingBy||'-')+'</td></tr>'+
+      '</table>'+
+    '</div>';
+    u.showModal('Job Card: '+u.escHtml(jc.JobCardNo),html,[{label:'Close',cls:'btn-secondary',action:function(){u.hideModal();}}]);
   }
 
-  function renderTable() {
-    _filtered = [];
-    _jobs.forEach(function(jc) {
-      var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
-      var as = (jc.ApprovalStatus || '').toLowerCase();
-      if (_activeTab === 'open' && s === 'open') _filtered.push(jc);
-      else if (_activeTab === 'running' && (s === 'running' || s === 'in progress')) _filtered.push(jc);
-      else if (_activeTab === 'closed' && (s === 'closed' || s === 'completed')) _filtered.push(jc);
-      else if (_activeTab === 'pendingapproval' && s === 'pending') _filtered.push(jc);
-      else if (_activeTab === 'approved' && as === 'approved') _filtered.push(jc);
-      else if (_activeTab === 'all') _filtered.push(jc);
-    });
+  function render(){
+    renderTabs();
+    renderDeptFilter();
+    var tabObj=null;
+    _tabs.forEach(function(t){if(t.key===tabObj||t.key===_tab)tabObj=t;});
+    var filtered=applyFilters(_data.filter(tabObj.filter));
 
-    var pf = document.getElementById('jcPriorityFilter');
-    var df = document.getElementById('jcDeptFilter');
-    var pVal = pf ? pf.value : '';
-    var dVal = df ? df.value : '';
-    if (pVal) _filtered = _filtered.filter(function(jc) { return jc.Priority === pVal; });
-    if (dVal) _filtered = _filtered.filter(function(jc) { return jc.Department === dVal; });
-    if (_searchQuery) {
-      _filtered = _filtered.filter(function(jc) {
-        return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(_searchQuery) !== -1) ||
-               (jc.Machine && jc.Machine.toLowerCase().indexOf(_searchQuery) !== -1) ||
-               (jc.AssignedTechnician && jc.AssignedTechnician.toLowerCase().indexOf(_searchQuery) !== -1) ||
-               (jc.ComplaintDescription && jc.ComplaintDescription.toLowerCase().indexOf(_searchQuery) !== -1);
-      });
-    }
+    var wrap=document.getElementById('jc-table-wrap');
+    if(!wrap)return;
 
-    var columns = [
-      { key: 'JobCardNo', label: 'Job Card No' },
-      { key: 'DateTime', label: 'Opened', datetime: true },
-      { key: 'Machine', label: 'Machine' },
-      { key: 'Department', label: 'Dept' },
-      { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Low': 'success', 'Medium': 'warning', 'High': 'danger', 'Critical': 'danger' } }
-    ];
-
-    if (_activeTab === 'open') {
-      columns.push({ key: 'DateTime', label: 'Waiting', format: function(val, row) {
-        var dt = row.DateTime || row.OpenTime || row.OpenDateTime;
-        return durationToggle(0, dt);
-      }});
-      columns.push({ key: 'ComplaintDescription', label: 'Description' });
-    } else if (_activeTab === 'running') {
-      columns.push({ key: 'AssignedTechnician', label: 'Technician' });
-      columns.push({ key: 'StartTime', label: 'Working', format: function(val, row) {
-        var st = row.StartTime || row.StartDateTime;
-        return durationToggle(0, st);
-      }});
-    } else if (_activeTab === 'closed' || _activeTab === 'pendingapproval') {
-      columns.push({ key: 'AssignedTechnician', label: 'Technician' });
-      columns.push({ key: 'WaitingTime', label: 'Waiting', format: function(val) { return durationToggle(val); } });
-      columns.push({ key: 'WorkingTime', label: 'Working', format: function(val) { return durationToggle(val); } });
-      columns.push({ key: 'BreakdownTime', label: 'Breakdown', format: function(val) { return durationToggle(val); } });
-    } else if (_activeTab === 'approved') {
-      columns.push({ key: 'AssignedTechnician', label: 'Technician' });
-      columns.push({ key: 'ApprovedBy', label: 'Approved By' });
-      columns.push({ key: 'ApprovedDateTime', label: 'Approved', datetime: true });
-      columns.push({ key: 'ApprovalStatus', label: 'Status', badge: true, badgeMap: { 'Approved': 'success' } });
-    } else {
-      columns.push({ key: 'AssignedTechnician', label: 'Technician' });
-      columns.push({ label: 'Status', format: function(val, row) {
-        var ds = getDisplayStatus(row);
-        var badgeCls = getStatusBadgeClass(ds);
-        return '<span class="badge badge-' + badgeCls + '">' + escapeHtml(ds) + '</span>';
-      }});
-    }
-
-    columns.push({ key: 'FaultImage', label: 'Fault', format: function(val) {
-      return val ? '<img src="' + val + '" class="img-thumb" onclick="JC.openImage(\'' + escapeHtml(val) + '\')" title="View Fault Image">' : '—';
-    }});
-
-    var actions = [
-      { label: 'View', icon: 'view', color: 'primary', onclick: "JC.viewDetail('{id}')", idField: 'JobCardNo' }
-    ];
-
-    var containerEl = document.getElementById('jcTableContainer');
-    if (!containerEl) return;
-    var totalPages = Math.ceil(_filtered.length / _pageSize) || 1;
-    if (_page > totalPages) _page = totalPages;
-
-    if (_filtered.length === 0) {
-      containerEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128196;</div><div class="empty-state-text">No job cards found</div></div>';
+    if(filtered.length===0){
+      wrap.innerHTML='<div class="empty-state" style="text-align:center;padding:40px;color:#888;">No job cards found.</div>';
       return;
     }
 
-    var html = '<table><thead><tr><th>#</th>';
-    columns.forEach(function(c) { html += '<th>' + c.label + '</th>'; });
-    html += '<th>Actions</th></tr></thead><tbody>';
-
-    var start = (_page - 1) * _pageSize;
-    var end = Math.min(start + _pageSize, _filtered.length);
-    for (var i = start; i < end; i++) {
-      var jc = _filtered[i];
-      html += '<tr><td style="color:var(--text-muted)">' + (i + 1) + '</td>';
-      columns.forEach(function(c) {
-        var val = jc[c.key];
-        if (c.format) {
-          html += '<td>' + c.format(val, jc) + '</td>';
-        } else if (c.badge && val) {
-          var bc = c.badgeMap && c.badgeMap[val] ? c.badgeMap[val] : 'secondary';
-          html += '<td><span class="badge badge-' + bc + '">' + escapeHtml(val) + '</span></td>';
-        } else if (c.datetime && val) {
-          html += '<td>' + formatDateTime(val) + '</td>';
-        } else {
-          html += '<td>' + escapeHtml(val || '-') + '</td>';
-        }
-      });
-      html += '<td><button class="btn btn-sm btn-secondary" onclick="JC.viewDetail(\'' + escapeHtml(jc.JobCardNo) + '\')">View</button></td>';
-      html += '</tr>';
+    var h='<table class="data-table"><thead><tr>';
+    if(_tab==='approved'){
+      h+='<th>JobCardNo</th><th>Approved DateTime</th><th>Machine</th><th>Assigned Technician</th><th>Approval Status</th><th>Action</th>';
+    }else if(_tab==='open'){
+      h+='<th>JobCardNo</th><th>Open Date</th><th>Machine</th><th>Department</th><th>Priority</th><th>Waiting Time</th><th>Complaint</th><th>Action</th>';
+    }else if(_tab==='running'){
+      h+='<th>JobCardNo</th><th>Open Date</th><th>Machine</th><th>Department</th><th>Priority</th><th>Technician</th><th>Working Time</th><th>Action</th>';
+    }else if(_tab==='closed'){
+      h+='<th>JobCardNo</th><th>Open Date</th><th>Machine</th><th>Department</th><th>Priority</th><th>Technician</th><th>Waiting</th><th>Working</th><th>Downtime</th><th>Action</th>';
+    }else if(_tab==='pending'){
+      h+='<th>JobCardNo</th><th>Open Date</th><th>Machine</th><th>Department</th><th>Priority</th><th>Technician</th><th>Waiting</th><th>Working</th><th>Downtime</th><th>Pending Date</th><th>Action</th>';
+    }else{
+      h+='<th>JobCardNo</th><th>Open Date</th><th>Machine</th><th>Department</th><th>Priority</th><th>Technician</th><th>Status</th><th>Action</th>';
     }
-    html += '</tbody></table>';
+    h+='</tr></thead><tbody>';
 
-    if (totalPages > 1) {
-      html += '<div class="pagination">';
-      html += '<button ' + (_page <= 1 ? 'disabled' : '') + ' onclick="JC.page(' + (_page - 1) + ')">Prev</button>';
-      for (var p = 1; p <= totalPages; p++) {
-        if (totalPages > 7 && p > 3 && p < totalPages - 2 && Math.abs(p - _page) > 1) {
-          if (p === 4 || p === totalPages - 3) html += '<button disabled>...</button>';
-          continue;
-        }
-        html += '<button class="' + (p === _page ? 'active' : '') + '" onclick="JC.page(' + p + ')">' + p + '</button>';
+    filtered.forEach(function(r){
+      h+='<tr data-id="'+u.escHtml(r.JobCardNo)+'">';
+      if(_tab==='approved'){
+        h+='<td>'+u.escHtml(r.JobCardNo)+'</td>';
+        h+='<td>'+u.formatDateTime(r.ApprovedDateTime)+'</td>';
+        h+='<td>'+u.escHtml(r.Machine||r.MachineName||'-')+'</td>';
+        h+='<td>'+u.escHtml(r.AssignedTechnician||'-')+'</td>';
+        h+='<td>'+(r.ApprovalStatus?u.statusBadge(r.ApprovalStatus):'-')+'</td>';
+      }else if(_tab==='open'){
+        h+='<td>'+u.escHtml(r.JobCardNo)+'</td>';
+        h+='<td>'+u.formatDateTime(r.OpenDateTime)+'</td>';
+        h+='<td>'+u.escHtml(r.Machine||r.MachineName||'-')+'</td>';
+        h+='<td>'+u.escHtml(r.Department||'-')+'</td>';
+        h+='<td>'+u.priorityBadge(r.Priority)+'</td>';
+        h+='<td class="live-time" data-start="'+u.escHtml(r.OpenDateTime)+'">'+timeSince(r.OpenDateTime)+'</td>';
+        h+='<td>'+u.escHtml((r.ComplaintDescription||'').substring(0,60))+'</td>';
+      }else if(_tab==='running'){
+        h+='<td>'+u.escHtml(r.JobCardNo)+'</td>';
+        h+='<td>'+u.formatDateTime(r.OpenDateTime)+'</td>';
+        h+='<td>'+u.escHtml(r.Machine||r.MachineName||'-')+'</td>';
+        h+='<td>'+u.escHtml(r.Department||'-')+'</td>';
+        h+='<td>'+u.priorityBadge(r.Priority)+'</td>';
+        h+='<td>'+u.escHtml(r.AssignedTechnician||'-')+'</td>';
+        h+='<td class="live-time" data-start="'+u.escHtml(r.StartedDateTime||r.OpenDateTime)+'">'+timeSince(r.StartedDateTime||r.OpenDateTime)+'</td>';
+      }else if(_tab==='closed'){
+        h+='<td>'+u.escHtml(r.JobCardNo)+'</td>';
+        h+='<td>'+u.formatDateTime(r.OpenDateTime)+'</td>';
+        h+='<td>'+u.escHtml(r.Machine||r.MachineName||'-')+'</td>';
+        h+='<td>'+u.escHtml(r.Department||'-')+'</td>';
+        h+='<td>'+u.priorityBadge(r.Priority)+'</td>';
+        h+='<td>'+u.escHtml(r.AssignedTechnician||'-')+'</td>';
+        h+='<td>'+u.escHtml(r.WaitingTime||'-')+'</td>';
+        h+='<td>'+u.escHtml(r.WorkingTime||'-')+'</td>';
+        h+='<td>'+u.escHtml(r.Downtime||'-')+'</td>';
+      }else if(_tab==='pending'){
+        h+='<td>'+u.escHtml(r.JobCardNo)+'</td>';
+        h+='<td>'+u.formatDateTime(r.OpenDateTime)+'</td>';
+        h+='<td>'+u.escHtml(r.Machine||r.MachineName||'-')+'</td>';
+        h+='<td>'+u.escHtml(r.Department||'-')+'</td>';
+        h+='<td>'+u.priorityBadge(r.Priority)+'</td>';
+        h+='<td>'+u.escHtml(r.AssignedTechnician||'-')+'</td>';
+        h+='<td>'+u.escHtml(r.WaitingTime||'-')+'</td>';
+        h+='<td>'+u.escHtml(r.WorkingTime||'-')+'</td>';
+        h+='<td>'+u.escHtml(r.Downtime||'-')+'</td>';
+        h+='<td>'+u.formatDateTime(r.PendingDateTime)+'</td>';
+      }else{
+        h+='<td>'+u.escHtml(r.JobCardNo)+'</td>';
+        h+='<td>'+u.formatDateTime(r.OpenDateTime)+'</td>';
+        h+='<td>'+u.escHtml(r.Machine||r.MachineName||'-')+'</td>';
+        h+='<td>'+u.escHtml(r.Department||'-')+'</td>';
+        h+='<td>'+u.priorityBadge(r.Priority)+'</td>';
+        h+='<td>'+u.escHtml(r.AssignedTechnician||'-')+'</td>';
+        h+='<td>'+u.statusBadge(r.CurrentStatus)+'</td>';
       }
-      html += '<button ' + (_page >= totalPages ? 'disabled' : '') + ' onclick="JC.page(' + (_page + 1) + ')">Next</button>';
-      html += '</div>';
-    }
+      h+='<td><button class="btn btn-sm btn-view" data-view="'+u.escHtml(r.JobCardNo)+'">'+CMMS.icons.view+'</button></td>';
+      h+='</tr>';
+    });
 
-    containerEl.innerHTML = html;
-  }
+    h+='</tbody></table>';
+    wrap.innerHTML=h;
 
-  function viewDetail(id) {
-    var item = _jobs.find(function(r) { return r.JobCardNo === id; });
-    if (!item) return;
-    var el = document.getElementById('jcViewRef');
-    if (el) el.textContent = id;
-    var displayStatus = getDisplayStatus(item);
-    var displayBadge = getStatusBadgeClass(displayStatus);
-    var pBadge = item.Priority === 'Critical' || item.Priority === 'High' ? 'danger' :
-                 item.Priority === 'Medium' ? 'warning' : 'success';
-    var waitingHrs = durationToggle(item.WaitingTime);
-    var workingHrs = durationToggle(item.WorkingTime);
-    var downtimeHrs = durationToggle(item.BreakdownTime);
-
-    var faultThumb = item.FaultImage ? '<img src="' + item.FaultImage + '" class="img-thumb" onclick="JC.openImage(\'' + escapeHtml(item.FaultImage) + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '—';
-    var repairThumb = item.RepairImage ? '<img src="' + item.RepairImage + '" class="img-thumb" onclick="JC.openImage(\'' + escapeHtml(item.RepairImage) + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '—';
-
-    var html =
-      '<div class="view-grid">' +
-        '<div class="view-section">' +
-          '<h4>Job Card Details</h4>' +
-          '<div class="view-row"><span>Job Card No</span><strong>' + escapeHtml(item.JobCardNo) + '</strong></div>' +
-          '<div class="view-row"><span>Opened</span><strong>' + formatDateTime(item.DateTime || item.OpenTime || item.OpenDateTime) + '</strong></div>' +
-          '<div class="view-row"><span>Machine</span><strong>' + escapeHtml(item.Machine || '-') + '</strong></div>' +
-          '<div class="view-row"><span>Asset</span><strong>' + escapeHtml(item.Asset || item.AssetID || '-') + '</strong></div>' +
-          '<div class="view-row"><span>Department</span><strong>' + escapeHtml(item.Department || '-') + '</strong></div>' +
-          '<div class="view-row"><span>Priority</span><strong><span class="badge badge-' + pBadge + '">' + escapeHtml(item.Priority) + '</span></strong></div>' +
-          '<div class="view-row"><span>Complaint By</span><strong>' + escapeHtml(item.ComplaintBy || '-') + '</strong></div>' +
-          '<div class="view-row"><span>Description</span><strong>' + escapeHtml(item.ComplaintDescription || '-') + '</strong></div>' +
-          '<div class="view-row"><span>Fault Image</span><strong>' + faultThumb + '</strong></div>' +
-        '</div>';
-
-    if (item.StartTime || item.StartDateTime) {
-      html +=
-        '<div class="view-section">' +
-          '<h4>Work Execution</h4>' +
-          '<div class="view-row"><span>Started</span><strong>' + formatDateTime(item.StartTime || item.StartDateTime) + '</strong></div>' +
-          '<div class="view-row"><span>Assigned Technician</span><strong>' + escapeHtml(item.AssignedTechnician || '-') + '</strong></div>' +
-          '<div class="view-row"><span>Waiting Time</span><strong>' + waitingHrs + '</strong></div>' +
-        '</div>';
-    }
-    if (item.CloseTime || item.CloseDateTime) {
-      html +=
-        '<div class="view-section">' +
-          '<h4>Completion</h4>' +
-          '<div class="view-row"><span>Closed</span><strong>' + formatDateTime(item.CloseTime || item.CloseDateTime) + '</strong></div>' +
-          '<div class="view-row"><span>Working Time</span><strong>' + workingHrs + '</strong></div>' +
-          '<div class="view-row"><span>Total Breakdown</span><strong>' + downtimeHrs + '</strong></div>' +
-          '<div class="view-row"><span>Root Cause</span><strong>' + escapeHtml(item.RootCause || '-') + '</strong></div>' +
-          '<div class="view-row"><span>Corrective Action</span><strong>' + escapeHtml(item.CorrectiveAction || '-') + '</strong></div>' +
-          '<div class="view-row"><span>Spare Parts</span><strong>' + escapeHtml(item.SpareParts || '-') + '</strong></div>' +
-          '<div class="view-row"><span>Repair Image</span><strong>' + repairThumb + '</strong></div>' +
-        '</div>';
-    }
-    if (item.ApprovalStatus) {
-      var appBadge = item.ApprovalStatus === 'Approved' ? 'success' :
-                     item.ApprovalStatus === 'Returned' ? 'warning' : 'info';
-      var appLabel = item.ApprovalStatus === 'Returned' ? 'Returned By' : 'Approved By';
-      var appDateField = item.ApprovalStatus === 'Returned' ? item.ReturnedDateTime : item.ApprovedDateTime;
-      var appRemark = item.ApprovalStatus === 'Returned' ? (item.ReturnReason || item.ApprovalRemarks || '-') : (item.ApprovalRemarks || '-');
-      html +=
-        '<div class="view-section">' +
-          '<h4>Approval</h4>' +
-          '<div class="view-row"><span>' + appLabel + '</span><strong>' + escapeHtml(item.ApprovedBy || item.ReturnedBy || '-') + '</strong></div>' +
-          '<div class="view-row"><span>Date</span><strong>' + formatDateTime(appDateField) + '</strong></div>' +
-          '<div class="view-row"><span>Status</span><strong><span class="badge badge-' + appBadge + '">' + escapeHtml(item.ApprovalStatus) + '</span></strong></div>' +
-          '<div class="view-row"><span>Remarks</span><strong>' + escapeHtml(appRemark) + '</strong></div>' +
-        '</div>';
-    }
-    if (!item.StartDateTime && !item.StartTime) {
-      html += '<div class="view-section"><h4>Status</h4><div class="view-row"><span>This job card is <strong>OPEN</strong> and waiting to be started.</span></div></div>';
-    }
-    html +=
-      '</div>' +
-      '<div class="view-status-bar"><span class="badge badge-' + displayBadge + '" style="font-size:13px;padding:5px 14px">Status: ' + escapeHtml(displayStatus) + '</span></div>';
-
-    var body = document.getElementById('jcViewBody');
-    if (body) body.innerHTML = html;
-    showJcModal('jcViewModal');
-  }
-
-  function showJcModal(id) {
-    var el = document.getElementById(id);
-    if (el) { el.style.display = 'flex'; }
-  }
-
-  window.JC = {
-    switchTab: function(tab) {
-      _activeTab = tab;
-      _page = 1;
-      var tabs = document.querySelectorAll('.workflow-tab');
-      tabs.forEach(function(t) {
-        if (t) t.classList.toggle('active', t.getAttribute('data-tab') === tab);
+    wrap.querySelectorAll('.btn-view').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var id=btn.getAttribute('data-view');
+        var jc=_data.find(function(r){return r.JobCardNo===id;});
+        if(jc)openViewModal(jc);
       });
-      renderTable();
-    },
-    filter: function() { _page = 1; renderTable(); },
-    page: function(p) { _page = p; renderTable(); },
-    searchTable: function(q) {
-      _searchQuery = q ? q.toLowerCase() : '';
-      _page = 1;
-      renderTable();
-    },
-    viewDetail: viewDetail,
-    openImage: function(url) {
-      if (!url) return;
-      var el = document.getElementById('jcFullImage');
-      if (el) el.src = url;
-      showJcModal('jcImageModal');
-    },
-    hideModal: function(id) {
-      var el = document.getElementById(id);
-      if (el) el.style.display = 'none';
+    });
+
+    _timers.forEach(clearInterval);
+    _timers=[];
+    var liveEls=document.querySelectorAll('.live-time[data-start]');
+    if(liveEls.length>0){
+      var tid=setInterval(function(){
+        document.querySelectorAll('.live-time[data-start]').forEach(function(el){
+          var s=el.getAttribute('data-start');
+          if(s)el.textContent=timeSince(s);
+        });
+      },60000);
+      _timers.push(tid);
     }
-  };
+    u.showLoading(false);
+  }
+
+  function load(){
+    u.showLoading(true);
+    C.api.call('getJobCards').then(function(d){
+      _data=Array.isArray(d)?d:[];render();
+    }).catch(function(){u.showLoading(false);u.showToast('Failed to load job cards','error');});
+  }
+
+  function destroy(){
+    _data=[];_tab='open';_filters={priority:'',department:'',search:''};
+    _timers.forEach(clearInterval);_timers=[];
+  }
+
+  C.router.registerPage('jobcards',{title:'Job Cards',init:init,load:load,destroy:destroy});
 })();

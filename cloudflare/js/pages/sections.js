@@ -1,211 +1,234 @@
-/* ============================================================
-   sections.js — Sections Page Module
-   GAS-identical: SectionsPage.html
-   ============================================================ */
+(function(){
+  var C=window.CMMS=window.CMMS||{};
+  var u=C.utils;
+  var _data=[];
+  var _state={page:1,perPage:25,search:'',editId:null};
 
-(function() {
-  var sectionsData = [];
-  var sectionsPage = 1;
+  var _days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
-  App.registerPage('sections', render, load);
-
-  function render() {
-    var el = document.getElementById('page-sections');
-    el.innerHTML =
-      '<div id="sectionsPage">' +
-        '<div class="card">' +
-          '<div class="card-header">' +
-            '<div class="card-title">Section Master</div>' +
-            '<div class="card-actions">' +
-              '<div class="search-box">' +
-                '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg>' +
-                '<input type="text" class="search-input" id="sectionSearchInput" placeholder="Search sections..." oninput="searchSectionsTable(this.value)">' +
-              '</div>' +
-              '<button class="btn btn-primary" onclick="openSectionForm()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> Add Section</button>' +
-            '</div>' +
-          '</div>' +
-          '<div id="sectionsTableContainer"></div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="modal-overlay" id="sectionFormModal">' +
-        '<div class="modal modal-wide">' +
-          '<div class="modal-header">' +
-            '<div class="modal-title" id="sectionFormTitle">Add Section</div>' +
-            '<button class="modal-close" onclick="hideModal(\'sectionFormModal\')">&times;</button>' +
-          '</div>' +
-          '<form id="sectionForm" onsubmit="return saveSection(event)">' +
-            '<div class="modal-body">' +
-              '<input type="hidden" name="SectionID" id="editSectionId">' +
-              '<div class="form-row">' +
-                '<div class="form-group">' +
-                  '<label>Section Name *</label>' +
-                  '<input type="text" name="Section" class="form-control" id="sectionName" placeholder="Enter section name" required>' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Section Code *</label>' +
-                  '<input type="text" name="SectionCode" class="form-control" id="sectionCode" placeholder="e.g. ADM" required>' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-group">' +
-                '<label>Description</label>' +
-                '<textarea name="Description" class="form-control" id="sectionDescription" rows="2" placeholder="Enter description"></textarea>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group">' +
-                  '<label>Status</label>' +
-                  '<select name="Status" class="form-control" id="sectionStatus">' +
-                    '<option value="Active">Active</option>' +
-                    '<option value="Inactive">Inactive</option>' +
-                  '</select>' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Sunday Off</label>' +
-                  '<select name="SundayOff" class="form-control" id="sectionSundayOff">' +
-                    '<option value="Sunday">Sunday</option>' +
-                    '<option value="Monday">Monday</option>' +
-                    '<option value="Tuesday">Tuesday</option>' +
-                    '<option value="Wednesday">Wednesday</option>' +
-                    '<option value="Thursday">Thursday</option>' +
-                    '<option value="Friday">Friday</option>' +
-                    '<option value="Saturday">Saturday</option>' +
-                    '<option value="No">No</option>' +
-                  '</select>' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-row">' +
-                '<div class="form-group">' +
-                  '<label>Hours Per Day</label>' +
-                  '<input type="number" name="HoursPerDay" class="form-control" id="sectionHoursPerDay" placeholder="8" min="1" max="24" step="0.5">' +
-                '</div>' +
-                '<div class="form-group">' +
-                  '<label>Department Count</label>' +
-                  '<input type="number" name="DepartmentCount" class="form-control" id="sectionDeptCount" placeholder="0" min="0" readonly>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
-            '<div class="modal-footer">' +
-              '<button type="button" class="btn btn-secondary" onclick="hideModal(\'sectionFormModal\')">Cancel</button>' +
-              '<button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M15 17v-5H5v5"/><path d="M5 3v4h7"/><path d="M4 3h10l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg> Save</button>' +
-            '</div>' +
-          '</form>' +
-        '</div>' +
-      '</div>';
+  function init(){
+    var mc=C.loader.getContainer();
+    mc.innerHTML=[
+      '<div class="page-header">',
+        '<h2>Section Master</h2>',
+        '<div class="header-actions">',
+          '<div class="search-box">',
+            '<span class="search-icon">'+u.icons.search+'</span>',
+            '<input type="text" id="secSearch" placeholder="Search sections..." />',
+          '</div>',
+          '<button class="btn btn-primary" id="btnAddSection">'+u.icons.plus+' Add Section</button>',
+        '</div>',
+      '</div>',
+      '<div id="secTable" class="table-container"></div>',
+      '<div id="secModal" class="modal-overlay" style="display:none;">',
+        '<div class="modal">',
+          '<div class="modal-header">',
+            '<h3 id="secModalTitle">Add Section</h3>',
+            '<button class="modal-close" id="btnCloseSecModal">&times;</button>',
+          '</div>',
+          '<div class="modal-body">',
+            '<form id="secForm" autocomplete="off">',
+              '<input type="hidden" id="sSectionId" />',
+              '<div class="form-row">',
+                '<div class="form-group">',
+                  '<label>Section Name <span class="req">*</span></label>',
+                  '<input type="text" id="sSection" required />',
+                '</div>',
+                '<div class="form-group">',
+                  '<label>Section Code <span class="req">*</span></label>',
+                  '<input type="text" id="sSectionCode" required />',
+                '</div>',
+              '</div>',
+              '<div class="form-row">',
+                '<div class="form-group full-width">',
+                  '<label>Description</label>',
+                  '<textarea id="sDescription" rows="3"></textarea>',
+                '</div>',
+              '</div>',
+              '<div class="form-row">',
+                '<div class="form-group">',
+                  '<label>Sunday Off</label>',
+                  '<select id="sSundayOff">',
+                  '</select>',
+                '</div>',
+                '<div class="form-group">',
+                  '<label>Hours Per Day</label>',
+                  '<input type="number" id="sHoursPerDay" value="8" min="1" max="24" />',
+                '</div>',
+              '</div>',
+              '<div class="form-row">',
+                '<div class="form-group">',
+                  '<label>Status <span class="req">*</span></label>',
+                  '<select id="sStatus" required>',
+                    '<option value="Active">Active</option>',
+                    '<option value="Inactive">Inactive</option>',
+                  '</select>',
+                '</div>',
+                '<div class="form-group"></div>',
+              '</div>',
+            '</form>',
+          '</div>',
+          '<div class="modal-footer">',
+            '<button class="btn btn-secondary" id="btnCancelSection">Cancel</button>',
+            '<button class="btn btn-primary" id="btnSaveSection">Save</button>',
+          '</div>',
+        '</div>',
+      '</div>'
+    ].join('');
+    populateDays();
+    bindEvents();
   }
 
-  function load() {
-    App.showLoading(true);
-    API.call('getSectionList')
-      .then(function(data) {
-        sectionsData = data || [];
-        App.showLoading(false);
-        renderSectionsTable();
-      })
-      .catch(function(err) {
-        App.showLoading(false);
-        App.showToast('Error loading sections: ' + err.message, 'error');
-      });
+  function populateDays(){
+    var sel=u.$('#sSundayOff');
+    var html='';
+    for(var i=0;i<_days.length;i++){
+      html+='<option value="'+_days[i]+'"'+(_days[i]==='Sunday'?' selected':'')+'>'+_days[i]+'</option>';
+    }
+    sel.innerHTML=html;
   }
 
-  function renderSectionsTable() {
-    renderTable(sectionsData, [
-      { key: 'SectionID', label: 'ID' },
-      { key: 'Section', label: 'Section Name' },
-      { key: 'Description', label: 'Description' },
-      { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Active': 'success', 'Inactive': 'danger' } },
-      { key: 'SundayOff', label: 'Sun Off', badge: true, badgeMap: { 'No': 'success', 'Sunday': 'warning', 'Monday': 'warning', 'Tuesday': 'warning', 'Wednesday': 'warning', 'Thursday': 'warning', 'Friday': 'warning', 'Saturday': 'warning' } },
-      { key: 'HoursPerDay', label: 'Hrs/Day' },
-      { key: 'SectionCode', label: 'Code' },
-      { key: 'DepartmentCount', label: 'Depts' }
-    ], [
-      { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editSection('{id}')", idField: 'SectionID' },
-      { label: 'Delete', icon: 'trash', color: 'danger', onclick: "deleteSection('{id}')", idField: 'SectionID' }
-    ], sectionsPage, PAGE_SIZE, 'sectionsTableContainer');
-    registerPageState('sectionsTableContainer', function(p) { sectionsPage = p; renderSectionsTable(); });
+  function bindEvents(){
+    u.$('#btnAddSection').addEventListener('click',function(){
+      _state.editId=null;
+      u.resetForm(u.$('#secForm'));
+      u.$('#sHoursPerDay').value='8';
+      u.$('#sSundayOff').value='Sunday';
+      u.$('#secModalTitle').textContent='Add Section';
+      u.$('#secModal').style.display='flex';
+    });
+    u.$('#btnCloseSecModal').addEventListener('click',function(){
+      u.$('#secModal').style.display='none';
+    });
+    u.$('#btnCancelSection').addEventListener('click',function(){
+      u.$('#secModal').style.display='none';
+    });
+    u.$('#btnSaveSection').addEventListener('click',function(){
+      saveSection();
+    });
+    var searchInput=u.$('#secSearch');
+    searchInput.addEventListener('input',u.debounce(function(){
+      _state.search=searchInput.value.trim();
+      load();
+    },400));
+    u.$('#secTable').addEventListener('click',function(e){
+      var btn=e.target.closest('[data-action]');
+      if(!btn)return;
+      var id=parseInt(btn.closest('tr').dataset.id);
+      if(btn.dataset.action==='edit')editSection(id);
+      else if(btn.dataset.action==='delete')deleteSection(id);
+    });
   }
 
-  window.openSectionForm = function() {
-    var el = document.getElementById('editSectionId'); if (el) el.value = '';
-    resetForm('sectionForm');
-    var el2 = document.getElementById('sectionSundayOff'); if (el2) el2.value = 'Sunday';
-    var el3 = document.getElementById('sectionHoursPerDay'); if (el3) el3.value = '8';
-    var el4 = document.getElementById('sectionDeptCount'); if (el4) el4.value = '0';
-    var el5 = document.getElementById('sectionStatus'); if (el5) el5.value = 'Active';
-    showModal('sectionFormModal');
-    var el6 = document.getElementById('sectionFormTitle'); if (el6) el6.textContent = 'Add Section';
-  };
+  function load(){
+    u.showLoading(true);
+    var params={};
+    if(_state.search)params.Search=_state.search;
+    C.api.call('getSectionList',params).then(function(data){
+      _data=data||[];
+      render();
+    }).catch(function(){
+      _data=[];
+      render();
+    }).finally(function(){u.showLoading(false);});
+  }
 
-  window.editSection = function(id) {
-    var item = sectionsData.find(function(s) { return s.SectionID === id; });
-    if (!item) return;
-    setFormData('sectionForm', item);
-    var el = document.getElementById('editSectionId'); if (el) el.value = id;
-    var el2 = document.getElementById('sectionFormTitle'); if (el2) el2.textContent = 'Edit Section - ' + id;
-    showModal('sectionFormModal');
-  };
+  function render(){
+    var rows=[];
+    for(var i=0;i<_data.length;i++){
+      var s=_data[i];
+      rows.push(
+        '<tr data-id="'+s.SectionID+'">',
+          '<td>'+u.escHtml(s.SectionID)+'</td>',
+          '<td>'+u.escHtml(s.Section||s.SectionName)+'</td>',
+          '<td>'+u.escHtml(s.SectionCode||s.Code||'')+'</td>',
+          '<td>'+u.escHtml(s.Description||'-')+'</td>',
+          '<td>'+u.escHtml(s.HoursPerDay||8)+'</td>',
+          '<td>'+u.statusBadge(s.Status)+'</td>',
+          '<td class="actions">',
+            '<button class="btn-icon" data-action="edit" title="Edit">'+u.icons.edit+'</button>',
+            '<button class="btn-icon btn-danger" data-action="delete" title="Delete">'+u.icons.trash+'</button>',
+          '</td>',
+        '</tr>'
+      );
+    }
+    u.renderTable(u.$('#secTable'),{
+      headers:['ID','Section','Code','Description','Hrs/Day','Status','Actions'],
+      rows:rows,
+      emptyMsg:'No sections found'
+    });
+  }
 
-  window.saveSection = function(event) {
-    event.preventDefault();
-    var id = document.getElementById('editSectionId').value;
-    var data = getFormData('sectionForm');
-    data.Section = data.Section || document.getElementById('sectionName').value.trim();
-    if (!data.Section) { App.showToast('Section name is required', 'warning'); return false; }
-    if (!data.SectionCode) { App.showToast('Section code is required', 'warning'); return false; }
-    if (!data.HoursPerDay || parseFloat(data.HoursPerDay) <= 0) { App.showToast('Hours Per Day must be a positive number', 'warning'); return false; }
-    App.showLoading(true);
-    var fn = id ? 'modifySection' : 'createSection';
-    var payload = id ? { id: id, data: data } : data;
-    API.call(fn, payload)
-      .then(function() {
-        App.showLoading(false);
-        hideModal('sectionFormModal');
-        App.showToast('Section ' + (id ? 'updated' : 'created') + ' successfully', 'success');
+  function getFormData(){
+    return{
+      Section:u.getVal('#sSection'),
+      SectionCode:u.getVal('#sSectionCode'),
+      Description:u.getVal('#sDescription'),
+      SundayOff:u.getVal('#sSundayOff'),
+      HoursPerDay:parseInt(u.getVal('#sHoursPerDay'))||8,
+      Status:u.getVal('#sStatus')
+    };
+  }
+
+  function saveSection(){
+    var d=getFormData();
+    if(!d.Section||!d.SectionCode||!d.Status){
+      u.showToast('Please fill all required fields','error');
+      return;
+    }
+    u.showLoading(true);
+    var action=_state.editId?'modifySection':'createSection';
+    if(_state.editId)d.SectionID=_state.editId;
+    C.api.call(action,d).then(function(){
+      u.showToast('Section saved successfully','success');
+      u.$('#secModal').style.display='none';
+      load();
+    }).catch(function(e){
+      u.showToast('Error saving section: '+(e.message||e),'error');
+      u.showLoading(false);
+    });
+  }
+
+  function editSection(id){
+    var s=null;
+    for(var i=0;i<_data.length;i++){
+      if(_data[i].SectionID===id){s=_data[i];break;}
+    }
+    if(!s)return;
+    _state.editId=id;
+    u.$('#secModalTitle').textContent='Edit Section';
+    u.$('#sSectionId').value=s.SectionID;
+    u.$('#sSection').value=s.Section||s.SectionName||'';
+    u.$('#sSectionCode').value=s.SectionCode||s.Code||'';
+    u.$('#sDescription').value=s.Description||'';
+    u.$('#sSundayOff').value=s.SundayOff||'Sunday';
+    u.$('#sHoursPerDay').value=s.HoursPerDay||8;
+    u.$('#sStatus').value=s.Status||'Active';
+    u.$('#secModal').style.display='flex';
+  }
+
+  function deleteSection(id){
+    u.showConfirm('Are you sure you want to delete this section?',function(){
+      u.showLoading(true);
+      C.api.call('removeSection',{SectionID:id}).then(function(){
+        u.showToast('Section deleted','success');
         load();
-      })
-      .catch(function(err) {
-        App.showLoading(false);
-        App.showToast('Error: ' + err.message, 'error');
+      }).catch(function(e){
+        u.showToast('Error deleting: '+(e.message||e),'error');
+        u.showLoading(false);
       });
-    return false;
-  };
-
-  window.deleteSection = function(id) {
-    showConfirm('Delete Section', 'Are you sure you want to delete this section?', function() {
-      App.showLoading(true);
-      API.call('removeSection', { id: id })
-        .then(function() {
-          App.showLoading(false);
-          App.showToast('Section deleted successfully', 'success');
-          load();
-        })
-        .catch(function(err) {
-          App.showLoading(false);
-          App.showToast('Error: ' + err.message, 'error');
-        });
     });
-  };
+  }
 
-  window.searchSectionsTable = function(query) {
-    if (!query) { sectionsPage = 1; renderSectionsTable(); return; }
-    var q = query.toLowerCase();
-    var filtered = sectionsData.filter(function(s) {
-      return (s.Section || '').toLowerCase().indexOf(q) >= 0 ||
-             (s.SectionCode || '').toLowerCase().indexOf(q) >= 0 ||
-             (s.SectionID || '').toLowerCase().indexOf(q) >= 0 ||
-             (s.Description || '').toLowerCase().indexOf(q) >= 0;
-    });
-    sectionsPage = 1;
-    renderTable(filtered, [
-      { key: 'SectionID', label: 'ID' },
-      { key: 'Section', label: 'Section Name' },
-      { key: 'Description', label: 'Description' },
-      { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Active': 'success', 'Inactive': 'danger' } },
-      { key: 'SundayOff', label: 'Sun Off', badge: true, badgeMap: { 'No': 'success', 'Sunday': 'warning', 'Monday': 'warning', 'Tuesday': 'warning', 'Wednesday': 'warning', 'Thursday': 'warning', 'Friday': 'warning', 'Saturday': 'warning' } },
-      { key: 'HoursPerDay', label: 'Hrs/Day' },
-      { key: 'SectionCode', label: 'Code' },
-      { key: 'DepartmentCount', label: 'Depts' }
-    ], [
-      { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editSection('{id}')", idField: 'SectionID' },
-      { label: 'Delete', icon: 'trash', color: 'danger', onclick: "deleteSection('{id}')", idField: 'SectionID' }
-    ], 1, PAGE_SIZE, 'sectionsTableContainer');
-  };
+  function destroy(){
+    _data=[];
+    _state={page:1,perPage:25,search:'',editId:null};
+  }
+
+  C.router.registerPage('sections',{
+    title:'Section Master',
+    init:init,
+    load:load,
+    destroy:destroy
+  });
 })();

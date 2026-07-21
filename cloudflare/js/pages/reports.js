@@ -1,165 +1,345 @@
-/* ============================================================
-   reports.js — Reports Page Module
-   Standard-021: Cloudflare Pages Frontend
-   ============================================================ */
+CMMS.router.registerPage("reports", {
+  title: "Reports",
+  icon: CMMS.icons.barChart,
 
-(function() {
-  var _reportData = null;
+  state: {
+    activeReport: "machineHistory",
+    machines: [],
+    departments: [],
+    reportData: [],
+    filters: {},
+    loading: false
+  },
 
-  App.registerPage('reports', render, load);
+  reportTypes: [
+    { key: "machineHistory", label: "Machine History", icon: "cog" },
+    { key: "technicianPerformance", label: "Technician Performance", icon: "user" },
+    { key: "department", label: "Department", icon: "building" },
+    { key: "breakdown", label: "Breakdown", icon: "alertTriangle" },
+    { key: "downtime", label: "Downtime", icon: "clock" },
+    { key: "monthly", label: "Monthly", icon: "calendar" },
+    { key: "pmCompliance", label: "PM Compliance", icon: "checkCircle" }
+  ],
 
-  function render() {
-    var el = document.getElementById('page-reports');
-    if (!Auth.canViewReports() && !Auth.isAdmin()) {
-      el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:60vh;flex-direction:column;gap:12px">' +
-        '<div style="font-size:48px">&#128274;</div>' +
-        '<h2>Access Denied</h2>' +
-        '<p style="color:var(--text-muted)">You do not have permission to view reports.</p></div>';
-      return;
-    }
-    el.innerHTML = '' +
-      '<div class="page-header"><h2>Reports</h2></div>' +
-      '<div class="tabs">' +
-        '<button class="tab active" onclick="ReportTab(this,\'jobcards\')">Job Cards</button>' +
-        '<button class="tab" onclick="ReportTab(this,\'downtime\')">Downtime</button>' +
-        '<button class="tab" onclick="ReportTab(this,\'maintenance\')">Maintenance</button>' +
-        '<button class="tab" onclick="ReportTab(this,\'inventory\')">Inventory</button>' +
-        '<button class="tab" onclick="ReportTab(this,\'technician\')">Technician Performance</button>' +
-      '</div>' +
-      '<div class="card" style="padding:24px">' +
-        '<div class="grid grid-3" style="margin-bottom:16px">' +
-          '<div class="form-group"><label class="form-label">From Date</label><input type="date" class="form-input" id="rpt-from"></div>' +
-          '<div class="form-group"><label class="form-label">To Date</label><input type="date" class="form-input" id="rpt-to"></div>' +
-          '<div class="form-group"><label class="form-label">Department</label>' +
-            '<select class="form-select" id="rpt-dept"><option value="">All Departments</option></select></div>' +
-        '</div>' +
-        '<button class="btn btn-primary" id="rpt-generate">Generate Report</button>' +
-      '</div>' +
-      '<div id="rpt-result" style="margin-top:16px"></div>';
-  }
-
-  function load() {
-    App.showLoading(true);
-    var now = new Date();
-    var firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    var fromInput = document.getElementById('rpt-from');
-    var toInput = document.getElementById('rpt-to');
-    if (fromInput) fromInput.value = firstOfMonth.getFullYear() + '-' + String(firstOfMonth.getMonth() + 1).padStart(2, '0') + '-' + String(firstOfMonth.getDate()).padStart(2, '0');
-    if (toInput) toInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-
-    API.call('getDepartmentList').then(function(list) {
-      var sel = document.getElementById('rpt-dept');
-      if (sel && list) {
-        list.forEach(function(d) {
-          var opt = document.createElement('option');
-          opt.value = d.DepartmentName || d.Name || '';
-          opt.textContent = d.DepartmentName || d.Name || '';
-          sel.appendChild(opt);
-        });
-      }
-      App.showLoading(false);
-    }).catch(function() { App.showLoading(false); });
-
-    var genBtn = document.getElementById('rpt-generate');
-    if (genBtn) genBtn.onclick = function() { generateReport('jobcards'); };
-  }
-
-  var _currentTab = 'jobcards';
-
-  window.ReportTab = function(btn, tab) {
-    document.querySelectorAll('.tabs .tab').forEach(function(t) { t.classList.remove('active'); });
-    btn.classList.add('active');
-    _currentTab = tab;
-    generateReport(tab);
-  };
-
-  function generateReport(type) {
-    var resultEl = document.getElementById('rpt-result');
-    if (!resultEl) return;
-    resultEl.innerHTML = '<div class="spinner" style="margin:40px auto"></div>';
-
-    API.call('getReportData', {
-      reportType: type,
-      filters: {
-        fromDate: document.getElementById('rpt-from').value,
-        toDate: document.getElementById('rpt-to').value,
-        department: document.getElementById('rpt-dept').value
-      }
-    }).then(function(data) {
-      _reportData = data;
-      renderReport(type, data, resultEl);
-    }).catch(function(err) {
-      resultEl.innerHTML = '<div class="card" style="padding:24px;color:var(--danger)">Failed to generate report: ' + App.escHtml(err.message) + '</div>';
+  async render() {
+    const container = CMMS.loader.getContainer();
+    container.innerHTML = `
+      <div class="page-header"><h2>Reports</h2></div>
+      <div class="report-type-selector" id="reportTypeSelector">
+        ${this.reportTypes.map(r => `
+          <button class="report-type-btn ${r.key === this.state.activeReport ? "active" : ""}" data-report="${r.key}">
+            ${CMMS.utils.capitalize(r.label)}
+          </button>
+        `).join("")}
+      </div>
+      <div id="reportFilters" class="card"><div class="card-body" id="reportFiltersBody"></div></div>
+      <div class="card" id="reportResultsCard" style="display:none">
+        <div class="card-header"><h3 id="reportTitle"></h3>
+          <div class="page-actions">
+            <button class="btn btn-outline btn-sm" id="exportReportCsv">${CMMS.icons.download} Export CSV</button>
+            <button class="btn btn-outline btn-sm" id="printReport">${CMMS.icons.print} Print</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive"><table class="table table-hover" id="reportTable">
+            <thead id="reportTableHead"></thead>
+            <tbody id="reportTableBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+    `;
+    CMMS.utils.$("#reportTypeSelector").addEventListener("click", (e) => {
+      if (!e.target.classList.contains("report-type-btn")) return;
+      this.state.activeReport = e.target.dataset.report;
+      document.querySelectorAll(".report-type-btn").forEach(b => b.classList.remove("active"));
+      e.target.classList.add("active");
+      this.state.reportData = [];
+      this.state.filters = {};
+      this.renderFilters();
+      CMMS.utils.$("#reportResultsCard").style.display = "none";
     });
-  }
+    CMMS.utils.$("#exportReportCsv").addEventListener("click", () => this.exportCsv());
+    CMMS.utils.$("#printReport").addEventListener("click", () => window.print());
+    await this.loadBaseData();
+    this.renderFilters();
+  },
 
-  function renderReport(type, data, el) {
-    if (!data) {
-      el.innerHTML = '<div class="card" style="padding:24px"><div class="empty-state"><div class="empty-state-text">No data for this report</div></div></div>';
-      return;
+  async loadBaseData() {
+    try {
+      const [machines, deptData] = await Promise.all([
+        CMMS.api.call("getQRModuleRecords", { module: "Machines" }).catch(() => []),
+        CMMS.api.call("getDepartmentList").catch(() => [])
+      ]);
+      this.state.machines = Array.isArray(machines) ? machines : (machines?.result || []);
+      this.state.departments = Array.isArray(deptData) ? deptData : (deptData?.result || []);
+    } catch (e) { /* ignore */ }
+  },
+
+  renderFilters() {
+    const el = CMMS.utils.$("#reportFiltersBody");
+    const report = this.state.activeReport;
+    let html = "";
+
+    switch (report) {
+      case "machineHistory":
+        html = `
+          <div class="form-row">
+            <div class="form-group"><label>Machine</label>
+              <select id="rptMachine" class="form-control">
+                <option value="">-- Select Machine --</option>
+                ${this.state.machines.map(m => {
+                  const id = m.MachineID || m.id || "";
+                  const name = m.MachineName || m.Name || "";
+                  return `<option value="${CMMS.utils.escHtml(id)}">${CMMS.utils.escHtml(name)}</option>`;
+                }).join("")}
+              </select>
+            </div>
+            <div class="form-group flex-end"><button class="btn btn-primary" id="runReport">${CMMS.icons.play} Generate Report</button></div>
+          </div>`;
+        break;
+
+      case "technicianPerformance":
+        html = `
+          <div class="form-row">
+            <div class="form-group"><label>Start Date</label><input type="date" id="rptStartDate" class="form-control" value="${this.getDefaultDate(-30)}"></div>
+            <div class="form-group"><label>End Date</label><input type="date" id="rptEndDate" class="form-control" value="${CMMS.utils.nowISO().split('T')[0]}"></div>
+            <div class="form-group flex-end"><button class="btn btn-primary" id="runReport">${CMMS.icons.play} Generate Report</button></div>
+          </div>`;
+        break;
+
+      case "department":
+        html = `
+          <div class="form-row">
+            <div class="form-group"><label>Start Date</label><input type="date" id="rptStartDate" class="form-control" value="${this.getDefaultDate(-30)}"></div>
+            <div class="form-group"><label>End Date</label><input type="date" id="rptEndDate" class="form-control" value="${CMMS.utils.nowISO().split('T')[0]}"></div>
+            <div class="form-group flex-end"><button class="btn btn-primary" id="runReport">${CMMS.icons.play} Generate Report</button></div>
+          </div>`;
+        break;
+
+      case "breakdown":
+        html = `
+          <div class="form-row">
+            <div class="form-group"><label>Machine</label>
+              <select id="rptMachine" class="form-control">
+                <option value="">All Machines</option>
+                ${this.state.machines.map(m => `<option value="${CMMS.utils.escHtml(m.MachineID || m.id || "")}">${CMMS.utils.escHtml(m.MachineName || m.Name || "")}</option>`).join("")}
+              </select>
+            </div>
+            <div class="form-group"><label>Department</label>
+              <select id="rptDepartment" class="form-control">
+                <option value="">All Departments</option>
+                ${this.state.departments.map(d => `<option value="${CMMS.utils.escHtml(d.DepartmentID || d.id || d)}">${CMMS.utils.escHtml(d.DepartmentName || d.Name || d)}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Start Date</label><input type="date" id="rptStartDate" class="form-control" value="${this.getDefaultDate(-30)}"></div>
+            <div class="form-group"><label>End Date</label><input type="date" id="rptEndDate" class="form-control" value="${CMMS.utils.nowISO().split('T')[0]}"></div>
+            <div class="form-group"><label>Priority</label>
+              <select id="rptPriority" class="form-control">
+                <option value="">All</option><option value="Low">Low</option><option value="Medium">Medium</option>
+                <option value="High">High</option><option value="Critical">Critical</option>
+              </select>
+            </div>
+            <div class="form-group flex-end"><button class="btn btn-primary" id="runReport">${CMMS.icons.play} Generate Report</button></div>
+          </div>`;
+        break;
+
+      case "downtime":
+        html = `
+          <div class="form-row">
+            <div class="form-group"><label>Machine</label>
+              <select id="rptMachine" class="form-control">
+                <option value="">-- Select Machine --</option>
+                ${this.state.machines.map(m => `<option value="${CMMS.utils.escHtml(m.MachineID || m.id || "")}">${CMMS.utils.escHtml(m.MachineName || m.Name || "")}</option>`).join("")}
+              </select>
+            </div>
+            <div class="form-group"><label>Start Date</label><input type="date" id="rptStartDate" class="form-control" value="${this.getDefaultDate(-30)}"></div>
+            <div class="form-group"><label>End Date</label><input type="date" id="rptEndDate" class="form-control" value="${CMMS.utils.nowISO().split('T')[0]}"></div>
+            <div class="form-group flex-end"><button class="btn btn-primary" id="runReport">${CMMS.icons.play} Generate Report</button></div>
+          </div>`;
+        break;
+
+      case "monthly":
+        const currentYear = new Date().getFullYear();
+        html = `
+          <div class="form-row">
+            <div class="form-group"><label>Year</label>
+              <select id="rptYear" class="form-control">
+                ${[currentYear, currentYear - 1, currentYear - 2, currentYear - 3].map(y => `<option value="${y}" ${y === currentYear ? "selected" : ""}>${y}</option>`).join("")}
+              </select>
+            </div>
+            <div class="form-group flex-end"><button class="btn btn-primary" id="runReport">${CMMS.icons.play} Generate Report</button></div>
+          </div>`;
+        break;
+
+      case "pmCompliance":
+        html = `
+          <div class="form-row">
+            <div class="form-group"><label>Machine</label>
+              <select id="rptMachine" class="form-control">
+                <option value="">-- Select Machine --</option>
+                ${this.state.machines.map(m => `<option value="${CMMS.utils.escHtml(m.MachineID || m.id || "")}">${CMMS.utils.escHtml(m.MachineName || m.Name || "")}</option>`).join("")}
+              </select>
+            </div>
+            <div class="form-group"><label>Start Date</label><input type="date" id="rptStartDate" class="form-control" value="${this.getDefaultDate(-90)}"></div>
+            <div class="form-group"><label>End Date</label><input type="date" id="rptEndDate" class="form-control" value="${CMMS.utils.nowISO().split('T')[0]}"></div>
+            <div class="form-group flex-end"><button class="btn btn-primary" id="runReport">${CMMS.icons.play} Generate Report</button></div>
+          </div>`;
+        break;
     }
 
-    var html = '<div class="card" style="padding:24px">';
-
-    if (type === 'jobcards') {
-      var summary = data.summary || {};
-      html += '<h3 style="margin-bottom:16px">Job Cards Summary</h3>';
-      html += '<div class="grid grid-4" style="margin-bottom:16px">';
-      html += '<div class="card stat-card"><div class="stat-label">Total</div><div class="stat-value">' + (summary.total || 0) + '</div></div>';
-      html += '<div class="card stat-card"><div class="stat-label">Open</div><div class="stat-value" style="color:var(--info)">' + (summary.open || 0) + '</div></div>';
-      html += '<div class="card stat-card"><div class="stat-label">Closed</div><div class="stat-value" style="color:var(--success)">' + (summary.closed || 0) + '</div></div>';
-      html += '<div class="card stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--warning)">' + (summary.pending || 0) + '</div></div>';
-      html += '</div>';
-      var records = data.records || [];
-      if (records.length > 0) {
-        html += '<div class="table-container"><table><thead><tr><th>#</th><th>Job Card</th><th>Machine</th><th>Status</th><th>Priority</th><th>Created</th></tr></thead><tbody>';
-        records.slice(0, 50).forEach(function(r, i) {
-          html += '<tr><td>' + (i + 1) + '</td><td><strong>' + App.escHtml(r.JobCardNo || '') + '</strong></td><td>' + App.escHtml(r.Machine || '') + '</td><td>' + App.escHtml(r.CurrentStatus || '') + '</td><td>' + App.escHtml(r.Priority || '') + '</td><td>' + App.formatDate(r.CreatedAt) + '</td></tr>';
-        });
-        html += '</tbody></table></div>';
-      }
-    } else if (type === 'downtime') {
-      html += '<h3 style="margin-bottom:16px">Downtime Report</h3>';
-      var dtRecords = data.records || data.downtime || [];
-      if (dtRecords.length > 0) {
-        html += '<div class="table-container"><table><thead><tr><th>Job Card</th><th>Machine</th><th>Downtime</th><th>Breakdown Type</th></tr></thead><tbody>';
-        dtRecords.forEach(function(r) {
-          html += '<tr><td>' + App.escHtml(r.JobCardNo || '') + '</td><td>' + App.escHtml(r.Machine || '') + '</td><td>' + App.escHtml(r.Downtime || '-') + '</td><td>' + App.escHtml(r.BreakdownType || '-') + '</td></tr>';
-        });
-        html += '</tbody></table></div>';
-      } else {
-        html += '<div class="empty-state"><div class="empty-state-text">No downtime data for selected period</div></div>';
-      }
-    } else if (type === 'maintenance') {
-      html += '<h3 style="margin-bottom:16px">Maintenance Report</h3>';
-      var pmSummary = data.summary || data.compliance || {};
-      html += '<div class="grid grid-3" style="margin-bottom:16px">';
-      html += '<div class="card stat-card"><div class="stat-label">Total PMs</div><div class="stat-value">' + (pmSummary.total || 0) + '</div></div>';
-      html += '<div class="card stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:var(--success)">' + (pmSummary.completed || 0) + '</div></div>';
-      html += '<div class="card stat-card"><div class="stat-label">Overdue</div><div class="stat-value" style="color:var(--danger)">' + (pmSummary.overdue || 0) + '</div></div>';
-      html += '</div>';
-    } else if (type === 'inventory') {
-      html += '<h3 style="margin-bottom:16px">Inventory Report</h3>';
-      html += '<div class="grid grid-3" style="margin-bottom:16px">';
-      html += '<div class="card stat-card"><div class="stat-label">Total Value</div><div class="stat-value">' + App.escHtml(data.totalValue || 'Rs. 0') + '</div></div>';
-      html += '<div class="card stat-card"><div class="stat-label">Low Stock</div><div class="stat-value" style="color:var(--warning)">' + (data.lowStockCount || 0) + '</div></div>';
-      html += '<div class="card stat-card"><div class="stat-label">Out of Stock</div><div class="stat-value" style="color:var(--danger)">' + (data.outOfStockCount || 0) + '</div></div>';
-      html += '</div>';
-    } else if (type === 'technician') {
-      html += '<h3 style="margin-bottom:16px">Technician Performance</h3>';
-      var techData = data.records || data.technicians || [];
-      if (techData.length > 0) {
-        html += '<div class="table-container"><table><thead><tr><th>Technician</th><th>Assigned</th><th>Completed</th><th>Avg Time</th></tr></thead><tbody>';
-        techData.forEach(function(t) {
-          html += '<tr><td>' + App.escHtml(t.Name || t.Technician || '') + '</td><td>' + (t.Assigned || 0) + '</td><td>' + (t.Completed || 0) + '</td><td>' + App.escHtml(t.AvgTime || '-') + '</td></tr>';
-        });
-        html += '</tbody></table></div>';
-      } else {
-        html += '<div class="empty-state"><div class="empty-state-text">No technician performance data</div></div>';
-      }
-    }
-
-    html += '</div>';
     el.innerHTML = html;
+    CMMS.utils.$("#runReport")?.addEventListener("click", () => this.runReport());
+  },
+
+  getDefaultDate(daysOffset) {
+    const d = new Date();
+    d.setDate(d.getDate() + daysOffset);
+    return d.toISOString().split("T")[0];
+  },
+
+  collectFilters() {
+    const f = {};
+    const el = (id) => { const e = CMMS.utils.$(`#${id}`); return e ? e.value.trim() : ""; };
+    switch (this.state.activeReport) {
+      case "machineHistory":
+        f.machine = el("rptMachine"); break;
+      case "technicianPerformance":
+        f.startDate = el("rptStartDate"); f.endDate = el("rptEndDate"); break;
+      case "department":
+        f.startDate = el("rptStartDate"); f.endDate = el("rptEndDate"); break;
+      case "breakdown":
+        f.machine = el("rptMachine"); f.department = el("rptDepartment");
+        f.startDate = el("rptStartDate"); f.endDate = el("rptEndDate"); f.priority = el("rptPriority"); break;
+      case "downtime":
+        f.machine = el("rptMachine"); f.startDate = el("rptStartDate"); f.endDate = el("rptEndDate"); break;
+      case "monthly":
+        f.year = el("rptYear"); break;
+      case "pmCompliance":
+        f.machine = el("rptMachine"); f.startDate = el("rptStartDate"); f.endDate = el("rptEndDate"); break;
+    }
+    return f;
+  },
+
+  async runReport() {
+    const filters = this.collectFilters();
+    this.state.filters = filters;
+    CMMS.utils.showLoading(true);
+    try {
+      const data = await CMMS.api.call("getReportData", { reportType: this.state.activeReport, ...filters });
+      this.state.reportData = Array.isArray(data) ? data : (data?.result || []);
+      this.renderResults();
+    } catch (err) {
+      CMMS.utils.showToast("Report generation failed: " + err.message, "error");
+    } finally {
+      CMMS.utils.showLoading(false);
+    }
+  },
+
+  renderResults() {
+    const report = this.state.activeReport;
+    const data = this.state.reportData;
+    const card = CMMS.utils.$("#reportResultsCard");
+    card.style.display = "block";
+
+    const titles = {
+      machineHistory: "Machine History Report",
+      technicianPerformance: "Technician Performance Report",
+      department: "Department Report",
+      breakdown: "Breakdown Report",
+      downtime: "Downtime Report",
+      monthly: "Monthly Report",
+      pmCompliance: "PM Compliance Report"
+    };
+    CMMS.utils.$("#reportTitle").textContent = titles[report] || "Report";
+
+    let headers = [], rows = [];
+    switch (report) {
+      case "machineHistory":
+        headers = ["Job Card No", "Date", "Title", "Type", "Status", "Priority", "Technician", "Downtime"];
+        rows = data.map(r => [
+          r.JobCardNo || r.id || "",
+          CMMS.utils.formatDate(r.DateTime || r.CreatedAt || ""),
+          r.Title || "",
+          r.JobType || r.Type || "",
+          r.Status || "",
+          r.Priority || "",
+          r.Technician || r.AssignedTo || "",
+          r.Downtime || "0"
+        ]);
+        break;
+      case "technicianPerformance":
+        headers = ["Technician", "Total Jobs", "Completed", "Completion %", "Total Downtime (hrs)"];
+        rows = data.map(r => {
+          const total = parseInt(r.TotalJobs) || 0;
+          const completed = parseInt(r.Completed) || 0;
+          const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+          return [r.Technician || r.Name || "", total, completed, pct + "%", r.TotalDowntime || "0"];
+        });
+        break;
+      case "department":
+        headers = ["Department", "Total Jobs", "Open Jobs", "Closed Jobs", "Total Downtime (hrs)"];
+        rows = data.map(r => [r.Department || r.Name || "", r.TotalJobs || 0, r.OpenJobs || 0, r.ClosedJobs || 0, r.TotalDowntime || "0"]);
+        break;
+      case "breakdown":
+        headers = ["Job Card No", "Date", "Machine", "Department", "Priority", "Status", "Technician"];
+        rows = data.map(r => [
+          r.JobCardNo || r.id || "", CMMS.utils.formatDate(r.DateTime || r.CreatedAt || ""),
+          r.MachineName || r.Machine || "", r.Department || "",
+          r.Priority || "", r.Status || "", r.Technician || r.AssignedTo || ""
+        ]);
+        break;
+      case "downtime":
+        headers = ["Job Card No", "Machine", "Date", "Downtime (hrs)", "Type", "Status"];
+        rows = data.map(r => [
+          r.JobCardNo || r.id || "", r.MachineName || r.Machine || "",
+          CMMS.utils.formatDate(r.DateTime || r.CreatedAt || ""), r.Downtime || "0",
+          r.JobType || r.Type || "", r.Status || ""
+        ]);
+        break;
+      case "monthly":
+        headers = ["Month", "Total Jobs", "Closed", "Open", "Downtime (hrs)", "Completion %"];
+        rows = data.map(r => {
+          const total = parseInt(r.Total) || 0;
+          const closed = parseInt(r.Closed) || 0;
+          const pct = total > 0 ? Math.round((closed / total) * 100) : 0;
+          return [r.Month || "", total, closed, total - closed, r.Downtime || "0", pct + "%"];
+        });
+        break;
+      case "pmCompliance":
+        headers = ["PM Number", "Machine", "Scheduled Date", "Compliant", "Status"];
+        rows = data.map(r => [
+          r.PMNumber || r.id || "", r.MachineName || r.Machine || "",
+          CMMS.utils.formatDate(r.ScheduledDate || r.DateTime || ""),
+          r.Compliant === "Yes" || r.Compliant === true ? CMMS.utils.badge("Yes", "success") : CMMS.utils.badge("No", "danger"),
+          r.Status || ""
+        ]);
+        break;
+    }
+
+    CMMS.utils.$("#reportTableHead").innerHTML = `<tr>${headers.map(h => `<th>${CMMS.utils.escHtml(h)}</th>`).join("")}</tr>`;
+    CMMS.utils.$("#reportTableBody").innerHTML = rows.length === 0 ?
+      `<tr><td colspan="${headers.length}" class="text-center text-muted">No data found</td></tr>` :
+      rows.map(r => `<tr>${r.map(c => `<td>${typeof c === "string" && !c.includes("<") ? CMMS.utils.escHtml(String(c)) : c}</td>`).join("")}</tr>`).join("");
+  },
+
+  exportCsv() {
+    const thead = CMMS.utils.$("#reportTableHead");
+    const tbody = CMMS.utils.$("#reportTableBody");
+    if (!thead || !tbody) return;
+    const headers = Array.from(thead.querySelectorAll("th")).map(th => th.textContent);
+    const rows = Array.from(tbody.querySelectorAll("tr")).map(tr =>
+      Array.from(tr.querySelectorAll("td")).map(td => td.textContent.replace(/,/g, ""))
+    );
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${this.state.activeReport}_report.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    CMMS.utils.showToast("CSV exported", "success");
   }
-})();
+});
