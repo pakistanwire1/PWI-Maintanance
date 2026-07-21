@@ -1135,6 +1135,9 @@
     showPrintDialog: showPrintDialog,
     bulkGenerateQR: bulkGenerateQR,
     bulkGenerateBarcode: bulkGenerateBarcode,
+    processScan: function(content) {
+      if (content) processQRContent(content);
+    },
     rescan: function() {
       _scanResult = null;
       var detailEl = document.getElementById('qr-detail-container');

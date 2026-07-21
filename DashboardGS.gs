@@ -334,6 +334,97 @@ function getDashboardData(filter, userDepartment, userEmail) {
     }
     var mtbf = closedCards.length >= 2 && mtbfIntervals.length > 0 ? Math.round((mtbfIntervals.reduce(function(a, b) { return a + b; }, 0) / mtbfIntervals.length) * 100) / 100 : null;
 
+    if (mttr === null || mtbf === null) {
+      if (rawJobCards.length > 0) {
+        var _h = Object.keys(rawJobCards[0]);
+        var _sf = null;
+        for (var _hi = 0; _hi < _h.length; _hi++) {
+          var _hl = _h[_hi].toLowerCase().trim();
+          if (_hl === 'currentstatus' || _hl === 'status') { _sf = _h[_hi]; break; }
+        }
+        if (!_sf) {
+          for (var _hi = 0; _hi < _h.length; _hi++) {
+            if (_h[_hi].toLowerCase().indexOf('status') !== -1) { _sf = _h[_hi]; break; }
+          }
+        }
+        var _cdf = null;
+        for (var _hi = 0; _hi < _h.length; _hi++) {
+          var _hl = _h[_hi].toLowerCase().trim();
+          if (_hl === 'closedatetime' || (_hl.indexOf('close') !== -1 && _hl.indexOf('date') !== -1)) { _cdf = _h[_hi]; break; }
+        }
+        var _wtf = null;
+        for (var _hi = 0; _hi < _h.length; _hi++) {
+          var _hl = _h[_hi].toLowerCase().trim();
+          if (_hl === 'workingtime' || (_hl.indexOf('working') !== -1 && _hl.indexOf('time') !== -1)) { _wtf = _h[_hi]; break; }
+        }
+        var _vd = {};
+        for (var _ri = 0; _ri < rawJobCards.length; _ri++) {
+          var _sv = (_sf ? (rawJobCards[_ri][_sf] || '') : '').toString().trim().toLowerCase();
+          if (_sv) _vd[_sv] = (_vd[_sv] || 0) + 1;
+        }
+        var _cl = ['closed', 'completed', 'done', 'finished', 'resolved', 'close'];
+        var _cv = null;
+        for (var _ai = 0; _ai < _cl.length; _ai++) {
+          if (_vd[_cl[_ai]]) { _cv = _cl[_ai]; break; }
+        }
+        if (!_cv) {
+          var _vk = Object.keys(_vd);
+          for (var _vi = 0; _vi < _vk.length; _vi++) {
+            if (_vk[_vi].indexOf('close') !== -1 || _vk[_vi].indexOf('complet') !== -1) { _cv = _vk[_vi]; break; }
+          }
+        }
+        console.log('[MTTR/MTBF AUTO-DETECT] statusField=' + _sf + ' closedValue=' + _cv + ' closeDateField=' + _cdf + ' workTimeField=' + _wtf + ' allStatusValues=' + JSON.stringify(_vd));
+        if (_sf && _cv) {
+          if (mttr === null) {
+            var _ac = 0, _aw = 0;
+            for (var _fi = 0; _fi < filtered.length; _fi++) {
+              var _fs = (filtered[_fi].raw[_sf] || '').toString().trim().toLowerCase();
+              if (_fs === _cv) {
+                _ac++;
+                _aw += _wtf ? resolveMinutes(filtered[_fi].raw, _wtf) : filtered[_fi].workingMins;
+              }
+            }
+            if (_ac > 0) {
+              closedJobCount = _ac;
+              closedWorkingMinutes = _aw;
+              mttr = Math.round((_aw / _ac / 60) * 100) / 100;
+              console.log('[MTTR/MTBF AUTO-DETECT] MTTR fixed: ' + mttr + ' hrs (count=' + _ac + ', workMins=' + _aw + ')');
+            }
+          }
+          if (mtbf === null) {
+            var _cc = [];
+            for (var _fi = 0; _fi < filtered.length; _fi++) {
+              var _fs = (filtered[_fi].raw[_sf] || '').toString().trim().toLowerCase();
+              if (_fs === _cv) {
+                var _cd = filtered[_fi].raw[_cdf] || filtered[_fi].closeDate || '';
+                var _cdt = new Date(_cd);
+                if (!isNaN(_cdt.getTime())) {
+                  _cc.push({ closeDate: _cdt, workingMins: _wtf ? resolveMinutes(filtered[_fi].raw, _wtf) : filtered[_fi].workingMins });
+                }
+              }
+            }
+            _cc.sort(function(a, b) { return a.closeDate - b.closeDate; });
+            var _mi = [];
+            for (var _ci = 1; _ci < _cc.length; _ci++) {
+              var _dm = _cc[_ci].closeDate.getTime() - _cc[_ci - 1].closeDate.getTime();
+              var _dh = _dm / 3600000;
+              if (_dh > 0) _mi.push(_dh);
+            }
+            if (_cc.length >= 2 && _mi.length > 0) {
+              closedCards = _cc;
+              mtbfIntervals = _mi;
+              mtbf = Math.round((_mi.reduce(function(a, b) { return a + b; }, 0) / _mi.length) * 100) / 100;
+              console.log('[MTTR/MTBF AUTO-DETECT] MTBF fixed: ' + mtbf + ' hrs (cards=' + _cc.length + ', intervals=' + _mi.length + ')');
+            } else {
+              console.log('[MTTR/MTBF AUTO-DETECT] MTBF still N/A (cards=' + _cc.length + ', intervals=' + _mi.length + ')');
+            }
+          }
+        } else {
+          console.log('[MTTR/MTBF AUTO-DETECT] Could not determine status field or closed value');
+        }
+      }
+    }
+
     var availability = (mtbf !== null && mttr !== null && (mtbf + mttr) > 0) ? Math.round((mtbf / (mtbf + mttr)) * 10000) / 100 : 0;
 
     var pmDue = 0, pmOverdue = 0, pmCompleted = 0, pmScheduled = 0, pmInProgress = 0, pmMissed = 0, pmSkipped = 0;

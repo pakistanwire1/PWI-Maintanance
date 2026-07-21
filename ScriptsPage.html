@@ -147,7 +147,7 @@ function updateUserInfo() {
     else if (page === 'pendingjobcard') { show = isAdmin || hasPermission('reviewPendingJobCard'); }
     else if (page === 'jobcards') { show = isAdmin || hasPermission('viewAllJobCards'); }
     else if (page === 'approvejobcard') { show = isAdmin || hasPermission('approveJobCard'); }
-    else if (page === 'checklists') { show = isAdmin || hasPermission('managePM'); }
+    else if (page === 'checklists') { show = true; }
     else if (page === 'pm') { show = isAdmin || hasPermission('managePM'); }
     else if (page === 'spareparts') { show = isAdmin || hasPermission('manageSpareParts'); }
     else if (page === 'inventory') { show = isAdmin || hasPermission('manageInventory'); }

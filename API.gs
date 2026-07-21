@@ -297,7 +297,47 @@ var API_ROUTES = {
   'getSidebarCounts':      { auth: true,  handler: function(d) { return getSidebarCounts(d._userEmail); } },
 
   /* ---- Server Info ---- */
-  'getServerTimestamp':    { auth: false, handler: function(d) { return getServerTimestamp(); } }
+  'getServerTimestamp':    { auth: false, handler: function(d) { return getServerTimestamp(); } },
+
+  /* ---- Debug ---- */
+  'tokenDiag':             { auth: false, handler: function(d) {
+    var props = PropertiesService.getScriptProperties();
+    var allProps = props.getProperties();
+    var tokenKeys = [];
+    var tokenCount = 0;
+    for (var k in allProps) {
+      if (k.indexOf('api_token_') === 0) {
+        tokenKeys.push(k.slice(0, 30) + '...');
+        tokenCount++;
+      }
+    }
+    var diag = {
+      totalScriptProperties: Object.keys(allProps).length,
+      tokenPropertyCount: tokenCount,
+      tokenPrefix: AUTH_CONFIG.TOKEN_PREFIX,
+      tokenKeySamples: tokenKeys.slice(0, 10),
+      inputTokenLength: d.token ? d.token.length : 0,
+      inputTokenPrefix: d.token ? d.token.slice(0, 8) : '(empty)'
+    };
+    if (d.token) {
+      var storeKey = AUTH_CONFIG.TOKEN_PREFIX + d.token;
+      var found = props.getProperty(storeKey);
+      diag.lookupKeyPrefix = storeKey.slice(0, 30);
+      diag.lookupResult = found ? 'FOUND (length=' + found.length + ')' : 'NOT FOUND';
+      if (found) {
+        try {
+          var parsed = JSON.parse(found);
+          diag.tokenEmail = parsed.email;
+          diag.tokenRole = parsed.role;
+          diag.tokenExpires = parsed.expires;
+          diag.tokenExpired = new Date(parsed.expires) < new Date();
+        } catch(e) {
+          diag.tokenParseError = e.message;
+        }
+      }
+    }
+    return diag;
+  } }
 };
 
 /* ============================================================

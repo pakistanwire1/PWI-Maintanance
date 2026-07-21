@@ -1318,6 +1318,11 @@ function showApp() {
   loadBadgeCounts();
   startBadgeRefresh();
   startEmailPanelRefresh();
+  startNotificationRefresh();
+  startSessionMonitor();
+  setupOfflineMode();
+  checkQRUrlParameter();
+  requestNotificationPermission();
   var lastPage = localStorage.getItem('cmms_last_page');
   if (lastPage && lastPage !== 'dashboard') { navigateTo(lastPage); } else { navigateTo('dashboard'); }
 }
@@ -1409,9 +1414,14 @@ function hideEl(id) { var el = document.getElementById(id); if (el) el.style.dis
 
 function handleLogout() {
   showConfirm('Sign Out', 'Are you sure you want to sign out?', function() {
-    // logout logged
+    var logoutEmail = (currentUser && currentUser.email) || '';
+    stopNotificationRefresh();
+    stopSessionMonitor();
+    stopEmailPanelRefresh();
+    API.call('logUserLogout', { email: logoutEmail }, { retry: false }).catch(function() {});
     currentUser = null;
     localStorage.removeItem('cmms_user');
+    localStorage.removeItem('cmms_token');
     var appContainer = document.getElementById('app-container'); if (appContainer) appContainer.style.display = 'none';
     var loginPage = document.getElementById('page-login'); if (loginPage) loginPage.style.display = '';
     var emailEl = document.getElementById('loginEmail');
@@ -1929,20 +1939,233 @@ function stopEmailPanelRefresh() {
   if (_emailPanelRefreshTimer) { clearInterval(_emailPanelRefreshTimer); _emailPanelRefreshTimer = null; }
 }
 
-/* ==================== STUBS ==================== */
-function onGlobalSearch(val) { /* stub */ }
-function onNotifSearchInput() { /* stub */ }
-function setNotifListFilter(filter) { /* stub */ }
-function applyNotifListFilters() { /* stub */ }
-function markAllNotifRead() { /* stub */ }
-function deleteAllNotifications() { /* stub */ }
-function loadNotifications() { /* stub */ }
-function startNotificationRefresh() { /* stub */ }
-function stopNotificationRefresh() { /* stub */ }
+/* ==================== GLOBAL SEARCH ==================== */
+var _globalSearchDebounce = null;
+function onGlobalSearch(val) {
+  if (_globalSearchDebounce) clearTimeout(_globalSearchDebounce);
+  _globalSearchDebounce = setTimeout(function() {
+    if (!val || val.length < 2) return;
+    API.call('searchRecords', { query: val })
+      .then(function(results) {
+        if (!results || results.length === 0) { showToast('No results found for "' + val + '"', 'info'); return; }
+        var first = results[0];
+        if (first.page) { navigateTo(first.page); }
+        else { showToast(results.length + ' result(s) found', 'info'); }
+      })
+      .catch(function() {});
+  }, 500);
+}
+
+/* ==================== NOTIFICATION HELPERS ==================== */
+var _notifRefreshTimer = null;
+var _lastNotifIds = [];
+
+function loadNotifications() {
+  var email = (currentUser && currentUser.email) || '';
+  API.call('getNotifications', { email: email })
+    .then(function(result) {
+      var items = (result && result.records) ? result.records : (result || []);
+      var unread = items.filter(function(n) { return (n.ReadStatus || '').toLowerCase() !== 'read'; }).length;
+      var nb = document.getElementById('notificationBadge');
+      if (nb) { if (unread > 0) { nb.textContent = unread > 99 ? '99+' : unread; nb.style.display = ''; } else { nb.style.display = 'none'; } }
+    })
+    .catch(function() {});
+}
+
+function startNotificationRefresh() {
+  if (_notifRefreshTimer) return;
+  _notifRefreshTimer = setInterval(function() {
+    loadNotifications();
+    var email = (currentUser && currentUser.email) || '';
+    API.call('getDashboardNotifications', { count: 5, email: email })
+      .then(function(result) { checkForNewNotifications(result); })
+      .catch(function() {});
+  }, 60000);
+}
+
+function stopNotificationRefresh() {
+  if (_notifRefreshTimer) { clearInterval(_notifRefreshTimer); _notifRefreshTimer = null; }
+}
+
+function requestNotificationPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function sendBrowserNotification(title, body, tag) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    var n = new Notification(title, {
+      body: body,
+      icon: LOGO_URL,
+      badge: LOGO_URL,
+      tag: tag || 'cmms-' + Date.now(),
+      requireInteraction: false,
+      silent: false
+    });
+    n.onclick = function() { window.focus(); n.close(); };
+    setTimeout(function() { n.close(); }, 8000);
+  } catch(e) {}
+}
+
+function checkForNewNotifications(data) {
+  if (!data || !data.data) return;
+  var newIds = data.data.map(function(n) { return n.NotificationID; });
+  if (_lastNotifIds.length > 0) {
+    var newOnes = data.data.filter(function(n) {
+      return _lastNotifIds.indexOf(n.NotificationID) === -1 && (n.Priority === 'Critical' || n.Priority === 'High');
+    });
+    newOnes.forEach(function(n) { sendBrowserNotification(n.Title, n.Message, n.NotificationID); });
+  }
+  _lastNotifIds = newIds;
+}
+
+/* ==================== SESSION MONITOR ==================== */
+var _sessionMonitorTimer = null;
+function startSessionMonitor() {
+  if (_sessionMonitorTimer) return;
+  _sessionMonitorTimer = setInterval(function() {
+    if (!currentUser) { stopSessionMonitor(); return; }
+    var email = currentUser.email || '';
+    API.call('validateSession', { email: email }, { retry: false })
+      .then(function(result) {
+        if (!result || !result.valid) {
+          console.warn('Session monitor: session invalid, logging out');
+          stopSessionMonitor();
+          currentUser = null;
+          localStorage.removeItem('cmms_user');
+          localStorage.removeItem('cmms_token');
+          var appContainer = document.getElementById('app-container');
+          if (appContainer) appContainer.style.display = 'none';
+          var loginPage = document.getElementById('page-login');
+          if (loginPage) loginPage.style.display = '';
+          showToast('Session expired. Please login again.', 'warning');
+        }
+      })
+      .catch(function() {});
+  }, 300000);
+}
+
+function stopSessionMonitor() {
+  if (_sessionMonitorTimer) { clearInterval(_sessionMonitorTimer); _sessionMonitorTimer = null; }
+}
+
+/* ==================== OFFLINE MODE ==================== */
+var isOffline = !navigator.onLine;
+var offlineQueue = [];
+
+function setupOfflineMode() {
+  window.addEventListener('online', function() {
+    isOffline = false;
+    var banner = document.getElementById('offlineBanner');
+    if (banner) banner.style.display = 'none';
+    showToast('Connection restored. Syncing...', 'success');
+    syncOfflineActions();
+  });
+  window.addEventListener('offline', function() {
+    isOffline = true;
+    var banner = document.getElementById('offlineBanner');
+    if (banner) banner.style.display = 'flex';
+    showToast('You are offline. Changes will be saved locally.', 'warning');
+  });
+  try {
+    var saved = localStorage.getItem('cmms_offline_queue');
+    if (saved) offlineQueue = JSON.parse(saved);
+    if (offlineQueue.length > 0 && navigator.onLine) syncOfflineActions();
+  } catch(e) {}
+  if (!navigator.onLine) {
+    var banner = document.getElementById('offlineBanner');
+    if (banner) banner.style.display = 'flex';
+  }
+}
+
+function queueOfflineAction(type, data) {
+  var action = { type: type, data: data, timestamp: Date.now(), id: 'offline_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5) };
+  offlineQueue.push(action);
+  try { localStorage.setItem('cmms_offline_queue', JSON.stringify(offlineQueue)); } catch(e) {}
+  return action.id;
+}
+
+function syncOfflineActions() {
+  if (offlineQueue.length === 0) return;
+  var toProcess = offlineQueue.slice();
+  var processed = 0;
+  var failed = 0;
+  function processNext() {
+    if (processed + failed >= toProcess.length) {
+      offlineQueue = [];
+      try { localStorage.removeItem('cmms_offline_queue'); } catch(e) {}
+      if (processed > 0) showToast('Synced ' + processed + ' offline action(s)' + (failed > 0 ? ', ' + failed + ' failed' : ''), failed > 0 ? 'warning' : 'success');
+      return;
+    }
+    var action = toProcess[processed + failed];
+    var actionMap = {
+      'addJobCard': 'addJobCard',
+      'updateJobCard': 'updateJobCard',
+      'updateJobCardStatus': 'updateJobCardStatus',
+      'createNotification': 'createNotification'
+    };
+    var apiAction = actionMap[action.type];
+    if (!apiAction) { failed++; processNext(); return; }
+    API.call(apiAction, action.data)
+      .then(function() { processed++; processNext(); })
+      .catch(function() { failed++; processNext(); });
+  }
+  processNext();
+}
+
+/* ==================== QR URL PARAMETER ==================== */
+function checkQRUrlParameter() {
+  var params = new URLSearchParams(window.location.search);
+  var qr = params.get('qr');
+  if (qr) {
+    if (!Auth.isLoggedIn()) {
+      sessionStorage.setItem('cmms_pending_qr', qr);
+      return;
+    }
+    navigateTo('qr');
+    setTimeout(function() {
+      if (typeof QRModule !== 'undefined' && QRModule.processScan) {
+        QRModule.processScan(decodeURIComponent(qr));
+      }
+    }, 500);
+  }
+}
+
+function openQRScanner() {
+  navigateTo('qr');
+  setTimeout(function() {
+    if (typeof QRModule !== 'undefined' && QRModule.toggleScanner) {
+      QRModule.toggleScanner();
+    }
+  }, 300);
+}
+
+/* ==================== MISC STUBS ==================== */
+function onNotifSearchInput() { /* handled by notification page module */ }
+function setNotifListFilter(filter) { /* handled by notification page module */ }
+function applyNotifListFilters() { /* handled by notification page module */ }
+function markAllNotifRead() {
+  API.call('markAllNotificationsRead', {})
+    .then(function() { loadNotifications(); loadBadgeCounts(); showToast('All notifications marked as read', 'success'); })
+    .catch(function() { showToast('Failed to mark all as read', 'error'); });
+}
+function deleteAllNotifications() {
+  showConfirm('Clear All', 'Delete all notifications?', function() {
+    API.call('clearAllNotifications', {})
+      .then(function() { loadNotifications(); loadBadgeCounts(); showToast('All notifications cleared', 'success'); })
+      .catch(function() { showToast('Failed to clear notifications', 'error'); });
+  });
+}
 function installPWA() { showToast('PWA install not available', 'info'); }
 function dismissInstall() { var banner = document.getElementById('installBanner'); if (banner) banner.style.display = 'none'; }
-function checkQRUrlParameter() { /* stub */ }
-function runFrontendDiagnostic() { /* stub */ }
+function runFrontendDiagnostic() {
+  if (typeof API !== 'undefined' && API.diagnose) {
+    API.diagnose().then(function(results) { console.table(results); showToast('Diagnostic complete — check console', 'info'); });
+  } else { showToast('API diagnostics not available', 'warning'); }
+}
 function refreshCurrentPage() {
   if (currentPage === 'dashboard') { loadDashboardData(); }
   else { App.loadPage(currentPage); }

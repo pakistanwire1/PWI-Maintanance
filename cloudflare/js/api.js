@@ -658,6 +658,24 @@ var API = (function() {
   }
 
   /* ==========================================================
+     TOKEN DIAGNOSTIC — call from browser console: API.tokenDiag()
+     ========================================================== */
+  function tokenDiag() {
+    var token = _token;
+    log('TOK-DIAG', 'Local token: ' + (token ? 'present (length=' + token.length + ', prefix=' + token.slice(0, 8) + '...)' : 'NULL'));
+    log('TOK-DIAG', 'localStorage.cmms_token: ' + (localStorage.getItem('cmms_token') || 'NULL'));
+    return call('tokenDiag', { token: token || '' }, { retry: false, timeout: 15000 })
+      .then(function(data) {
+        log('TOK-DIAG', 'Server response:', data);
+        return data;
+      })
+      .catch(function(err) {
+        logError('TOK-DIAG', 'Failed: ' + err.message);
+        throw err;
+      });
+  }
+
+  /* ==========================================================
      PUBLIC API
      ========================================================== */
   return {
@@ -673,6 +691,7 @@ var API = (function() {
     ping: ping,
     getDiagnostics: getDiagnostics,
     diagnose: diagnose,
+    tokenDiag: tokenDiag,
     logNet: logNet,
     testFetch: function(url) {
       url = url || API_BASE_URL;

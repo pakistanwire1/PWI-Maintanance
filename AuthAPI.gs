@@ -16,6 +16,7 @@ var AUTH_CONFIG = {
 /* ---- Token Generation ---- */
 
 function generateApiToken(email, role, name, department) {
+  var _t0 = Date.now();
   var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   var token = '';
   for (var i = 0; i < AUTH_CONFIG.TOKEN_LENGTH; i++) {
@@ -32,7 +33,12 @@ function generateApiToken(email, role, name, department) {
     created: now,
     expires: expires
   });
-  props.setProperty(AUTH_CONFIG.TOKEN_PREFIX + token, tokenData);
+  var storeKey = AUTH_CONFIG.TOKEN_PREFIX + token;
+  console.log('[TOKEN-GEN] Storing token key=' + storeKey.slice(0, 20) + '... for email=' + email);
+  props.setProperty(storeKey, tokenData);
+  var verifyRead = props.getProperty(storeKey);
+  console.log('[TOKEN-GEN] Verify read after write: ' + (verifyRead ? 'OK (length=' + verifyRead.length + ')' : 'FAILED - null!'));
+
   var userTokensStr = props.getProperty(AUTH_CONFIG.TOKEN_USER_PREFIX + email);
   var userTokens = [];
   try { userTokens = userTokensStr ? JSON.parse(userTokensStr) : []; } catch(e) { userTokens = []; }
@@ -44,25 +50,44 @@ function generateApiToken(email, role, name, department) {
     }
   }
   props.setProperty(AUTH_CONFIG.TOKEN_USER_PREFIX + email, JSON.stringify(userTokens));
+
+  console.log('[TOKEN-GEN] Done in ' + (Date.now() - _t0) + 'ms. Token prefix=' + token.slice(0, 8) + '...');
   return token;
 }
 
 /* ---- Token Validation ---- */
 
 function validateApiToken(token) {
-  if (!token || typeof token !== 'string') return null;
+  if (!token || typeof token !== 'string') {
+    console.log('[TOKEN-VALIDATE] Rejecting: token is empty or not a string (type=' + typeof token + ')');
+    return null;
+  }
   var props = PropertiesService.getScriptProperties();
-  var tokenDataStr = props.getProperty(AUTH_CONFIG.TOKEN_PREFIX + token);
-  if (!tokenDataStr) return null;
+  var storeKey = AUTH_CONFIG.TOKEN_PREFIX + token;
+  console.log('[TOKEN-VALIDATE] Looking up key=' + storeKey.slice(0, 20) + '... (full length=' + storeKey.length + ', token length=' + token.length + ')');
+  var tokenDataStr = props.getProperty(storeKey);
+  if (!tokenDataStr) {
+    console.log('[TOKEN-VALIDATE] NOT FOUND in ScriptProperties!');
+    var allProps = props.getProperties();
+    var tokenKeys = [];
+    for (var k in allProps) {
+      if (k.indexOf(AUTH_CONFIG.TOKEN_PREFIX) === 0) tokenKeys.push(k.slice(0, 25) + '...');
+    }
+    console.log('[TOKEN-VALIDATE] All token keys in ScriptProperties (' + tokenKeys.length + '): ' + tokenKeys.join(', '));
+    return null;
+  }
   try {
     var tokenData = JSON.parse(tokenDataStr);
     if (new Date(tokenData.expires) < new Date()) {
+      console.log('[TOKEN-VALIDATE] Token EXPIRED (expires=' + tokenData.expires + ')');
       invalidateApiToken(token);
       return null;
     }
+    console.log('[TOKEN-VALIDATE] VALID for email=' + tokenData.email + ' role=' + tokenData.role);
     return tokenData;
   } catch(e) {
-    props.deleteProperty(AUTH_CONFIG.TOKEN_PREFIX + token);
+    console.log('[TOKEN-VALIDATE] JSON parse error: ' + e.message);
+    props.deleteProperty(storeKey);
     return null;
   }
 }
