@@ -1,12 +1,14 @@
-const CACHE_NAME = 'cmms-v31';
+const CACHE_NAME = 'cmms-v37';
 const STATIC_ASSETS = [
   '/', '/index.html', '/css/styles.css', '/css/welcome.css', '/css/login.css', '/css/dashboard.css',
   '/js/app.js',
   '/js/core/utils.js', '/js/core/icons.js', '/js/core/api.js', '/js/core/session.js',
   '/js/core/router.js', '/js/core/nav.js', '/js/core/loader.js', '/js/core/theme.js',
-  '/js/core/notify.js',
+  '/js/core/notify.js', '/js/core/constants.js', '/js/core/table.js', '/js/core/modal.js', '/js/core/forms.js',
   '/js/pages/welcome.js', '/js/pages/login.js', '/js/pages/dashboard.js',
-  '/logo.svg', '/favicon.svg'
+  '/js/pages/sections.js', '/js/pages/departments.js', '/js/pages/machines.js',
+  '/js/pages/assets.js', '/js/pages/technicians.js', '/js/pages/users.js',
+  '/logo.svg', '/favicon.svg', '/assets/pwianimated.gif'
 ];
 
 self.addEventListener('install', function(e) {

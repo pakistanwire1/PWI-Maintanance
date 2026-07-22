@@ -312,7 +312,7 @@
               </div>
               <button type="submit" class="login-btn" id="loginBtn">
                 <span class="login-btn-text">Sign In</span>
-                <span class="spinner" style="display:none"></span>
+                <span class="login-spinner" style="display:none"><img src="assets/pwianimated.gif" alt="" /></span>
               </button>
               <div id="loginError" class="login-error" style="display:none"></div>
             </form>
@@ -381,7 +381,7 @@
     <div class="sidebar" id="mainSidebar">
       <div class="sidebar-brand">
         <div class="sidebar-logo-wrapper">
-          <img class="sidebar-logo-img" id="sidebarLogoImg" alt="PWI" src="logo.svg" style="display:none" onload="this.style.display='block'" onerror="this.style.display='none'">
+          <img class="sidebar-logo-img" id="sidebarLogoImg" alt="PWI" src="logo.svg" style="display:none" onload="this.style.display='block';var el=this.nextElementSibling;if(el)el.style.display='none'" onerror="this.style.display='none'">
           <svg class="sidebar-logo-fallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="30" height="30">
             <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
             <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
@@ -800,17 +800,8 @@
   </div>
 
   <div id="loadingOverlay" class="loading-overlay">
-    <div class="loading-logo-area">
-      <img class="loading-logo-img" id="loadingLogoImg" alt="Pakistan Wire Industries" src="logo.svg" style="display:none" onload="this.style.display='block'" onerror="this.style.display='none'">
-      <svg class="loading-logo-fallback" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="44" height="44">
-        <rect x="4" y="4" width="56" height="56" rx="12" stroke="currentColor" fill="none" opacity="0.3"/>
-        <path d="M20 20 L44 20 L44 28 L28 28 L28 36 L44 36 L44 44 L20 44 Z" stroke="currentColor" fill="none"/>
-        <circle cx="32" cy="32" r="6" stroke="currentColor" fill="none"/>
-        <path d="M32 18 L32 46 M18 32 L46 32" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-      </svg>
-    </div>
-    <div class="spinner spinner-dark"></div>
-    <div style="color:var(--text-light)">Loading...</div>
+    <img src="assets/pwianimated.gif" alt="Loading" class="loading-gif" />
+    <div class="loading-text" id="loadingText">Loading...</div>
   </div>
 
   <div class="modal-overlay" id="modalOverlay">
@@ -849,9 +840,19 @@
   <script src="js/core/notify.js"></script>
   <script src="js/core/nav.js"></script>
   <script src="js/core/router.js"></script>
+  <script src="js/core/constants.js"></script>
+  <script src="js/core/table.js"></script>
+  <script src="js/core/modal.js"></script>
+  <script src="js/core/forms.js"></script>
   <script src="js/pages/welcome.js"></script>
   <script src="js/pages/login.js"></script>
   <script src="js/pages/dashboard.js"></script>
+  <script src="js/pages/sections.js"></script>
+  <script src="js/pages/departments.js"></script>
+  <script src="js/pages/machines.js"></script>
+  <script src="js/pages/assets.js"></script>
+  <script src="js/pages/technicians.js"></script>
+  <script src="js/pages/users.js"></script>
   <script src="https://www.gstatic.com/charts/loader.js"></script>
   <script src="js/app.js"></script>
 </body>

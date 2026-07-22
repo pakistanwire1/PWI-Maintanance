@@ -1,15 +1,38 @@
 (function() {
   function initApp() {
     Theme.apply();
-    Nav.restoreSidebar();
+    Nav.initSidebar();
     Nav.init();
 
     Router.register('dashboard', function(el) {
       Dashboard.init(el);
     });
 
+    Router.register('sections', function(el) {
+      Section.init(el);
+    });
+
+    Router.register('machines', function(el) {
+      Machine.show();
+    });
+
+    Router.register('departments', function(el) {
+      Department.show();
+    });
+
+    Router.register('assets', function(el) {
+      Asset.show();
+    });
+
+    Router.register('technicians', function(el) {
+      Technician.show();
+    });
+
+    Router.register('users', function(el) {
+      User.show();
+    });
+
     var pageNames = [
-      'machines','assets','users','technicians','departments','sections',
       'jobcards','openjobcard','startjobcard','closejobcard','pendingjobcard','approvejobcard',
       'pm','pmhistory','checklists','spareparts','inventory','inventorytransactions',
       'stockhistory','goodsreceipt','breakdown','reports',

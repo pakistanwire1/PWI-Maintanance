@@ -3,10 +3,8 @@ var Loader = {
     var el = document.getElementById('loadingOverlay');
     if (el) {
       el.classList.add('show');
-      if (msg) {
-        var div = el.querySelector('div:last-child');
-        if (div) div.textContent = msg;
-      }
+      var textEl = document.getElementById('loadingText');
+      if (textEl) textEl.textContent = msg || 'Loading...';
     }
   },
 

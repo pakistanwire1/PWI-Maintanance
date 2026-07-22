@@ -294,7 +294,7 @@
     if (!btn) return;
     btn.disabled = loading;
     var btnText = btn.querySelector('.login-btn-text');
-    var spnr = btn.querySelector('.spinner');
+    var spnr = btn.querySelector('.login-spinner');
     if (btnText) btnText.textContent = loading ? 'Signing in...' : 'Sign In';
     if (spnr) spnr.style.display = loading ? 'inline-block' : 'none';
   }

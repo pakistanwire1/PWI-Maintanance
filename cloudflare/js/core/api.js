@@ -2,27 +2,31 @@ var API = {
   baseUrl: '/api/exec',
 
   request: function(action, data, token) {
+    var payload = { action: action, token: token || Session.getToken(), data: data || {} };
+    console.log('[API] >> ' + action, JSON.stringify(payload).slice(0, 200));
     return fetch(API.baseUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: action, token: token || Session.getToken(), data: data || {} })
+      body: JSON.stringify(payload)
     })
     .then(function(resp) {
       var ct = resp.headers.get('content-type') || '';
       return resp.text().then(function(rawBody) {
         var isJson = ct.indexOf('application/json') > -1 || (rawBody && rawBody.charAt(0) === '{');
         if (!isJson) {
-          console.error('[API] Non-JSON response for action=' + action + ': status=' + resp.status + ', content-type=' + ct + ', body=' + (rawBody ? rawBody.slice(0, 200) : 'null'));
+          console.error('[API] Non-JSON response for action=' + action + ': status=' + resp.status + ', content-type=' + ct + ', body=' + (rawBody ? rawBody.slice(0, 300) : 'null'));
           throw new Error('Server returned non-JSON response (status ' + resp.status + ', type: ' + (ct || 'empty') + ')');
         }
         var json;
         try {
           json = JSON.parse(rawBody);
         } catch(parseErr) {
-          console.error('[API] JSON parse error for action=' + action + ': ' + parseErr.message + ', body=' + (rawBody ? rawBody.slice(0, 200) : 'null'));
+          console.error('[API] JSON parse error for action=' + action + ': ' + parseErr.message + ', body=' + (rawBody ? rawBody.slice(0, 300) : 'null'));
           throw new Error('Invalid server response');
         }
+        console.log('[API] << ' + action, 'success=' + json.success, 'data_type=' + typeof json.data, 'is_array=' + Array.isArray(json.data), 'data_length=' + (json.data ? (json.data.length || Object.keys(json.data).length) : 0));
         if (json.success === false) {
+          console.error('[API] << ' + action + ' ERROR:', json.error, 'code=' + json.code);
           if (json.code === 401) {
             Session.clear();
             window.location.reload();
@@ -34,7 +38,7 @@ var API = {
       });
     })
     .catch(function(err) {
-      console.error('[API] Request failed: action=' + action + ', error=' + err.message);
+      console.error('[API] FAILED: action=' + action + ', error=' + err.message);
       throw err;
     });
   },
