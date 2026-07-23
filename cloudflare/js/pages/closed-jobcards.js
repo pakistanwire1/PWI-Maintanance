@@ -113,7 +113,7 @@ var ClosedJobCard = (function() {
                   '<label>Root Cause *</label>' +
                   '<input type="text" name="RootCause" id="closeJcRootCause" class="form-control" placeholder="Root cause of failure" required>' +
                   '<div style="display:flex;gap:6px;margin-top:4px">' +
-                    '<button type="button" class="btn btn-sm btn-secondary" onclick="ClosedJobCard.addVoiceButton(\'closeJcRootCause\')" style="font-size:11px;padding:3px 8px">' +
+                    '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="ClosedJobCard.addVoiceButton(\'closeJcRootCause\')">' +
                       ICON_MIC + ' Voice Input' +
                     '</button>' +
                   '</div>' +
@@ -129,7 +129,7 @@ var ClosedJobCard = (function() {
                 '<label>Corrective Action *</label>' +
                 '<textarea name="CorrectiveAction" id="closeJcCorrectiveAction" class="form-control" rows="3" placeholder="Actions performed to resolve the issue..." required></textarea>' +
                 '<div style="display:flex;gap:6px;margin-top:4px">' +
-                  '<button type="button" class="btn btn-sm btn-secondary" onclick="ClosedJobCard.addVoiceButton(\'closeJcCorrectiveAction\')" style="font-size:11px;padding:3px 8px">' +
+                  '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="ClosedJobCard.addVoiceButton(\'closeJcCorrectiveAction\')">' +
                     ICON_MIC + ' Voice Input' +
                   '</button>' +
                 '</div>' +
@@ -138,7 +138,7 @@ var ClosedJobCard = (function() {
                 '<label>Final Remarks</label>' +
                 '<textarea name="FinalRemarks" id="closeJcFinalRemarks" class="form-control" rows="2" placeholder="Additional notes..."></textarea>' +
                 '<div style="display:flex;gap:6px;margin-top:4px">' +
-                  '<button type="button" class="btn btn-sm btn-secondary" onclick="ClosedJobCard.addVoiceButton(\'closeJcFinalRemarks\')" style="font-size:11px;padding:3px 8px">' +
+                  '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="ClosedJobCard.addVoiceButton(\'closeJcFinalRemarks\')">' +
                     ICON_MIC + ' Voice Input' +
                   '</button>' +
                 '</div>' +

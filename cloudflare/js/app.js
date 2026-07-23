@@ -84,17 +84,68 @@
       AuditTrail.show();
     });
 
-    var pageNames = [
-      'inventorytransactions',
-      'stockhistory','goodsreceipt','reports',
-      'notifications','email','whatsapp',
-      'qr','qrmachines','qrassets','qrspareparts','qrjobcards','qrprint','qrhistory',
-      'settings','backuprestore'
-    ];
-    pageNames.forEach(function(name) {
-      Router.register(name, function(el) {
-        el.innerHTML = '<div class="card"><div class="card-header"><span class="card-title">' + Utils.capitalize(name) + '</span></div><div class="empty-state"><p>This page will be built in a later phase.</p></div></div>';
-      });
+    Router.register('inventorytransactions', function(el) {
+      InventoryTransactions.show();
+    });
+
+    Router.register('stockhistory', function(el) {
+      StockHistory.show();
+    });
+
+    Router.register('goodsreceipt', function(el) {
+      GoodsReceipt.show();
+    });
+
+    Router.register('reports', function(el) {
+      Reports.show();
+    });
+
+    Router.register('notifications', function(el) {
+      Notifications.show();
+    });
+
+    Router.register('email', function(el) {
+      EmailSettings.show();
+    });
+
+    Router.register('whatsapp', function(el) {
+      WhatsApp.show();
+    });
+
+    Router.register('qr', function(el) {
+      QRCodes.showQR(el);
+    });
+
+    Router.register('qrmachines', function(el) {
+      QRCodes.showQRMachines(el);
+    });
+
+    Router.register('qrassets', function(el) {
+      QRCodes.showQRAssets(el);
+    });
+
+    Router.register('qrspareparts', function(el) {
+      QRCodes.showQRSpareParts(el);
+    });
+
+    Router.register('qrjobcards', function(el) {
+      QRCodes.showQRJobCards(el);
+    });
+
+    Router.register('qrprint', function(el) {
+      QRCodes.showQRPrint(el);
+    });
+
+    Router.register('qrhistory', function(el) {
+      QRCodes.showQRHistory(el);
+    });
+
+    Router.register('settings', function(el) {
+      Settings.show(el);
+    });
+
+    Router.register('backuprestore', function(el) {
+      BackupRestore.show(el);
     });
 
     Loader.hide();

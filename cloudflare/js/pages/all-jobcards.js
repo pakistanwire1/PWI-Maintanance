@@ -139,7 +139,7 @@ var AllJobCards = (function() {
       '<div class="modal-overlay" id="allJcImageModal" style="display:none">' +
         '<div class="modal" style="max-width:90vw;max-height:90vh;background:transparent;border:none;box-shadow:none;backdrop-filter:none">' +
           '<div style="text-align:right;margin-bottom:8px">' +
-            '<button class="modal-close" onclick="AllJobCards.hideImageModal()" style="background:rgba(0,0,0,0.5);color:#fff;border-radius:50%;width:36px;height:36px;font-size:22px;display:inline-flex;align-items:center;justify-content:center">&times;</button>' +
+            '<button class="modal-close-overlay" onclick="AllJobCards.hideImageModal()">&times;</button>' +
           '</div>' +
           '<img id="allJcFullImage" src="" alt="Full size image" style="max-width:100%;max-height:80vh;border-radius:12px;display:block;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.6)">' +
         '</div>' +

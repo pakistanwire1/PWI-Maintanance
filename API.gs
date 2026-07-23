@@ -155,6 +155,8 @@ var API_ROUTES = {
 
   /* ---- Inventory ---- */
   'getAllTransactions':     { auth: true,  handler: function(d) { return getAllTransactions(); } },
+  'getInventoryTransactions': { auth: true, handler: function(d) { return getInventoryTransactions(); } },
+  'getGoodsReceipt':       { auth: true,  handler: function(d) { return getGoodsReceipt(); } },
   'processGoodsReceipt':   { auth: true,  handler: function(d) { return processGoodsReceipt(d); } },
   'processIssue':          { auth: true,  handler: function(d) { return processIssue(d); } },
   'processReturn':         { auth: true,  handler: function(d) { return processReturn(d); } },
@@ -233,6 +235,10 @@ var API_ROUTES = {
   /* ---- Settings ---- */
   'getSettings':           { auth: true,  handler: function(d) { return getSettings(); } },
   'saveSetting':           { auth: true,  handler: function(d) { return saveSetting(d.key, d.value); } },
+  'getSettingsData':       { auth: true,  handler: function(d) { return getSettingsData(); } },
+  'saveSettingValue':      { auth: true,  handler: function(d) { return saveSettingValue(d.key, d.value); } },
+  'addDepartment':         { auth: true,  handler: function(d) { return addDepartment(d.name); } },
+  'deleteDepartment':      { auth: true,  handler: function(d) { return deleteDepartment(d.id); } },
 
   /* ---- Checklists ---- */
   'getChecklistTemplates': { auth: true,  handler: function(d) { return getChecklistTemplates(); } },
@@ -286,6 +292,7 @@ var API_ROUTES = {
 
   /* ---- Backup ---- */
   'getBackupHistory':      { auth: true,  handler: function(d) { return getBackupHistory(); } },
+  'getBackupStatus':       { auth: true,  handler: function(d) { return getBackupStatus(); } },
   'createBackup':          { auth: true,  handler: function(d) { return createBackup(d.label); } },
   'restoreBackup':         { auth: true,  handler: function(d) { return restoreBackup(d.backupId); } },
   'deleteBackup':          { auth: true,  handler: function(d) { return deleteBackup(d.backupId); } },

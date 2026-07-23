@@ -112,7 +112,7 @@ var StartedJobCard = (function() {
                 '<label>Initial Remarks</label>' +
                 '<textarea name="InitialRemarks" id="startJcInitialRemarks" class="form-control" rows="3" placeholder="Initial assessment and observations..."></textarea>' +
                 '<div style="display:flex;gap:6px;margin-top:4px">' +
-                  '<button type="button" class="btn btn-sm btn-secondary" onclick="StartedJobCard.addVoiceButton(\'startJcInitialRemarks\')" style="font-size:11px;padding:3px 8px">' +
+                  '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="StartedJobCard.addVoiceButton(\'startJcInitialRemarks\')">' +
                     ICON_MIC + ' Voice Input' +
                   '</button>' +
                 '</div>' +
@@ -127,7 +127,7 @@ var StartedJobCard = (function() {
             '</div>' +
             '<div class="modal-footer">' +
               '<button type="button" class="btn btn-secondary" onclick="StartedJobCard.hideModal()">Cancel</button>' +
-              '<button type="submit" class="btn btn-warning" style="color:#fff">' +
+              '<button type="submit" class="btn btn-warning">' +
                 ICON_PLAY + ' Start Job' +
               '</button>' +
             '</div>' +
