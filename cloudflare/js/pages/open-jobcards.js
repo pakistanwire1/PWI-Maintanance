@@ -357,7 +357,6 @@ var OpenJobCard = (function() {
     var data = Forms.get('createJobCardForm');
     var _u = Session.getUser();
     if (_u && _u.email) { data.UpdatedBy = _u.email; }
-    console.log('[P10.18-FE-CREATE] _u=' + JSON.stringify(_u) + ' data=' + JSON.stringify(data));
 
     if (!data.Section) { Notify.error('Please select a Section'); return false; }
     if (!data.Department) { Notify.error('Please select a Department'); return false; }

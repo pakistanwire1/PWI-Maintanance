@@ -264,7 +264,8 @@ var ApproveJobCards = (function() {
   function search() {
     var q = document.getElementById('jcaSearch').value.toLowerCase();
     if (!q) { state.page = 1; renderTable(); return; }
-    var filtered = state.data.filter(function(jc) {
+    var original = state.data;
+    var filtered = original.filter(function(jc) {
       var s = (jc.Status || '').toLowerCase();
       var as = (jc.ApprovalStatus || '').toLowerCase();
       if (s !== 'pending' || as === 'approved') return false;
@@ -275,6 +276,7 @@ var ApproveJobCards = (function() {
     state.data = filtered;
     state.page = 1;
     renderTable();
+    state.data = original;
   }
 
   function reviewCard(id) {

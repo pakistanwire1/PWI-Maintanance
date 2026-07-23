@@ -322,7 +322,8 @@ var PendingJobCards = (function() {
   function search() {
     var q = document.getElementById('pendingJcSearch').value.toLowerCase();
     if (!q) { state.page = 1; loadData(); return; }
-    var filtered = state.data.filter(function(jc) {
+    var original = state.data;
+    var filtered = original.filter(function(jc) {
       return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(q) !== -1) ||
              (jc.Machine && jc.Machine.toLowerCase().indexOf(q) !== -1) ||
              (jc.AssignedTechnician && jc.AssignedTechnician.toLowerCase().indexOf(q) !== -1) ||
@@ -331,6 +332,7 @@ var PendingJobCards = (function() {
     state.data = filtered;
     state.page = 1;
     renderTable();
+    state.data = original;
   }
 
   function viewJobCard(id) {

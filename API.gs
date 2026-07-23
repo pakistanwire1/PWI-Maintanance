@@ -54,7 +54,6 @@ function doPost(e) {
       data._userRole = user.role;
       data._userName = user.name || '';
       data._token = token;
-      console.log('[P10.18-AUTH] action=' + action + ' _userEmail=' + data._userEmail + ' _userRole=' + data._userRole + ' dataKeys=' + Object.keys(data).join(','));
     }
 
     try {
@@ -116,9 +115,9 @@ var API_ROUTES = {
   'approveJobCard':        { auth: true,  handler: function(d) { return approveJobCard(d.id, d); } },
   'returnJobCard':         { auth: true,  handler: function(d) { return returnJobCard(d.id, d); } },
   'pendingJobCard':        { auth: true,  handler: function(d) { return apiPendingJobCard(d); } },
-  'unlockJobCard':         { auth: true,  handler: function(d) { return unlockJobCard(d.id, d); } },
+  'unlockJobCard':         { auth: true,  handler: function(d) { return unlockJobCard(d.id); } },
   'searchJobCards':        { auth: true,  handler: function(d) { return searchJobCards(d.query); } },
-  'canApproveJobCard':     { auth: true,  handler: function(d) { return canApproveJobCard(d._userEmail); } },
+  'canApproveJobCard':     { auth: true,  handler: function(d) { return canApproveJobCard(); } },
 
   /* ---- Machines ---- */
   'getMachines':           { auth: true,  handler: function(d) { return getMachines(); } },
@@ -156,9 +155,6 @@ var API_ROUTES = {
 
   /* ---- Inventory ---- */
   'getAllTransactions':     { auth: true,  handler: function(d) { return getAllTransactions(); } },
-  'getTransactionsByType': { auth: true,  handler: function(d) { return getTransactionsByType(d.type); } },
-  'getTransactionsByDateRange': { auth: true, handler: function(d) { return getTransactionsByDateRange(d.startDate, d.endDate); } },
-  'getTransactionsByPart': { auth: true,  handler: function(d) { return getTransactionsByPart(d.partCode); } },
   'processGoodsReceipt':   { auth: true,  handler: function(d) { return processGoodsReceipt(d); } },
   'processIssue':          { auth: true,  handler: function(d) { return processIssue(d); } },
   'processReturn':         { auth: true,  handler: function(d) { return processReturn(d); } },
@@ -244,10 +240,6 @@ var API_ROUTES = {
   'updateChecklistTemplate': { auth: true, handler: function(d) { return updateChecklistTemplate(d.id, d); } },
   'deleteChecklistTemplate': { auth: true, handler: function(d) { return deleteChecklistTemplate(d.id); } },
   'getChecklists':         { auth: true,  handler: function(d) { return getChecklists(); } },
-  'addChecklist':          { auth: true,  handler: function(d) { return addChecklist(d); } },
-  'updateChecklist':       { auth: true,  handler: function(d) { return updateChecklist(d.id, d); } },
-  'deleteChecklist':       { auth: true,  handler: function(d) { return deleteChecklist(d.id); } },
-  'searchChecklists':      { auth: true,  handler: function(d) { return searchChecklists(d.query); } },
 
   /* ---- Breakdown Types ---- */
   'getBreakdownTypes':     { auth: true,  handler: function(d) { return getBreakdownTypes(); } },

@@ -6,7 +6,6 @@ var API = {
     var _u = Session.getUser();
     if (_u && _u.email) { payload.data._userEmail = _u.email; }
     console.log('[API] >> ' + action, JSON.stringify(payload).slice(0, 200));
-    console.log('[P10.18-API] >> ' + action + ' _userEmail=' + (payload.data._userEmail || 'MISSING') + ' UpdatedBy=' + (payload.data.UpdatedBy || 'MISSING') + ' fullPayload=' + JSON.stringify(payload).slice(0, 500));
     return fetch(API.baseUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

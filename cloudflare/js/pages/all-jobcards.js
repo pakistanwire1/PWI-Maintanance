@@ -1,5 +1,5 @@
 var AllJobCards = (function() {
-  var state = { data: [], page: 1, activeTab: 'open' };
+  var state = { data: [], page: 1, activeTab: 'open', timer: null };
 
   var PAGE_SIZE = 10;
 
@@ -350,15 +350,13 @@ var AllJobCards = (function() {
   }
 
   function startLiveTimers() {
-    document.querySelectorAll('#allJcTableContainer .live-timer').forEach(function(el) {
-      var startStr = el.getAttribute('data-start');
-      if (!startStr) return;
-      function update() {
-        el.innerHTML = formatDurationFromDates(startStr);
-      }
-      update();
-      setInterval(update, 60000);
-    });
+    if (state.timer) clearInterval(state.timer);
+    state.timer = setInterval(function() {
+      document.querySelectorAll('#allJcTableContainer .live-timer').forEach(function(el) {
+        var start = el.getAttribute('data-start');
+        if (start) el.innerHTML = formatDurationFromDates(start);
+      });
+    }, 60000);
   }
 
   function viewDetail(id) {
@@ -460,7 +458,8 @@ var AllJobCards = (function() {
 
   return {
     show: function() {
-      state = { data: [], page: 1, activeTab: 'open' };
+      if (state.timer) clearInterval(state.timer);
+      state = { data: [], page: 1, activeTab: 'open', timer: null };
       renderPage();
       loadData();
     },

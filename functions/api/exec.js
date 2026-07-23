@@ -1,4 +1,4 @@
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbwbASpDAA20uFqkOKm2AmXr31SBjyFsMk0xP4lef0PA87uvqMHapEhKl3Xw8yfJo2T6/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzfFoC488YfvEEASpYOcChjNJvWq7xjJfdhsc-ozB1uKsGqN2Nx_OoOE435SxH-DdqZ/exec';
 
 var CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -63,8 +63,7 @@ async function handleRequest(context) {
 
     if (request.method === 'POST') {
       var body = await request.text();
-      console.log('[' + ts + '] Forwarding POST to GAS, body length=' + (body ? body.length : 0) + ', first 100 chars=' + (body ? body.slice(0, 100) : 'null'));
-      try { var _dbg = JSON.parse(body); console.log('[' + ts + '] [P10.18-PROXY] action=' + (_dbg.action||'') + ' _userEmail=' + ((_dbg.data||{})._userEmail||'MISSING') + ' UpdatedBy=' + ((_dbg.data||{}).UpdatedBy||'MISSING') + ' dataKeys=' + Object.keys(_dbg.data||{}).join(',')); } catch(_e) {}
+      console.log('[' + ts + '] Forwarding POST to GAS, body length=' + (body ? body.length : 0));
       fetchOpts.headers['Content-Type'] = 'text/plain;charset=utf-8';
       fetchOpts.body = body;
     }
