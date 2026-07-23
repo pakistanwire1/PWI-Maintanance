@@ -372,6 +372,7 @@ var OpenJobCard = (function() {
       Loader.hide();
       if (btn) { btn.disabled = false; btn.innerHTML = ICON_BTN_SAVE + ' Save Job Card'; }
       Notify.success('Job Card Saved Successfully');
+      Badge.refresh();
       var form = document.getElementById('createJobCardForm');
       if (form) form.reset();
       resetForm();

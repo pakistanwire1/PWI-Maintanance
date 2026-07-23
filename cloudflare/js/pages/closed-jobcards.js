@@ -443,6 +443,7 @@ var ClosedJobCard = (function() {
       Loader.hide();
       document.getElementById('closeJcModal').style.display = 'none';
       Notify.success('Job card closed successfully');
+      Badge.refresh();
       loadData();
     }).catch(function(err) {
       Loader.hide();

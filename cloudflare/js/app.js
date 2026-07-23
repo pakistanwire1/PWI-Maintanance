@@ -98,6 +98,7 @@
     });
 
     Loader.hide();
+    Badge.startAutoRefresh();
 
     var welcomeEl = document.getElementById('welcomePage');
     var loginEl = document.getElementById('loginPage');

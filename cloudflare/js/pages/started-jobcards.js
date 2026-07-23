@@ -458,6 +458,7 @@ var StartedJobCard = (function() {
       Loader.hide();
       document.getElementById('startJcModal').style.display = 'none';
       Notify.success('Job started \u2014 Status: Running');
+      Badge.refresh();
       loadData();
     }).catch(function(err) {
       Loader.hide();

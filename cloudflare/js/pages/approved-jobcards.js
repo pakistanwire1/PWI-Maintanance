@@ -323,6 +323,7 @@ var ApproveJobCards = (function() {
           if (btn) btn.disabled = false;
           hideModal();
           Notify.success('Job card returned to technician');
+          Badge.refresh();
           loadData();
         })
         .catch(function() {
@@ -340,6 +341,7 @@ var ApproveJobCards = (function() {
           if (btn) btn.disabled = false;
           hideModal();
           Notify.success('Job card approved successfully');
+          Badge.refresh();
           loadData();
         })
         .catch(function() {

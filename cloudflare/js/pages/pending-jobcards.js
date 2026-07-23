@@ -469,6 +469,7 @@ var PendingJobCards = (function() {
           Loader.hide();
           hideModal();
           Notify.success('Job card returned to Running');
+          Badge.refresh();
           loadData();
         })
         .catch(function() {
@@ -482,6 +483,7 @@ var PendingJobCards = (function() {
           Loader.hide();
           hideModal();
           Notify.success('Job card approved successfully');
+          Badge.refresh();
           loadData();
         })
         .catch(function() {
