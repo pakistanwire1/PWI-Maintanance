@@ -32,13 +32,64 @@
       User.show();
     });
 
+    Router.register('openjobcard', function(el) {
+      OpenJobCard.show();
+    });
+
+    Router.register('startjobcard', function(el) {
+      StartedJobCard.show();
+    });
+
+    Router.register('closejobcard', function(el) {
+      ClosedJobCard.show();
+    });
+
+    Router.register('pendingjobcard', function(el) {
+      PendingJobCards.show();
+    });
+
+    Router.register('approvejobcard', function(el) {
+      ApproveJobCards.show();
+    });
+
+    Router.register('pm', function(el) {
+      PMSchedule.show();
+    });
+
+    Router.register('checklists', function(el) {
+      Checklists.show();
+    });
+
+    Router.register('spareparts', function(el) {
+      SpareParts.show();
+    });
+
+    Router.register('inventory', function(el) {
+      Inventory.show();
+    });
+
+    Router.register('jobcards', function(el) {
+      AllJobCards.show();
+    });
+
+    Router.register('pmhistory', function(el) {
+      PMHistory.show();
+    });
+
+    Router.register('breakdown', function(el) {
+      BreakdownHistory.show();
+    });
+
+    Router.register('audit', function(el) {
+      AuditTrail.show();
+    });
+
     var pageNames = [
-      'jobcards','openjobcard','startjobcard','closejobcard','pendingjobcard','approvejobcard',
-      'pm','pmhistory','checklists','spareparts','inventory','inventorytransactions',
-      'stockhistory','goodsreceipt','breakdown','reports',
+      'inventorytransactions',
+      'stockhistory','goodsreceipt','reports',
       'notifications','email','whatsapp',
       'qr','qrmachines','qrassets','qrspareparts','qrjobcards','qrprint','qrhistory',
-      'settings','audit','backuprestore'
+      'settings','backuprestore'
     ];
     pageNames.forEach(function(name) {
       Router.register(name, function(el) {
@@ -52,7 +103,22 @@
     var loginEl = document.getElementById('loginPage');
     var appEl = document.getElementById('appContainer');
 
-    if (welcomeEl && welcomeEl.style.display !== 'none') {
+    var wasWelcomed = false;
+    try { wasWelcomed = !!localStorage.getItem('cmms_welcomed'); } catch(e) {}
+
+    if (wasWelcomed) {
+      if (welcomeEl) welcomeEl.style.display = 'none';
+      if (!Session.isLoggedIn()) {
+        loginEl.style.display = 'block';
+        appEl.style.display = 'none';
+        Router.init();
+      } else {
+        loginEl.style.display = 'none';
+        appEl.style.display = 'flex';
+        Nav.updateUserInfo();
+        Router.init();
+      }
+    } else if (welcomeEl && welcomeEl.style.display !== 'none') {
       loginEl.style.display = 'none';
       appEl.style.display = 'none';
     } else {
@@ -78,9 +144,19 @@
     Router.init();
   };
 
+  window.handleSessionExpired = function() {
+    var welcomeEl = document.getElementById('welcomePage');
+    var loginEl = document.getElementById('loginPage');
+    var appEl = document.getElementById('appContainer');
+    if (welcomeEl) welcomeEl.style.display = 'none';
+    if (loginEl) loginEl.style.display = 'block';
+    if (appEl) appEl.style.display = 'none';
+  };
+
   window.handleLogout = function() {
     var token = Session.getToken();
     Session.clear();
+    try { localStorage.removeItem('cmms_welcomed'); } catch(e) {}
     if (token) {
       API.post('logout', {}).catch(function() {});
     }

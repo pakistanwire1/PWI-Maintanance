@@ -64,6 +64,7 @@ async function handleRequest(context) {
     if (request.method === 'POST') {
       var body = await request.text();
       console.log('[' + ts + '] Forwarding POST to GAS, body length=' + (body ? body.length : 0) + ', first 100 chars=' + (body ? body.slice(0, 100) : 'null'));
+      try { var _dbg = JSON.parse(body); console.log('[' + ts + '] [P10.18-PROXY] action=' + (_dbg.action||'') + ' _userEmail=' + ((_dbg.data||{})._userEmail||'MISSING') + ' UpdatedBy=' + ((_dbg.data||{}).UpdatedBy||'MISSING') + ' dataKeys=' + Object.keys(_dbg.data||{}).join(',')); } catch(_e) {}
       fetchOpts.headers['Content-Type'] = 'text/plain;charset=utf-8';
       fetchOpts.body = body;
     }

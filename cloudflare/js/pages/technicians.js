@@ -33,7 +33,7 @@ var Technician = (function() {
       ],
       actions: [
         { icon: 'edit', label: 'Edit', color: 'primary', onclick: "Technician.openEdit('{id}')", idField: 'EmployeeID' },
-        { icon: 'trash', label: 'Delete', color: 'danger', onclick: "Technician.confirmDelete('{id}')", idField: 'EmployeeID' }
+        { icon: 'trash', label: 'Del', color: 'danger', onclick: "Technician.confirmDelete('{id}')", idField: 'EmployeeID' }
       ],
       page: state.page,
       pageSize: PAGE_SIZE,

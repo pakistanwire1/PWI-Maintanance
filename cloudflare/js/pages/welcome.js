@@ -10,6 +10,16 @@
 
   var FADE_OUT_MS = 400;
 
+  var wasWelcomed = false;
+  try { wasWelcomed = !!localStorage.getItem('cmms_welcomed'); } catch(e) {}
+
+  var welcomeEl = document.getElementById('welcomePage');
+  if (wasWelcomed) {
+    if (welcomeEl) welcomeEl.style.display = 'none';
+  } else {
+    if (welcomeEl) welcomeEl.style.display = '';
+  }
+
   var wsLoaded = false;
   var slideshowComplete = false;
   var pendingTransition = false;
@@ -70,6 +80,7 @@
     setTimeout(function() {
       welcomeEl.style.display = 'none';
       if (progressTimer) { clearTimeout(progressTimer); progressTimer = null; }
+      try { localStorage.setItem('cmms_welcomed', '1'); } catch(e) {}
 
       if (Session.isLoggedIn()) {
         startApp();

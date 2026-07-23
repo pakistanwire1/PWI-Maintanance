@@ -114,13 +114,13 @@ function approveJobCard(id, approvalData) {
     var data = {
       ApprovalStatus: 'Approved',
       ApprovalRemarks: approvalData.ApprovalRemarks || '',
-      ApprovedBy: Session.getActiveUser().getEmail(),
+      ApprovedBy: approvalData._userEmail || Session.getActiveUser().getEmail(),
       ApprovedDateTime: formatDateTimeISO(new Date()),
       CurrentStatus: 'APPROVED',
-      UpdatedBy: Session.getActiveUser().getEmail(),
+      UpdatedBy: approvalData._userEmail || Session.getActiveUser().getEmail(),
       UpdatedAt: getCurrentTimestamp()
     };
-    var result = updateRow(CONFIG.SHEET_NAMES.JOBCARDS, 'JobCardNo', id, data);
+    var result = safeUpdateJobCardRow_(id, data);
     logActivity('Approve Job Card', id + ' -> Approved');
     Logger.log('approveJobCard() SUCCESS: ' + id + ' status=' + data.CurrentStatus);
     console.log('approveJobCard() SUCCESS: ' + id + ' status=' + data.CurrentStatus);
@@ -145,7 +145,7 @@ function returnJobCard(id, returnData) {
     if (s !== 'pending') {
       throw new Error('Job card must be in PENDING status before returning.');
     }
-    var currentUser = Session.getActiveUser().getEmail();
+    var currentUser = returnData._userEmail || Session.getActiveUser().getEmail();
     var data = {
       ReturnedBy: currentUser,
       ReturnedDateTime: formatDateTimeISO(new Date()),
@@ -155,7 +155,7 @@ function returnJobCard(id, returnData) {
       UpdatedBy: currentUser,
       UpdatedAt: getCurrentTimestamp()
     };
-    var result = updateRow(CONFIG.SHEET_NAMES.JOBCARDS, 'JobCardNo', id, data);
+    var result = safeUpdateJobCardRow_(id, data);
     logActivity('Return Job Card', id + ' returned to technician');
     Logger.log('returnJobCard() SUCCESS: ' + id + ' returned to RUNNING');
     console.log('returnJobCard() SUCCESS: ' + id + ' returned to RUNNING');
@@ -170,13 +170,13 @@ function returnJobCard(id, returnData) {
   }
 }
 
-function unlockJobCard(id) {
+function unlockJobCard(id, unlockData) {
   Logger.log('unlockJobCard() called: ' + id);
   console.log('unlockJobCard() called: ' + id);
   try {
     var current = getJobCard(id);
     if (!current) throw new Error('Job card not found: ' + id);
-    var currentUser = Session.getActiveUser().getEmail();
+    var currentUser = (unlockData && unlockData._userEmail) || Session.getActiveUser().getEmail();
     var users = getAllData(CONFIG.SHEET_NAMES.USERS);
     var user = users.find(function(u) { return u.Email === currentUser; });
     if (!user || (user.Role !== 'Admin' && user.IsAdmin !== 'TRUE')) {
@@ -191,7 +191,7 @@ function unlockJobCard(id) {
       UpdatedBy: currentUser,
       UpdatedAt: getCurrentTimestamp()
     };
-    var result = updateRow(CONFIG.SHEET_NAMES.JOBCARDS, 'JobCardNo', id, data);
+    var result = safeUpdateJobCardRow_(id, data);
     logActivity('Unlock Job Card', id);
     Logger.log('unlockJobCard() SUCCESS: ' + id);
     console.log('unlockJobCard() SUCCESS: ' + id);
@@ -203,8 +203,8 @@ function unlockJobCard(id) {
   }
 }
 
-function canApproveJobCard() {
-  var userEmail = Session.getActiveUser().getEmail();
+function canApproveJobCard(userEmail) {
+  var userEmail = userEmail || Session.getActiveUser().getEmail();
   var users = getAllData(CONFIG.SHEET_NAMES.USERS);
   var user = users.find(function(u) { return u.Email === userEmail; });
   if (!user) return false;
@@ -238,11 +238,12 @@ function addJobCard(data) {
   data.OpenDateTime = now;
   data.CurrentStatus = 'OPEN';
   data.WaitingTime = 0;
-  data.CreatedBy = Session.getActiveUser().getEmail();
+  data.CreatedBy = data._userEmail || Session.getActiveUser().getEmail();
   data.CreatedAt = getCurrentTimestamp();
+  console.log('[P10.18-ADDJC] _userEmail=' + data._userEmail + ' CreatedBy=' + data.CreatedBy + ' UpdatedBy=' + data.UpdatedBy + ' sessionUser=' + Session.getActiveUser().getEmail() + ' dataKeys=' + Object.keys(data).join(','));
 
   // Populate ComplaintByCode and ComplaintByEmail from session user
-  var sessionEmail = Session.getActiveUser().getEmail();
+  var sessionEmail = data._userEmail || Session.getActiveUser().getEmail();
   var allUsers = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
   var sessionUser = allUsers.find(function(u) { return u.Email === sessionEmail; });
   if (sessionUser) {
@@ -270,7 +271,7 @@ function addJobCard(data) {
     }
   }
 
-  var result = addRow(CONFIG.SHEET_NAMES.JOBCARDS, data);
+  var result = safeAddJobCardRow_(data);
   logActivity('Add Job Card', data.JobCardNo);
   try { generateQRBarcodeForNewRecord('Job Card', data.JobCardNo, data); } catch(e) { console.error('JobCard QR generation failed: ' + e.message); }
   try { createNotification('Job Card Opened: ' + (data.JobCardNo || ''), 'Job card ' + (data.JobCardNo || '') + ' opened for ' + (data.Machine || '') + ' - ' + (data.ComplaintDescription || '').substring(0, 100), CONFIG.NOTIFICATION_MODULES.JOBCARD, data.Priority || CONFIG.PRIORITY.MEDIUM, data.CreatedBy, data.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
@@ -315,9 +316,10 @@ function updateJobCard(id, data) {
     }
   }
 
-  data.UpdatedBy = Session.getActiveUser().getEmail();
+  data.UpdatedBy = data._userEmail || Session.getActiveUser().getEmail();
   data.UpdatedAt = getCurrentTimestamp();
-  var result = updateRow(CONFIG.SHEET_NAMES.JOBCARDS, 'JobCardNo', id, data);
+  console.log('[P10.18-UPDATEJC] id=' + id + ' _userEmail=' + data._userEmail + ' UpdatedBy=' + data.UpdatedBy + ' status=' + data.CurrentStatus + ' sessionUser=' + Session.getActiveUser().getEmail());
+  var result = safeUpdateJobCardRow_(id, data);
   logActivity('Update Job Card', id);
   if (data.AssignedTechnician && data.AssignedTechnician !== current.AssignedTechnician && data.AssignedTechnician !== '') {
     try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.JC_ASSIGNED, { jobCardNo: id, machine: current.Machine || '', assignedTech: data.AssignedTechnician, priority: current.Priority || '', complaint: (current.ComplaintDescription || '').substring(0, 200), reportedBy: current.ComplaintBy || '', assignedTechEmail: data.AssignedTechnician || '', complaintByEmail: current.ComplaintBy || '' }); } catch(e) {}
@@ -340,20 +342,21 @@ function updateJobCard(id, data) {
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
 
-function updateJobCardStatus(id, status) {
+function updateJobCardStatus(id, status, userData) {
   var data = { CurrentStatus: status };
   var current = getJobCard(id);
   if (!current) throw new Error('Job card not found: ' + id);
+  var userEmail = (userData && userData._userEmail) || Session.getActiveUser().getEmail();
 
   if (status === 'RUNNING') {
     data.StartDateTime = formatDateTimeISO(new Date());
-    data.StartedBy = Session.getActiveUser().getEmail();
+    data.StartedBy = userEmail;
     data.WaitingTime = calculateDuration(current.OpenDateTime, data.StartDateTime);
   }
 
   if (status === 'CLOSED') {
     data.CloseDateTime = formatDateTimeISO(new Date());
-    data.ClosedBy = Session.getActiveUser().getEmail();
+    data.ClosedBy = userEmail;
     var startDt = current.StartDateTime || data.StartDateTime;
     var openDt = current.OpenDateTime;
     if (startDt && openDt) {
@@ -364,9 +367,9 @@ function updateJobCardStatus(id, status) {
     }
   }
 
-  data.UpdatedBy = Session.getActiveUser().getEmail();
+  data.UpdatedBy = userEmail;
   data.UpdatedAt = getCurrentTimestamp();
-  var result = updateRow(CONFIG.SHEET_NAMES.JOBCARDS, 'JobCardNo', id, data);
+  var result = safeUpdateJobCardRow_(id, data);
   logActivity('Update Job Card Status', id + ' -> ' + status);
   if (status === 'RUNNING') {
     try { createNotification('Job Started: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been started.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
@@ -625,13 +628,50 @@ function restructureJobCardsSheet() {
   return { migrated: newData.length - 1, columns: newHeaders.length, message: 'Restructured ' + (newData.length - 1) + ' job cards into ' + newHeaders.length + ' columns.' };
 }
 
+function clearJobCardMultiValueValidations_() {
+  try {
+    var sheet = getSheet(CONFIG.SHEET_NAMES.JOBCARDS);
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return;
+    var techCol = CONFIG.JOBCARD_FIELDS.indexOf('AssignedTechnician') + 1;
+    var teamCol = CONFIG.JOBCARD_FIELDS.indexOf('MaintenanceTeam') + 1;
+    if (techCol > 0) sheet.getRange(2, techCol, lastRow - 1, 1).clearDataValidations();
+    if (teamCol > 0) sheet.getRange(2, teamCol, lastRow - 1, 1).clearDataValidations();
+  } catch (e) {
+    console.error('clearJobCardMultiValueValidations_: ' + e.message);
+  }
+}
+
+function reapplyJobCardDropdowns_() {
+  try {
+    var sheet = getSheet(CONFIG.SHEET_NAMES.JOBCARDS);
+    applyDropdownValidation(sheet);
+  } catch (e) {
+    console.error('reapplyJobCardDropdowns_: ' + e.message);
+  }
+}
+
+function safeUpdateJobCardRow_(id, data) {
+  clearJobCardMultiValueValidations_();
+  var result = updateRow(CONFIG.SHEET_NAMES.JOBCARDS, 'JobCardNo', id, data);
+  reapplyJobCardDropdowns_();
+  return result;
+}
+
+function safeAddJobCardRow_(data) {
+  clearJobCardMultiValueValidations_();
+  var result = addRow(CONFIG.SHEET_NAMES.JOBCARDS, data);
+  reapplyJobCardDropdowns_();
+  return result;
+}
+
 function applyDropdownValidation(sheet) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var headers = CONFIG.JOBCARD_FIELDS;
 
   function getCol(field) { return headers.indexOf(field) + 1; }
 
-  function setDropdown(colIndex, sourceSheetName, sourceCol) {
+  function setDropdown(colIndex, sourceSheetName, sourceCol, allowInvalid) {
     var col = colIndex;
     if (col < 1) return;
     var srcSheet = ss.getSheetByName(sourceSheetName);
@@ -641,7 +681,7 @@ function applyDropdownValidation(sheet) {
     var range = srcSheet.getRange(sourceCol + '2:' + sourceCol);
     var rule = SpreadsheetApp.newDataValidation()
       .requireValueInRange(range, true)
-      .setAllowInvalid(false)
+      .setAllowInvalid(allowInvalid || false)
       .build();
     sheet.getRange(2, col, Math.max(sheet.getLastRow() - 1, 1), 1).setDataValidation(rule);
   }
@@ -661,8 +701,8 @@ function applyDropdownValidation(sheet) {
   setDropdown(getCol('Section'),           CONFIG.SHEET_NAMES.SECTIONS,          'B');
   setDropdown(getCol('Department'),         CONFIG.SHEET_NAMES.DEPARTMENTS,       'B');
   setDropdown(getCol('BreakdownType'),      CONFIG.SHEET_NAMES.BREAKDOWN_TYPES,   'B');
-  setDropdown(getCol('AssignedTechnician'), CONFIG.SHEET_NAMES.TECHNICIANS,       'B');
-  setDropdown(getCol('MaintenanceTeam'),    CONFIG.SHEET_NAMES.MAINTENANCE_TEAMS, 'B');
+  setDropdown(getCol('AssignedTechnician'), CONFIG.SHEET_NAMES.TECHNICIANS,       'B', true);
+  setDropdown(getCol('MaintenanceTeam'),    CONFIG.SHEET_NAMES.MAINTENANCE_TEAMS, 'B', true);
 
   // Static-list sourced dropdowns
   setStaticDropdown(getCol('Priority'),        CONFIG.CRITICALITY_LEVELS);

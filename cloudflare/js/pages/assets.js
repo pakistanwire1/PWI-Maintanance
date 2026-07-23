@@ -32,7 +32,7 @@ var Asset = (function() {
       ],
       actions: [
         { icon: 'edit', label: 'Edit', color: 'primary', onclick: "Asset.openEdit('{id}')", idField: 'AssetID' },
-        { icon: 'trash', label: 'Delete', color: 'danger', onclick: "Asset.confirmDelete('{id}')", idField: 'AssetID' }
+        { icon: 'trash', label: 'Del', color: 'danger', onclick: "Asset.confirmDelete('{id}')", idField: 'AssetID' }
       ],
       page: state.page,
       pageSize: PAGE_SIZE,

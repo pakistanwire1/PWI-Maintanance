@@ -3,7 +3,10 @@ var API = {
 
   request: function(action, data, token) {
     var payload = { action: action, token: token || Session.getToken(), data: data || {} };
+    var _u = Session.getUser();
+    if (_u && _u.email) { payload.data._userEmail = _u.email; }
     console.log('[API] >> ' + action, JSON.stringify(payload).slice(0, 200));
+    console.log('[P10.18-API] >> ' + action + ' _userEmail=' + (payload.data._userEmail || 'MISSING') + ' UpdatedBy=' + (payload.data.UpdatedBy || 'MISSING') + ' fullPayload=' + JSON.stringify(payload).slice(0, 500));
     return fetch(API.baseUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -29,7 +32,9 @@ var API = {
           console.error('[API] << ' + action + ' ERROR:', json.error, 'code=' + json.code);
           if (json.code === 401) {
             Session.clear();
-            window.location.reload();
+            if (typeof handleSessionExpired === 'function') {
+              handleSessionExpired();
+            }
             throw new Error(json.error || 'Session expired');
           }
           throw new Error(json.error || 'API error');

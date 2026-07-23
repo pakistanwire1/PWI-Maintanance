@@ -106,7 +106,7 @@ var Machine = (function() {
       ],
       actions: [
         { icon: 'edit', label: 'Edit', color: 'primary', onclick: "Machine.openEdit('{id}')", idField: 'MachineID' },
-        { icon: 'trash', label: 'Delete', color: 'danger', onclick: "Machine.confirmDelete('{id}')", idField: 'MachineID' }
+        { icon: 'trash', label: 'Del', color: 'danger', onclick: "Machine.confirmDelete('{id}')", idField: 'MachineID' }
       ],
       page: state.page,
       pageSize: PAGE_SIZE,

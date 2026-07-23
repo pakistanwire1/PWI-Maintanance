@@ -166,9 +166,14 @@ function addRow(sheetName, data) {
   var sheet = getSheet(sheetName);
   var cached = getAllData(sheetName);
   var headers = (cached.length > 0) ? Object.keys(cached[0]) : sheet.getDataRange().getValues()[0];
+  console.log('[P10.18-ADDROW] sheet=' + sheetName + ' cachedRows=' + cached.length + ' headers=' + headers.length + ' dataCreatedBy=' + data['CreatedBy'] + ' dataUpdatedBy=' + data['UpdatedBy'] + ' dataKeys=' + Object.keys(data).join(','));
   var row = [];
   for (var i = 0; i < headers.length; i++) {
-    row.push(sanitizeSheetValue(headers[i], data[headers[i]]) || '');
+    var val = data[headers[i]];
+    if (headers[i] === 'CreatedBy' || headers[i] === 'UpdatedBy' || headers[i] === '_userEmail') {
+      console.log('[P10.18-ADDROW-MAP] header="' + headers[i] + '" value="' + val + '" hasOwn=' + data.hasOwnProperty(headers[i]));
+    }
+    row.push(sanitizeSheetValue(headers[i], val) || '');
   }
   sheet.appendRow(row);
   SpreadsheetApp.flush();
@@ -184,6 +189,7 @@ function updateRow(sheetName, idField, idValue, data) {
   var headers = values[0];
   var idCol = headers.indexOf(idField);
   if (idCol === -1) return getAllData(sheetName);
+  console.log('[P10.18-UPDATEROW] sheet=' + sheetName + ' idField=' + idField + ' idValue=' + idValue + ' dataUpdatedBy=' + data['UpdatedBy'] + ' data_userEmail=' + data['_userEmail'] + ' dataKeys=' + Object.keys(data).join(','));
   for (var r = 1; r < values.length; r++) {
     if (String(values[r][idCol]) === String(idValue)) {
       var updates = [];
