@@ -13,15 +13,11 @@ var ApproveJobCards = (function() {
     var days = Math.floor(totalMinutes / 1440);
     var hours = Math.floor((totalMinutes % 1440) / 60);
     var minutes = totalMinutes % 60;
-    var totalHours = Math.floor(totalMinutes / 60);
-    var hRemainder = totalMinutes % 60;
-    var primary = '';
-    if (days > 0) primary = days + ' Days ' + hours + 'h ' + minutes + 'm';
-    else if (hours > 0) primary = hours + 'h ' + minutes + 'm';
-    else primary = minutes + 'm';
-    var secondary = totalHours + 'h ' + hRemainder + 'm';
-    if (primary === secondary) return primary;
-    return primary + '<br>' + secondary;
+    var parts = [];
+    if (days > 0) parts.push(days + 'd');
+    if (hours > 0 || days > 0) parts.push(hours + 'h');
+    parts.push(minutes + 'm');
+    return parts.join(' ');
   }
 
   function hasPermission(perm) {
@@ -78,7 +74,6 @@ var ApproveJobCards = (function() {
           '<form id="jcaForm" onsubmit="return ApproveJobCards.saveForm(event)">' +
             '<div class="modal-body">' +
               '<input type="hidden" name="JobCardNo" id="jcaJobNo">' +
-
               '<div class="time-summary-panel">' +
                 '<div class="ts-header">Job Summary</div>' +
                 '<div class="ts-stats">' +
@@ -87,27 +82,24 @@ var ApproveJobCards = (function() {
                   '<div class="ts-stat"><span class="ts-stat-label">Technician</span><span class="ts-stat-value" id="jcaTech">\u2014</span></div>' +
                 '</div>' +
                 '<div class="ts-stats">' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Waiting Time</span><span class="ts-stat-value" id="jcaWaiting">00:00</span></div>' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Working Time</span><span class="ts-stat-value" id="jcaWorking">00:00</span></div>' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Total Downtime</span><span class="ts-stat-value" id="jcaBreakdown">00:00</span></div>' +
+                  '<div class="ts-stat"><span class="ts-stat-label">Waiting Time</span><span class="ts-stat-value" id="jcaWaiting">0h 0m</span></div>' +
+                  '<div class="ts-stat"><span class="ts-stat-label">Working Time</span><span class="ts-stat-value" id="jcaWorking">0h 0m</span></div>' +
+                  '<div class="ts-stat"><span class="ts-stat-label">Total Downtime</span><span class="ts-stat-value" id="jcaBreakdown">0h 0m</span></div>' +
                 '</div>' +
                 '<div class="ts-stats">' +
                   '<div class="ts-stat"><span class="ts-stat-label">Description</span><span class="ts-stat-value" id="jcaDesc" style="font-weight:400;font-size:12px">\u2014</span></div>' +
                 '</div>' +
               '</div>' +
-
               '<div class="form-group">' +
                 '<label>Decision *</label>' +
                 '<div class="radio-group" style="display:flex;gap:24px;margin-top:8px">' +
-                  '<label class="radio-inline" style="display:flex;align-items:center;gap:6px;cursor:pointer">' +
-                    '<input type="radio" name="approveDecision" value="approve" checked>' +
-                    '<span style="font-size:14px;font-weight:500">Approve</span>' +
-                  '</label>' +
-                  '<label class="radio-inline" style="display:flex;align-items:center;gap:6px;cursor:pointer">' +
-                    '<input type="radio" name="approveDecision" value="return">' +
-                    '<span style="font-size:14px;font-weight:500">Return to Technician</span>' +
-                  '</label>' +
+                  '<label class="radio-inline" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="approveDecision" value="approve" checked><span style="font-size:14px;font-weight:500">Approve</span></label>' +
+                  '<label class="radio-inline" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="approveDecision" value="return"><span style="font-size:14px;font-weight:500">Return to Technician</span></label>' +
                 '</div>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label>Approval Remarks</label>' +
+                '<textarea name="ApprovalRemarks" class="form-control" id="jcaApprovalRemarks" rows="3" placeholder="Enter your approval remarks..."></textarea>' +
               '</div>' +
               '<div class="form-group" id="jcaReturnReasonGroup" style="display:none">' +
                 '<label>Return Reason *</label>' +
@@ -132,17 +124,15 @@ var ApproveJobCards = (function() {
 
   function loadData() {
     Loader.show();
-    API.post('getJobCards', { status: 'Pending' })
-      .then(function(res) {
-        state.data = (res && res.records) ? res.records : (Array.isArray(res) ? res : []);
-        Loader.hide();
-        populateFilters();
-        renderTable();
-      })
-      .catch(function() {
-        Loader.hide();
-        Notify.error('Failed to load job cards');
-      });
+    API.post('getJobCards', {}).then(function(data) {
+      state.data = Array.isArray(data) ? data : (data && Array.isArray(data.records) ? data.records : []);
+      Loader.hide();
+      populateFilters();
+      renderTable();
+    }).catch(function() {
+      Loader.hide();
+      Notify.error('Failed to load job cards');
+    });
   }
 
   function populateFilters() {
@@ -161,6 +151,7 @@ var ApproveJobCards = (function() {
 
   function getFilteredData() {
     var dept = document.getElementById('jcaDeptFilter') ? document.getElementById('jcaDeptFilter').value : '';
+    var query = document.getElementById('jcaSearch') ? document.getElementById('jcaSearch').value.toLowerCase() : '';
     var userDept = getUserDept();
     var isAdminUser = Session.getUser() && (Session.getUser().role === 'Admin' || Session.getUser().isSystemAdmin);
     return state.data.filter(function(jc) {
@@ -169,6 +160,13 @@ var ApproveJobCards = (function() {
       if (s !== 'pending' || as === 'approved') return false;
       if (!isAdminUser && userDept && jc.Department !== userDept) return false;
       if (dept && jc.Department !== dept) return false;
+      if (query) {
+        if ((jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(query) === -1) &&
+            (jc.Machine && jc.Machine.toLowerCase().indexOf(query) === -1) &&
+            (jc.AssignedTechnician && jc.AssignedTechnician.toLowerCase().indexOf(query) === -1)) {
+          return false;
+        }
+      }
       return true;
     });
   }
@@ -223,11 +221,7 @@ var ApproveJobCards = (function() {
           val = col.format(val, row);
         } else if (col.badge && val) {
           var badgeMap = col.badgeMap || {};
-          var mapKey = val;
-          if (!(mapKey in badgeMap)) {
-            mapKey = Object.keys(badgeMap).find(function(k) { return k.toLowerCase() === String(val).toLowerCase(); }) || mapKey;
-          }
-          var badgeClass = badgeMap[mapKey] || 'primary';
+          var badgeClass = badgeMap[val] || 'primary';
           val = '<span class="badge badge-' + badgeClass + '">' + Utils.escapeHtml(String(val)) + '</span>';
         } else if (col.datetime && val) {
           val = Utils.formatDateTime(val);
@@ -259,47 +253,31 @@ var ApproveJobCards = (function() {
     container.innerHTML = html;
   }
 
-  function filter() { state.page = 1; renderTable(); }
-
-  function search() {
-    var q = document.getElementById('jcaSearch').value.toLowerCase();
-    if (!q) { state.page = 1; renderTable(); return; }
-    var original = state.data;
-    var filtered = original.filter(function(jc) {
-      var s = (jc.Status || '').toLowerCase();
-      var as = (jc.ApprovalStatus || '').toLowerCase();
-      if (s !== 'pending' || as === 'approved') return false;
-      return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(q) !== -1) ||
-             (jc.Machine && jc.Machine.toLowerCase().indexOf(q) !== -1) ||
-             (jc.AssignedTechnician && jc.AssignedTechnician.toLowerCase().indexOf(q) !== -1);
-    });
-    state.data = filtered;
-    state.page = 1;
-    renderTable();
-    state.data = original;
-  }
-
   function reviewCard(id) {
     var user = Session.getUser();
     if (!user || (!user.isSystemAdmin && user.role !== 'Admin' && !user['canApproveJobCard'])) {
       Notify.warning('You do not have permission to approve job cards');
       return;
     }
-    var item = state.data.find(function(r) { return r.JobCardNo === id; });
+    var item = null;
+    for (var i = 0; i < state.data.length; i++) {
+      if (state.data[i].JobCardNo === id) { item = state.data[i]; break; }
+    }
     if (!item) return;
 
     document.getElementById('jcaForm').reset();
     document.getElementById('jcaJobNo').value = id;
     document.getElementById('jcaRef').textContent = id;
-    document.getElementById('jcaDept').textContent = item.Department || '-';
-    document.getElementById('jcaMachine').textContent = item.Machine || '-';
-    document.getElementById('jcaTech').textContent = item.AssignedTechnician || '-';
+    var el;
+    el = document.getElementById('jcaDept'); if (el) el.textContent = item.Department || '-';
+    el = document.getElementById('jcaMachine'); if (el) el.textContent = item.Machine || '-';
+    el = document.getElementById('jcaTech'); if (el) el.textContent = item.AssignedTechnician || '-';
     var desc = (item.ComplaintDescription || '').substring(0, 100) + ((item.ComplaintDescription || '').length > 100 ? '...' : '');
-    document.getElementById('jcaDesc').textContent = desc;
-    document.getElementById('jcaWaiting').textContent = formatDuration(item.WaitingTime);
-    document.getElementById('jcaWorking').textContent = formatDuration(item.WorkingTime);
-    document.getElementById('jcaBreakdown').textContent = formatDuration(item.BreakdownTime);
-    document.getElementById('jcaReturnReason').value = '';
+    el = document.getElementById('jcaDesc'); if (el) el.textContent = desc;
+    el = document.getElementById('jcaWaiting'); if (el) el.textContent = formatDuration(item.WaitingTime);
+    el = document.getElementById('jcaWorking'); if (el) el.textContent = formatDuration(item.WorkingTime);
+    el = document.getElementById('jcaBreakdown'); if (el) el.textContent = formatDuration(item.BreakdownTime);
+    el = document.getElementById('jcaReturnReason'); if (el) el.value = '';
 
     var radios = document.querySelectorAll('input[name="approveDecision"]');
     radios.forEach(function(r) {
@@ -328,7 +306,7 @@ var ApproveJobCards = (function() {
     var id = document.getElementById('jcaJobNo').value;
     if (!id) return;
 
-    var remarks = '';
+    var remarks = (document.getElementById('jcaApprovalRemarks') ? document.getElementById('jcaApprovalRemarks').value.trim() : '');
 
     if (decision === 'return') {
       var reason = document.getElementById('jcaReturnReason').value.trim();
@@ -380,8 +358,8 @@ var ApproveJobCards = (function() {
 
   return {
     show: renderPage,
-    filter: filter,
-    search: search,
+    filter: function() { state.page = 1; renderTable(); },
+    search: function() { state.page = 1; renderTable(); },
     reviewCard: reviewCard,
     submitReview: submitReview,
     hideModal: hideModal,

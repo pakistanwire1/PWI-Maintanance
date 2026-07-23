@@ -19,19 +19,15 @@ var AllJobCards = (function() {
     var days = Math.floor(totalMinutes / 1440);
     var hours = Math.floor((totalMinutes % 1440) / 60);
     var minutes = totalMinutes % 60;
-    var totalHours = Math.floor(totalMinutes / 60);
-    var hRemainder = totalMinutes % 60;
-    var primary = '';
-    if (days > 0) primary = days + ' Days ' + hours + 'h ' + minutes + 'm';
-    else if (hours > 0) primary = hours + 'h ' + minutes + 'm';
-    else primary = minutes + 'm';
-    var secondary = totalHours + 'h ' + hRemainder + 'm';
-    if (primary === secondary) return primary;
-    return primary + '<br>' + secondary;
+    var parts = [];
+    if (days > 0) parts.push(days + 'd');
+    if (hours > 0 || days > 0) parts.push(hours + 'h');
+    parts.push(minutes + 'm');
+    return parts.join(' ');
   }
 
   function formatDurationFromDates(startStr) {
-    if (!startStr) return '—';
+    if (!startStr) return '\u2014';
     var start = new Date(startStr);
     var end = new Date();
     return formatDuration(end.getTime() - start.getTime());
@@ -130,7 +126,7 @@ var AllJobCards = (function() {
       '<div class="modal-overlay" id="allJcViewModal" style="display:none">' +
         '<div class="modal modal-wide">' +
           '<div class="modal-header">' +
-            '<div class="modal-title">Job Card — <span id="allJcViewRef"></span></div>' +
+            '<div class="modal-title">Job Card \u2014 <span id="allJcViewRef"></span></div>' +
             '<button class="modal-close" onclick="AllJobCards.hideViewModal()">&times;</button>' +
           '</div>' +
           '<div class="modal-body" id="allJcViewBody"></div>' +
@@ -152,8 +148,8 @@ var AllJobCards = (function() {
 
   function loadData() {
     Loader.show();
-    API.post('getJobCards', {}).then(function(result) {
-      state.data = result.records || result || [];
+    API.post('getJobCards', {}).then(function(data) {
+      state.data = Array.isArray(data) ? data : (data && Array.isArray(data.records) ? data.records : []);
       Loader.hide();
       populateDeptFilter();
       updateTabs();
@@ -298,7 +294,7 @@ var AllJobCards = (function() {
     }
 
     columns.push({ key: 'FaultImage', label: 'Fault', format: function(val) {
-      return val ? '<img src="' + val + '" class="img-thumb" onclick="AllJobCards.openFullImage(\'' + val + '\')" title="View Fault Image">' : '—';
+      return val ? '<img src="' + val + '" class="img-thumb" onclick="AllJobCards.openFullImage(\'' + val + '\')" title="View Fault Image">' : '\u2014';
     }});
 
     var html = '<div class="table-container"><table><thead><tr>';
@@ -360,7 +356,10 @@ var AllJobCards = (function() {
   }
 
   function viewDetail(id) {
-    var item = state.data.find(function(r) { return r.JobCardNo === id; });
+    var item = null;
+    for (var i = 0; i < state.data.length; i++) {
+      if (state.data[i].JobCardNo === id) { item = state.data[i]; break; }
+    }
     if (!item) return;
 
     var el = document.getElementById('allJcViewRef');
@@ -374,8 +373,8 @@ var AllJobCards = (function() {
     var workingHrs = displayDuration(item.WorkingTime);
     var downtimeHrs = displayDuration(item.BreakdownTime);
 
-    var faultThumb = item.FaultImage ? '<img src="' + item.FaultImage + '" class="img-thumb" onclick="AllJobCards.openFullImage(\'' + item.FaultImage + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '—';
-    var repairThumb = item.RepairImage ? '<img src="' + item.RepairImage + '" class="img-thumb" onclick="AllJobCards.openFullImage(\'' + item.RepairImage + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '—';
+    var faultThumb = item.FaultImage ? '<img src="' + item.FaultImage + '" class="img-thumb" onclick="AllJobCards.openFullImage(\'' + item.FaultImage + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '\u2014';
+    var repairThumb = item.RepairImage ? '<img src="' + item.RepairImage + '" class="img-thumb" onclick="AllJobCards.openFullImage(\'' + item.RepairImage + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '\u2014';
 
     var html =
       '<div class="view-grid">' +

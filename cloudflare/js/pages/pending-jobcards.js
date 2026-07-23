@@ -5,7 +5,6 @@ var PendingJobCards = (function() {
   var ICON_VIEW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   var ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>';
   var ICON_RETURN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0016.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 002 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>';
-  var ICON_MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>';
 
   var PAGE_SIZE = 10;
 
@@ -15,19 +14,11 @@ var PendingJobCards = (function() {
     var days = Math.floor(totalMinutes / 1440);
     var hours = Math.floor((totalMinutes % 1440) / 60);
     var minutes = totalMinutes % 60;
-    var totalHours = Math.floor(totalMinutes / 60);
-    var hRemainder = totalMinutes % 60;
-    var primary = '';
-    if (days > 0) primary = days + ' Days ' + hours + 'h ' + minutes + 'm';
-    else if (hours > 0) primary = hours + 'h ' + minutes + 'm';
-    else primary = minutes + 'm';
-    var secondary = totalHours + 'h ' + hRemainder + 'm';
-    if (primary === secondary) return primary;
-    return primary + '<br>' + secondary;
-  }
-
-  function formatDateTime(dt) {
-    return Utils.formatDateTime(dt);
+    var parts = [];
+    if (days > 0) parts.push(days + 'd');
+    if (hours > 0 || days > 0) parts.push(hours + 'h');
+    parts.push(minutes + 'm');
+    return parts.join(' ');
   }
 
   function hasPermission(perm) {
@@ -96,7 +87,6 @@ var PendingJobCards = (function() {
           '<form id="pendingJcForm" onsubmit="return false;">' +
             '<div class="modal-body">' +
               '<input type="hidden" name="JobCardNo" id="pendingJcJobNo">' +
-
               '<div class="view-grid">' +
                 '<div class="view-section">' +
                   '<h4>Job Card Details</h4>' +
@@ -111,14 +101,13 @@ var PendingJobCards = (function() {
                 '</div>' +
                 '<div class="view-section">' +
                   '<h4>Time Summary</h4>' +
-                  '<div class="view-row"><span>Working Time</span><strong id="pjWorkingTime">00:00</strong></div>' +
-                  '<div class="view-row"><span>Total Downtime</span><strong id="pjDowntime">00:00</strong></div>' +
-                  '<div class="view-row"><span>Waiting Time</span><strong id="pjWaitingTime">00:00</strong></div>' +
+                  '<div class="view-row"><span>Working Time</span><strong id="pjWorkingTime">0h 0m</strong></div>' +
+                  '<div class="view-row"><span>Total Downtime</span><strong id="pjDowntime">0h 0m</strong></div>' +
+                  '<div class="view-row"><span>Waiting Time</span><strong id="pjWaitingTime">0h 0m</strong></div>' +
                   '<div class="view-row"><span>Closed On</span><strong id="pjClosedOn">\u2014</strong></div>' +
                   '<div class="view-row"><span>Pending Since</span><strong id="pjPendingSince">\u2014</strong></div>' +
                 '</div>' +
               '</div>' +
-
               '<div class="view-section" style="margin-top:16px">' +
                 '<h4>Work Details</h4>' +
                 '<div class="view-row"><span>Root Cause</span><strong id="pjRootCause">\u2014</strong></div>' +
@@ -126,12 +115,10 @@ var PendingJobCards = (function() {
                 '<div class="view-row"><span>Spare Parts</span><strong id="pjSpareParts">\u2014</strong></div>' +
                 '<div class="view-row"><span>Technician Remarks</span><strong id="pjRemarks">\u2014</strong></div>' +
               '</div>' +
-
               '<div class="form-group" style="margin-top:16px">' +
                 '<label>Repair Images</label>' +
                 '<div class="image-gallery" id="pjRepairImages"></div>' +
               '</div>' +
-
               '<div class="view-section" style="margin-top:16px">' +
                 '<h4>Supervisor Review</h4>' +
                 '<div class="form-group">' +
@@ -141,14 +128,8 @@ var PendingJobCards = (function() {
                 '<div class="form-group" style="margin-top:12px">' +
                   '<label>Decision *</label>' +
                   '<div class="radio-group">' +
-                    '<label class="radio-inline">' +
-                      '<input type="radio" name="pjDecision" value="approve" checked>' +
-                      '<span class="radio-label">Approve</span>' +
-                    '</label>' +
-                    '<label class="radio-inline">' +
-                      '<input type="radio" name="pjDecision" value="return">' +
-                      '<span class="radio-label">Return to Technician</span>' +
-                    '</label>' +
+                    '<label class="radio-inline"><input type="radio" name="pjDecision" value="approve" checked><span class="radio-label">Approve</span></label>' +
+                    '<label class="radio-inline"><input type="radio" name="pjDecision" value="return"><span class="radio-label">Return to Technician</span></label>' +
                   '</div>' +
                 '</div>' +
                 '<div class="form-group" id="pjReturnReasonGroup" style="display:none">' +
@@ -183,21 +164,19 @@ var PendingJobCards = (function() {
 
   function loadData() {
     Loader.show();
-    API.post('getJobCards', { status: 'Pending', pageSize: 100000 })
-      .then(function(res) {
-        var records = (res && res.records) ? res.records : (Array.isArray(res) ? res : []);
-        state.data = records.filter(function(jc) {
-          var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
-          return s === 'pending';
-        });
-        Loader.hide();
-        populateFilters();
-        renderTable();
-      })
-      .catch(function() {
-        Loader.hide();
-        Notify.error('Failed to load pending job cards');
+    API.post('getJobCards', {}).then(function(data) {
+      var records = Array.isArray(data) ? data : (data && Array.isArray(data.records) ? data.records : []);
+      state.data = records.filter(function(jc) {
+        var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
+        return s === 'pending';
       });
+      Loader.hide();
+      populateFilters();
+      renderTable();
+    }).catch(function() {
+      Loader.hide();
+      Notify.error('Failed to load pending job cards');
+    });
   }
 
   function populateFilters() {
@@ -214,16 +193,30 @@ var PendingJobCards = (function() {
     techs.sort().forEach(function(t) { if (techEl) techEl.innerHTML += '<option value="' + t + '">' + t + '</option>'; });
   }
 
-  function renderTable() {
+  function getFilteredData() {
     var dept = document.getElementById('pendingJcDeptFilter') ? document.getElementById('pendingJcDeptFilter').value : '';
     var tech = document.getElementById('pendingJcTechnicianFilter') ? document.getElementById('pendingJcTechnicianFilter').value : '';
+    var query = document.getElementById('pendingJcSearch') ? document.getElementById('pendingJcSearch').value.toLowerCase() : '';
     var list = state.data;
     var userDept = getUserDept();
     var isAdminUser = Session.getUser() && (Session.getUser().role === 'Admin' || Session.getUser().isSystemAdmin);
     if (!isAdminUser && userDept) list = list.filter(function(jc) { return jc.Department === userDept; });
     if (dept) list = list.filter(function(jc) { return jc.Department === dept; });
     if (tech) list = list.filter(function(jc) { return jc.AssignedTechnician === tech; });
-    var canReview = isAdminUser || hasPermission('reviewPendingJobCard');
+    if (query) {
+      list = list.filter(function(jc) {
+        return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(query) !== -1) ||
+               (jc.Machine && jc.Machine.toLowerCase().indexOf(query) !== -1) ||
+               (jc.AssignedTechnician && jc.AssignedTechnician.toLowerCase().indexOf(query) !== -1) ||
+               (jc.Department && jc.Department.toLowerCase().indexOf(query) !== -1);
+      });
+    }
+    return list;
+  }
+
+  function renderTable() {
+    var list = getFilteredData();
+    var canReview = Session.getUser() && (Session.getUser().role === 'Admin' || Session.getUser().isSystemAdmin || hasPermission('reviewPendingJobCard'));
 
     var p = state.page;
     var totalPages = Math.ceil(list.length / PAGE_SIZE) || 1;
@@ -277,11 +270,7 @@ var PendingJobCards = (function() {
           val = col.format(val, row);
         } else if (col.badge && val) {
           var badgeMap = col.badgeMap || {};
-          var mapKey = val;
-          if (!(mapKey in badgeMap)) {
-            mapKey = Object.keys(badgeMap).find(function(k) { return k.toLowerCase() === String(val).toLowerCase(); }) || mapKey;
-          }
-          var badgeClass = badgeMap[mapKey] || 'primary';
+          var badgeClass = badgeMap[val] || 'primary';
           val = '<span class="badge badge-' + badgeClass + '">' + Utils.escapeHtml(String(val)) + '</span>';
         } else if (col.datetime && val) {
           val = Utils.formatDateTime(val);
@@ -316,27 +305,11 @@ var PendingJobCards = (function() {
     container.innerHTML = html;
   }
 
-  function filter() { state.page = 1; renderTable(); }
-  function refresh() { loadData(); }
-
-  function search() {
-    var q = document.getElementById('pendingJcSearch').value.toLowerCase();
-    if (!q) { state.page = 1; loadData(); return; }
-    var original = state.data;
-    var filtered = original.filter(function(jc) {
-      return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(q) !== -1) ||
-             (jc.Machine && jc.Machine.toLowerCase().indexOf(q) !== -1) ||
-             (jc.AssignedTechnician && jc.AssignedTechnician.toLowerCase().indexOf(q) !== -1) ||
-             (jc.Department && jc.Department.toLowerCase().indexOf(q) !== -1);
-    });
-    state.data = filtered;
-    state.page = 1;
-    renderTable();
-    state.data = original;
-  }
-
   function viewJobCard(id) {
-    var item = state.data.find(function(r) { return r.JobCardNo === id; });
+    var item = null;
+    for (var i = 0; i < state.data.length; i++) {
+      if (state.data[i].JobCardNo === id) { item = state.data[i]; break; }
+    }
     if (!item) return;
 
     var html =
@@ -344,7 +317,7 @@ var PendingJobCards = (function() {
         '<div class="view-section">' +
           '<h4>Job Card Details</h4>' +
           '<div class="view-row"><span>Job Card No</span><strong>' + Utils.escapeHtml(item.JobCardNo) + '</strong></div>' +
-          '<div class="view-row"><span>Opened</span><strong>' + formatDateTime(item.DateTime || item.OpenTime || item.OpenDateTime) + '</strong></div>' +
+          '<div class="view-row"><span>Opened</span><strong>' + Utils.formatDateTime(item.DateTime || item.OpenTime || item.OpenDateTime) + '</strong></div>' +
           '<div class="view-row"><span>Machine</span><strong>' + Utils.escapeHtml(item.Machine || '-') + '</strong></div>' +
           '<div class="view-row"><span>Asset</span><strong>' + Utils.escapeHtml(item.Asset || item.AssetID || '-') + '</strong></div>' +
           '<div class="view-row"><span>Department</span><strong>' + Utils.escapeHtml(item.Department || '-') + '</strong></div>' +
@@ -354,16 +327,16 @@ var PendingJobCards = (function() {
           '<div class="view-row"><span>Technician(s)</span><strong>' + Utils.escapeHtml(item.AssignedTechnician || '-') + '</strong></div>' +
           '<div class="view-row"><span>Created By</span><strong>' + Utils.escapeHtml(item.CreatedBy || '-') + '</strong></div>' +
           '<div class="view-row"><span>Updated By</span><strong>' + Utils.escapeHtml(item.UpdatedBy || '-') + '</strong></div>' +
-          '<div class="view-row"><span>Last Updated</span><strong>' + formatDateTime(item.UpdatedAt) + '</strong></div>' +
+          '<div class="view-row"><span>Last Updated</span><strong>' + Utils.formatDateTime(item.UpdatedAt) + '</strong></div>' +
         '</div>' +
         '<div class="view-section">' +
           '<h4>Time Summary</h4>' +
-          '<div class="view-row"><span>Started</span><strong>' + formatDateTime(item.StartTime || item.StartDateTime) + '</strong></div>' +
-          '<div class="view-row"><span>Closed</span><strong>' + formatDateTime(item.CloseTime || item.CloseDateTime) + '</strong></div>' +
+          '<div class="view-row"><span>Started</span><strong>' + Utils.formatDateTime(item.StartTime || item.StartDateTime) + '</strong></div>' +
+          '<div class="view-row"><span>Closed</span><strong>' + Utils.formatDateTime(item.CloseTime || item.CloseDateTime) + '</strong></div>' +
           '<div class="view-row"><span>Waiting Time</span><strong>' + formatDuration(item.WaitingTime) + '</strong></div>' +
           '<div class="view-row"><span>Working Time</span><strong>' + formatDuration(item.WorkingTime) + '</strong></div>' +
           '<div class="view-row"><span>Total Downtime</span><strong>' + formatDuration(item.Downtime) + '</strong></div>' +
-          '<div class="view-row"><span>Pending Since</span><strong>' + formatDateTime(item.PendingDateTime) + '</strong></div>' +
+          '<div class="view-row"><span>Pending Since</span><strong>' + Utils.formatDateTime(item.PendingDateTime) + '</strong></div>' +
         '</div>' +
       '</div>' +
       '<div class="view-section" style="margin-top:16px">' +
@@ -402,29 +375,33 @@ var PendingJobCards = (function() {
       Notify.warning('You do not have permission to review job cards');
       return;
     }
-    var item = state.data.find(function(r) { return r.JobCardNo === id; });
+    var item = null;
+    for (var i = 0; i < state.data.length; i++) {
+      if (state.data[i].JobCardNo === id) { item = state.data[i]; break; }
+    }
     if (!item) return;
 
     document.getElementById('pendingJcForm').reset();
     document.getElementById('pendingJcJobNo').value = id;
     document.getElementById('pendingJcRef').textContent = id;
-    document.getElementById('pjMachine').textContent = item.Machine || '-';
-    document.getElementById('pjAsset').textContent = item.Asset || item.AssetID || '-';
-    document.getElementById('pjDepartment').textContent = item.Department || '-';
-    document.getElementById('pjSection').textContent = item.Section || '-';
-    document.getElementById('pjPriority').textContent = item.Priority || '-';
-    document.getElementById('pjComplaint').textContent = item.ComplaintDescription || '-';
-    document.getElementById('pjTechnician').textContent = item.AssignedTechnician || '-';
-    document.getElementById('pjTeam').textContent = item.MaintenanceTeam || '-';
-    document.getElementById('pjWorkingTime').textContent = formatDuration(item.WorkingTime);
-    document.getElementById('pjDowntime').textContent = formatDuration(item.Downtime);
-    document.getElementById('pjWaitingTime').textContent = formatDuration(item.WaitingTime);
-    document.getElementById('pjClosedOn').textContent = formatDateTime(item.CloseTime || item.CloseDateTime);
-    document.getElementById('pjPendingSince').textContent = formatDateTime(item.PendingDateTime);
-    document.getElementById('pjRootCause').textContent = item.RootCause || '-';
-    document.getElementById('pjCorrectiveAction').textContent = item.CorrectiveAction || '-';
-    document.getElementById('pjSpareParts').textContent = item.SpareParts || '-';
-    document.getElementById('pjRemarks').textContent = item.FinalRemarks || item.Remarks || '-';
+    var el;
+    el = document.getElementById('pjMachine'); if (el) el.textContent = item.Machine || '-';
+    el = document.getElementById('pjAsset'); if (el) el.textContent = item.Asset || item.AssetID || '-';
+    el = document.getElementById('pjDepartment'); if (el) el.textContent = item.Department || '-';
+    el = document.getElementById('pjSection'); if (el) el.textContent = item.Section || '-';
+    el = document.getElementById('pjPriority'); if (el) el.textContent = item.Priority || '-';
+    el = document.getElementById('pjComplaint'); if (el) el.textContent = item.ComplaintDescription || '-';
+    el = document.getElementById('pjTechnician'); if (el) el.textContent = item.AssignedTechnician || '-';
+    el = document.getElementById('pjTeam'); if (el) el.textContent = item.MaintenanceTeam || '-';
+    el = document.getElementById('pjWorkingTime'); if (el) el.textContent = formatDuration(item.WorkingTime);
+    el = document.getElementById('pjDowntime'); if (el) el.textContent = formatDuration(item.Downtime);
+    el = document.getElementById('pjWaitingTime'); if (el) el.textContent = formatDuration(item.WaitingTime);
+    el = document.getElementById('pjClosedOn'); if (el) el.textContent = Utils.formatDateTime(item.CloseTime || item.CloseDateTime);
+    el = document.getElementById('pjPendingSince'); if (el) el.textContent = Utils.formatDateTime(item.PendingDateTime);
+    el = document.getElementById('pjRootCause'); if (el) el.textContent = item.RootCause || '-';
+    el = document.getElementById('pjCorrectiveAction'); if (el) el.textContent = item.CorrectiveAction || '-';
+    el = document.getElementById('pjSpareParts'); if (el) el.textContent = item.SpareParts || '-';
+    el = document.getElementById('pjRemarks'); if (el) el.textContent = item.FinalRemarks || item.Remarks || '-';
 
     var imgContainer = document.getElementById('pjRepairImages');
     imgContainer.innerHTML = '';
@@ -516,9 +493,9 @@ var PendingJobCards = (function() {
 
   return {
     show: renderPage,
-    filter: filter,
-    refresh: refresh,
-    search: search,
+    filter: function() { state.page = 1; renderTable(); },
+    refresh: loadData,
+    search: function() { state.page = 1; renderTable(); },
     viewJobCard: viewJobCard,
     reviewJobCard: reviewJobCard,
     submitReview: submitReview,

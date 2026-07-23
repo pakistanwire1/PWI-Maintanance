@@ -661,14 +661,12 @@ function applyDropdownValidation(sheet) {
   setDropdown(getCol('Section'),           CONFIG.SHEET_NAMES.SECTIONS,          'B');
   setDropdown(getCol('Department'),         CONFIG.SHEET_NAMES.DEPARTMENTS,       'B');
   setDropdown(getCol('BreakdownType'),      CONFIG.SHEET_NAMES.BREAKDOWN_TYPES,   'B');
-  setDropdown(getCol('AssignedTechnician'), CONFIG.SHEET_NAMES.TECHNICIANS,       'B');
-  setDropdown(getCol('MaintenanceTeam'),    CONFIG.SHEET_NAMES.MAINTENANCE_TEAMS, 'B');
+  
 
   // Static-list sourced dropdowns
   setStaticDropdown(getCol('Priority'),        CONFIG.CRITICALITY_LEVELS);
   setStaticDropdown(getCol('CurrentStatus'),   [CONFIG.STATUS.OPEN, CONFIG.STATUS.RUNNING, CONFIG.STATUS.CLOSED, CONFIG.STATUS.PENDING, 'Approved']);
-  setStaticDropdown(getCol('ApprovalStatus'),  ['Approved', 'Returned', 'Pending', 'WaitingApproval']);
-
+  
   SpreadsheetApp.flush();
 }
 

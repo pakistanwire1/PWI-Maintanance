@@ -5,7 +5,6 @@ var API = {
     var payload = { action: action, token: token || Session.getToken(), data: data || {} };
     var _u = Session.getUser();
     if (_u && _u.email) { payload.data._userEmail = _u.email; }
-    console.log('[API] >> ' + action, JSON.stringify(payload).slice(0, 200));
     return fetch(API.baseUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -26,7 +25,6 @@ var API = {
           console.error('[API] JSON parse error for action=' + action + ': ' + parseErr.message + ', body=' + (rawBody ? rawBody.slice(0, 300) : 'null'));
           throw new Error('Invalid server response');
         }
-        console.log('[API] << ' + action, 'success=' + json.success, 'data_type=' + typeof json.data, 'is_array=' + Array.isArray(json.data), 'data_length=' + (json.data ? (json.data.length || Object.keys(json.data).length) : 0));
         if (json.success === false) {
           console.error('[API] << ' + action + ' ERROR:', json.error, 'code=' + json.code);
           if (json.code === 401) {

@@ -14,26 +14,18 @@ var ClosedJobCard = (function() {
     var days = Math.floor(totalMinutes / 1440);
     var hours = Math.floor((totalMinutes % 1440) / 60);
     var minutes = totalMinutes % 60;
-    var totalHours = Math.floor(totalMinutes / 60);
-    var hRemainder = totalMinutes % 60;
-    var primary = '';
-    if (days > 0) primary = days + ' Days ' + hours + 'h ' + minutes + 'm';
-    else if (hours > 0) primary = hours + 'h ' + minutes + 'm';
-    else primary = minutes + 'm';
-    var secondary = totalHours + 'h ' + hRemainder + 'm';
-    if (primary === secondary) return primary;
-    return primary + '<br>' + secondary;
+    var parts = [];
+    if (days > 0) parts.push(days + 'd');
+    if (hours > 0 || days > 0) parts.push(hours + 'h');
+    parts.push(minutes + 'm');
+    return parts.join(' ');
   }
 
   function formatDurationFromDates(startStr) {
-    if (!startStr) return '—';
+    if (!startStr) return '\u2014';
     var start = new Date(startStr);
     var end = new Date();
     return formatDuration(end.getTime() - start.getTime());
-  }
-
-  function formatDateTime(dt) {
-    return Utils.formatDateTime(dt);
   }
 
   function hasPermission(perm) {
@@ -57,7 +49,7 @@ var ClosedJobCard = (function() {
         '<div class="card-header">' +
           '<div class="card-title">' +
             '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 8px var(--primary-glow);vertical-align:middle;margin-right:8px"></span>' +
-            'Close Job Card — Running Jobs' +
+            'Close Job Card \u2014 Running Jobs' +
           '</div>' +
           '<div class="card-actions">' +
             '<div class="search-box">' +
@@ -86,7 +78,7 @@ var ClosedJobCard = (function() {
           '<div class="modal-header">' +
             '<div class="modal-title">' +
               '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.4);vertical-align:middle;margin-right:8px"></span>' +
-              'Close Job — <span id="closeJcRef"></span>' +
+              'Close Job \u2014 <span id="closeJcRef"></span>' +
             '</div>' +
             '<button class="modal-close" onclick="ClosedJobCard.hideModal()">&times;</button>' +
           '</div>' +
@@ -97,17 +89,17 @@ var ClosedJobCard = (function() {
               '<div class="time-summary-panel">' +
                 '<div class="ts-header">Time Summary</div>' +
                 '<div class="ts-timeline">' +
-                  '<div class="ts-node"><div class="ts-dot ts-dot-created"></div><div class="ts-body"><span class="ts-body-label">Opened</span><span class="ts-body-time" id="closeJcOpenedDisplay">—</span></div></div>' +
+                  '<div class="ts-node"><div class="ts-dot ts-dot-created"></div><div class="ts-body"><span class="ts-body-label">Opened</span><span class="ts-body-time" id="closeJcOpenedDisplay">\u2014</span></div></div>' +
                   '<div class="ts-line"></div>' +
-                  '<div class="ts-node"><div class="ts-dot ts-dot-start"></div><div class="ts-body"><span class="ts-body-label">Started</span><span class="ts-body-time" id="closeJcStartedDisplay">—</span></div></div>' +
+                  '<div class="ts-node"><div class="ts-dot ts-dot-start"></div><div class="ts-body"><span class="ts-body-label">Started</span><span class="ts-body-time" id="closeJcStartedDisplay">\u2014</span></div></div>' +
                   '<div class="ts-line"></div>' +
-                  '<div class="ts-node"><div class="ts-dot ts-dot-close"></div><div class="ts-body"><span class="ts-body-label">Closed</span><span class="ts-body-time" id="closeJcClosedDisplay">—</span></div></div>' +
+                  '<div class="ts-node"><div class="ts-dot ts-dot-close"></div><div class="ts-body"><span class="ts-body-label">Closed</span><span class="ts-body-time" id="closeJcClosedDisplay">\u2014</span></div></div>' +
                 '</div>' +
                 '<div class="ts-divider"></div>' +
                 '<div class="ts-stats">' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Waiting Time</span><span class="ts-stat-value ts-stat-waiting" id="closeJcWaitingDisplay">0h 0m</span><span class="ts-stat-desc">Opened → Started</span></div>' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Working Time</span><span class="ts-stat-value ts-stat-working" id="closeJcWorkingDisplay">0h 0m</span><span class="ts-stat-desc">Started → Closed</span></div>' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Total Downtime</span><span class="ts-stat-value ts-stat-breakdown" id="closeJcBreakdownDisplay">0h 0m</span><span class="ts-stat-desc">Opened → Closed</span></div>' +
+                  '<div class="ts-stat"><span class="ts-stat-label">Waiting Time</span><span class="ts-stat-value ts-stat-waiting" id="closeJcWaitingDisplay">0h 0m</span><span class="ts-stat-desc">Opened \u2192 Started</span></div>' +
+                  '<div class="ts-stat"><span class="ts-stat-label">Working Time</span><span class="ts-stat-value ts-stat-working" id="closeJcWorkingDisplay">0h 0m</span><span class="ts-stat-desc">Started \u2192 Closed</span></div>' +
+                  '<div class="ts-stat"><span class="ts-stat-label">Total Downtime</span><span class="ts-stat-value ts-stat-breakdown" id="closeJcBreakdownDisplay">0h 0m</span><span class="ts-stat-desc">Opened \u2192 Closed</span></div>' +
                 '</div>' +
               '</div>' +
               '<div class="form-row">' +
@@ -189,8 +181,8 @@ var ClosedJobCard = (function() {
 
   function loadData() {
     Loader.show();
-    API.post('getJobCards', {}).then(function(result) {
-      var records = result.records || result || [];
+    API.post('getJobCards', {}).then(function(data) {
+      var records = Array.isArray(data) ? data : (data && Array.isArray(data.records) ? data.records : []);
       state.data = records.filter(function(jc) {
         var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
         return s === 'running';
@@ -218,7 +210,10 @@ var ClosedJobCard = (function() {
     techs.sort().forEach(function(t) { if (techFilter) techFilter.innerHTML += '<option value="' + t + '">' + t + '</option>'; });
 
     API.post('getBreakdownTypes', {}).then(function(types) {
-      state.breakdownTypes = (types || []).filter(function(t) { return (t.Status || '').toLowerCase() === 'active'; });
+      state.breakdownTypes = (types || []).filter(function(t) {
+        var s = (t.Status || '').toLowerCase();
+        return s === 'active';
+      });
       var sel = document.getElementById('closeJcBreakdownType');
       if (sel) {
         sel.innerHTML = '<option value="">Select Breakdown Type</option>';
@@ -232,16 +227,29 @@ var ClosedJobCard = (function() {
     }).catch(function() {});
   }
 
-  function renderTable() {
+  function getFilteredData() {
     var dept = document.getElementById('closeJcDeptFilter') ? document.getElementById('closeJcDeptFilter').value : '';
     var tech = document.getElementById('closeJcTechnicianFilter') ? document.getElementById('closeJcTechnicianFilter').value : '';
+    var query = document.getElementById('closeJcSearch') ? document.getElementById('closeJcSearch').value.toLowerCase() : '';
     var list = state.data;
     var userDept = getUserDept();
     var isAdminUser = Session.getUser() && (Session.getUser().role === 'Admin' || Session.getUser().isSystemAdmin);
     if (!isAdminUser && userDept) list = list.filter(function(jc) { return jc.Department === userDept; });
     if (dept) list = list.filter(function(jc) { return jc.Department === dept; });
     if (tech) list = list.filter(function(jc) { return jc.AssignedTechnician === tech; });
-    var canClose = isAdminUser || hasPermission('closeJobCard');
+    if (query) {
+      list = list.filter(function(jc) {
+        return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(query) !== -1) ||
+               (jc.Machine && jc.Machine.toLowerCase().indexOf(query) !== -1) ||
+               (jc.AssignedTechnician && jc.AssignedTechnician.toLowerCase().indexOf(query) !== -1);
+      });
+    }
+    return list;
+  }
+
+  function renderTable() {
+    var list = getFilteredData();
+    var canClose = Session.getUser() && (Session.getUser().role === 'Admin' || Session.getUser().isSystemAdmin || hasPermission('closeJobCard'));
 
     var p = state.page;
     var totalPages = Math.ceil(list.length / PAGE_SIZE) || 1;
@@ -291,11 +299,7 @@ var ClosedJobCard = (function() {
           val = col.format(val, row);
         } else if (col.badge && val) {
           var badgeMap = col.badgeMap || {};
-          var mapKey = val;
-          if (!(mapKey in badgeMap)) {
-            mapKey = Object.keys(badgeMap).find(function(k) { return k.toLowerCase() === String(val).toLowerCase(); }) || mapKey;
-          }
-          var badgeClass = badgeMap[mapKey] || 'primary';
+          var badgeClass = badgeMap[val] || 'primary';
           val = '<span class="badge badge-' + badgeClass + '">' + Utils.escapeHtml(String(val)) + '</span>';
         } else if (col.datetime && val) {
           val = Utils.formatDateTime(val);
@@ -333,11 +337,11 @@ var ClosedJobCard = (function() {
   function startLiveTimers() {
     if (state.timer) clearInterval(state.timer);
     state.timer = setInterval(function() {
-      document.querySelectorAll('.live-timer').forEach(function(el) {
+      document.querySelectorAll('#closeJcTableContainer .live-timer').forEach(function(el) {
         var start = el.getAttribute('data-start');
         if (start) el.textContent = formatDurationFromDates(start);
       });
-    }, 10000);
+    }, 60000);
   }
 
   function openCloseJc(id) {
@@ -345,15 +349,16 @@ var ClosedJobCard = (function() {
       Notify.warning('You do not have permission to close job cards');
       return;
     }
-    var item = state.data.find(function(r) { return r.JobCardNo === id; });
+    var item = null;
+    for (var i = 0; i < state.data.length; i++) {
+      if (state.data[i].JobCardNo === id) { item = state.data[i]; break; }
+    }
     if (!item) return;
     var form = document.getElementById('closeJcForm');
     if (form) form.reset();
     var el = document.getElementById('closeJcJobNo'); if (el) el.value = id;
     el = document.getElementById('closeJcRef'); if (el) el.textContent = id;
     updateTimeSummary();
-    if (state.timer) clearInterval(state.timer);
-    state.timer = setInterval(updateTimeSummary, 10000);
     document.getElementById('closeJcModal').style.display = 'flex';
     setTimeout(function() {
       ClosedJobCard.addVoiceButton('closeJcCorrectiveAction');
@@ -364,23 +369,26 @@ var ClosedJobCard = (function() {
 
   function updateTimeSummary() {
     var jobNo = document.getElementById('closeJcJobNo') ? document.getElementById('closeJcJobNo').value : '';
-    var item = state.data.find(function(r) { return r.JobCardNo === jobNo; });
+    var item = null;
+    for (var i = 0; i < state.data.length; i++) {
+      if (state.data[i].JobCardNo === jobNo) { item = state.data[i]; break; }
+    }
     if (!item) return;
     var openedStr = item.DateTime || item.OpenTime || item.OpenDateTime;
     var startStr = item.StartTime || item.StartDateTime;
     var now = new Date();
 
     if (openedStr) {
-      var el = document.getElementById('closeJcOpenedDisplay'); if (el) el.textContent = formatDateTime(openedStr);
+      var el = document.getElementById('closeJcOpenedDisplay'); if (el) el.textContent = Utils.formatDateTime(openedStr);
       var waitingMs = (startStr ? new Date(startStr) : now).getTime() - new Date(openedStr).getTime();
       el = document.getElementById('closeJcWaitingDisplay'); if (el) el.textContent = formatDuration(waitingMs);
     }
     if (startStr) {
-      var el = document.getElementById('closeJcStartedDisplay'); if (el) el.textContent = formatDateTime(startStr);
+      var el = document.getElementById('closeJcStartedDisplay'); if (el) el.textContent = Utils.formatDateTime(startStr);
       var workingMs = now.getTime() - new Date(startStr).getTime();
       el = document.getElementById('closeJcWorkingDisplay'); if (el) el.textContent = formatDuration(workingMs);
     }
-    var el = document.getElementById('closeJcClosedDisplay'); if (el) el.textContent = formatDateTime(now);
+    var el = document.getElementById('closeJcClosedDisplay'); if (el) el.textContent = Utils.formatDateTime(now);
     if (openedStr) {
       var breakdownMs = now.getTime() - new Date(openedStr).getTime();
       el = document.getElementById('closeJcBreakdownDisplay'); if (el) el.textContent = formatDuration(breakdownMs);
@@ -429,12 +437,9 @@ var ClosedJobCard = (function() {
       Notify.error('Please fill in Root Cause and Corrective Action');
       return false;
     }
-    if (state.timer) { clearInterval(state.timer); state.timer = null; }
 
     Loader.show();
-    var _u = Session.getUser();
-    var _email = (_u && _u.email) ? _u.email : '';
-    API.post('updateJobCard', { id: id, CurrentStatus: 'PENDING', RootCause: data.RootCause, CorrectiveAction: data.CorrectiveAction, SpareParts: data.SpareParts, FinalRemarks: data.FinalRemarks, BreakdownType: data.BreakdownType, RepairImage: data.RepairImage, ClosedBy: _email }).then(function() {
+    API.post('closeJobCard', { id: id, rootCause: data.RootCause, correctiveAction: data.CorrectiveAction, spareParts: data.SpareParts, finalRemarks: data.FinalRemarks, breakdownType: data.BreakdownType, repairImage: data.RepairImage }).then(function() {
       Loader.hide();
       document.getElementById('closeJcModal').style.display = 'none';
       Notify.success('Job card closed successfully');
@@ -446,33 +451,15 @@ var ClosedJobCard = (function() {
     return false;
   }
 
-  function searchJc() {
-    var q = (document.getElementById('closeJcSearch') ? document.getElementById('closeJcSearch').value : '').toLowerCase();
-    if (!q) { state.page = 1; renderTable(); return; }
-    var original = state.data;
-    state.data = original.filter(function(jc) {
-      return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(q) !== -1) ||
-             (jc.Machine && jc.Machine.toLowerCase().indexOf(q) !== -1) ||
-             (jc.AssignedTechnician && jc.AssignedTechnician.toLowerCase().indexOf(q) !== -1);
-    });
-    state.page = 1;
-    renderTable();
-    state.data = original;
-  }
-
-  function filterJc() {
-    state.page = 1;
-    renderTable();
-  }
-
   return {
     show: function() {
+      if (state.timer) clearInterval(state.timer);
       state = { data: [], page: 1, timer: null, breakdownTypes: [] };
       renderPage();
       loadData();
     },
-    search: function() { searchJc(); },
-    filter: function() { filterJc(); },
+    search: function() { state.page = 1; renderTable(); },
+    filter: function() { state.page = 1; renderTable(); },
     open: function(id) { openCloseJc(id); },
     save: function(e) { return saveCloseJc(e); },
     hideModal: function() { document.getElementById('closeJcModal').style.display = 'none'; },

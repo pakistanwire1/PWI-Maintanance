@@ -27,7 +27,6 @@ var OpenJobCard = (function() {
   function renderPage() {
     var el = document.getElementById('pageContent');
     if (!el) return;
-
     el.innerHTML =
       '<div id="openjobcardPage" class="page"><div class="card" style="max-width:860px;margin:0 auto">' +
         '<div class="card-header">' +
@@ -355,8 +354,6 @@ var OpenJobCard = (function() {
   function save(e) {
     if (e) e.preventDefault();
     var data = Forms.get('createJobCardForm');
-    var _u = Session.getUser();
-    if (_u && _u.email) { data.UpdatedBy = _u.email; }
 
     if (!data.Section) { Notify.error('Please select a Section'); return false; }
     if (!data.Department) { Notify.error('Please select a Department'); return false; }
@@ -375,7 +372,9 @@ var OpenJobCard = (function() {
       Loader.hide();
       if (btn) { btn.disabled = false; btn.innerHTML = ICON_BTN_SAVE + ' Save Job Card'; }
       Notify.success('Job Card Saved Successfully');
-      navigateTo('jobcards');
+      var form = document.getElementById('createJobCardForm');
+      if (form) form.reset();
+      resetForm();
     }).catch(function(err) {
       Loader.hide();
       if (btn) { btn.disabled = false; btn.innerHTML = ICON_BTN_SAVE + ' Save Job Card'; }

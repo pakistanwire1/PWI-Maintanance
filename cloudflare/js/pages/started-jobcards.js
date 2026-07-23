@@ -13,26 +13,18 @@ var StartedJobCard = (function() {
     var days = Math.floor(totalMinutes / 1440);
     var hours = Math.floor((totalMinutes % 1440) / 60);
     var minutes = totalMinutes % 60;
-    var totalHours = Math.floor(totalMinutes / 60);
-    var hRemainder = totalMinutes % 60;
-    var primary = '';
-    if (days > 0) primary = days + ' Days ' + hours + 'h ' + minutes + 'm';
-    else if (hours > 0) primary = hours + 'h ' + minutes + 'm';
-    else primary = minutes + 'm';
-    var secondary = totalHours + 'h ' + hRemainder + 'm';
-    if (primary === secondary) return primary;
-    return primary + '<br>' + secondary;
+    var parts = [];
+    if (days > 0) parts.push(days + 'd');
+    if (hours > 0 || days > 0) parts.push(hours + 'h');
+    parts.push(minutes + 'm');
+    return parts.join(' ');
   }
 
   function formatDurationFromDates(startStr) {
-    if (!startStr) return '—';
+    if (!startStr) return '\u2014';
     var start = new Date(startStr);
     var end = new Date();
     return formatDuration(end.getTime() - start.getTime());
-  }
-
-  function formatDateTime(dt) {
-    return Utils.formatDateTime(dt);
   }
 
   function hasPermission(perm) {
@@ -56,7 +48,7 @@ var StartedJobCard = (function() {
         '<div class="card-header">' +
           '<div class="card-title">' +
             '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--warning);box-shadow:0 0 8px rgba(245,158,11,0.4);vertical-align:middle;margin-right:8px"></span>' +
-            'Start Job Card — Open Jobs' +
+            'Start Job Card \u2014 Open Jobs' +
           '</div>' +
           '<div class="card-actions">' +
             '<div class="search-box">' +
@@ -89,7 +81,7 @@ var StartedJobCard = (function() {
           '<div class="modal-header">' +
             '<div class="modal-title">' +
               '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--warning);box-shadow:0 0 8px rgba(245,158,11,0.4);vertical-align:middle;margin-right:8px"></span>' +
-              'Start Job — <span id="startJcRef"></span>' +
+              'Start Job \u2014 <span id="startJcRef"></span>' +
             '</div>' +
             '<button class="modal-close" onclick="StartedJobCard.hideModal()">&times;</button>' +
           '</div>' +
@@ -146,8 +138,8 @@ var StartedJobCard = (function() {
 
   function loadData() {
     Loader.show();
-    API.post('getJobCards', {}).then(function(result) {
-      var records = result.records || result || [];
+    API.post('getJobCards', {}).then(function(data) {
+      var records = Array.isArray(data) ? data : (data && Array.isArray(data.records) ? data.records : []);
       state.data = records.filter(function(jc) {
         var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
         return s === 'open' || s === 'waiting';
@@ -186,16 +178,29 @@ var StartedJobCard = (function() {
     });
   }
 
-  function renderTable() {
+  function getFilteredData() {
     var dept = document.getElementById('startJcDeptFilter') ? document.getElementById('startJcDeptFilter').value : '';
     var priority = document.getElementById('startJcPriorityFilter') ? document.getElementById('startJcPriorityFilter').value : '';
+    var query = document.getElementById('startJcSearch') ? document.getElementById('startJcSearch').value.toLowerCase() : '';
     var list = state.data;
     var userDept = getUserDept();
     var isAdminUser = Session.getUser() && (Session.getUser().role === 'Admin' || Session.getUser().isSystemAdmin);
     if (!isAdminUser && userDept) list = list.filter(function(jc) { return jc.Department === userDept; });
     if (dept) list = list.filter(function(jc) { return jc.Department === dept; });
     if (priority) list = list.filter(function(jc) { return jc.Priority === priority; });
-    var canStart = isAdminUser || hasPermission('startJobCard');
+    if (query) {
+      list = list.filter(function(jc) {
+        return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(query) !== -1) ||
+               (jc.Machine && jc.Machine.toLowerCase().indexOf(query) !== -1) ||
+               (jc.ComplaintDescription && jc.ComplaintDescription.toLowerCase().indexOf(query) !== -1);
+      });
+    }
+    return list;
+  }
+
+  function renderTable() {
+    var list = getFilteredData();
+    var canStart = Session.getUser() && (Session.getUser().role === 'Admin' || Session.getUser().isSystemAdmin || hasPermission('startJobCard'));
 
     var p = state.page;
     var totalPages = Math.ceil(list.length / PAGE_SIZE) || 1;
@@ -246,11 +251,7 @@ var StartedJobCard = (function() {
           val = col.format(val, row);
         } else if (col.badge && val) {
           var badgeMap = col.badgeMap || {};
-          var mapKey = val;
-          if (!(mapKey in badgeMap)) {
-            mapKey = Object.keys(badgeMap).find(function(k) { return k.toLowerCase() === String(val).toLowerCase(); }) || mapKey;
-          }
-          var badgeClass = badgeMap[mapKey] || 'primary';
+          var badgeClass = badgeMap[val] || 'primary';
           val = '<span class="badge badge-' + badgeClass + '">' + Utils.escapeHtml(String(val)) + '</span>';
         } else if (col.datetime && val) {
           val = Utils.formatDateTime(val);
@@ -288,11 +289,11 @@ var StartedJobCard = (function() {
   function startLiveTimers() {
     if (state.timer) clearInterval(state.timer);
     state.timer = setInterval(function() {
-      document.querySelectorAll('.live-timer').forEach(function(el) {
+      document.querySelectorAll('#startJcTableContainer .live-timer').forEach(function(el) {
         var start = el.getAttribute('data-start');
         if (start) el.textContent = formatDurationFromDates(start);
       });
-    }, 10000);
+    }, 60000);
   }
 
   function initMultiSelect(wrapperId, options) {
@@ -300,7 +301,7 @@ var StartedJobCard = (function() {
     if (!wrapper) return null;
     var tagsEl = wrapper.querySelector('.multi-select-tags');
     var searchEl = wrapper.querySelector('.multi-select-search');
-    var hiddenEl = wrapper.querySelector('input[type="hidden"]');
+    var hiddenEl = wrapper.querySelector('input[type="hidden"][name="AssignedTechnicianIDs"]');
     var dropdownEl = wrapper.querySelector('.multi-select-dropdown');
     if (!tagsEl || !searchEl || !hiddenEl || !dropdownEl) return null;
     var selected = [];
@@ -410,7 +411,10 @@ var StartedJobCard = (function() {
       Notify.warning('You do not have permission to start job cards');
       return;
     }
-    var item = state.data.find(function(r) { return r.JobCardNo === id; });
+    var item = null;
+    for (var i = 0; i < state.data.length; i++) {
+      if (state.data[i].JobCardNo === id) { item = state.data[i]; break; }
+    }
     if (!item) return;
     var form = document.getElementById('startJcForm');
     if (form) form.reset();
@@ -418,7 +422,7 @@ var StartedJobCard = (function() {
     var el = document.getElementById('startJcSkillDisplay'); if (el) el.value = '';
     el = document.getElementById('startJcJobNo'); if (el) el.value = id;
     el = document.getElementById('startJcRef'); if (el) el.textContent = id;
-    el = document.getElementById('startJcOpenedDisplay'); if (el) el.textContent = formatDateTime(item.DateTime || item.OpenTime || item.OpenDateTime);
+    el = document.getElementById('startJcOpenedDisplay'); if (el) el.textContent = Utils.formatDateTime(item.DateTime || item.OpenTime || item.OpenDateTime);
     updateWaiting();
     document.getElementById('startJcModal').style.display = 'flex';
     setTimeout(function() { StartedJobCard.addVoiceButton('startJcInitialRemarks'); }, 100);
@@ -426,7 +430,10 @@ var StartedJobCard = (function() {
 
   function updateWaiting() {
     var jobNo = document.getElementById('startJcJobNo') ? document.getElementById('startJcJobNo').value : '';
-    var item = state.data.find(function(r) { return r.JobCardNo === jobNo; });
+    var item = null;
+    for (var i = 0; i < state.data.length; i++) {
+      if (state.data[i].JobCardNo === jobNo) { item = state.data[i]; break; }
+    }
     if (!item) return;
     var dt = item.DateTime || item.OpenTime || item.OpenDateTime;
     if (!dt) return;
@@ -445,15 +452,12 @@ var StartedJobCard = (function() {
       Notify.error('Please select at least one technician');
       return false;
     }
-    if (state.timer) { clearInterval(state.timer); state.timer = null; }
 
     Loader.show();
-    var _u = Session.getUser();
-    var _email = (_u && _u.email) ? _u.email : '';
-    API.post('updateJobCard', { id: id, CurrentStatus: 'RUNNING', AssignedTechnician: data.AssignedTechnician, AssignedTechnicianIDs: data.AssignedTechnicianIDs, MaintenanceTeam: data.MaintenanceTeam, InitialRemarks: data.InitialRemarks, StartedBy: _email }).then(function() {
+    API.post('startJobCard', { id: id, technician: data.AssignedTechnician, technicianIds: data.AssignedTechnicianIDs, team: data.MaintenanceTeam, remarks: data.InitialRemarks }).then(function() {
       Loader.hide();
       document.getElementById('startJcModal').style.display = 'none';
-      Notify.success('Job started — Status: Running');
+      Notify.success('Job started \u2014 Status: Running');
       loadData();
     }).catch(function(err) {
       Loader.hide();
@@ -462,33 +466,15 @@ var StartedJobCard = (function() {
     return false;
   }
 
-  function searchJc() {
-    var q = (document.getElementById('startJcSearch') ? document.getElementById('startJcSearch').value : '').toLowerCase();
-    if (!q) { state.page = 1; renderTable(); return; }
-    var original = state.data;
-    state.data = original.filter(function(jc) {
-      return (jc.JobCardNo && jc.JobCardNo.toLowerCase().indexOf(q) !== -1) ||
-             (jc.Machine && jc.Machine.toLowerCase().indexOf(q) !== -1) ||
-             (jc.ComplaintDescription && jc.ComplaintDescription.toLowerCase().indexOf(q) !== -1);
-    });
-    state.page = 1;
-    renderTable();
-    state.data = original;
-  }
-
-  function filterJc() {
-    state.page = 1;
-    renderTable();
-  }
-
   return {
     show: function() {
+      if (state.timer) clearInterval(state.timer);
       state = { data: [], page: 1, timer: null, techMulti: null, techList: [] };
       renderPage();
       loadData();
     },
-    search: function() { searchJc(); },
-    filter: function() { filterJc(); },
+    search: function() { state.page = 1; renderTable(); },
+    filter: function() { state.page = 1; renderTable(); },
     open: function(id) { openStartJc(id); },
     save: function(e) { return saveStartJc(e); },
     hideModal: function() { document.getElementById('startJcModal').style.display = 'none'; },
