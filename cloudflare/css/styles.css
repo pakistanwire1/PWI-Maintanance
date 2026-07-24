@@ -755,8 +755,7 @@
   /* ===== PAGE CONTENT ===== */
   .page-content { flex: 1; padding: 22px; min-height: 0; }
 
-  .page { display: none; animation: fadeIn 0.3s ease; }
-  .page.active { display: block; min-height: 100%; }
+  .page { animation: fadeIn 0.3s ease; min-height: 100%; }
 
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
