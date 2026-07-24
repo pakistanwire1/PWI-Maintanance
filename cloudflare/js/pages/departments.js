@@ -23,6 +23,7 @@ var Department = (function() {
         { key: 'DepartmentID', label: 'ID' },
         { key: 'Department', label: 'Department' },
         { key: 'Section', label: 'Section' },
+        { key: 'SectionID', label: 'SecID' },
         { key: 'DepartmentCode', label: 'Code' },
         { key: 'DepartmentHead', label: 'Head' },
         { key: 'Description', label: 'Description' },

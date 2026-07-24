@@ -581,6 +581,9 @@ var Settings = (function() {
       prefs[key] = value;
       saveThemePrefs(prefs);
       renderThemePrefsUI();
+      if (key === 'accentColor') {
+        Theme.applyAccent(value);
+      }
       Notify.success(key === 'accentColor' ? 'Accent color updated' : 'Theme preference saved');
     },
 

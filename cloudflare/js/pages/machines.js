@@ -42,17 +42,17 @@ var Machine = (function() {
               '<div class="form-group"><label>Section</label><select name="SectionID" class="form-control" id="mcSection"><option value="">Auto from Department</option></select></div>' +
               '<div class="form-group"><label>Location</label><input type="text" name="Location" class="form-control" id="mcLocation"></div>' +
             '</div>' +
-            '<div class="form-row">' +
+            '<div class="form-row-3">' +
               '<div class="form-group"><label>Machine Type</label><select name="MachineType" class="form-control" id="mcType"></select></div>' +
               '<div class="form-group"><label>Manufacturer</label><input type="text" name="Manufacturer" class="form-control" id="mcManufacturer"></div>' +
               '<div class="form-group"><label>Model</label><input type="text" name="Model" class="form-control" id="mcModel"></div>' +
             '</div>' +
-            '<div class="form-row">' +
+            '<div class="form-row-3">' +
               '<div class="form-group"><label>Serial No</label><input type="text" name="SerialNo" class="form-control" id="mcSerialNo"></div>' +
               '<div class="form-group"><label>Capacity</label><input type="text" name="Capacity" class="form-control" id="mcCapacity" placeholder="e.g. 500 kg"></div>' +
               '<div class="form-group"><label>Power Rating</label><input type="text" name="PowerRating" class="form-control" id="mcPower" placeholder="e.g. 50 kW"></div>' +
             '</div>' +
-            '<div class="form-row">' +
+            '<div class="form-row-3">' +
               '<div class="form-group"><label>Install Date</label><input type="date" name="InstallDate" class="form-control" id="mcInstallDate"></div>' +
               '<div class="form-group"><label>Warranty Expiry</label><input type="date" name="WarrantyExpiry" class="form-control" id="mcWarranty"></div>' +
               '<div class="form-group"><label>Criticality</label><select name="Criticality" class="form-control" id="mcCriticality"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></div>' +
@@ -94,6 +94,7 @@ var Machine = (function() {
         { key: 'MachineID', label: 'ID' },
         { key: 'MachineCode', label: 'Code' },
         { key: 'MachineName', label: 'Machine Name' },
+        { key: 'MachineNumber', label: 'Number' },
         { key: 'Department', label: 'Dept' },
         { key: 'Section', label: 'Section' },
         { key: 'Location', label: 'Location' },
@@ -131,7 +132,7 @@ var Machine = (function() {
     sel.innerHTML = '<option value="">Select Department</option>';
     state.departments.forEach(function(d) {
       var opt = document.createElement('option');
-      opt.value = d.DepartmentID;
+      opt.value = d.DeptID;
       opt.textContent = d.Department || '';
       if (selectedDeptId && opt.value === selectedDeptId) opt.selected = true;
       sel.appendChild(opt);

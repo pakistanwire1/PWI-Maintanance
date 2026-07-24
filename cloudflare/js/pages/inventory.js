@@ -797,7 +797,7 @@ var Inventory = (function() {
             '</div>' +
             '<div class="modal-footer">' +
               '<button type="button" class="btn btn-secondary" onclick="Inventory.hideModal(\'issueModal\')">Cancel</button>' +
-              '<button type="submit" class="btn btn-warning">' + ICONS.plus.replace('16px;height:16px', '16px;height:16px;flex-shrink:0') + ' Issue</button>' +
+              '<button type="submit" class="btn btn-warning"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg> Issue</button>' +
             '</div>' +
           '</form>' +
         '</div>' +
@@ -844,7 +844,7 @@ var Inventory = (function() {
             '</div>' +
             '<div class="modal-footer">' +
               '<button type="button" class="btn btn-secondary" onclick="Inventory.hideModal(\'returnModal\')">Cancel</button>' +
-              '<button type="submit" class="btn btn-primary">' + ICONS.plus.replace('16px;height:16px', '16px;height:16px;flex-shrink:0') + ' Return</button>' +
+              '<button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M4 12v6a2 2 0 002 2h12a2 2 0 002-2v-6"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Return</button>' +
             '</div>' +
           '</form>' +
         '</div>' +
@@ -895,7 +895,7 @@ var Inventory = (function() {
             '</div>' +
             '<div class="modal-footer">' +
               '<button type="button" class="btn btn-secondary" onclick="Inventory.hideModal(\'transferModal\')">Cancel</button>' +
-              '<button type="submit" class="btn btn-primary">' + ICONS.plus.replace('16px;height:16px', '16px;height:16px;flex-shrink:0') + ' Transfer</button>' +
+              '<button type="submit" class="btn btn-primary"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg> Transfer</button>' +
             '</div>' +
           '</form>' +
         '</div>' +
@@ -940,7 +940,7 @@ var Inventory = (function() {
             '</div>' +
             '<div class="modal-footer">' +
               '<button type="button" class="btn btn-secondary" onclick="Inventory.hideModal(\'adjustmentModal\')">Cancel</button>' +
-              '<button type="submit" class="btn btn-warning">' + ICONS.plus.replace('16px;height:16px', '16px;height:16px;flex-shrink:0') + ' Adjust</button>' +
+              '<button type="submit" class="btn btn-warning"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> Adjust</button>' +
             '</div>' +
           '</form>' +
         '</div>' +

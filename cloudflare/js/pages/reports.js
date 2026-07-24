@@ -3,7 +3,6 @@ var Reports = (function() {
   var PAGE_SIZE = 100;
   var __pageStates = {};
 
-  var ICON_EXPORT = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg>';
   var ICON_VIEW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
 
   function displayDuration(val) {
@@ -57,7 +56,7 @@ var Reports = (function() {
             '</div>' +
             '<div class="form-group">' +
               '<button class="btn btn-primary" onclick="Reports.generate()" style="margin-top:20px">Generate Report</button>' +
-              '<button class="btn btn-secondary" onclick="Reports.exportCSV()" style="margin-top:20px">' + ICON_EXPORT + ' Export CSV</button>' +
+              '<button class="btn btn-secondary" onclick="Reports.exportCSV()" style="margin-top:20px">Export CSV</button>' +
             '</div>' +
           '</div>' +
           '<div id="reportTableContainer"></div>' +

@@ -193,12 +193,12 @@ var Asset = (function() {
               '<div class="form-group"><label>Asset Code *</label><input type="text" name="AssetCode" class="form-control" id="asCode" required></div>' +
               '<div class="form-group"><label>Asset Name *</label><input type="text" name="AssetName" class="form-control" id="asName" required></div>' +
             '</div>' +
-            '<div class="form-row">' +
+            '<div class="form-row-3">' +
               '<div class="form-group"><label>Asset Type</label><select name="AssetType" class="form-control" id="asType"></select></div>' +
               '<div class="form-group"><label>Category</label><select name="Category" class="form-control" id="asCategory"></select></div>' +
               '<div class="form-group"><label>Filter Dept</label><select class="form-control" id="asFilterDept" onchange="Asset.onFilterDeptChange()"><option value="">All Departments</option></select></div>' +
             '</div>' +
-            '<div class="form-row">' +
+            '<div class="form-row-3">' +
               '<div class="form-group"><label>Filter Section</label><select class="form-control" id="asFilterSection" onchange="Asset.onFilterSectionChange()"><option value="">All Sections</option></select></div>' +
               '<div class="form-group"><label>Linked Machine</label><select name="MachineID" class="form-control" id="asMachine" onchange="Asset.onMachineChange()"><option value="">None</option></select></div>' +
               '<div class="form-group"><label>Machine Name</label><input type="text" name="MachineName" class="form-control" id="asMachineName" readonly></div>' +
@@ -211,17 +211,17 @@ var Asset = (function() {
               '<div class="form-group"><label>Location</label><input type="text" name="Location" class="form-control" id="asLocation"></div>' +
               '<div class="form-group"><label>Manufacturer</label><input type="text" name="Manufacturer" class="form-control" id="asManufacturer"></div>' +
             '</div>' +
-            '<div class="form-row">' +
+            '<div class="form-row-3">' +
               '<div class="form-group"><label>Model</label><input type="text" name="Model" class="form-control" id="asModel"></div>' +
               '<div class="form-group"><label>Serial No</label><input type="text" name="SerialNo" class="form-control" id="asSerialNo"></div>' +
               '<div class="form-group"><label>Specification</label><input type="text" name="Specification" class="form-control" id="asSpecification"></div>' +
             '</div>' +
-            '<div class="form-row">' +
+            '<div class="form-row-3">' +
               '<div class="form-group"><label>Purchase Date</label><input type="date" name="PurchaseDate" class="form-control" id="asPurchaseDate"></div>' +
               '<div class="form-group"><label>Install Date</label><input type="date" name="InstallDate" class="form-control" id="asInstallDate"></div>' +
               '<div class="form-group"><label>Warranty Expiry</label><input type="date" name="WarrantyExpiry" class="form-control" id="asWarranty"></div>' +
             '</div>' +
-            '<div class="form-row">' +
+            '<div class="form-row-3">' +
               '<div class="form-group"><label>Criticality</label><select name="Criticality" class="form-control" id="asCriticality"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></div>' +
               '<div class="form-group"><label>Supplier</label><input type="text" name="Supplier" class="form-control" id="asSupplier"></div>' +
               '<div class="form-group"><label>Cost</label><input type="number" name="Cost" class="form-control" id="asCost" step="0.01" min="0"></div>' +
