@@ -163,7 +163,7 @@
       if (!Session.isLoggedIn()) {
         loginEl.style.display = 'block';
         appEl.style.display = 'none';
-        Router.init();
+        try { window.location.hash = ''; } catch(e) {}
       } else {
         loginEl.style.display = 'none';
         appEl.style.display = 'flex';
@@ -177,7 +177,7 @@
       if (!Session.isLoggedIn()) {
         loginEl.style.display = 'block';
         appEl.style.display = 'none';
-        Router.init();
+        try { window.location.hash = ''; } catch(e) {}
       } else {
         loginEl.style.display = 'none';
         appEl.style.display = 'flex';
@@ -203,6 +203,9 @@
     if (welcomeEl) welcomeEl.style.display = 'none';
     if (loginEl) loginEl.style.display = 'block';
     if (appEl) appEl.style.display = 'none';
+    try { window.location.hash = ''; history.replaceState(null, '', window.location.pathname); } catch(e) {}
+    Badge.stopAutoRefresh();
+    Router.current = null;
   };
 
   window.handleLogout = function() {

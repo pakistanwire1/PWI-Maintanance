@@ -81,6 +81,7 @@
       welcomeEl.style.display = 'none';
       if (progressTimer) { clearTimeout(progressTimer); progressTimer = null; }
       try { localStorage.setItem('cmms_welcomed', '1'); } catch(e) {}
+      try { window.location.hash = ''; history.replaceState(null, '', window.location.pathname); } catch(e) {}
 
       if (Session.isLoggedIn()) {
         startApp();

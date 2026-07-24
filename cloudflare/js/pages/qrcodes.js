@@ -55,6 +55,13 @@ var QRCodes = (function() {
       '.qr-scan-input{width:100%;padding:.75rem;font-size:1rem;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-input);color:var(--text);margin-bottom:1rem;box-sizing:border-box}' +
       '.qr-scan-input:focus{outline:none;border-color:var(--primary)}' +
       '.qr-scan-result{min-height:100px;padding:1rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-sidebar)}' +
+      '.qr-scanner-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center}' +
+      '.qr-scanner-header{color:#fff;font-size:18px;font-weight:600;margin-bottom:16px;text-align:center}' +
+      '.qr-scanner-viewfinder{width:280px;height:280px;position:relative;border:3px solid rgba(99,102,241,.5);border-radius:16px;overflow:hidden;background:#000}' +
+      '.qr-scanner-viewfinder::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--primary);animation:qrScanLine 2s linear infinite}' +
+      '@keyframes qrScanLine{0%{top:0}50%{top:calc(100% - 3px)}100%{top:0}}' +
+      '.qr-scanner-close{margin-top:16px;padding:10px 24px;border-radius:8px;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:var(--transition)}' +
+      '.qr-scanner-close:hover{background:rgba(255,255,255,.25)}' +
       '.qr-label-sizes{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}' +
       '.qr-label-size-btn{padding:.5rem 1rem;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-card);color:var(--text);cursor:pointer;font-size:.85rem;transition:var(--transition)}' +
       '.qr-label-size-btn.active,.qr-label-size-btn:hover{border-color:var(--primary);background:var(--primary-light);color:var(--primary-dark)}' +
@@ -341,7 +348,7 @@ var QRCodes = (function() {
       '</div>' +
       '<div class="qr-modal-footer">' +
       '<button class="btn btn-info" onclick="doScanLookup()">Look Up</button>' +
-      '<button class="btn btn-secondary" onclick="Notify.info(\'Camera scanning not available\')">Camera</button>' +
+      '<button class="btn btn-info" onclick="closeQROverlay(\'qrScanOverlay\');QRCodes.openCameraScanner()">Camera</button>' +
       '<button class="btn btn-secondary" onclick="closeQROverlay(\'qrScanOverlay\')">Cancel</button>' +
       '</div></div>';
     overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
@@ -350,6 +357,130 @@ var QRCodes = (function() {
       var inp = document.getElementById('qrScanInput');
       if (inp) { inp.focus(); inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') window.doScanLookup(); }); }
     }, 50);
+  }
+
+  var _scannerActive = false;
+
+  function openCameraScanner() {
+    if (_scannerActive) return;
+    _scannerActive = true;
+    var overlay = document.createElement('div');
+    overlay.className = 'qr-scanner-overlay';
+    overlay.id = 'qrScannerOverlay';
+    overlay.innerHTML =
+      '<div class="qr-scanner-header">Scan Machine / Asset / Job Card QR</div>' +
+      '<div class="qr-scanner-viewfinder" id="qrReader"></div>' +
+      '<div style="color:rgba(255,255,255,.6);font-size:12px;margin-top:12px;text-align:center">Position QR code within the frame</div>' +
+      '<button class="qr-scanner-close" onclick="QRCodes.closeCameraScanner()">Close Scanner</button>';
+    document.body.appendChild(overlay);
+    if (typeof Html5Qrcode === 'undefined') {
+      var script = document.createElement('script');
+      script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+      script.onload = function() { startCameraScanning(); };
+      script.onerror = function() { closeCameraScanner(); Notify.error('Failed to load QR scanner library'); };
+      document.head.appendChild(script);
+    } else {
+      startCameraScanning();
+    }
+  }
+
+  function startCameraScanning() {
+    try {
+      var html5QrCode = new Html5Qrcode('qrReader');
+      html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
+        function onScanSuccess(decodedText) {
+          html5QrCode.stop().then(function() {
+            closeCameraScanner();
+            processCameraScanResult(decodedText);
+          }).catch(function() {});
+        },
+        function onScanFailure() {}
+      ).catch(function(err) {
+        closeCameraScanner();
+        if (err && err.toString().indexOf('NotAllowedError') !== -1) {
+          Notify.error('Camera permission denied. Please allow camera access.');
+        } else {
+          Notify.error('Could not access camera: ' + (err.message || err));
+        }
+      });
+    } catch(e) {
+      closeCameraScanner();
+      Notify.error('QR scanner error: ' + e.message);
+    }
+  }
+
+  function closeCameraScanner() {
+    _scannerActive = false;
+    var el = document.getElementById('qrScannerOverlay');
+    if (el) el.remove();
+  }
+
+  function processCameraScanResult(decodedText) {
+    Notify.info('QR scanned: processing...');
+    API.post('getQRDetail', { qrContent: decodedText }).then(function(rec) {
+      if (!rec || rec.error) {
+        Notify.error(rec ? rec.error : 'QR code not recognized');
+        return;
+      }
+      showCameraScanDetail(rec);
+    }).catch(function() {
+      Notify.error('Failed to process QR code');
+    });
+  }
+
+  function showCameraScanDetail(rec) {
+    var mod = rec.module || '';
+    var name = rec.name || '';
+    var code = rec.code || '';
+    var status = rec.status || '';
+    var id = rec.id || '';
+    var qrContent = rec.qrContent || '';
+    var iconMap = { 'Machine': '\u2699\uFE0F', 'Asset': '\uD83D\uDCE6', 'Job Card': '\uD83D\uDCCB', 'Spare Part': '\uD83D\uDD27' };
+    var routeMap = { 'Machine': 'machines', 'Asset': 'assets', 'Job Card': 'openjobcard', 'Spare Part': 'spareparts' };
+    var icon = iconMap[mod] || '\uD83D\uDD0D';
+    var rows = '';
+    function addRow(label, val) { if (val) rows += '<div class="qr-detail-row"><span class="qr-detail-label">' + esc(label) + '</span><span class="qr-detail-value">' + esc(String(val)) + '</span></div>'; }
+    addRow('Module', mod);
+    addRow('Name', name);
+    addRow('Code', code);
+    addRow('Status', status);
+    addRow('Department', rec.department);
+    if (rec.module === 'Machine' || rec.module === 'Asset') {
+      addRow('Location', rec.location);
+      addRow('Criticality', rec.criticality);
+    }
+    if (rec.module === 'Job Card') {
+      addRow('Priority', rec.priority);
+      addRow('Complaint', rec.complaint);
+    }
+    if (rec.jobs !== undefined) addRow('Open Jobs', rec.jobs);
+    if (rec.breakdowns !== undefined) addRow('Breakdowns', rec.breakdowns);
+    if (rec.totalDowntime) addRow('Total Downtime', rec.totalDowntime);
+    if (rec.mttr) addRow('MTTR', rec.mttr);
+    if (rec.mtbf) addRow('MTBF', rec.mtbf);
+    if (rec.totalParts !== undefined) addRow('Total Parts', rec.totalParts);
+
+    var overlay = document.createElement('div');
+    overlay.className = 'qr-overlay';
+    overlay.id = 'qrDetailOverlay';
+    overlay.innerHTML = '<div style="max-width:400px;width:90%;background:var(--bg-card);border-radius:16px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3);border:1px solid var(--border)">' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">' +
+        '<div style="width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--primary-light);color:var(--primary)">' + icon + '</div>' +
+        '<div><div style="font-size:18px;font-weight:700;color:var(--text)">' + esc(name) + '</div>' +
+        '<div style="font-size:12px;color:var(--text-muted)">' + esc(code) + '</div></div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px">' + rows + '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">' +
+        '<button class="btn btn-primary" style="flex:1" onclick="QRCodes.closeDetail();navigateTo(\'' + (routeMap[mod] || 'dashboard') + '\')">View ' + esc(mod) + '</button>' +
+        (mod === 'Machine' ? '<button class="btn btn-success" style="flex:1" onclick="QRCodes.closeDetail();navigateTo(\'openjobcard\')">Create Job Card</button>' : '') +
+        '<button class="btn btn-secondary" style="flex:1" onclick="QRCodes.closeDetail()">Close</button>' +
+      '</div>' +
+    '</div>';
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+    API.post('logQRScan', { module: mod, recordId: id, recordName: name, scanResult: 'Success', action: 'Camera Scan' }).catch(function() {});
   }
 
   window.doScanLookup = function() {
@@ -1092,6 +1223,9 @@ var QRCodes = (function() {
     hsPage: function(p) { _hs.page = p; loadHistoryPage(); },
 
     openScan: function() { showScanModal(); },
+    openCameraScanner: function() { openCameraScanner(); },
+    closeCameraScanner: function() { closeCameraScanner(); },
+    closeDetail: function() { var el = document.getElementById('qrDetailOverlay'); if (el) el.remove(); },
 
     generateQR: function(mod, id) {
       API.post('generateQRCode', { module: mod, recordId: id }).then(function() {

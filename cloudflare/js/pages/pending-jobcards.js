@@ -79,7 +79,7 @@ var PendingJobCards = (function() {
         '<div class="modal modal-wide">' +
           '<div class="modal-header">' +
             '<div class="modal-title">' +
-              '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--warning);box-shadow:0 0 8px rgba(234,179,8,0.4);vertical-align:middle;margin-right:8px"></span>' +
+              '<span class="status-dot status-progress"></span>' +
               'Review Job Card \u2014 <span id="pendingJcRef"></span>' +
             '</div>' +
             '<button class="modal-close" onclick="PendingJobCards.hideModal()">&times;</button>' +

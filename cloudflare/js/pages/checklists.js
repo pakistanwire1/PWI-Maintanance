@@ -475,7 +475,7 @@ var Checklists = (function() {
     var items = template.Items.split('\n').filter(function(i) { return i.trim(); });
     var html = '';
     items.forEach(function(item, idx) {
-      html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">' +
+          html += '<div class="flex-row-input">' +
         '<input type="checkbox" name="cl_item_' + idx + '" value="Pass" onchange="Checklists.updateResults()">' +
         '<span>' + item + '</span></div>';
     });
@@ -509,7 +509,7 @@ var Checklists = (function() {
         var containerEl = document.getElementById('checklistItemsContainer'); if (containerEl) containerEl.style.display = 'block';
         var html = '';
         results.forEach(function(r, idx) {
-          html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">' +
+      html += '<div class="flex-row-input">' +
             '<input type="checkbox" name="cl_item_' + idx + '" value="Pass" ' + (r.status === 'Pass' ? 'checked' : '') + ' onchange="Checklists.updateResults()">' +
             '<span>' + r.item + '</span></div>';
         });

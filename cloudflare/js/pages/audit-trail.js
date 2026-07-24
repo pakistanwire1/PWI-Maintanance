@@ -268,19 +268,19 @@ var AuditTrail = (function() {
       html += '<tr onclick="AuditTrail.viewLog(\'' + Utils.escapeHtml(String(row.AuditID || '')) + '\')" style="cursor:pointer">';
 
       var auditId = row.AuditID !== undefined && row.AuditID !== null ? row.AuditID : '-';
-      html += '<td><span class="badge badge-secondary" style="font-size:9px">' + Utils.escapeHtml(String(auditId)) + '</span></td>';
+      html += '<td><span class="badge badge-secondary badge-xs">' + Utils.escapeHtml(String(auditId)) + '</span></td>';
 
       var dt = row.DateTime || row.Date || '';
-      html += '<td style="white-space:nowrap;font-size:12px">' + Utils.escapeHtml(Utils.formatDateTime(dt)) + '</td>';
+      html += '<td class="audit-dt-cell">' + Utils.escapeHtml(Utils.formatDateTime(dt)) + '</td>';
 
       var userName = row.UserName || row.User || '';
       var userEmail = row.Email || '';
       html += '<td><strong>' + Utils.escapeHtml(userName) + '</strong>';
-      if (userEmail) html += '<br><small style="color:var(--text-muted)">' + Utils.escapeHtml(userEmail) + '</small>';
+      if (userEmail) html += '<br><small class="audit-email">' + Utils.escapeHtml(userEmail) + '</small>';
       html += '</td>';
 
       var roleVal = row.Role || '-';
-      html += '<td><span class="badge badge-secondary" style="font-size:9px">' + Utils.escapeHtml(roleVal) + '</span></td>';
+      html += '<td><span class="badge badge-secondary badge-xs">' + Utils.escapeHtml(roleVal) + '</span></td>';
 
       html += '<td>' + Utils.escapeHtml(row.Department || '-') + '</td>';
 
@@ -292,10 +292,10 @@ var AuditTrail = (function() {
       var actIcon = actionIcons[act] || '';
       html += '<td>' + actIcon + '<span class="badge badge-secondary">' + Utils.escapeHtml(act) + '</span></td>';
 
-      html += '<td style="font-size:12px">' + Utils.escapeHtml(String(row.RecordID || '-')) + '</td>';
+      html += '<td class="audit-rec-id">' + Utils.escapeHtml(String(row.RecordID || '-')) + '</td>';
 
       var recName = row.RecordName || '-';
-      html += '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + Utils.escapeHtml(String(recName)) + '">' + Utils.escapeHtml(recName) + '</td>';
+      html += '<td class="audit-rec-name" title="' + Utils.escapeHtml(String(recName)) + '">' + Utils.escapeHtml(recName) + '</td>';
 
       var stat = row.Status || 'Success';
       var statClass = statusBadges[stat] || 'badge-secondary';
@@ -305,7 +305,7 @@ var AuditTrail = (function() {
       if (!remarks && row.OldValue && row.NewValue) {
         remarks = 'Changed from "' + row.OldValue + '" to "' + row.NewValue + '"';
       }
-      html += '<td style="max-width:200px;font-size:12px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + Utils.escapeHtml(remarks) + '">' + Utils.escapeHtml(remarks || '-') + '</td>';
+      html += '<td class="audit-remarks" title="' + Utils.escapeHtml(remarks) + '">' + Utils.escapeHtml(remarks || '-') + '</td>';
 
       html += '</tr>';
     });
@@ -317,7 +317,7 @@ var AuditTrail = (function() {
     html += '<div class="pagination-controls">';
     html += '<button class="btn btn-sm btn-secondary" ' + (p <= 1 ? 'disabled' : '') + ' onclick="AuditTrail.goPage(1)">&laquo;</button>';
     html += '<button class="btn btn-sm btn-secondary" ' + (p <= 1 ? 'disabled' : '') + ' onclick="AuditTrail.goPage(' + (p - 1) + ')">&lsaquo;</button>';
-    html += '<span style="padding:0 12px;font-size:13px">Page ' + p + ' of ' + totalPages + '</span>';
+    html += '<span class="audit-pg-text">Page ' + p + ' of ' + totalPages + '</span>';
     html += '<button class="btn btn-sm btn-secondary" ' + (p >= totalPages ? 'disabled' : '') + ' onclick="AuditTrail.goPage(' + (p + 1) + ')">&rsaquo;</button>';
     html += '<button class="btn btn-sm btn-secondary" ' + (p >= totalPages ? 'disabled' : '') + ' onclick="AuditTrail.goPage(' + totalPages + ')">&raquo;</button>';
     html += '</div></div>';
@@ -353,12 +353,12 @@ var AuditTrail = (function() {
       { label: 'User Agent', value: item.UserAgent || '-' }
     ];
 
-    var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+    var html = '<div class="audit-detail-grid">';
     fields.forEach(function(f) {
       if (f.value && f.value !== '-') {
-        html += '<div style="border:1px solid var(--border);border-radius:6px;padding:10px">' +
-          '<div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">' + Utils.escapeHtml(f.label) + '</div>' +
-          '<div style="font-size:13px;color:var(--text);word-break:break-all">' + Utils.escapeHtml(String(f.value)) + '</div>' +
+        html += '<div class="audit-detail-card">' +
+          '<div class="audit-detail-label">' + Utils.escapeHtml(f.label) + '</div>' +
+          '<div class="audit-detail-value">' + Utils.escapeHtml(String(f.value)) + '</div>' +
         '</div>';
       }
     });

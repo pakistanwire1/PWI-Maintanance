@@ -1,6 +1,7 @@
 var Asset = (function() {
   var state = { data: [], filtered: [], page: 1, search: '', editingId: null, machines: [], sections: [], departments: [] };
   var PAGE_SIZE = 10;
+  var _searchDebounce = null;
 
   function getFiltered() {
     var s = state.search.toLowerCase();
@@ -243,7 +244,26 @@ var Asset = (function() {
     init: function() { doShow(); },
     show: function() { doShow(); },
 
-    onSearch: function(val) { state.search = (val || '').trim(); state.page = 1; renderTable(); },
+    onSearch: function(val) {
+      state.search = (val || '').trim();
+      state.page = 1;
+      if (!state.search) {
+        load();
+        return;
+      }
+      if (_searchDebounce) clearTimeout(_searchDebounce);
+      _searchDebounce = setTimeout(function() {
+        Loader.show();
+        API.post('searchAssets', { query: state.search }).then(function(result) {
+          Loader.hide();
+          state.data = Array.isArray(result) ? result : [];
+          renderTable();
+        }).catch(function() {
+          Loader.hide();
+          Notify.error('Search failed');
+        });
+      }, 300);
+    },
     goToPage: function(p) { state.page = parseInt(p, 10) || 1; renderTable(); },
     prevPage: function() { if (state.page > 1) { state.page--; renderTable(); } },
     nextPage: function() { if (state.page < Math.ceil(state.filtered.length / PAGE_SIZE)) { state.page++; renderTable(); } },

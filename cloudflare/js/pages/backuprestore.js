@@ -107,7 +107,7 @@ var BackupRestore = (function() {
         '<div class="page-title-row">' +
           '<div>' +
             '<h2>Backup & Restore</h2>' +
-            '<p style="color:var(--text-muted);margin:4px 0 0;font-size:14px">Backup, restore, and manage your CMMS data</p>' +
+            '<p class="page-subtitle">Backup, restore, and manage your CMMS data</p>' +
           '</div>' +
           '<div class="page-actions">' +
             '<button class="btn btn-secondary" onclick="BackupRestore.refresh()">' + ICON_REFRESH + ' Refresh</button>' +
@@ -164,8 +164,8 @@ var BackupRestore = (function() {
               '<label>Backup Label (optional)</label>' +
               '<input type="text" class="form-control" id="brBackupLabel" placeholder="Enter a label for this backup" maxlength="100">' +
             '</div>' +
-            '<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-top:12px">' +
-              '<p style="color:var(--text-muted);font-size:13px;margin:0 0 8px">The following sheets will be backed up:</p>' +
+            '<div class="br-info-card" style="margin-top:12px">' +
+              '<p>The following sheets will be backed up:</p>' +
               '<div id="brSheetsList" style="color:var(--text);font-size:13px;line-height:1.8"></div>' +
             '</div>' +
           '</div>' +
@@ -183,8 +183,8 @@ var BackupRestore = (function() {
             '<button class="modal-close" onclick="BackupRestore.hideRestoreModal()">&times;</button>' +
           '</div>' +
           '<div class="modal-body">' +
-            '<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px">' +
-              '<p style="color:var(--danger);font-size:13px;margin:0;font-weight:500">Warning: Restoring a backup will overwrite all current data in your sheets. This action cannot be undone.</p>' +
+            '<div class="br-warning-box">' +
+              '<p>Warning: Restoring a backup will overwrite all current data in your sheets. This action cannot be undone.</p>' +
             '</div>' +
             '<div class="form-group">' +
               '<label>Select Backup to Restore</label>' +
@@ -207,8 +207,8 @@ var BackupRestore = (function() {
             '<button class="modal-close" onclick="BackupRestore.hideImportModal()">&times;</button>' +
           '</div>' +
           '<div class="modal-body">' +
-            '<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px">' +
-              '<p style="color:var(--danger);font-size:13px;margin:0;font-weight:500">Warning: Importing a backup may overwrite existing data. Ensure you are importing the correct backup file.</p>' +
+            '<div class="br-warning-box">' +
+              '<p>Warning: Importing a backup may overwrite existing data. Ensure you are importing the correct backup file.</p>' +
             '</div>' +
             '<div class="form-group">' +
               '<label>Select Backup File (.json)</label>' +
@@ -375,23 +375,23 @@ var BackupRestore = (function() {
     var labelEl = document.getElementById('brBackupLabel');
     if (labelEl) labelEl.value = '';
     var sheetsList = document.getElementById('brSheetsList');
-    if (sheetsList) sheetsList.innerHTML = '<span style="color:var(--text-muted)">Loading sheets...</span>';
+    if (sheetsList) sheetsList.innerHTML = '<span class="text-muted-sm">Loading sheets...</span>';
     showModal('brCreateModal');
     API.post('getBackupSheetsList', {})
       .then(function(data) {
         brSheets = data || [];
         var html = '';
         brSheets.forEach(function(name) {
-          html += '<div style="padding:4px 0;display:flex;align-items:center;gap:8px">' +
-            '<span style="color:var(--success)">&#10003;</span>' +
+          html += '<div class="br-sheet-item">' +
+            '<span class="br-sheet-check">&#10003;</span>' +
             '<span>' + Utils.escapeHtml(name) + '</span>' +
           '</div>';
         });
-        if (brSheets.length === 0) html = '<span style="color:var(--text-muted)">No sheets found</span>';
+        if (brSheets.length === 0) html = '<span class="text-muted-sm">No sheets found</span>';
         setHTML('brSheetsList', html);
       })
       .catch(function() {
-        setHTML('brSheetsList', '<span style="color:var(--danger)">Failed to load sheets list</span>');
+        setHTML('brSheetsList', '<span class="msg-error">Failed to load sheets list</span>');
       });
   }
 
@@ -560,13 +560,13 @@ var BackupRestore = (function() {
           var arr = sheets[name];
           if (Array.isArray(arr)) recordCount += arr.length;
         });
-        var html = '<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px">' +
-          '<h4 style="margin:0 0 8px;font-size:14px;color:var(--text)">Import Preview</h4>' +
-          '<div style="font-size:13px;color:var(--text-muted);line-height:1.8">' +
-            '<div>Backup ID: <strong style="color:var(--text)">' + Utils.escapeHtml(parsed.backupId || parsed.BackupID || '-') + '</strong></div>' +
-            '<div>Label: <strong style="color:var(--text)">' + Utils.escapeHtml(parsed.label || parsed.Label || '-') + '</strong></div>' +
-            '<div>Sheets: <strong style="color:var(--text)">' + sheetNames.length + '</strong></div>' +
-            '<div>Total Records: <strong style="color:var(--text)">' + recordCount + '</strong></div>' +
+        var html = '<div class="br-preview-card">' +
+          '<h4>Import Preview</h4>' +
+          '<div class="br-preview-body">' +
+            '<div>Backup ID: <strong>' + Utils.escapeHtml(parsed.backupId || parsed.BackupID || '-') + '</strong></div>' +
+            '<div>Label: <strong>' + Utils.escapeHtml(parsed.label || parsed.Label || '-') + '</strong></div>' +
+            '<div>Sheets: <strong>' + sheetNames.length + '</strong></div>' +
+            '<div>Total Records: <strong>' + recordCount + '</strong></div>' +
           '</div>' +
         '</div>';
         setHTML('brImportPreview', html);
@@ -575,7 +575,7 @@ var BackupRestore = (function() {
       } catch (ex) {
         Notify.error('Invalid JSON file');
         brImportData = null;
-        setHTML('brImportPreview', '<div style="color:var(--danger);font-size:13px;padding:8px">Invalid JSON format. Please check the file.</div>');
+        setHTML('brImportPreview', '<div class="msg-error" style="padding:8px">Invalid JSON format. Please check the file.</div>');
         var confirmBtn = document.getElementById('brImportConfirmBtn');
         if (confirmBtn) confirmBtn.disabled = true;
       }

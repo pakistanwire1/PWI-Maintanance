@@ -147,7 +147,7 @@ var Notifications = (function() {
             '<div class="view-grid" style="margin-top:16px">' +
               '<div class="view-section" style="grid-column:1/-1">' +
                 '<h4>Message</h4>' +
-                '<p id="notifViewMessage" style="color:var(--text);font-size:13px;line-height:1.5;white-space:pre-wrap">-</p>' +
+                '<p id="notifViewMessage" class="view-text" style="white-space:pre-wrap">-</p>' +
               '</div>' +
             '</div>' +
           '</div>' +

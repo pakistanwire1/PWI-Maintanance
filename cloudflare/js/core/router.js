@@ -1,6 +1,7 @@
 var Router = {
   pages: {},
   current: null,
+  _prevPage: null,
 
   register: function(name, handler) {
     Router.pages[name] = handler;
@@ -8,6 +9,16 @@ var Router = {
 
   navigate: function(page) {
     if (!page) page = 'dashboard';
+
+    if (typeof Session !== 'undefined' && !Session.isLoggedIn()) {
+      var loginEl = document.getElementById('loginPage');
+      var appEl = document.getElementById('appContainer');
+      if (loginEl) loginEl.style.display = 'block';
+      if (appEl) appEl.style.display = 'none';
+      try { window.location.hash = ''; } catch(e) {}
+      return;
+    }
+
     var handler = Router.pages[page];
     if (!handler) {
       page = 'dashboard';
@@ -20,6 +31,12 @@ var Router = {
 
     var content = document.getElementById('pageContent');
     if (!content) return;
+
+    try {
+      var prevHandler = Router.pages[Router._prevPage];
+      if (prevHandler && typeof prevHandler.destroy === 'function') prevHandler.destroy();
+    } catch(e) {}
+    Router._prevPage = page;
 
     try { history.pushState({ page: page }, '', '#' + page); } catch(e) {}
 

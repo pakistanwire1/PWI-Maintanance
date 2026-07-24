@@ -1,6 +1,7 @@
 var Machine = (function() {
   var state = { data: [], filtered: [], page: 1, search: '', editingId: null, sections: [], departments: [] };
   var PAGE_SIZE = 10;
+  var _searchDebounce = null;
 
   function container() { return document.getElementById('pageContent'); }
 
@@ -199,7 +200,27 @@ var Machine = (function() {
       loadDeptCache(function() { loadData(); });
     },
 
-    onSearch: function(val) { state.search = val || ''; applyFilter(); },
+    onSearch: function(val) {
+      state.search = val || '';
+      state.page = 1;
+      if (!state.search) {
+        loadData();
+        return;
+      }
+      if (_searchDebounce) clearTimeout(_searchDebounce);
+      _searchDebounce = setTimeout(function() {
+        Loader.show();
+        API.post('searchMachines', { query: state.search }).then(function(result) {
+          Loader.hide();
+          state.data = Array.isArray(result) ? result : [];
+          state.filtered = state.data.slice();
+          renderTable();
+        }).catch(function() {
+          Loader.hide();
+          Notify.error('Search failed');
+        });
+      }, 300);
+    },
     goToPage: function(p) { state.page = p; renderTable(); },
     prevPage: function() { if (state.page > 1) { state.page--; renderTable(); } },
     nextPage: function() { if (state.page < Math.ceil(state.filtered.length / PAGE_SIZE)) { state.page++; renderTable(); } },

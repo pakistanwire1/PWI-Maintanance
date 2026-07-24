@@ -31,7 +31,7 @@ var OpenJobCard = (function() {
       '<div id="openjobcardPage" class="page"><div class="card" style="max-width:860px;margin:0 auto">' +
         '<div class="card-header">' +
           '<div class="card-title">' +
-            '<span class="status-dot status-open" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 8px var(--primary-glow);vertical-align:middle;margin-right:8px"></span>' +
+            '<span class="status-dot status-open"></span>' +
             'Open New Job Card' +
           '</div>' +
         '</div>' +
@@ -85,7 +85,7 @@ var OpenJobCard = (function() {
           '<div class="form-group">' +
             '<label>' + ICON_CHAT + ' Complaint Description *</label>' +
             '<textarea name="ComplaintDescription" id="jcComplaintDesc" class="form-control" rows="4" placeholder="Describe the issue in detail..." required></textarea>' +
-            '<div style="display:flex;gap:6px;margin-top:4px">' +
+            '<div class="flex-row-sm">' +
               '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="OpenJobCard.addVoiceButton(\'jcComplaintDesc\')" title="Add voice input button">' +
                 ICON_MIC + ' Voice Input' +
               '</button>' +
@@ -124,13 +124,13 @@ var OpenJobCard = (function() {
             '</div>' +
           '</div>' +
           '<div class="form-group" style="margin-bottom:0">' +
-            '<small style="color:var(--text-muted);font-size:11px">' +
+            '<small class="jc-hint-text">' +
               'Job Card No will be auto-generated (e.g. JC-2026-000001). ' +
               'Status will be set to <strong>OPEN</strong>. ' +
               'Waiting Time will be <strong>00:00</strong>.' +
             '</small>' +
           '</div>' +
-          '<div class="card-actions" style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);justify-content:flex-end">' +
+          '<div class="card-actions jc-form-footer">' +
             '<button type="submit" class="btn btn-primary" id="jcSubmitBtn">' +
               ICON_BTN_SAVE + ' Save Job Card' +
             '</button>' +
@@ -418,7 +418,7 @@ var OpenJobCard = (function() {
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn btn-sm btn-secondary voice-input-added';
-      btn.style.cssText = 'font-size:11px;padding:3px 8px;margin-top:4px';
+      btn.className += ' btn-voice-sm';
       btn.title = 'Add voice input button';
       btn.innerHTML = ICON_MIC + ' Voice Input';
       btn.onclick = function() {

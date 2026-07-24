@@ -47,7 +47,7 @@ var StartedJobCard = (function() {
       '<div id="startjobcardPage" class="page"><div class="card">' +
         '<div class="card-header">' +
           '<div class="card-title">' +
-            '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--warning);box-shadow:0 0 8px rgba(245,158,11,0.4);vertical-align:middle;margin-right:8px"></span>' +
+            '<span class="status-dot status-progress"></span>' +
             'Start Job Card \u2014 Open Jobs' +
           '</div>' +
           '<div class="card-actions">' +
@@ -80,7 +80,7 @@ var StartedJobCard = (function() {
         '<div class="modal">' +
           '<div class="modal-header">' +
             '<div class="modal-title">' +
-              '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--warning);box-shadow:0 0 8px rgba(245,158,11,0.4);vertical-align:middle;margin-right:8px"></span>' +
+            '<span class="status-dot status-progress"></span>' +
               'Start Job \u2014 <span id="startJcRef"></span>' +
             '</div>' +
             '<button class="modal-close" onclick="StartedJobCard.hideModal()">&times;</button>' +
@@ -111,7 +111,7 @@ var StartedJobCard = (function() {
               '<div class="form-group">' +
                 '<label>Initial Remarks</label>' +
                 '<textarea name="InitialRemarks" id="startJcInitialRemarks" class="form-control" rows="3" placeholder="Initial assessment and observations..."></textarea>' +
-                '<div style="display:flex;gap:6px;margin-top:4px">' +
+                '<div class="flex-row-sm">' +
                   '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="StartedJobCard.addVoiceButton(\'startJcInitialRemarks\')">' +
                     ICON_MIC + ' Voice Input' +
                   '</button>' +

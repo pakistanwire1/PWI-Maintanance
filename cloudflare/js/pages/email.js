@@ -14,34 +14,34 @@ var EmailSettings = (function() {
               'Email Notification Settings' +
             '</div>' +
           '</div>' +
-          '<div class="card-body" style="padding:24px">' +
+          '<div class="card-body email-card-body">' +
             '<div class="settings-grid">' +
               '<div>' +
-                '<h3 style="margin-bottom:16px;font-size:15px">General Settings</h3>' +
+                '<h3 class="email-section-title">General Settings</h3>' +
 
-                '<div class="form-group" style="margin-bottom:14px">' +
+                '<div class="form-group email-form-group">' +
                   '<label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">' +
                     '<input type="checkbox" id="emailEnabled" onchange="EmailSettings.saveSetting(\'enabled\', this.checked)">' +
                     'Enable Email Notifications' +
                   '</label>' +
                 '</div>' +
 
-                '<div class="form-group" style="margin-bottom:14px">' +
+                '<div class="form-group email-form-group">' +
                   '<label class="form-label">Sender Name</label>' +
                   '<input type="text" class="form-control" id="emailSenderName" placeholder="CMMS Notification" onchange="EmailSettings.saveSetting(\'senderName\', this.value)">' +
                 '</div>' +
 
-                '<div class="form-group" style="margin-bottom:14px">' +
+                '<div class="form-group email-form-group">' +
                   '<label class="form-label">Reply-To Email</label>' +
                   '<input type="email" class="form-control" id="emailReplyTo" placeholder="noreply@cmms.com" onchange="EmailSettings.saveSetting(\'replyTo\', this.value)">' +
                 '</div>' +
 
-                '<div class="form-group" style="margin-bottom:14px">' +
+                '<div class="form-group email-form-group">' +
                   '<label class="form-label">Daily Summary Time</label>' +
                   '<input type="time" class="form-control" id="emailDailyTime" onchange="EmailSettings.saveSetting(\'dailySummaryTime\', this.value)">' +
                 '</div>' +
 
-                '<div class="form-group" style="margin-bottom:14px">' +
+                '<div class="form-group email-form-group">' +
                   '<label class="form-label">Weekly Summary Day</label>' +
                   '<select class="form-control" id="emailWeeklyDay" onchange="EmailSettings.saveSetting(\'weeklySummaryDay\', this.value)">' +
                     '<option value="Monday">Monday</option>' +
@@ -54,10 +54,10 @@ var EmailSettings = (function() {
                   '</select>' +
                 '</div>' +
 
-                '<hr style="margin:20px 0;border:none;border-top:1px solid var(--border)">' +
+                '<hr class="email-divider">' +
 
-                '<h3 style="margin-bottom:16px;font-size:15px">Actions</h3>' +
-                '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+                '<h3 class="email-section-title">Actions</h3>' +
+                '<div class="email-action-toolbar">' +
                   '<button class="btn btn-primary" onclick="EmailSettings.testEmail()">' +
                     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>' +
                     'Send Test Email' +
@@ -74,8 +74,8 @@ var EmailSettings = (function() {
               '</div>' +
 
               '<div>' +
-                '<h3 style="margin-bottom:16px;font-size:15px">Email Stats</h3>' +
-                '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">' +
+                '<h3 class="email-section-title">Email Stats</h3>' +
+                '<div class="email-stats-grid">' +
                   '<div class="stat-card stat-primary" style="cursor:default">' +
                     '<div class="stat-inner">' +
                       '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg></div>' +
@@ -96,8 +96,8 @@ var EmailSettings = (function() {
                   '</div>' +
                 '</div>' +
 
-                '<h3 style="margin-bottom:12px;font-size:15px">Email Logs</h3>' +
-                '<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">' +
+                '<h3 class="email-section-title" style="margin-bottom:12px">Email Logs</h3>' +
+                '<div class="email-log-toolbar">' +
                   '<select id="emailLogFilterModule" class="form-control" style="width:auto;min-width:120px" onchange="EmailSettings.refreshLogs()">' +
                     '<option value="">All Modules</option>' +
                     '<option value="JobCardOpened">Job Opened</option>' +
@@ -127,21 +127,21 @@ var EmailSettings = (function() {
                     ' Refresh' +
                   '</button>' +
                 '</div>' +
-                '<div style="border:1px solid var(--border);border-radius:var(--radius-md)">' +
-                  '<table style="width:100%;border-collapse:collapse;font-size:11px">' +
+                '<div class="email-table-wrap">' +
+                  '<table class="email-table">' +
                     '<thead>' +
                       '<tr>' +
-                        '<th style="padding:7px 8px;text-align:left;font-weight:600;color:var(--text-secondary);background:var(--bg-sidebar);border-bottom:1px solid var(--border);white-space:nowrap">ID</th>' +
-                        '<th style="padding:7px 8px;text-align:left;font-weight:600;color:var(--text-secondary);background:var(--bg-sidebar);border-bottom:1px solid var(--border);white-space:nowrap">Date/Time</th>' +
-                        '<th style="padding:7px 8px;text-align:left;font-weight:600;color:var(--text-secondary);background:var(--bg-sidebar);border-bottom:1px solid var(--border);white-space:nowrap">Recipient</th>' +
-                        '<th style="padding:7px 8px;text-align:left;font-weight:600;color:var(--text-secondary);background:var(--bg-sidebar);border-bottom:1px solid var(--border);white-space:nowrap">Subject</th>' +
-                        '<th style="padding:7px 8px;text-align:left;font-weight:600;color:var(--text-secondary);background:var(--bg-sidebar);border-bottom:1px solid var(--border);white-space:nowrap">Module</th>' +
-                        '<th style="padding:7px 8px;text-align:left;font-weight:600;color:var(--text-secondary);background:var(--bg-sidebar);border-bottom:1px solid var(--border);white-space:nowrap">Status</th>' +
-                        '<th style="padding:7px 8px;text-align:left;font-weight:600;color:var(--text-secondary);background:var(--bg-sidebar);border-bottom:1px solid var(--border);white-space:nowrap">Error</th>' +
+                        '<th>ID</th>' +
+                        '<th>Date/Time</th>' +
+                        '<th>Recipient</th>' +
+                        '<th>Subject</th>' +
+                        '<th>Module</th>' +
+                        '<th>Status</th>' +
+                        '<th>Error</th>' +
                       '</tr>' +
                     '</thead>' +
                     '<tbody id="emailLogsBody">' +
-                      '<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--text-muted)">Loading...</td></tr>' +
+                      '<tr><td colspan="7" class="email-loading">Loading...</td></tr>' +
                     '</tbody>' +
                   '</table>' +
                 '</div>' +
@@ -203,7 +203,7 @@ var EmailSettings = (function() {
     var moduleFilter = (document.getElementById('emailLogFilterModule') || {}).value || '';
     var statusFilter = (document.getElementById('emailLogFilterStatus') || {}).value || '';
     var tbody = document.getElementById('emailLogsBody');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--text-muted)">Loading email records...</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="email-loading">Loading email records...</td></tr>';
 
     API.post('emailGetLogs', { filters: { module: moduleFilter || undefined, status: statusFilter || undefined } })
       .then(function(logs) {
@@ -211,7 +211,7 @@ var EmailSettings = (function() {
         renderLogs(logsData);
       })
       .catch(function() {
-        if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--text-muted)">Failed to load. <button class="btn btn-xs btn-secondary" onclick="EmailSettings.refreshLogs()">Retry</button></td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="email-loading">Failed to load. <button class="btn btn-xs btn-secondary" onclick="EmailSettings.refreshLogs()">Retry</button></td></tr>';
       });
   }
 
@@ -219,7 +219,7 @@ var EmailSettings = (function() {
     var tbody = document.getElementById('emailLogsBody');
     if (!tbody) return;
     if (!logs || logs.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--text-muted)">No Email Records Found</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="email-loading">No Email Records Found</td></tr>';
       return;
     }
     var html = '';
@@ -229,17 +229,17 @@ var EmailSettings = (function() {
       var l = logs[i];
       var statusClass = l.Status === 'Sent' ? 'badge badge-success' : (l.Status === 'Failed' ? 'badge badge-danger' : 'badge badge-warning');
       html += '<tr>' +
-        '<td style="padding:6px 8px;border-bottom:1px solid var(--border);font-family:monospace;font-size:10px">' + Utils.escapeHtml(l.EmailID || '') + '</td>' +
-        '<td style="padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap">' + Utils.escapeHtml((l.DateTime || '').substring(0, 19)) + '</td>' +
-        '<td style="padding:6px 8px;border-bottom:1px solid var(--border)">' + Utils.escapeHtml(l.Recipient || '') + '</td>' +
-        '<td style="padding:6px 8px;border-bottom:1px solid var(--border);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + Utils.escapeHtml(l.Subject || '') + '">' + Utils.escapeHtml((l.Subject || '').substring(0, 50)) + '</td>' +
-        '<td style="padding:6px 8px;border-bottom:1px solid var(--border)">' + Utils.escapeHtml(l.Module || '') + '</td>' +
-        '<td style="padding:6px 8px;border-bottom:1px solid var(--border)"><span class="' + statusClass + '">' + Utils.escapeHtml(l.Status || '') + '</span></td>' +
-        '<td style="padding:6px 8px;border-bottom:1px solid var(--border);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--danger)" title="' + Utils.escapeHtml(l.ErrorMessage || '') + '">' + Utils.escapeHtml((l.ErrorMessage || '').substring(0, 40)) + '</td>' +
+        '<td class="email-td-id">' + Utils.escapeHtml(l.EmailID || '') + '</td>' +
+        '<td class="email-td-nowrap">' + Utils.escapeHtml((l.DateTime || '').substring(0, 19)) + '</td>' +
+        '<td>' + Utils.escapeHtml(l.Recipient || '') + '</td>' +
+        '<td class="email-td-truncate" title="' + Utils.escapeHtml(l.Subject || '') + '">' + Utils.escapeHtml((l.Subject || '').substring(0, 50)) + '</td>' +
+        '<td>' + Utils.escapeHtml(l.Module || '') + '</td>' +
+        '<td><span class="' + statusClass + '">' + Utils.escapeHtml(l.Status || '') + '</span></td>' +
+        '<td class="email-td-truncate-sm email-td-danger" title="' + Utils.escapeHtml(l.ErrorMessage || '') + '">' + Utils.escapeHtml((l.ErrorMessage || '').substring(0, 40)) + '</td>' +
         '</tr>';
     }
     if (logs.length > maxLogs) {
-      html += '<tr><td colspan="7" style="padding:8px;text-align:center;color:var(--text-muted);font-size:11px">Showing ' + maxLogs + ' of ' + logs.length + ' logs</td></tr>';
+      html += '<tr class="email-footer-row"><td colspan="7">Showing ' + maxLogs + ' of ' + logs.length + ' logs</td></tr>';
     }
     tbody.innerHTML = html;
   }

@@ -62,7 +62,7 @@ var AllJobCards = (function() {
       '<div id="allJobcardsPage" class="page"><div class="card">' +
         '<div class="card-header">' +
           '<div class="card-title">' +
-            '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 8px var(--primary-glow);vertical-align:middle;margin-right:8px"></span>' +
+            '<span class="status-dot status-open"></span>' +
             'Job Cards' +
           '</div>' +
           '<div class="card-actions">' +
@@ -441,7 +441,7 @@ var AllJobCards = (function() {
 
     html +=
       '</div>' +
-      '<div class="view-status-bar"><span class="badge badge-' + displayBadge + '" style="font-size:13px;padding:5px 14px">Status: ' + Utils.escapeHtml(displayStatus) + '</span></div>';
+      '<div class="view-status-bar"><span class="badge badge-' + displayBadge + ' jc-status-lg">Status: ' + Utils.escapeHtml(displayStatus) + '</span></div>';
 
     var body = document.getElementById('allJcViewBody');
     if (body) body.innerHTML = html;

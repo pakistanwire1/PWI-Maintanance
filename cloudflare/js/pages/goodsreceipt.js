@@ -154,7 +154,7 @@ var GoodsReceipt = (function() {
             '<div class="view-grid" style="margin-top:16px">' +
               '<div class="view-section" style="grid-column:1/-1">' +
                 '<h4>Remarks</h4>' +
-                '<p id="grViewRemarks" style="color:var(--text);font-size:13px;line-height:1.5">-</p>' +
+                '<p id="grViewRemarks" class="view-text">-</p>' +
               '</div>' +
             '</div>' +
           '</div>' +

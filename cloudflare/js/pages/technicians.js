@@ -1,6 +1,7 @@
 var Technician = (function() {
   var state = { data: [], page: 1, search: '', editingId: null };
   var PAGE_SIZE = 10;
+  var _searchDebounce = null;
 
   function filteredData() {
     var q = state.search.toLowerCase();
@@ -168,7 +169,26 @@ var Technician = (function() {
       getData();
     },
 
-    onSearch: function(val) { state.search = val || ''; state.page = 1; renderTable(); },
+    onSearch: function(val) {
+      state.search = val || '';
+      state.page = 1;
+      if (!state.search) {
+        getData();
+        return;
+      }
+      if (_searchDebounce) clearTimeout(_searchDebounce);
+      _searchDebounce = setTimeout(function() {
+        Loader.show();
+        API.post('searchTechnicians', { query: state.search }).then(function(result) {
+          Loader.hide();
+          state.data = Array.isArray(result) ? result : [];
+          renderTable();
+        }).catch(function() {
+          Loader.hide();
+          Notify.error('Search failed');
+        });
+      }, 300);
+    },
     goToPage: function(p) { state.page = p; renderTable(); },
     prevPage: function() { if (state.page > 1) { state.page--; renderTable(); } },
     nextPage: function() { if (state.page < Math.ceil(filteredData().length / PAGE_SIZE)) { state.page++; renderTable(); } },

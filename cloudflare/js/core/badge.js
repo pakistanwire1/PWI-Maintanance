@@ -17,9 +17,6 @@ var Badge = {
       .then(function(data) {
         if (!data || data.success === false) return;
         Badge._updateSidebar(data);
-        if (typeof Dashboard !== 'undefined' && Router.current === 'dashboard') {
-          Dashboard.load();
-        }
       })
       .catch(function(err) {
         console.error('Badge.refresh failed:', err);

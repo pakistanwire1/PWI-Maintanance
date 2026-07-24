@@ -48,7 +48,7 @@ var ClosedJobCard = (function() {
       '<div id="closejobcardPage" class="page"><div class="card">' +
         '<div class="card-header">' +
           '<div class="card-title">' +
-            '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 8px var(--primary-glow);vertical-align:middle;margin-right:8px"></span>' +
+            '<span class="status-dot status-open"></span>' +
             'Close Job Card \u2014 Running Jobs' +
           '</div>' +
           '<div class="card-actions">' +
@@ -77,7 +77,7 @@ var ClosedJobCard = (function() {
         '<div class="modal modal-wide">' +
           '<div class="modal-header">' +
             '<div class="modal-title">' +
-              '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.4);vertical-align:middle;margin-right:8px"></span>' +
+              '<span class="status-dot status-completed"></span>' +
               'Close Job \u2014 <span id="closeJcRef"></span>' +
             '</div>' +
             '<button class="modal-close" onclick="ClosedJobCard.hideModal()">&times;</button>' +
@@ -112,7 +112,7 @@ var ClosedJobCard = (function() {
                 '<div class="form-group">' +
                   '<label>Root Cause *</label>' +
                   '<input type="text" name="RootCause" id="closeJcRootCause" class="form-control" placeholder="Root cause of failure" required>' +
-                  '<div style="display:flex;gap:6px;margin-top:4px">' +
+                  '<div class="flex-row-sm">' +
                     '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="ClosedJobCard.addVoiceButton(\'closeJcRootCause\')">' +
                       ICON_MIC + ' Voice Input' +
                     '</button>' +
@@ -128,7 +128,7 @@ var ClosedJobCard = (function() {
               '<div class="form-group">' +
                 '<label>Corrective Action *</label>' +
                 '<textarea name="CorrectiveAction" id="closeJcCorrectiveAction" class="form-control" rows="3" placeholder="Actions performed to resolve the issue..." required></textarea>' +
-                '<div style="display:flex;gap:6px;margin-top:4px">' +
+                '<div class="flex-row-sm">' +
                   '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="ClosedJobCard.addVoiceButton(\'closeJcCorrectiveAction\')">' +
                     ICON_MIC + ' Voice Input' +
                   '</button>' +
@@ -137,7 +137,7 @@ var ClosedJobCard = (function() {
               '<div class="form-group">' +
                 '<label>Final Remarks</label>' +
                 '<textarea name="FinalRemarks" id="closeJcFinalRemarks" class="form-control" rows="2" placeholder="Additional notes..."></textarea>' +
-                '<div style="display:flex;gap:6px;margin-top:4px">' +
+                '<div class="flex-row-sm">' +
                   '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="ClosedJobCard.addVoiceButton(\'closeJcFinalRemarks\')">' +
                     ICON_MIC + ' Voice Input' +
                   '</button>' +
@@ -161,7 +161,7 @@ var ClosedJobCard = (function() {
                 '</div>' +
               '</div>' +
               '<div style="margin-bottom:0">' +
-                '<small style="color:var(--text-muted);font-size:11px">' +
+                '<small class="jc-hint-text">' +
                   'Close Date & Time will be captured automatically. ' +
                   'All durations calculated automatically. ' +
                   'Status will change from <strong>Running</strong> to <strong>Pending (Review)</strong>.' +
@@ -475,7 +475,7 @@ var ClosedJobCard = (function() {
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn btn-sm btn-secondary voice-input-added';
-      btn.style.cssText = 'font-size:11px;padding:3px 8px;margin-top:4px';
+      btn.className += ' btn-voice-sm';
       btn.title = 'Add voice input button';
       btn.innerHTML = ICON_MIC + ' Voice Input';
       btn.onclick = function() {

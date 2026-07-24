@@ -755,7 +755,8 @@
   /* ===== PAGE CONTENT ===== */
   .page-content { flex: 1; padding: 22px; min-height: 0; }
 
-  .page { animation: fadeIn 0.3s ease; min-height: 100%; }
+  .page { display: none; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; min-height: 100%; }
 
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -1275,6 +1276,8 @@
     gap: 14px;
   }
   .loading-overlay.show { display: flex; }
+  .loading-overlay .spinner { width: 36px; height: 36px; border-width: 3px; }
+  .loading-overlay > div { font-size: 14px; color: var(--text-muted); }
   .loading-gif {
     max-width: 240px;
     max-height: 240px;
@@ -1496,14 +1499,14 @@
   /* ===== STATUS DOTS ===== */
   .status-dot {
     display: inline-block;
-    width: 8px; height: 8px;
+    width: 10px; height: 10px;
     border-radius: 50%;
-    margin-right: 6px;
+    margin-right: 8px;
     vertical-align: middle;
   }
-  .status-dot.status-open { background: var(--primary); box-shadow: 0 0 6px var(--primary-glow); }
-  .status-dot.status-progress { background: var(--warning); box-shadow: 0 0 6px rgba(245,158,11,0.4); }
-  .status-dot.status-completed { background: var(--success); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+  .status-dot.status-open { background: var(--primary); box-shadow: 0 0 8px var(--primary-glow); }
+  .status-dot.status-progress { background: var(--warning); box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+  .status-dot.status-completed { background: var(--success); box-shadow: 0 0 8px rgba(34,197,94,0.4); }
 
   @media (max-width: 768px) {
     .workflow-stepper { padding: 12px 14px; }
@@ -2198,4 +2201,63 @@
     .stat-card .stat-info h3 { font-size: 18px; }
     .filter-btn { padding: 5px 8px; font-size: 10px; }
   }
+
+  /* ===== Extracted Inline Styles ===== */
+
+  .text-muted-sm { color: var(--text-muted); font-size: 13px; margin: 0; }
+  .text-xs-hint { color: var(--text-muted); font-size: 11px; }
+
+  .br-info-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; }
+  .br-info-card p { color: var(--text-muted); font-size: 13px; margin: 0; line-height: 1.8; }
+  .br-info-card strong { color: var(--text); }
+  .br-sheet-item { padding: 4px 0; display: flex; align-items: center; gap: 8px; }
+  .br-sheet-check { color: var(--success); }
+  .br-warning-box { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px; }
+  .br-warning-box p { color: var(--danger); font-size: 13px; margin: 0; font-weight: 500; }
+  .br-preview-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; }
+  .br-preview-card h4 { margin: 0 0 8px; font-size: 14px; color: var(--text); }
+  .br-preview-card .br-preview-body { font-size: 13px; color: var(--text-muted); line-height: 1.8; }
+  .br-preview-card .br-preview-body strong { color: var(--text); }
+
+  .audit-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .audit-detail-card { border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
+  .audit-detail-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+  .audit-detail-value { font-size: 13px; color: var(--text); word-break: break-all; }
+  .audit-pg-text { padding: 0 12px; font-size: 13px; }
+  .audit-email { color: var(--text-muted); }
+  .audit-dt-cell { white-space: nowrap; font-size: 12px; }
+  .audit-rec-id { font-size: 12px; }
+  .audit-rec-name { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .audit-remarks { max-width: 200px; font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .email-card-body { padding: 24px; }
+  .email-divider { margin: 20px 0; border: none; border-top: 1px solid var(--border); }
+  .email-section-title { margin-bottom: 16px; font-size: 15px; }
+  .email-form-group { margin-bottom: 14px; }
+  .email-toolbar { margin-bottom: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .email-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  .email-table-wrap { border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .email-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .email-table th { padding: 7px 8px; text-align: left; font-weight: 600; color: var(--text-secondary); background: var(--bg-sidebar); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .email-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  .email-td-id { font-family: monospace; font-size: 10px; }
+  .email-td-nowrap { white-space: nowrap; }
+  .email-td-truncate { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .email-td-truncate-sm { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .email-td-danger { color: var(--danger); }
+  .email-loading { padding: 30px; text-align: center; color: var(--text-muted); }
+  .email-footer-row td { padding: 8px; text-align: center; color: var(--text-muted); font-size: 11px; }
+
+  .jc-hint-text { color: var(--text-muted); font-size: 11px; }
+  .jc-form-footer { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); justify-content: flex-end; }
+  .jc-radio-text { font-size: 14px; font-weight: 500; }
+  .jc-desc-value { font-weight: 400; font-size: 12px; }
+  .jc-status-lg { font-size: 13px; padding: 5px 14px; }
+
+  .page-subtitle { color: var(--text-muted); margin: 4px 0 0; font-size: 14px; }
+  .view-text { color: var(--text); font-size: 13px; line-height: 1.5; }
+  .msg-error { color: var(--danger); font-size: 13px; }
+  .btn-voice-sm { font-size: 11px; padding: 3px 8px; margin-top: 4px; }
+  .flex-row-sm { display: flex; gap: 6px; margin-top: 4px; }
+  .flex-row-input { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
 

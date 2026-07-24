@@ -41,7 +41,7 @@ var ApproveJobCards = (function() {
         '<div class="card">' +
           '<div class="card-header">' +
             '<div class="card-title">' +
-              '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.4);vertical-align:middle;margin-right:8px"></span>' +
+              '<span class="status-dot status-completed"></span>' +
               'Approve Jobs' +
             '</div>' +
             '<div class="card-actions">' +
@@ -66,7 +66,7 @@ var ApproveJobCards = (function() {
         '<div class="modal modal-wide">' +
           '<div class="modal-header">' +
             '<div class="modal-title">' +
-              '<span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.4);vertical-align:middle;margin-right:8px"></span>' +
+              '<span class="status-dot status-completed"></span>' +
               'Approve Job \u2014 <span id="jcaRef"></span>' +
             '</div>' +
             '<button class="modal-close" onclick="ApproveJobCards.hideModal()">&times;</button>' +
@@ -87,14 +87,14 @@ var ApproveJobCards = (function() {
                   '<div class="ts-stat"><span class="ts-stat-label">Total Downtime</span><span class="ts-stat-value" id="jcaBreakdown">0h 0m</span></div>' +
                 '</div>' +
                 '<div class="ts-stats">' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Description</span><span class="ts-stat-value" id="jcaDesc" style="font-weight:400;font-size:12px">\u2014</span></div>' +
+                  '<div class="ts-stat"><span class="ts-stat-label">Description</span><span class="ts-stat-value jc-desc-value" id="jcaDesc">\u2014</span></div>' +
                 '</div>' +
               '</div>' +
               '<div class="form-group">' +
                 '<label>Decision *</label>' +
                 '<div class="radio-group" style="display:flex;gap:24px;margin-top:8px">' +
-                  '<label class="radio-inline" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="approveDecision" value="approve" checked><span style="font-size:14px;font-weight:500">Approve</span></label>' +
-                  '<label class="radio-inline" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="approveDecision" value="return"><span style="font-size:14px;font-weight:500">Return to Technician</span></label>' +
+                  '<label class="radio-inline" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="approveDecision" value="approve" checked><span class="jc-radio-text">Approve</span></label>' +
+                  '<label class="radio-inline" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="approveDecision" value="return"><span class="jc-radio-text">Return to Technician</span></label>' +
                 '</div>' +
               '</div>' +
               '<div class="form-group">' +
