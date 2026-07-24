@@ -1040,10 +1040,10 @@
     color: var(--text);
     transform: translateY(-1px);
   }
-  .icon-btn-primary, .btn-primary { color: var(--primary); }
-  .icon-btn-danger, .btn-danger { color: var(--danger); }
-  .icon-btn-success, .btn-success { color: var(--success); }
-  .icon-btn-warning, .btn-warning { color: var(--warning); }
+  .icon-btn-primary { color: var(--primary); }
+  .icon-btn-danger { color: var(--danger); }
+  .icon-btn-success { color: var(--success); }
+  .icon-btn-warning { color: var(--warning); }
   .icon-btn-primary:hover, .btn-icon.btn-primary:hover { background: var(--primary-light); color: var(--primary); }
   .icon-btn-danger:hover, .btn-icon.btn-danger:hover { background: var(--danger); color: #fff; }
   .icon-btn-success:hover, .btn-icon.btn-success:hover { background: var(--success-bg); color: var(--success); }
