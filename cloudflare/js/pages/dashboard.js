@@ -48,7 +48,7 @@ var Dashboard = {
       '<div class="stat-card stat-danger"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="stat-info"><h3 id="statOutOfStock">0</h3><p>Out of Stock</p></div></div></div>' +
       '<div class="stat-card stat-success"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="stat-info"><h3 id="statPMCompliance">0%</h3><p>PM Compliance</p></div></div></div>' +
       '<div class="stat-card stat-primary" onclick="navigateTo(\'qr\')" style="cursor:pointer"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg></div><div class="stat-info"><h3 id="statQRGenerated">0</h3><p>QR Codes</p></div></div></div>' +
-      '<div class="stat-card stat-success"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div><div class="stat-info"><h3 id="statStockValue">$0</h3><p>Inventory Value</p></div></div></div>' +
+       '<div class="stat-card stat-success"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div><div class="stat-info"><h3 id="statStockValue">Rs. 0</h3><p>Inventory Value</p></div></div></div>' +
     '</div>' +
 
     '<div class="dashboard-grid" style="margin-bottom:16px;grid-template-columns:1fr">' +
@@ -128,7 +128,7 @@ var Dashboard = {
 
     API.post('getNotifications', {})
       .then(function(result) {
-        var items = Array.isArray(result) ? result : (result.data || []);
+        var items = Array.isArray(result) ? result : (result.data || result.records || []);
         Dashboard._renderNotifications(items.slice(0, 10));
         var unread = 0, critical = 0, approval = 0;
         for (var i = 0; i < items.length; i++) {
@@ -173,7 +173,7 @@ var Dashboard = {
       var dt = n.CreatedDateTime || '';
       var displayDt = dt ? Utils.timeAgo(dt) : '';
       html +=
-        '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);background:var(--bg-input);' + (isUnread ? 'border-left:3px solid var(--primary);background:var(--primary-light);' : '') + 'cursor:pointer" onclick="navigateTo(\'notifications\')">' +
+        '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);background:var(--bg-input);' + (isUnread ? 'border-left:3px solid var(--primary);background:var(--primary-light);' : '') + 'cursor:pointer" onclick="Dashboard._handleNotifClick(\'' + (n.NotificationID || '') + '\',\'' + (n.ActionURL || '') + '\')">' +
           '<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:' + tc.bg + ';color:' + tc.color + ';font-size:12px;font-weight:700">' + notifType.charAt(0) + '</div>' +
           '<div style="flex:1;min-width:0">' +
             '<div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + Utils.escapeHtml(n.Title) + '</div>' +
@@ -251,6 +251,24 @@ var Dashboard = {
     if (el) el.textContent = v;
   },
 
+  _formatCurrency: function(val) {
+    var v = Math.round(val || 0);
+    if (v >= 1000000000) return 'Rs. ' + (v / 1000000000).toFixed(1) + 'B';
+    if (v >= 1000000) return 'Rs. ' + (v / 1000000).toFixed(1) + 'M';
+    if (v >= 1000) return 'Rs. ' + (v / 1000).toFixed(0) + 'K';
+    return 'Rs. ' + v.toLocaleString('en-PK');
+  },
+
+  _handleNotifClick: function(id, actionUrl) {
+    if (id) {
+      API.post('markNotificationRead', { id: id }).catch(function() {});
+    }
+    if (actionUrl) {
+      try { eval(actionUrl); } catch(e) {}
+    }
+    Dashboard.loadNotifications();
+  },
+
   _renderStats: function(data) {
     Dashboard._setText('statMachines', data.totalMachines);
     Dashboard._setText('statRunningMachines', data.runningMachines);
@@ -275,7 +293,7 @@ var Dashboard = {
     Dashboard._setText('statOutOfStock', data.outOfStockParts);
     Dashboard._setText('statPMCompliance', (data.pmCompliance || 0) + '%');
     Dashboard._setText('statQRGenerated', data.qrGenerated);
-    Dashboard._setText('statStockValue', '$' + (data.totalStockValue || 0).toFixed(2));
+    Dashboard._setText('statStockValue', Dashboard._formatCurrency(data.totalStockValue));
   },
 
   _kpiFormatHours: function(minutes) {
