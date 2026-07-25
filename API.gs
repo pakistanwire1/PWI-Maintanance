@@ -360,42 +360,69 @@ function apiGetUsers(d) {
   });
 }
 
+var ALIAS_FIELDS = ['Status', 'DateTime', 'OpenTime', 'StartTime', 'CloseTime', 'BreakdownTime', 'DateCreated', 'Remarks', 'PartsUsed', 'ActualWorkingTime', 'Asset'];
+
+var CF_UNUSED_FIELDS = ['Section', 'CreatedBy', 'CreatedAt', 'AssignedTechnicianIDs', 'ComplaintByCode', 'ComplaintByEmail', 'StartedBy', 'MaintenanceTeam', 'InitialRemarks', 'ClosedBy', 'PendingDateTime', 'PendingBy', 'PendingRemarks', 'UpdatedBy', 'UpdatedAt'];
+
+var CF_STRIP_FIELDS = ALIAS_FIELDS.concat(CF_UNUSED_FIELDS);
+
+function leanRecord(jc) {
+  var lean = {};
+  for (var key in jc) {
+    var v = jc[key];
+    if (v !== '' && v !== null && v !== undefined) {
+      lean[key] = v;
+    }
+  }
+  return lean;
+}
+
+function cfLeanRecord(jc) {
+  var lean = {};
+  for (var key in jc) {
+    if (CF_STRIP_FIELDS.indexOf(key) > -1) continue;
+    var v = jc[key];
+    if (v !== '' && v !== null && v !== undefined) {
+      lean[key] = v;
+    }
+  }
+  return lean;
+}
+
 function apiGetJobCards(d) {
   var jobCards = getJobCards();
-  Logger.log('[DIAG apiGetJobCards] getJobCards() returned: ' + jobCards.length + ' records');
   if (d.status) {
-    Logger.log('[DIAG apiGetJobCards] Filtering by status: ' + d.status);
     jobCards = jobCards.filter(function(jc) {
       return (jc.CurrentStatus || '').toLowerCase() === d.status.toLowerCase();
     });
-    Logger.log('[DIAG apiGetJobCards] After status filter: ' + jobCards.length + ' records');
   }
   if (d.search) {
-    Logger.log('[DIAG apiGetJobCards] Filtering by search: ' + d.search);
     var q = d.search.toLowerCase();
     jobCards = jobCards.filter(function(jc) {
       return (jc.JobCardNo || '').toLowerCase().indexOf(q) > -1 ||
              (jc.ComplaintDescription || '').toLowerCase().indexOf(q) > -1 ||
              (jc.Machine || '').toLowerCase().indexOf(q) > -1;
     });
-    Logger.log('[DIAG apiGetJobCards] After search filter: ' + jobCards.length + ' records');
   }
-  var page = parseInt(d.page) || 1;
-  var pageSize = parseInt(d.pageSize) || 50;
-  var start = (page - 1) * pageSize;
-  Logger.log('[DIAG apiGetJobCards] page=' + page + ', pageSize=' + pageSize + ', start=' + start + ', returning=' + Math.min(pageSize, jobCards.length - start) + ' records, total=' + jobCards.length);
-  var statusCounts = {};
-  jobCards.forEach(function(jc) {
-    var s = (jc.CurrentStatus || 'EMPTY').toUpperCase();
-    statusCounts[s] = (statusCounts[s] || 0) + 1;
-  });
-  Logger.log('[DIAG apiGetJobCards] Status distribution: ' + JSON.stringify(statusCounts));
+  var page = parseInt(d.page) || 0;
+  var pageSize = parseInt(d.pageSize) || 0;
+  if (page > 0 && pageSize > 0) {
+    var start = (page - 1) * pageSize;
+    var paged = jobCards.slice(start, start + pageSize).map(cfLeanRecord);
+    return {
+      records: paged,
+      total: jobCards.length,
+      page: page,
+      pageSize: pageSize,
+      totalPages: Math.ceil(jobCards.length / pageSize)
+    };
+  }
   return {
-    records: jobCards.slice(start, start + pageSize),
+    records: jobCards.map(cfLeanRecord),
     total: jobCards.length,
-    page: page,
-    pageSize: pageSize,
-    totalPages: Math.ceil(jobCards.length / pageSize)
+    page: 1,
+    pageSize: jobCards.length,
+    totalPages: 1
   };
 }
 
@@ -499,3 +526,5 @@ function apiGetNotifications(d) {
   };
 }
 
+function diagJobCards() {
+}

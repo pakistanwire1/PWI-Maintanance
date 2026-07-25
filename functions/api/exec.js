@@ -1,4 +1,4 @@
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbx_dfOWHc54Fa-qA7UGKswPkkWxT_Y7fSe7zHk8rPbKcOqm_B_JvtLlNXxjLF8vEBWw/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzvvysRrSrakAVUZ-2e1ndCiWk6M6HU-j8Xtp5NmC9i5SLhEv1FDP-2P5hsxWYyoYwj/exec';
 
 var CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -21,36 +21,12 @@ function handleOptions() {
 }
 
 async function handleRequest(context) {
-  var ts = new Date().toISOString();
   try {
     var request = context.request;
     var url = new URL(request.url);
 
-    console.log('[' + ts + '] API function invoked: ' + request.method + ' ' + url.pathname + url.search);
-
     if (url.searchParams.get('health') === '1') {
-      console.log('[' + ts + '] Health check requested');
-      return jsonResponse({ status: 'ok', gas_url: GAS_URL ? 'set' : 'MISSING', ts: ts }, 200);
-    }
-
-    if (url.searchParams.get('diag') === '1') {
-      console.log('[' + ts + '] Diagnostic requested, testing GAS reachability...');
-      var gasTestOk = false;
-      var gasTestErr = '';
-      try {
-        var controller = new AbortController();
-        var tid = setTimeout(function() { controller.abort(); }, 10000);
-        var testResp = await fetch(GAS_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'getServerTimestamp', token: '', data: {} }), signal: controller.signal });
-        clearTimeout(tid);
-        var testBody = await testResp.text();
-        gasTestOk = true;
-        console.log('[' + ts + '] GAS reachability test: OK, status=' + testResp.status + ', body=' + testBody.slice(0, 200));
-        return jsonResponse({ status: 'ok', gas_reachable: true, gas_status: testResp.status, gas_body: testBody.slice(0, 300), ts: ts }, 200);
-      } catch(e) {
-        gasTestErr = e.message || String(e);
-        console.error('[' + ts + '] GAS reachability test FAILED: ' + gasTestErr);
-        return jsonResponse({ status: 'error', gas_reachable: false, gas_error: gasTestErr, ts: ts }, 200);
-      }
+      return jsonResponse({ status: 'ok', gas_url: GAS_URL ? 'set' : 'MISSING' }, 200);
     }
 
     var gasUrl = GAS_URL + url.search;
@@ -63,7 +39,6 @@ async function handleRequest(context) {
 
     if (request.method === 'POST') {
       var body = await request.text();
-      console.log('[' + ts + '] Forwarding POST to GAS, body length=' + (body ? body.length : 0));
       fetchOpts.headers['Content-Type'] = 'text/plain;charset=utf-8';
       fetchOpts.body = body;
     }
@@ -74,38 +49,18 @@ async function handleRequest(context) {
       var tid = setTimeout(function() { controller.abort(); }, GAS_TIMEOUT_MS);
       gasResponse = await fetch(gasUrl, fetchOpts);
       clearTimeout(tid);
-      console.log('[' + ts + '] GAS responded: status=' + gasResponse.status);
     } catch (fetchErr) {
       var errMsg = fetchErr.name === 'AbortError'
         ? 'GAS backend timed out after ' + (GAS_TIMEOUT_MS / 1000) + 's'
         : 'GAS backend unreachable: ' + fetchErr.message;
-      console.error('[' + ts + '] ' + errMsg);
-      return jsonResponse({ success: false, error: errMsg, ts: ts }, 502);
+      return jsonResponse({ success: false, error: errMsg }, 502);
     }
 
     var responseBody;
     try {
       responseBody = await gasResponse.text();
-      console.log('[' + ts + '] GAS response body length=' + (responseBody ? responseBody.length : 0));
-      if (responseBody && responseBody.charAt(0) === '{') {
-        try {
-          var parsed = JSON.parse(responseBody);
-          if (parsed.data && parsed.data.records) {
-            console.log('[' + ts + '] DIAG: API response records count=' + parsed.data.records.length + ', total=' + parsed.data.total);
-            if (parsed.data.records.length > 0) {
-              var statusDist = {};
-              parsed.data.records.forEach(function(jc) {
-                var s = (jc.Status || jc.CurrentStatus || 'EMPTY').toLowerCase();
-                statusDist[s] = (statusDist[s] || 0) + 1;
-              });
-              console.log('[' + ts + '] DIAG: Status distribution from GAS: ' + JSON.stringify(statusDist));
-            }
-          }
-        } catch(e) {}
-      }
     } catch (textErr) {
-      console.error('[' + ts + '] Failed to read GAS response: ' + textErr.message);
-      return jsonResponse({ success: false, error: 'Failed to read GAS response: ' + textErr.message, ts: ts }, 502);
+      return jsonResponse({ success: false, error: 'Failed to read GAS response: ' + textErr.message }, 502);
     }
 
     var ct = gasResponse.headers.get('content-type') || '';
@@ -120,8 +75,7 @@ async function handleRequest(context) {
       headers: respHeaders
     });
   } catch (err) {
-    console.error('[' + ts + '] Proxy error: ' + err.message);
-    return jsonResponse({ success: false, error: 'Proxy error: ' + err.message, ts: new Date().toISOString() }, 500);
+    return jsonResponse({ success: false, error: 'Proxy error: ' + err.message }, 500);
   }
 }
 

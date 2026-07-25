@@ -54,7 +54,7 @@ var API = {
   },
 
   diag: function() {
-    return fetch(API.baseUrl + '?diag=1')
+    return fetch(API.baseUrl + '?health=1')
       .then(function(resp) { return resp.json(); });
   }
 };

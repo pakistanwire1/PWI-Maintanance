@@ -140,7 +140,7 @@ var ApproveJobCards = (function() {
     if (deptEl) deptEl.innerHTML = '<option value="">All Departments</option>';
     var depts = [];
     state.data.forEach(function(jc) {
-      var s = (jc.Status || '').toLowerCase();
+      var s = (jc.Status || jc.CurrentStatus || '').toLowerCase();
       var as = (jc.ApprovalStatus || '').toLowerCase();
       if (s === 'pending' && as !== 'approved') {
         if (jc.Department && depts.indexOf(jc.Department) === -1) depts.push(jc.Department);
@@ -155,7 +155,7 @@ var ApproveJobCards = (function() {
     var userDept = getUserDept();
     var isAdminUser = Session.getUser() && (Session.getUser().role === 'Admin' || Session.getUser().isSystemAdmin);
     return state.data.filter(function(jc) {
-      var s = (jc.Status || '').toLowerCase();
+      var s = (jc.Status || jc.CurrentStatus || '').toLowerCase();
       var as = (jc.ApprovalStatus || '').toLowerCase();
       if (s !== 'pending' || as === 'approved') return false;
       if (!isAdminUser && userDept && jc.Department !== userDept) return false;
@@ -203,7 +203,7 @@ var ApproveJobCards = (function() {
       { key: 'AssignedTechnician', label: 'Technician' },
       { key: 'WaitingTime', label: 'Waiting', format: function(val) { return formatDuration(val); } },
       { key: 'WorkingTime', label: 'Working', format: function(val) { return formatDuration(val); } },
-      { key: 'BreakdownTime', label: 'Breakdown', format: function(val) { return formatDuration(val); } }
+      { key: '_breakdown', label: 'Breakdown', format: function(val, row) { return formatDuration(row.BreakdownTime || row.Downtime || row.TotalDuration || 0); } }
     ];
 
     var html = '<div class="table-container"><table><thead><tr>';
@@ -276,7 +276,7 @@ var ApproveJobCards = (function() {
     el = document.getElementById('jcaDesc'); if (el) el.textContent = desc;
     el = document.getElementById('jcaWaiting'); if (el) el.textContent = formatDuration(item.WaitingTime);
     el = document.getElementById('jcaWorking'); if (el) el.textContent = formatDuration(item.WorkingTime);
-    el = document.getElementById('jcaBreakdown'); if (el) el.textContent = formatDuration(item.BreakdownTime);
+    el = document.getElementById('jcaBreakdown'); if (el) el.textContent = formatDuration(item.BreakdownTime || item.Downtime || item.TotalDuration || 0);
     el = document.getElementById('jcaReturnReason'); if (el) el.value = '';
 
     var radios = document.querySelectorAll('input[name="approveDecision"]');
