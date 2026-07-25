@@ -1,4 +1,4 @@
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbzA0ySCshIXXtisMslcfpfdIcIMLYqb4vY-lf3ka-BH6BDg51-I-K4ZwyPv8goD8uc0/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbx_dfOWHc54Fa-qA7UGKswPkkWxT_Y7fSe7zHk8rPbKcOqm_B_JvtLlNXxjLF8vEBWw/exec';
 
 var CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -86,7 +86,23 @@ async function handleRequest(context) {
     var responseBody;
     try {
       responseBody = await gasResponse.text();
-      console.log('[' + ts + '] GAS response body length=' + (responseBody ? responseBody.length : 0) + ', first 200=' + (responseBody ? responseBody.slice(0, 200) : 'null'));
+      console.log('[' + ts + '] GAS response body length=' + (responseBody ? responseBody.length : 0));
+      if (responseBody && responseBody.charAt(0) === '{') {
+        try {
+          var parsed = JSON.parse(responseBody);
+          if (parsed.data && parsed.data.records) {
+            console.log('[' + ts + '] DIAG: API response records count=' + parsed.data.records.length + ', total=' + parsed.data.total);
+            if (parsed.data.records.length > 0) {
+              var statusDist = {};
+              parsed.data.records.forEach(function(jc) {
+                var s = (jc.Status || jc.CurrentStatus || 'EMPTY').toLowerCase();
+                statusDist[s] = (statusDist[s] || 0) + 1;
+              });
+              console.log('[' + ts + '] DIAG: Status distribution from GAS: ' + JSON.stringify(statusDist));
+            }
+          }
+        } catch(e) {}
+      }
     } catch (textErr) {
       console.error('[' + ts + '] Failed to read GAS response: ' + textErr.message);
       return jsonResponse({ success: false, error: 'Failed to read GAS response: ' + textErr.message, ts: ts }, 502);

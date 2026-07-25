@@ -362,22 +362,34 @@ function apiGetUsers(d) {
 
 function apiGetJobCards(d) {
   var jobCards = getJobCards();
+  Logger.log('[DIAG apiGetJobCards] getJobCards() returned: ' + jobCards.length + ' records');
   if (d.status) {
+    Logger.log('[DIAG apiGetJobCards] Filtering by status: ' + d.status);
     jobCards = jobCards.filter(function(jc) {
       return (jc.CurrentStatus || '').toLowerCase() === d.status.toLowerCase();
     });
+    Logger.log('[DIAG apiGetJobCards] After status filter: ' + jobCards.length + ' records');
   }
   if (d.search) {
+    Logger.log('[DIAG apiGetJobCards] Filtering by search: ' + d.search);
     var q = d.search.toLowerCase();
     jobCards = jobCards.filter(function(jc) {
       return (jc.JobCardNo || '').toLowerCase().indexOf(q) > -1 ||
              (jc.ComplaintDescription || '').toLowerCase().indexOf(q) > -1 ||
              (jc.Machine || '').toLowerCase().indexOf(q) > -1;
     });
+    Logger.log('[DIAG apiGetJobCards] After search filter: ' + jobCards.length + ' records');
   }
   var page = parseInt(d.page) || 1;
   var pageSize = parseInt(d.pageSize) || 50;
   var start = (page - 1) * pageSize;
+  Logger.log('[DIAG apiGetJobCards] page=' + page + ', pageSize=' + pageSize + ', start=' + start + ', returning=' + Math.min(pageSize, jobCards.length - start) + ' records, total=' + jobCards.length);
+  var statusCounts = {};
+  jobCards.forEach(function(jc) {
+    var s = (jc.CurrentStatus || 'EMPTY').toUpperCase();
+    statusCounts[s] = (statusCounts[s] || 0) + 1;
+  });
+  Logger.log('[DIAG apiGetJobCards] Status distribution: ' + JSON.stringify(statusCounts));
   return {
     records: jobCards.slice(start, start + pageSize),
     total: jobCards.length,

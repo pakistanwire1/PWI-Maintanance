@@ -149,7 +149,20 @@ var AllJobCards = (function() {
   function loadData() {
     Loader.show();
     API.post('getJobCards', {}).then(function(data) {
+      console.log('[DIAG] API raw response type:', typeof data, 'isArray:', Array.isArray(data));
+      console.log('[DIAG] API response keys:', data ? Object.keys(data) : 'null');
+      if (data && data.records) console.log('[DIAG] data.records length:', data.records.length);
+      if (data && data.total !== undefined) console.log('[DIAG] data.total:', data.total);
       state.data = Array.isArray(data) ? data : (data && Array.isArray(data.records) ? data.records : []);
+      console.log('[DIAG] state.data.length after assignment:', state.data.length);
+      if (state.data.length > 0) {
+        var statusCounts = {};
+        state.data.forEach(function(jc) {
+          var s = (jc.Status || jc.CurrentStatus || 'EMPTY').toLowerCase();
+          statusCounts[s] = (statusCounts[s] || 0) + 1;
+        });
+        console.log('[DIAG] Status distribution in state.data:', JSON.stringify(statusCounts));
+      }
       Loader.hide();
       populateDeptFilter();
       updateTabs();
@@ -214,6 +227,7 @@ var AllJobCards = (function() {
       if (tab === 'approved' && as !== 'approved') return;
       list.push(jc);
     });
+    console.log('[DIAG] getFilteredData: tab=' + tab + ', state.data.length=' + state.data.length + ', after-tab-filter=' + list.length);
 
     if (priorityFilter) list = list.filter(function(jc) { return jc.Priority === priorityFilter; });
     if (deptFilter) list = list.filter(function(jc) { return jc.Department === deptFilter; });
