@@ -499,22 +499,69 @@ var Dashboard = {
     if (el) el.textContent = Dashboard._kpiFormatDays(minutes);
   },
 
+  _chartLoadRetries: 0,
+  _chartLoadTimer: null,
+  _chartLoadMaxRetries: 3,
+  _chartLoadTimeoutMs: 10000,
+
   _drawCharts: function(data) {
     if (!Dashboard.chartsLoaded) {
       if (typeof google !== 'undefined' && google.charts) {
+        Dashboard._startChartLoadWithTimeout(data);
         google.charts.load('current', { packages: ['corechart'] });
         google.charts.setOnLoadCallback(function() {
+          Dashboard._clearChartLoadTimer();
           Dashboard.chartsLoaded = true;
+          Dashboard._chartLoadRetries = 0;
           Dashboard._doDrawCharts(data);
         });
       } else {
         Dashboard._loadGoogleCharts(function() {
+          Dashboard._clearChartLoadTimer();
           Dashboard.chartsLoaded = true;
+          Dashboard._chartLoadRetries = 0;
           Dashboard._doDrawCharts(data);
         });
       }
     } else {
       Dashboard._doDrawCharts(data);
+    }
+  },
+
+  _startChartLoadWithTimeout: function(data) {
+    Dashboard._clearChartLoadTimer();
+    Dashboard._chartLoadTimer = setTimeout(function() {
+      if (Dashboard.chartsLoaded) return;
+      if (Dashboard._chartLoadRetries < Dashboard._chartLoadMaxRetries) {
+        Dashboard._chartLoadRetries++;
+        console.log('[Dashboard] Google Charts load timeout, retry ' + Dashboard._chartLoadRetries + '/' + Dashboard._chartLoadMaxRetries);
+        Dashboard._loadGoogleCharts(function() {
+          Dashboard._clearChartLoadTimer();
+          Dashboard.chartsLoaded = true;
+          Dashboard._chartLoadRetries = 0;
+          Dashboard._doDrawCharts(data);
+        });
+      } else {
+        Dashboard._clearChartLoadTimer();
+        console.error('[Dashboard] Google Charts failed to load after ' + Dashboard._chartLoadMaxRetries + ' retries');
+        Dashboard._showChartError();
+      }
+    }, Dashboard._chartLoadTimeoutMs);
+  },
+
+  _clearChartLoadTimer: function() {
+    if (Dashboard._chartLoadTimer) {
+      clearTimeout(Dashboard._chartLoadTimer);
+      Dashboard._chartLoadTimer = null;
+    }
+  },
+
+  _showChartError: function() {
+    var ids = ['chartJobStatus', 'chartPriority', 'chartMTTR', 'chartMTBF', 'chartMonthlyJobs', 'chartBreakdown', 'chartWaitingTime', 'chartDowntime', 'chartMonthlyMaintenance'];
+    var msg = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;margin-bottom:8px;opacity:0.4"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><div>Charts could not be loaded</div><div style="font-size:11px;margin-top:4px;opacity:0.6">Check your connection or try refreshing</div></div>';
+    for (var i = 0; i < ids.length; i++) {
+      var el = document.getElementById(ids[i]);
+      if (el && el.textContent.indexOf('Loading chart') > -1) el.innerHTML = msg;
     }
   },
 
@@ -524,14 +571,33 @@ var Dashboard = {
       google.charts.setOnLoadCallback(callback);
       return;
     }
+    var existingScript = document.querySelector('script[src*="gstatic.com/charts/loader.js"]');
+    if (existingScript) {
+      var checkGoogle = function(attempts) {
+        if (typeof google !== 'undefined' && google.charts) {
+          google.charts.load('current', { packages: ['corechart'] });
+          google.charts.setOnLoadCallback(callback);
+        } else if (attempts < 20) {
+          setTimeout(function() { checkGoogle(attempts + 1); }, 250);
+        } else {
+          console.error('[Dashboard] Google Charts loader found but google.charts not available');
+        }
+      };
+      checkGoogle(0);
+      return;
+    }
     var script = document.createElement('script');
     script.src = 'https://www.gstatic.com/charts/loader.js';
     script.onload = function() {
-      google.charts.load('current', { packages: ['corechart'] });
-      google.charts.setOnLoadCallback(callback);
+      if (typeof google !== 'undefined' && google.charts) {
+        google.charts.load('current', { packages: ['corechart'] });
+        google.charts.setOnLoadCallback(callback);
+      } else {
+        console.error('[Dashboard] loader.js loaded but google.charts not defined');
+      }
     };
     script.onerror = function() {
-      console.log('Google Charts failed to load');
+      console.error('[Dashboard] Failed to load Google Charts from CDN');
     };
     document.head.appendChild(script);
   },
@@ -539,7 +605,13 @@ var Dashboard = {
   _doDrawCharts: function(data) {
     try {
       if (typeof google === 'undefined' || !google.visualization) {
-        console.log('Google Charts not available');
+        console.warn('[Dashboard] google.visualization not available, will retry');
+        if (Dashboard._chartLoadRetries < Dashboard._chartLoadMaxRetries) {
+          Dashboard._chartLoadRetries++;
+          setTimeout(function() { Dashboard._doDrawCharts(data); }, 500);
+        } else {
+          Dashboard._showChartError();
+        }
         return;
       }
       var c = data.charts || {};
@@ -565,7 +637,8 @@ var Dashboard = {
       Dashboard._drawDowntime(c.downtime || [], months, animCfg, tooltipStyle);
       Dashboard._drawMonthlyMaintenance(c.monthlyMaintenance || [], months, animCfg, tooltipStyle);
     } catch (e) {
-      console.log('Chart error:', e);
+      console.error('[Dashboard] Chart error:', e);
+      Dashboard._showChartError();
     }
   },
 
