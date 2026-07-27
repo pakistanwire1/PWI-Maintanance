@@ -713,7 +713,7 @@ function doDrawCharts(data) {
           mttrData.addColumn({ type: 'string', role: 'tooltip', p: { html: true } });
           for (var mi2 = 0; mi2 < months.length; mi2++) {
             var avgTip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;color:#94A3B8">Average MTTR</div><div>' + stats.avg.toFixed(1) + ' hours</div></div>';
-            mttrData.setCell(mi2, 2, stats.avg, avgTip);
+            mttrData.setCell(mi2, 3, stats.avg, avgTip);
           }
           mttrOptions.colors.push('#94A3B8');
           mttrOptions.lineDashStyle = [6, 4];

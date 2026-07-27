@@ -724,7 +724,7 @@ var Dashboard = {
       dt.addColumn({ type: 'string', role: 'tooltip', p: { html: true } });
       for (var i = 0; i < months.length; i++) {
         var avgTip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;color:#94A3B8">Average MTTR</div><div>' + stats.avg.toFixed(1) + ' hours</div></div>';
-        dt.setCell(i, 2, stats.avg, avgTip);
+        dt.setCell(i, 3, stats.avg, avgTip);
       }
       opts.colors.push('#94A3B8');
       opts.lineDashStyle = [6, 4];

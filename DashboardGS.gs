@@ -270,6 +270,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
     var breakdownJobCount = 0;
     var breakdownClosedCount = 0;
     var breakdownClosedRepairMinutes = 0;
+    var breakdownTypeDowntimeMinutes = 0;
     var breakdownMaintenanceCount = 0;
     var preventiveMaintenanceCount = 0;
 
@@ -294,14 +295,16 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
       deptJobCounts[n.dept] = (deptJobCounts[n.dept] || 0) + 1;
 
-      if (n.isClosed) {
-        breakdownJobCount++;
-        breakdownClosedCount++;
-        breakdownClosedRepairMinutes += n.repairMins;
-      }
-
       var bdType = (n.raw.BreakdownType || '').toLowerCase();
-      if (bdType === 'breakdown maintenance') breakdownMaintenanceCount++;
+      if (bdType === 'breakdown maintenance') {
+        breakdownMaintenanceCount++;
+        if (n.isClosed) {
+          breakdownJobCount++;
+          breakdownClosedCount++;
+          breakdownClosedRepairMinutes += n.repairMins;
+        }
+        breakdownTypeDowntimeMinutes += n.downtimeMins;
+      }
       else if (bdType === 'preventive maintenance') preventiveMaintenanceCount++;
     }
 
@@ -320,7 +323,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
     var mttr = breakdownClosedCount > 0 ? Math.round((breakdownClosedRepairMinutes / breakdownClosedCount / 60) * 100) / 100 : null;
 
-    var totalRunningHours = Math.max(0, rangeHours - totalDowntimeHours);
+    var totalRunningHours = Math.max(0, rangeHours - (breakdownTypeDowntimeMinutes / 60));
     var mtbf = breakdownJobCount > 0 ? Math.round((totalRunningHours / breakdownJobCount) * 100) / 100 : null;
 
     var availability = (totalWorkingMinutes + totalDowntimeMinutes) > 0 ? Math.round((totalWorkingMinutes / (totalWorkingMinutes + totalDowntimeMinutes)) * 10000) / 100 : 0;
@@ -394,6 +397,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
       var periodBreakdownCount = 0;
       var periodBreakdownClosedCount = 0;
       var periodBreakdownRepairMins = 0;
+      var periodBreakdownTypeDownMins = 0;
       var periodBreakdownMaintCount = 0;
       var periodPreventiveMaintCount = 0;
 
@@ -415,14 +419,16 @@ function getDashboardData(filter, userDepartment, userEmail) {
           periodWorkMins += n.workingMins;
           periodDownMins += n.downtimeMins;
 
-          if (n.isClosed) {
-            periodBreakdownCount++;
-            periodBreakdownClosedCount++;
-            periodBreakdownRepairMins += n.repairMins;
-          }
-
           var bdType = (n.raw.BreakdownType || '').toLowerCase();
-          if (bdType === 'breakdown maintenance') periodBreakdownMaintCount++;
+          if (bdType === 'breakdown maintenance') {
+            periodBreakdownMaintCount++;
+            if (n.isClosed) {
+              periodBreakdownCount++;
+              periodBreakdownClosedCount++;
+              periodBreakdownRepairMins += n.repairMins;
+            }
+            periodBreakdownTypeDownMins += n.downtimeMins;
+          }
           else if (bdType === 'preventive maintenance') periodPreventiveMaintCount++;
         }
       }
@@ -440,8 +446,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
       var monthMttrVal = periodBreakdownClosedCount > 0 ? Math.round((periodBreakdownRepairMins / periodBreakdownClosedCount / 60) * 100) / 100 : null;
 
-      var periodDowntimeHours = periodDownMins / 60;
-      var periodUptimeHours = Math.max(0, (periodMs / 3600000) - periodDowntimeHours);
+      var periodUptimeHours = Math.max(0, (periodMs / 3600000) - (periodBreakdownTypeDownMins / 60));
       var monthMtbfVal = periodBreakdownCount > 0 ? Math.round((periodUptimeHours / periodBreakdownCount) * 100) / 100 : null;
 
       chartMttr.push(monthMttrVal);
@@ -483,7 +488,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
     console.log('SUM RepairTime   = ' + totalRepairMinutes + ' min  (' + durationToDisplay(totalRepairMinutes) + ')');
     console.log('SUM Downtime     = ' + totalDowntimeMinutes + ' min  (' + durationToDisplay(totalDowntimeMinutes) + ')');
     console.log('MTTR = ' + (mttr !== null ? mttr + ' hrs' : 'N/A') + ' (breakdownClosedCount=' + breakdownClosedCount + ', repairMins=' + breakdownClosedRepairMinutes + ')');
-    console.log('MTBF = ' + (mtbf !== null ? mtbf + ' hrs' : 'N/A') + ' (breakdownJobCount=' + breakdownJobCount + ', runningHours=' + totalRunningHours + ')');
+    console.log('MTBF = ' + (mtbf !== null ? mtbf + ' hrs' : 'N/A') + ' (breakdownJobCount=' + breakdownJobCount + ', runningHours=' + totalRunningHours + ', bdDowntimeMins=' + breakdownTypeDowntimeMinutes + ')');
     console.log('Availability = ' + availability + '%');
     if (totalWaitingMinutes === 0 && filteredJobCount > 0) {
       console.log('[DASHBOARD WARNING] WaitingTime SUM is 0 but there are ' + filteredJobCount + ' filtered records.');
