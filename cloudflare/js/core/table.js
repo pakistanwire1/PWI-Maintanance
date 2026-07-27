@@ -87,17 +87,8 @@ var Table = {
 
       if (result.totalPages > 1) {
         html += '<div class="pagination" id="' + containerId + '-pagination">';
-        html += '<button class="btn-sm" ' + (result.page <= 1 ? 'disabled' : '') + ' onclick="' + (options.onPrev || '') + '">‹</button>';
-
-        for (var i = 1; i <= result.totalPages; i++) {
-          if (result.totalPages <= 7 || Math.abs(i - result.page) <= 2 || i === 1 || i === result.totalPages) {
-            html += '<button class="btn-sm ' + (i === result.page ? 'active' : '') + '" onclick="' + (options.onPageClick || '').replace('{page}', i) + '">' + i + '</button>';
-          } else if (Math.abs(i - result.page) === 3) {
-            html += '<span class="pagination-ellipsis">…</span>';
-          }
-        }
-
-        html += '<button class="btn-sm" ' + (result.page >= result.totalPages ? 'disabled' : '') + ' onclick="' + (options.onNext || '') + '">›</button>';
+        html += '<button class="btn-sm" ' + (result.page <= 1 ? 'disabled' : '') + ' onclick="' + (options.onPrev || '') + '">‹ Prev</button>';
+        html += '<button class="btn-sm" ' + (result.page >= result.totalPages ? 'disabled' : '') + ' onclick="' + (options.onNext || '') + '">Next ›</button>';
         html += '</div>';
       }
 

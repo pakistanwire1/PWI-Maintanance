@@ -135,7 +135,9 @@ function loadPendingJobCardsData() {
   showLoading(true);
   google.script.run
     .withSuccessHandler(function(data) {
-      pendingJcData = data || [];
+      pendingJcData = (data || []).filter(function(jc) {
+        return (jc.ApprovalStatus || '').toLowerCase() !== 'approved';
+      });
       showLoading(false);
       populatePendingJcSelects();
       renderPendingJc();

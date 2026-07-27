@@ -140,9 +140,8 @@ var ApproveJobCards = (function() {
     if (deptEl) deptEl.innerHTML = '<option value="">All Departments</option>';
     var depts = [];
     state.data.forEach(function(jc) {
-      var s = (jc.Status || jc.CurrentStatus || '').toLowerCase();
       var as = (jc.ApprovalStatus || '').toLowerCase();
-      if (s === 'pending' && as !== 'approved') {
+      if (as === 'approved') {
         if (jc.Department && depts.indexOf(jc.Department) === -1) depts.push(jc.Department);
       }
     });
@@ -155,9 +154,8 @@ var ApproveJobCards = (function() {
     var userDept = getUserDept();
     var isAdminUser = Session.getUser() && (Session.getUser().role === 'Admin' || Session.getUser().isSystemAdmin);
     return state.data.filter(function(jc) {
-      var s = (jc.Status || jc.CurrentStatus || '').toLowerCase();
       var as = (jc.ApprovalStatus || '').toLowerCase();
-      if (s !== 'pending' || as === 'approved') return false;
+      if (as !== 'approved') return false;
       if (!isAdminUser && userDept && jc.Department !== userDept) return false;
       if (dept && jc.Department !== dept) return false;
       if (query) {

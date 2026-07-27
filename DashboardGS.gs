@@ -283,7 +283,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
       totalDowntimeMinutes += n.downtimeMins;
 
       if (n.isApproved) { approvedJobs++; }
-      else if (n.isPendingApproval) { pendingApprovalJobs++; }
+      else if (n.isPending) { pendingApprovalJobs++; }
       else if (n.isOpen) { openJobs++; waitingJobs++; }
       else if (n.isRunning) { runningJobs++; }
       else if (n.isClosed) { closedJobs++; }

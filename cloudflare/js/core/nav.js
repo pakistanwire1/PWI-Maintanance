@@ -189,7 +189,8 @@ var Nav = {
       filtered = items.filter(function(n) { return (n.ReadStatus || '').toLowerCase() === 'read'; });
     }
     var countEl = document.getElementById('notifPanelCount');
-    if (countEl) countEl.textContent = filtered.length + ' notification' + (filtered.length !== 1 ? 's' : '');
+    var unreadCount = items.filter(function(n) { return (n.ReadStatus || '').toLowerCase() !== 'read'; }).length;
+    if (countEl) countEl.textContent = unreadCount + ' unread notification' + (unreadCount !== 1 ? 's' : '');
     if (!filtered || filtered.length === 0) {
       list.innerHTML = '<div class="notification-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><p>No notifications</p></div>';
       if (footer) footer.innerHTML = '';

@@ -1532,15 +1532,11 @@ function renderTable(data, columns, actions, page, pageSize, containerId) {
   html += '</tbody></table></div>';
 
   if (totalPages > 1) {
-    var pageFn = containerId.charAt(0).toUpperCase() + containerId.slice(1) + 'Page';
     html += '<div class="pagination">' +
       '<div class="pagination-info">Showing ' + (start + 1) + ' to ' + end + ' of ' + data.length + ' entries</div>' +
       '<div class="pagination-btns">' +
-      '<button onclick="changePage(\'' + containerId + '\',' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>Prev</button>';
-    for (var p = 1; p <= totalPages; p++) {
-      html += '<button class="' + (p === page ? 'active' : '') + '" onclick="changePage(\'' + containerId + '\',' + p + ')">' + p + '</button>';
-    }
-    html += '<button onclick="changePage(\'' + containerId + '\',' + (page + 1) + ')" ' + (page >= totalPages ? 'disabled' : '') + '>Next</button>' +
+      '<button onclick="changePage(\'' + containerId + '\',' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>Prev</button>' +
+      '<button onclick="changePage(\'' + containerId + '\',' + (page + 1) + ')" ' + (page >= totalPages ? 'disabled' : '') + '>Next</button>' +
       '</div></div>';
   }
   container.innerHTML = html;
@@ -1951,7 +1947,8 @@ function renderNotifications() {
   if (!list) return;
   var filtered = getFilteredNotifications();
   var countEl = document.getElementById('notifPanelCount');
-  if (countEl) countEl.textContent = filtered.length + ' notification' + (filtered.length !== 1 ? 's' : '');
+  var unreadCount = notifications.filter(function(n) { return (n.ReadStatus || '').toLowerCase() !== 'read'; }).length;
+  if (countEl) countEl.textContent = unreadCount + ' unread notification' + (unreadCount !== 1 ? 's' : '');
   if (filtered.length === 0) {
     list.innerHTML =
       '<div class="notification-empty">' +

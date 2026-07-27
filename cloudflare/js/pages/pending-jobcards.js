@@ -168,7 +168,8 @@ var PendingJobCards = (function() {
       var records = Array.isArray(data) ? data : (data && Array.isArray(data.records) ? data.records : []);
       state.data = records.filter(function(jc) {
         var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
-        return s === 'pending';
+        var as = (jc.ApprovalStatus || '').toLowerCase();
+        return s === 'pending' && as !== 'approved';
       });
       Loader.hide();
       populateFilters();
