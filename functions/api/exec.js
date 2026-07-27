@@ -67,7 +67,8 @@ async function handleRequest(context) {
     var isJson = ct.indexOf('application/json') > -1 || (responseBody && responseBody.charAt(0) === '{');
 
     var respHeaders = Object.assign({}, CORS_HEADERS, {
-      'Content-Type': isJson ? 'application/json; charset=utf-8' : ct || 'text/html; charset=utf-8'
+      'Content-Type': isJson ? 'application/json; charset=utf-8' : ct || 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store, no-cache, must-revalidate'
     });
 
     return new Response(responseBody, {

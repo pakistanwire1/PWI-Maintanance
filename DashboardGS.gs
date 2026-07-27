@@ -302,8 +302,8 @@ function getDashboardData(filter, userDepartment, userEmail) {
           breakdownJobCount++;
           breakdownClosedCount++;
           breakdownClosedRepairMinutes += n.repairMins;
+          breakdownTypeDowntimeMinutes += n.downtimeMins;
         }
-        breakdownTypeDowntimeMinutes += n.downtimeMins;
       }
       else if (bdType === 'preventive maintenance') preventiveMaintenanceCount++;
     }
@@ -325,6 +325,40 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
     var totalRunningHours = Math.max(0, rangeHours - (breakdownTypeDowntimeMinutes / 60));
     var mtbf = breakdownJobCount > 0 ? Math.round((totalRunningHours / breakdownJobCount) * 100) / 100 : null;
+
+    console.log('');
+    console.log('===== P11.32 MTBF DEBUG =====');
+    console.log('breakdownMaintenanceCount=' + breakdownMaintenanceCount);
+    console.log('breakdownClosedCount=' + breakdownClosedCount);
+    console.log('breakdownJobCount=' + breakdownJobCount);
+    console.log('breakdownClosedRepairMinutes=' + breakdownClosedRepairMinutes);
+    console.log('breakdownTypeDowntimeMinutes=' + breakdownTypeDowntimeMinutes);
+    console.log('totalWorkingMinutes=' + totalWorkingMinutes);
+    console.log('totalDowntimeMinutes=' + totalDowntimeMinutes);
+    console.log('rangeHours=' + rangeHours);
+    console.log('totalRunningHours=' + totalRunningHours);
+    console.log('mtbf=' + mtbf);
+    console.log('mttr=' + mttr);
+    var bdDebugJobs = [];
+    for (var di = 0; di < filtered.length; di++) {
+      var dn = filtered[di];
+      var dBdType = (dn.raw.BreakdownType || '').toLowerCase();
+      if (dBdType === 'breakdown maintenance') {
+        bdDebugJobs.push({
+          JobCardNo: dn.raw.JobCardNo,
+          CurrentStatus: dn.raw.CurrentStatus || dn.raw.Status,
+          ApprovalStatus: dn.raw.ApprovalStatus,
+          isClosed: dn.isClosed,
+          isPending: dn.isPending,
+          isApproved: dn.isApproved,
+          isPendingApproval: dn.isPendingApproval,
+          downtimeMins: dn.downtimeMins,
+          repairMins: dn.repairMins,
+          workingMins: dn.workingMins
+        });
+      }
+    }
+    console.log('BD_JOBS=' + JSON.stringify(bdDebugJobs));
 
     var availability = (totalWorkingMinutes + totalDowntimeMinutes) > 0 ? Math.round((totalWorkingMinutes / (totalWorkingMinutes + totalDowntimeMinutes)) * 10000) / 100 : 0;
 
@@ -426,8 +460,8 @@ function getDashboardData(filter, userDepartment, userEmail) {
               periodBreakdownCount++;
               periodBreakdownClosedCount++;
               periodBreakdownRepairMins += n.repairMins;
+              periodBreakdownTypeDownMins += n.downtimeMins;
             }
-            periodBreakdownTypeDownMins += n.downtimeMins;
           }
           else if (bdType === 'preventive maintenance') periodPreventiveMaintCount++;
         }
@@ -532,6 +566,27 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
     console.log('===== RETURN VALUES =====');
     console.log('totalWaitingTimeMinutes=' + totalWaitingMinutes + ' totalWorkingTimeMinutes=' + totalWorkingMinutes + ' totalRepairTimeMinutes=' + totalRepairMinutes + ' totalDowntimeMinutes=' + totalDowntimeMinutes);
+
+    console.log('');
+    console.log('===== P11.32 PENDING APPROVAL DEBUG =====');
+    console.log('pendingApprovalJobs=' + pendingApprovalJobs);
+    console.log('approvedJobs=' + approvedJobs);
+    console.log('closedJobs=' + closedJobs);
+    console.log('openJobs=' + openJobs);
+    console.log('runningJobs=' + runningJobs);
+    var allStatuses = [];
+    for (var si = 0; si < filtered.length; si++) {
+      allStatuses.push({
+        JobCardNo: filtered[si].raw.JobCardNo,
+        CurrentStatus: filtered[si].raw.CurrentStatus || filtered[si].raw.Status,
+        ApprovalStatus: filtered[si].raw.ApprovalStatus,
+        isClosed: filtered[si].isClosed,
+        isPending: filtered[si].isPending,
+        isApproved: filtered[si].isApproved,
+        isPendingApproval: filtered[si].isPendingApproval
+      });
+    }
+    console.log('ALL_JOB_STATUSES=' + JSON.stringify(allStatuses));
 
     return {
       totalMachines: totalMachines,

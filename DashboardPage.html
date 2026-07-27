@@ -357,6 +357,7 @@ function loadDashboardData() {
       cards.forEach(function(el) { el.classList.remove('loading'); });
 
       console.log('Dashboard Response', JSON.stringify(data, null, 2));
+      console.log('P11.32 GAS received pendingJobs=' + data.pendingJobs + ' approvedJobs=' + data.approvedJobs + ' mtbf=' + data.mtbf + ' breakdownJobCount=' + data.breakdownJobCount);
       console.log('DashboardPage Fields check:', {
         totalWaitingTimeMinutes: data.totalWaitingTimeMinutes,
         totalWorkingTimeMinutes: data.totalWorkingTimeMinutes,

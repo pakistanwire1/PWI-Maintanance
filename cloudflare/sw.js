@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cmms-v46';
+const CACHE_NAME = 'cmms-v47';
 const STATIC_ASSETS = [
   '/', '/index.html', '/css/styles.css', '/css/welcome.css', '/css/login.css', '/css/dashboard.css',
   '/js/app.js',

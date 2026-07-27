@@ -118,6 +118,13 @@ var Dashboard = {
 
     API.post('getDashboardData', { filter: Dashboard.filter, department: dept, email: user ? user.email : '' })
       .then(function(data) {
+        console.log('===== P11.32 CF RECEIVED =====');
+        console.log('pendingJobs=' + data.pendingJobs);
+        console.log('approvedJobs=' + data.approvedJobs);
+        console.log('mtbf=' + data.mtbf);
+        console.log('breakdownJobCount=' + data.breakdownJobCount);
+        console.log('breakdownMaintenanceCount=' + data.breakdownMaintenanceCount);
+        console.log('_debug=', JSON.stringify(data._debug));
         for (var i = 0; i < cards.length; i++) cards[i].classList.remove('loading');
         Dashboard._renderStats(data);
         Dashboard._drawCharts(data);
