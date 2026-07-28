@@ -23,6 +23,13 @@ function inRange(dt, range) {
   return d >= range.start && d < range.end;
 }
 
+function classifyMaintenance(record) {
+  var bt = String(record.BreakdownType || '').trim().toLowerCase();
+  var isBreakdown = bt.indexOf('breakdown') !== -1;
+  var isPreventive = bt === 'preventive maintenance';
+  return { isBreakdown: isBreakdown, isPreventive: isPreventive };
+}
+
 function jcDate(jc) {
   return jc.DateCreated || jc.OpenDateTime || jc.DateTime || jc.Date || '';
 }
@@ -162,6 +169,200 @@ function inspectJobCards() {
   }
 }
 
+function auditComplaintCategories() {
+  invalidateCache(CONFIG.SHEET_NAMES.JOBCARDS);
+  var raw = getAllData(CONFIG.SHEET_NAMES.JOBCARDS) || [];
+  var headers = raw.length > 0 ? Object.keys(raw[0]) : [];
+
+  var ccIdx = headers.indexOf('ComplaintCategory');
+  var btIdx = headers.indexOf('BreakdownType');
+
+  console.log('');
+  console.log('========================================');
+  console.log('  COMPLAINT CATEGORY AUDIT');
+  console.log('  Total rows: ' + raw.length);
+  console.log('  ComplaintCategory col index: ' + ccIdx);
+  console.log('  BreakdownType col index: ' + btIdx);
+  console.log('========================================');
+
+  var valueCounts = {};
+  for (var i = 0; i < raw.length; i++) {
+    var val = String(raw[i].ComplaintCategory || '').trim();
+    valueCounts[val] = (valueCounts[val] || 0) + 1;
+  }
+
+  console.log('');
+  console.log('--- ComplaintCategory VALUE COUNTS ---');
+  var sorted = Object.keys(valueCounts).sort(function(a, b) { return valueCounts[b] - valueCounts[a]; });
+  for (var s = 0; s < sorted.length; s++) {
+    var k = sorted[s];
+    console.log('  ' + JSON.stringify(k) + ' = ' + valueCounts[k]);
+  }
+
+  console.log('');
+  console.log('--- BreakdownType VALUE COUNTS ---');
+  var btCounts = {};
+  for (var i = 0; i < raw.length; i++) {
+    var val = String(raw[i].BreakdownType || '').trim();
+    btCounts[val] = (btCounts[val] || 0) + 1;
+  }
+  var btSorted = Object.keys(btCounts).sort(function(a, b) { return btCounts[b] - btCounts[a]; });
+  for (var s = 0; s < btSorted.length; s++) {
+    var k = btSorted[s];
+    console.log('  ' + JSON.stringify(k) + ' = ' + btCounts[k]);
+  }
+
+  console.log('');
+  console.log('--- FIRST 10 ROWS (ComplaintCategory + BreakdownType) ---');
+  for (var i = 0; i < Math.min(10, raw.length); i++) {
+    var r = raw[i];
+    console.log('[ROW ' + i + '] ' + (r.JobCardNo || 'N/A') +
+      ' | ComplaintCategory=' + JSON.stringify(r.ComplaintCategory) +
+      ' | BreakdownType=' + JSON.stringify(r.BreakdownType) +
+      ' | Status=' + JSON.stringify(r.CurrentStatus));
+  }
+
+  var bdByCC = 0, pmByCC = 0, otherByCC = 0;
+  for (var i = 0; i < raw.length; i++) {
+    var cc = String(raw[i].ComplaintCategory || '').toLowerCase().trim();
+    if (cc === 'routine maintenance') pmByCC++;
+    else if (cc === '' || cc === 'other') otherByCC++;
+    else bdByCC++;
+  }
+  console.log('');
+  console.log('--- DASHBOARD CLASSIFICATION (current logic) ---');
+  console.log('  isBreakdown (any non-empty, non-routine, non-other) = ' + bdByCC);
+  console.log('  isPreventive (=== "routine maintenance") = ' + pmByCC);
+  console.log('  unclassified (empty or "other") = ' + otherByCC);
+
+  return { valueCounts: valueCounts, btCounts: btCounts };
+}
+
+function auditBreakdownRootCause() {
+  invalidateCache(CONFIG.SHEET_NAMES.JOBCARDS);
+  var raw = getAllData(CONFIG.SHEET_NAMES.JOBCARDS) || [];
+  var headers = Object.keys(raw[0] || {});
+  var btColIdx = headers.indexOf('BreakdownType');
+  var ccColIdx = headers.indexOf('ComplaintCategory');
+
+  console.log('');
+  console.log('========================================');
+  console.log('  P11.39 — ROOT CAUSE AUDIT');
+  console.log('  Rows: ' + raw.length);
+  console.log('  BreakdownType column index: ' + btColIdx);
+  console.log('  ComplaintCategory column index: ' + ccColIdx);
+  console.log('========================================');
+
+  // STEP 1: COUNT BreakdownType VALUES
+  console.log('');
+  console.log('--- STEP 1 — BreakdownType VALUE COUNTS ---');
+  var btCounts = {};
+  for (var i = 0; i < raw.length; i++) {
+    var v = String(raw[i].BreakdownType || '').trim();
+    btCounts[v] = (btCounts[v] || 0) + 1;
+  }
+  var btSorted = Object.keys(btCounts).sort(function(a,b){return btCounts[b]-btCounts[a];});
+  for (var s = 0; s < btSorted.length; s++) {
+    var k = btSorted[s];
+    console.log('  ' + JSON.stringify(k) + ' = ' + btCounts[k]);
+  }
+
+  // STEP 2: COUNT ComplaintCategory VALUES
+  console.log('');
+  console.log('--- ComplaintCategory VALUE COUNTS ---');
+  var ccCounts = {};
+  for (var i = 0; i < raw.length; i++) {
+    var v = String(raw[i].ComplaintCategory || '').trim();
+    ccCounts[v] = (ccCounts[v] || 0) + 1;
+  }
+  var ccSorted = Object.keys(ccCounts).sort(function(a,b){return ccCounts[b]-ccCounts[a];});
+  for (var s = 0; s < ccSorted.length; s++) {
+    var k = ccSorted[s];
+    console.log('  ' + JSON.stringify(k) + ' = ' + ccCounts[k]);
+  }
+
+  // STEP 3: PRINT EVERY JOB CARD WITH CLASSIFICATION
+  console.log('');
+  console.log('--- STEP 3 — PER-JOB CARD CLASSIFICATION ---');
+  var bdByBT = 0, pmByBT = 0, unkByBT = 0;
+  var bdByCC = 0, pmByCC = 0;
+  var mismatchCount = 0;
+
+  for (var i = 0; i < raw.length; i++) {
+    var r = raw[i];
+    var jcNo = r.JobCardNo || 'N/A';
+    var bt = String(r.BreakdownType || '').trim();
+    var cc = String(r.ComplaintCategory || '').trim();
+    var status = (r.CurrentStatus || r.Status || '').toLowerCase();
+    var approval = (r.ApprovalStatus || '').toLowerCase();
+
+    // Classification by BreakdownType
+    var btLower = bt.toLowerCase();
+    var fromBT_isBd = btLower.indexOf('breakdown') !== -1;
+    var fromBT_isPm = btLower.indexOf('preventive') !== -1;
+    var fromBT_isOther = !fromBT_isBd && !fromBT_isPm && bt !== '';
+
+    // Classification by ComplaintCategory (current dashboard logic)
+    var ccLower = cc.toLowerCase().trim();
+    var fromCC_isBd = ccLower !== '' && ccLower !== 'routine maintenance' && ccLower !== 'preventive maintenance' && ccLower !== 'other';
+    var fromCC_isPm = ccLower === 'routine maintenance' || ccLower === 'preventive maintenance';
+
+    // Count by BreakdownType
+    if (fromBT_isBd) bdByBT++;
+    else if (fromBT_isPm) pmByBT++;
+    else if (bt !== '') unkByBT++;
+
+    // Count by ComplaintCategory
+    if (fromCC_isBd) bdByCC++;
+    else if (fromCC_isPm) pmByCC++;
+
+    // Check mismatch
+    var ccClass = fromCC_isBd ? 'BREAKDOWN' : (fromCC_isPm ? 'PREVENTIVE' : 'SKIP');
+    var btClass = fromBT_isBd ? 'BREAKDOWN' : (fromBT_isPm ? 'PREVENTIVE' : (bt !== '' ? 'UNKNOWN' : 'EMPTY'));
+    var isMismatch = false;
+    if (btClass === 'PREVENTIVE' && ccClass !== 'PREVENTIVE') isMismatch = true;
+    if (btClass === 'BREAKDOWN' && ccClass === 'SKIP') isMismatch = true;
+    if (isMismatch) mismatchCount++;
+
+    var isClosed = status === 'closed' || status === 'approved';
+    var includedInMTBF = fromBT_isBd && isClosed;
+
+    if (i < 20 || isMismatch) {
+      console.log('[' + i + '] ' + jcNo +
+        ' | BT=' + JSON.stringify(bt) +
+        ' | CC=' + JSON.stringify(cc) +
+        ' | Status=' + status +
+        ' | Approval=' + approval +
+        ' | ByBT=' + btClass +
+        ' | ByCC=' + ccClass +
+        ' | Closed=' + isClosed +
+        ' | InMTBF=' + includedInMTBF +
+        (isMismatch ? ' <<< MISMATCH' : ''));
+    }
+  }
+
+  // Print counts
+  console.log('');
+  console.log('--- COUNTS BY BREAKDOWNTYPE ---');
+  console.log('  Breakdown (contains "Breakdown"): ' + bdByBT);
+  console.log('  Preventive (contains "Preventive"): ' + pmByBT);
+  console.log('  Other non-empty: ' + unkByBT);
+
+  console.log('');
+  console.log('--- COUNTS BY COMPLAINTCATEGORY (DASHBOARD CURRENT) ---');
+  console.log('  isBreakdown: ' + bdByCC);
+  console.log('  isPreventive: ' + pmByCC);
+  console.log('  MISMATCHES (BT says Preventive but CC does not, or BT says Breakdown but CC skips): ' + mismatchCount);
+
+  return {
+    btCounts: btCounts,
+    ccCounts: ccCounts,
+    byBT: { breakdown: bdByBT, preventive: pmByBT, unknown: unkByBT },
+    byCC: { breakdown: bdByCC, preventive: pmByCC },
+    mismatches: mismatchCount
+  };
+}
+
 function getDashboardData(filter, userDepartment, userEmail) {
   try {
     var range = getDateRange(filter || 'all');
@@ -295,10 +496,8 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
       deptJobCounts[n.dept] = (deptJobCounts[n.dept] || 0) + 1;
 
-      var complaintCat = (n.raw.ComplaintCategory || '').toLowerCase();
-      var isBreakdown = complaintCat !== '' && complaintCat !== 'routine maintenance' && complaintCat !== 'other';
-      var isPreventive = complaintCat === 'routine maintenance';
-      if (isBreakdown) {
+      var classification = classifyMaintenance(n.raw);
+      if (classification.isBreakdown) {
         breakdownMaintenanceCount++;
         if (n.isClosed) {
           breakdownJobCount++;
@@ -307,7 +506,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
           breakdownTypeDowntimeMinutes += n.downtimeMins;
         }
       }
-      else if (isPreventive) preventiveMaintenanceCount++;
+      else if (classification.isPreventive) preventiveMaintenanceCount++;
     }
 
     var effectiveMachines = totalMachines > 0 ? totalMachines : 1;
@@ -317,6 +516,8 @@ function getDashboardData(filter, userDepartment, userEmail) {
     } else {
       rangeHours = Math.max(1, Math.round((range.end - range.start) / 3600000));
     }
+
+    breakdownTypeDowntimeMinutes = Math.min(breakdownTypeDowntimeMinutes, rangeHours * 60);
 
     var totalRepairHours = totalRepairMinutes / 60;
     var totalDowntimeHours = totalDowntimeMinutes / 60;
@@ -344,8 +545,8 @@ function getDashboardData(filter, userDepartment, userEmail) {
     var bdDebugJobs = [];
     for (var di = 0; di < filtered.length; di++) {
       var dn = filtered[di];
-      var dComplaintCat = (dn.raw.ComplaintCategory || '').toLowerCase();
-      if (dComplaintCat !== '' && dComplaintCat !== 'routine maintenance' && dComplaintCat !== 'other') {
+      var dClassification = classifyMaintenance(dn.raw);
+      if (dClassification.isBreakdown) {
         bdDebugJobs.push({
           JobCardNo: dn.raw.JobCardNo,
           CurrentStatus: dn.raw.CurrentStatus || dn.raw.Status,
@@ -455,10 +656,8 @@ function getDashboardData(filter, userDepartment, userEmail) {
           periodWorkMins += n.workingMins;
           periodDownMins += n.downtimeMins;
 
-          var complaintCat = (n.raw.ComplaintCategory || '').toLowerCase();
-          var isBreakdown = complaintCat !== '' && complaintCat !== 'routine maintenance' && complaintCat !== 'other';
-          var isPreventive = complaintCat === 'routine maintenance';
-          if (isBreakdown) {
+          var classification = classifyMaintenance(n.raw);
+          if (classification.isBreakdown) {
             periodBreakdownMaintCount++;
             if (n.isClosed) {
               periodBreakdownCount++;
@@ -467,7 +666,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
               periodBreakdownTypeDownMins += n.downtimeMins;
             }
           }
-          else if (isPreventive) periodPreventiveMaintCount++;
+          else if (classification.isPreventive) periodPreventiveMaintCount++;
         }
       }
 
@@ -591,6 +790,50 @@ function getDashboardData(filter, userDepartment, userEmail) {
       });
     }
     console.log('ALL_JOB_STATUSES=' + JSON.stringify(allStatuses));
+
+    // ============================================
+    // P11.39 — APPROVED JOB CARD DIAGNOSTIC
+    // ============================================
+    console.log('');
+    console.log('===== P11.39 APPROVED JOB CARDS =====');
+    console.log('breakdownMaintenanceCount=' + breakdownMaintenanceCount);
+    console.log('preventiveMaintenanceCount=' + preventiveMaintenanceCount);
+    console.log('breakdownJobCount=' + breakdownJobCount);
+    console.log('breakdownClosedCount=' + breakdownClosedCount);
+    console.log('breakdownClosedRepairMinutes=' + breakdownClosedRepairMinutes);
+    console.log('breakdownTypeDowntimeMinutes=' + breakdownTypeDowntimeMinutes);
+    console.log('totalRunningHours=' + totalRunningHours);
+    console.log('rangeHours=' + rangeHours);
+    console.log('mtbf=' + mtbf);
+
+    var tracedBreakdown = 0, tracedPreventive = 0, tracedMTBF = 0;
+    for (var ti = 0; ti < filtered.length; ti++) {
+      var tn = filtered[ti];
+      var traw = tn.raw;
+      var isApprovedRecord = (traw.ApprovalStatus || '').toLowerCase() === 'approved'
+                          || (traw.CurrentStatus || traw.Status || '').toLowerCase() === 'approved';
+
+      var tc = classifyMaintenance(traw);
+      var tInMTBF = tc.isBreakdown && tn.isClosed;
+
+      if (tc.isBreakdown) tracedBreakdown++;
+      if (tc.isPreventive) tracedPreventive++;
+      if (tInMTBF) tracedMTBF++;
+
+      if (isApprovedRecord || ti < 5) {
+        console.log('[' + ti + '] ' + (traw.JobCardNo || 'N/A') +
+          ' | BT=' + JSON.stringify(traw.BreakdownType) +
+          ' | CC=' + JSON.stringify(traw.ComplaintCategory) +
+          ' | ByBT: isBd=' + tc.isBreakdown + ' isPm=' + tc.isPreventive +
+          ' | Closed=' + tn.isClosed +
+          ' | InMTBF=' + tInMTBF);
+      }
+    }
+    console.log('--- P11.40 AFTER FIX ---');
+    console.log('Breakdown = ' + tracedBreakdown);
+    console.log('Preventive = ' + tracedPreventive);
+    console.log('Breakdown jobs used in MTBF = ' + tracedMTBF);
+    console.log('MTBF = ' + mtbf);
 
     return {
       totalMachines: totalMachines,
