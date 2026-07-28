@@ -283,7 +283,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
       totalDowntimeMinutes += n.downtimeMins;
 
       if (n.isApproved) { approvedJobs++; }
-      else if (n.isPending) { pendingApprovalJobs++; }
+      else if (n.isPending || (n.isClosed && !n.isApproved)) { pendingApprovalJobs++; }
       else if (n.isOpen) { openJobs++; waitingJobs++; }
       else if (n.isRunning) { runningJobs++; }
       else if (n.isClosed) { closedJobs++; }
@@ -295,8 +295,10 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
       deptJobCounts[n.dept] = (deptJobCounts[n.dept] || 0) + 1;
 
-      var bdType = (n.raw.BreakdownType || '').toLowerCase();
-      if (bdType === 'breakdown maintenance') {
+      var complaintCat = (n.raw.ComplaintCategory || '').toLowerCase();
+      var isBreakdown = complaintCat !== '' && complaintCat !== 'routine maintenance' && complaintCat !== 'other';
+      var isPreventive = complaintCat === 'routine maintenance';
+      if (isBreakdown) {
         breakdownMaintenanceCount++;
         if (n.isClosed) {
           breakdownJobCount++;
@@ -305,7 +307,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
           breakdownTypeDowntimeMinutes += n.downtimeMins;
         }
       }
-      else if (bdType === 'preventive maintenance') preventiveMaintenanceCount++;
+      else if (isPreventive) preventiveMaintenanceCount++;
     }
 
     var effectiveMachines = totalMachines > 0 ? totalMachines : 1;
@@ -342,8 +344,8 @@ function getDashboardData(filter, userDepartment, userEmail) {
     var bdDebugJobs = [];
     for (var di = 0; di < filtered.length; di++) {
       var dn = filtered[di];
-      var dBdType = (dn.raw.BreakdownType || '').toLowerCase();
-      if (dBdType === 'breakdown maintenance') {
+      var dComplaintCat = (dn.raw.ComplaintCategory || '').toLowerCase();
+      if (dComplaintCat !== '' && dComplaintCat !== 'routine maintenance' && dComplaintCat !== 'other') {
         bdDebugJobs.push({
           JobCardNo: dn.raw.JobCardNo,
           CurrentStatus: dn.raw.CurrentStatus || dn.raw.Status,
@@ -453,8 +455,10 @@ function getDashboardData(filter, userDepartment, userEmail) {
           periodWorkMins += n.workingMins;
           periodDownMins += n.downtimeMins;
 
-          var bdType = (n.raw.BreakdownType || '').toLowerCase();
-          if (bdType === 'breakdown maintenance') {
+          var complaintCat = (n.raw.ComplaintCategory || '').toLowerCase();
+          var isBreakdown = complaintCat !== '' && complaintCat !== 'routine maintenance' && complaintCat !== 'other';
+          var isPreventive = complaintCat === 'routine maintenance';
+          if (isBreakdown) {
             periodBreakdownMaintCount++;
             if (n.isClosed) {
               periodBreakdownCount++;
@@ -463,7 +467,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
               periodBreakdownTypeDownMins += n.downtimeMins;
             }
           }
-          else if (bdType === 'preventive maintenance') periodPreventiveMaintCount++;
+          else if (isPreventive) periodPreventiveMaintCount++;
         }
       }
 

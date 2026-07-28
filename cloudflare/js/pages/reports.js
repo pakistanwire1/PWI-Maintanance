@@ -6,13 +6,7 @@ var Reports = (function() {
   var ICON_VIEW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
 
   function displayDuration(val) {
-    if (!val || val === 0) return '0h 0m';
-    if (typeof val === 'number') {
-      var hours = Math.floor(val / 60);
-      var mins = val % 60;
-      return hours + 'h ' + mins + 'm';
-    }
-    return String(val);
+    return Duration.format(val);
   }
 
   function renderPage() {

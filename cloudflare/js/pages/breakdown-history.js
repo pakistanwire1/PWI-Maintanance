@@ -6,13 +6,7 @@ var BreakdownHistory = (function() {
   var ICON_BAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>';
 
   function displayDuration(val) {
-    if (!val || val === 0) return '0h 0m';
-    if (typeof val === 'number') {
-      var hours = Math.floor(val / 60);
-      var mins = val % 60;
-      return hours + 'h ' + mins + 'm';
-    }
-    return String(val);
+    return Duration.format(val);
   }
 
   function renderPage() {

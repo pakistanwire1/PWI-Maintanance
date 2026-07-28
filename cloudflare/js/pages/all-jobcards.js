@@ -3,62 +3,15 @@ var AllJobCards = (function() {
   var PAGE_SIZE = 10;
 
   function formatDuration(ms) {
-    if (!ms || ms < 0) ms = 0;
-    var totalMinutes = Math.floor(ms / 60000);
-    var days = Math.floor(totalMinutes / 1440);
-    var hours = Math.floor((totalMinutes % 1440) / 60);
-    var minutes = totalMinutes % 60;
-    var parts = [];
-    if (days > 0) parts.push(days + 'd');
-    if (hours > 0 || days > 0) parts.push(hours + 'h');
-    parts.push(minutes + 'm');
-    return parts.join(' ');
+    return Duration.fromMs(ms);
   }
 
   function formatDurationFromDates(startStr, endStr) {
-    if (!startStr) return '\u2014';
-    var start = new Date(startStr);
-    var end = endStr ? new Date(endStr) : new Date();
-    return formatDuration(end.getTime() - start.getTime());
+    return Duration.fromDates(startStr, endStr);
   }
 
   function displayDuration(val) {
-    if (!val && val !== 0 && val !== '0') return '0m';
-    if (typeof val === 'string' && val.indexOf('h ') > -1) return val;
-    var totalMinutes;
-    if (val instanceof Date) {
-      totalMinutes = Math.round(val.getTime() / 60000);
-    } else if (typeof val === 'number') {
-      totalMinutes = Math.floor(val);
-    } else if (typeof val === 'string') {
-      var s = val.trim();
-      if (s === '') return '0m';
-      var daysTimeMatch = s.match(/(\d+)\s+Days?\s+(\d{1,2}):(\d{2})/i);
-      if (daysTimeMatch) {
-        totalMinutes = parseInt(daysTimeMatch[1]) * 1440 + parseInt(daysTimeMatch[2]) * 60 + parseInt(daysTimeMatch[3]);
-      } else if (s.indexOf(':') > -1) {
-        var parts = s.split(':');
-        if (parts.length === 3) {
-          totalMinutes = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0) + Math.round((parseInt(parts[2]) || 0) / 60);
-        } else if (parts.length === 2) {
-          totalMinutes = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
-        } else {
-          totalMinutes = 0;
-        }
-      } else {
-        var num = parseFloat(s);
-        totalMinutes = isNaN(num) ? 0 : Math.round(num);
-      }
-    } else {
-      totalMinutes = 0;
-    }
-    if (totalMinutes < 0) totalMinutes = 0;
-    var d = Math.floor(totalMinutes / 1440);
-    var h = Math.floor((totalMinutes % 1440) / 60);
-    var m = totalMinutes % 60;
-    if (d > 0) return d + ' Days ' + h + 'h ' + m + 'm';
-    if (h > 0) return h + 'h ' + m + 'm';
-    return m + 'm';
+    return Duration.format(val);
   }
 
   function getDisplayStatus(item) {
@@ -247,20 +200,20 @@ var AllJobCards = (function() {
     if (state.activeTab === 'open' || state.activeTab === 'waiting') {
       columns.push({ key: 'OpenDateTime', label: 'Waiting', format: function(val, row) {
         var dt = row.OpenDateTime;
-        return '<span class="live-timer" data-start="' + (dt || '') + '">' + formatDurationFromDates(dt) + '</span>';
+        return Duration.cellFromDates(dt);
       }});
       columns.push({ key: 'ComplaintDescription', label: 'Description' });
     } else if (state.activeTab === 'running') {
       columns.push({ key: 'AssignedTechnician', label: 'Technician' });
       columns.push({ key: 'StartDateTime', label: 'Working', format: function(val, row) {
         var st = row.StartDateTime;
-        return '<span class="live-timer" data-start="' + (st || '') + '">' + formatDurationFromDates(st) + '</span>';
+        return Duration.cellFromDates(st);
       }});
     } else if (state.activeTab === 'closed' || state.activeTab === 'pendingapproval') {
       columns.push({ key: 'AssignedTechnician', label: 'Technician' });
-      columns.push({ key: 'WaitingTime', label: 'Waiting', format: function(val) { return displayDuration(val); } });
-      columns.push({ key: 'WorkingTime', label: 'Working', format: function(val) { return displayDuration(val); } });
-      columns.push({ key: 'Downtime', label: 'Breakdown', format: function(val, row) { return displayDuration(row.Downtime || row.TotalDuration || 0); } });
+      columns.push({ key: 'WaitingTime', label: 'Waiting', format: function(val) { return Duration.cell(val); } });
+      columns.push({ key: 'WorkingTime', label: 'Working', format: function(val) { return Duration.cell(val); } });
+      columns.push({ key: 'Downtime', label: 'Breakdown', format: function(val, row) { return Duration.cell(row.Downtime || row.TotalDuration || 0); } });
     } else if (state.activeTab === 'approved') {
       columns.push({ key: 'AssignedTechnician', label: 'Technician' });
       columns.push({ key: 'ApprovedBy', label: 'Approved By' });
@@ -348,13 +301,7 @@ var AllJobCards = (function() {
   }
 
   function startLiveTimers() {
-    if (state.timer) clearInterval(state.timer);
-    state.timer = setInterval(function() {
-      document.querySelectorAll('#jcTableContainer .live-timer').forEach(function(el) {
-        var start = el.getAttribute('data-start');
-        if (start) el.innerHTML = formatDurationFromDates(start);
-      });
-    }, 60000);
+    Duration.startRotation(3000);
   }
 
   function viewJcDetail(id) {
@@ -371,9 +318,9 @@ var AllJobCards = (function() {
     var displayBadge = getStatusBadgeClass(displayStatus);
     var priorityBadge = item.Priority === 'Critical' || item.Priority === 'High' ? 'danger' :
                         item.Priority === 'Medium' ? 'warning' : 'success';
-    var waitingHrs = displayDuration(item.WaitingTime);
-    var workingHrs = displayDuration(item.WorkingTime);
-    var downtimeHrs = displayDuration(item.Downtime || item.TotalDuration || 0);
+    var waitingHrs = Duration.cell(item.WaitingTime);
+    var workingHrs = Duration.cell(item.WorkingTime);
+    var downtimeHrs = Duration.cell(item.Downtime || item.TotalDuration || 0);
 
     var faultThumb = item.FaultImage ? '<img src="' + item.FaultImage + '" class="img-thumb" onclick="AllJobCards.openFullImage(\'' + item.FaultImage + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '\u2014';
     var repairThumb = item.RepairImage ? '<img src="' + item.RepairImage + '" class="img-thumb" onclick="AllJobCards.openFullImage(\'' + item.RepairImage + '\')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer">' : '\u2014';

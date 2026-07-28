@@ -8,17 +8,8 @@ var PendingJobCards = (function() {
 
   var PAGE_SIZE = 10;
 
-  function formatDuration(ms) {
-    if (!ms || ms < 0) ms = 0;
-    var totalMinutes = Math.floor(ms / 60000);
-    var days = Math.floor(totalMinutes / 1440);
-    var hours = Math.floor((totalMinutes % 1440) / 60);
-    var minutes = totalMinutes % 60;
-    var parts = [];
-    if (days > 0) parts.push(days + 'd');
-    if (hours > 0 || days > 0) parts.push(hours + 'h');
-    parts.push(minutes + 'm');
-    return parts.join(' ');
+  function formatDuration(val) {
+    return Duration.format(val);
   }
 
   function hasPermission(perm) {
@@ -242,16 +233,16 @@ var PendingJobCards = (function() {
 
     var columns = [
       { key: 'JobCardNo', label: 'Job Card No' },
-      { key: 'DateTime', label: 'Date', datetime: true },
+      { key: 'OpenDateTime', label: 'Date', datetime: true },
       { key: 'Department', label: 'Dept' },
       { key: 'Section', label: 'Section' },
       { key: 'Machine', label: 'Machine' },
-      { key: 'Asset', label: 'Asset' },
+      { key: 'AssetID', label: 'Asset' },
       { key: 'ComplaintDescription', label: 'Complaint' },
       { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Low': 'success', 'Medium': 'warning', 'High': 'danger', 'Critical': 'danger' } },
       { key: 'AssignedTechnician', label: 'Technician(s)' },
-      { key: 'WorkingTime', label: 'Working', format: function(val) { return formatDuration(val); } },
-      { key: 'Downtime', label: 'Downtime', format: function(val) { return formatDuration(val); } },
+      { key: 'WorkingTime', label: 'Working', format: function(val) { return Duration.cell(val); } },
+      { key: 'Downtime', label: 'Downtime', format: function(val) { return Duration.cell(val); } },
       { key: 'PendingDateTime', label: 'Pending Since', datetime: true },
       { key: 'PendingBy', label: 'Supervisor' }
     ];
@@ -318,9 +309,9 @@ var PendingJobCards = (function() {
         '<div class="view-section">' +
           '<h4>Job Card Details</h4>' +
           '<div class="view-row"><span>Job Card No</span><strong>' + Utils.escapeHtml(item.JobCardNo) + '</strong></div>' +
-          '<div class="view-row"><span>Opened</span><strong>' + Utils.formatDateTime(item.DateTime || item.OpenTime || item.OpenDateTime) + '</strong></div>' +
+          '<div class="view-row"><span>Opened</span><strong>' + Utils.formatDateTime(item.OpenDateTime) + '</strong></div>' +
           '<div class="view-row"><span>Machine</span><strong>' + Utils.escapeHtml(item.Machine || '-') + '</strong></div>' +
-          '<div class="view-row"><span>Asset</span><strong>' + Utils.escapeHtml(item.Asset || item.AssetID || '-') + '</strong></div>' +
+          '<div class="view-row"><span>Asset</span><strong>' + Utils.escapeHtml(item.AssetID || '-') + '</strong></div>' +
           '<div class="view-row"><span>Department</span><strong>' + Utils.escapeHtml(item.Department || '-') + '</strong></div>' +
           '<div class="view-row"><span>Section</span><strong>' + Utils.escapeHtml(item.Section || '-') + '</strong></div>' +
           '<div class="view-row"><span>Priority</span><strong><span class="badge badge-warning">' + Utils.escapeHtml(item.Priority) + '</span></strong></div>' +
@@ -332,11 +323,11 @@ var PendingJobCards = (function() {
         '</div>' +
         '<div class="view-section">' +
           '<h4>Time Summary</h4>' +
-          '<div class="view-row"><span>Started</span><strong>' + Utils.formatDateTime(item.StartTime || item.StartDateTime) + '</strong></div>' +
-          '<div class="view-row"><span>Closed</span><strong>' + Utils.formatDateTime(item.CloseTime || item.CloseDateTime) + '</strong></div>' +
-          '<div class="view-row"><span>Waiting Time</span><strong>' + formatDuration(item.WaitingTime) + '</strong></div>' +
-          '<div class="view-row"><span>Working Time</span><strong>' + formatDuration(item.WorkingTime) + '</strong></div>' +
-          '<div class="view-row"><span>Total Downtime</span><strong>' + formatDuration(item.Downtime) + '</strong></div>' +
+          '<div class="view-row"><span>Started</span><strong>' + Utils.formatDateTime(item.StartDateTime) + '</strong></div>' +
+          '<div class="view-row"><span>Closed</span><strong>' + Utils.formatDateTime(item.CloseDateTime) + '</strong></div>' +
+          '<div class="view-row"><span>Waiting Time</span><strong>' + Duration.cell(item.WaitingTime) + '</strong></div>' +
+          '<div class="view-row"><span>Working Time</span><strong>' + Duration.cell(item.WorkingTime) + '</strong></div>' +
+          '<div class="view-row"><span>Total Downtime</span><strong>' + Duration.cell(item.Downtime) + '</strong></div>' +
           '<div class="view-row"><span>Pending Since</span><strong>' + Utils.formatDateTime(item.PendingDateTime) + '</strong></div>' +
         '</div>' +
       '</div>' +
@@ -387,17 +378,17 @@ var PendingJobCards = (function() {
     document.getElementById('pendingJcRef').textContent = id;
     var el;
     el = document.getElementById('pjMachine'); if (el) el.textContent = item.Machine || '-';
-    el = document.getElementById('pjAsset'); if (el) el.textContent = item.Asset || item.AssetID || '-';
+    el = document.getElementById('pjAsset'); if (el) el.textContent = item.AssetID || '-';
     el = document.getElementById('pjDepartment'); if (el) el.textContent = item.Department || '-';
     el = document.getElementById('pjSection'); if (el) el.textContent = item.Section || '-';
     el = document.getElementById('pjPriority'); if (el) el.textContent = item.Priority || '-';
     el = document.getElementById('pjComplaint'); if (el) el.textContent = item.ComplaintDescription || '-';
     el = document.getElementById('pjTechnician'); if (el) el.textContent = item.AssignedTechnician || '-';
     el = document.getElementById('pjTeam'); if (el) el.textContent = item.MaintenanceTeam || '-';
-    el = document.getElementById('pjWorkingTime'); if (el) el.textContent = formatDuration(item.WorkingTime);
-    el = document.getElementById('pjDowntime'); if (el) el.textContent = formatDuration(item.Downtime);
-    el = document.getElementById('pjWaitingTime'); if (el) el.textContent = formatDuration(item.WaitingTime);
-    el = document.getElementById('pjClosedOn'); if (el) el.textContent = Utils.formatDateTime(item.CloseTime || item.CloseDateTime);
+    el = document.getElementById('pjWorkingTime'); if (el) Duration.setElement(el, item.WorkingTime);
+    el = document.getElementById('pjDowntime'); if (el) Duration.setElement(el, item.Downtime);
+    el = document.getElementById('pjWaitingTime'); if (el) Duration.setElement(el, item.WaitingTime);
+    el = document.getElementById('pjClosedOn'); if (el) el.textContent = Utils.formatDateTime(item.CloseDateTime);
     el = document.getElementById('pjPendingSince'); if (el) el.textContent = Utils.formatDateTime(item.PendingDateTime);
     el = document.getElementById('pjRootCause'); if (el) el.textContent = item.RootCause || '-';
     el = document.getElementById('pjCorrectiveAction'); if (el) el.textContent = item.CorrectiveAction || '-';

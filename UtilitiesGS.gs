@@ -24,7 +24,7 @@ function durationToDisplay(minutes) {
   var d = Math.floor(m / 1440);
   var h = Math.floor((m % 1440) / 60);
   var mn = m % 60;
-  if (d > 0) return d + ' Day' + (d > 1 ? 's ' : ' ') + pad(h) + ':' + pad(mn);
+  if (d > 0) return d + 'd ' + pad(h) + ':' + pad(mn);
   return pad(h) + ':' + pad(mn);
 }
 

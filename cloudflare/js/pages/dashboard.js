@@ -456,21 +456,11 @@ var Dashboard = {
   },
 
   _kpiFormatHours: function(minutes) {
-    if (!minutes && minutes !== 0) return '0h 0m';
-    var m = Math.round(minutes);
-    var h = Math.floor(m / 60);
-    var rm = m % 60;
-    return h + 'h ' + rm + 'm';
+    return Duration.formatHours(minutes);
   },
 
   _kpiFormatDays: function(minutes) {
-    if (!minutes && minutes !== 0) return '0 Days 00:00';
-    var m = Math.round(minutes);
-    var d = Math.floor(m / 1440);
-    var h = Math.floor((m % 1440) / 60);
-    var rm = m % 60;
-    if (d > 0) return d + ' Days ' + String(h).padStart(2,'0') + ':' + String(rm).padStart(2,'0');
-    return h + 'h ' + rm + 'm';
+    return Duration.formatDays(minutes);
   },
 
   _kpiTick: function() {

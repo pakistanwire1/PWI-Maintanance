@@ -284,20 +284,22 @@ function updateJobCard(id, data) {
   if (!current) throw new Error('Job card not found: ' + id);
 
   if (data.CurrentStatus === 'RUNNING') {
-    data.StartDateTime = formatDateTimeISO(new Date());
+    var now = new Date();
+    data.StartDateTime = formatDateTimeISO(now);
     data.StartedBy = data.StartedBy || Session.getActiveUser().getEmail();
-    data.WaitingTime = calculateDuration(current.OpenDateTime, data.StartDateTime);
+    data.WaitingTime = calculateDuration(current.OpenDateTime, now.toISOString());
   }
 
   if (data.CurrentStatus === 'CLOSED' || data.CurrentStatus === 'PENDING') {
-    data.CloseDateTime = formatDateTimeISO(new Date());
+    var now = new Date();
+    data.CloseDateTime = formatDateTimeISO(now);
     data.ClosedBy = data.ClosedBy || Session.getActiveUser().getEmail();
     var startDt = current.StartDateTime || data.StartDateTime;
     var openDt = current.OpenDateTime;
     if (startDt && openDt) {
       data.WaitingTime = data.WaitingTime || current.WaitingTime || calculateDuration(openDt, startDt);
-      data.WorkingTime = calculateDuration(startDt, data.CloseDateTime);
-      data.Downtime = calculateDuration(openDt, data.CloseDateTime);
+      data.WorkingTime = calculateDuration(startDt, now.toISOString());
+      data.Downtime = calculateDuration(openDt, now.toISOString());
       data.TotalDuration = data.Downtime;
     }
     if (data.CurrentStatus === 'PENDING') {
@@ -346,20 +348,22 @@ function updateJobCardStatus(id, status) {
   if (!current) throw new Error('Job card not found: ' + id);
 
   if (status === 'RUNNING') {
-    data.StartDateTime = formatDateTimeISO(new Date());
+    var now = new Date();
+    data.StartDateTime = formatDateTimeISO(now);
     data.StartedBy = Session.getActiveUser().getEmail();
-    data.WaitingTime = calculateDuration(current.OpenDateTime, data.StartDateTime);
+    data.WaitingTime = calculateDuration(current.OpenDateTime, now.toISOString());
   }
 
   if (status === 'CLOSED') {
-    data.CloseDateTime = formatDateTimeISO(new Date());
+    var now = new Date();
+    data.CloseDateTime = formatDateTimeISO(now);
     data.ClosedBy = Session.getActiveUser().getEmail();
     var startDt = current.StartDateTime || data.StartDateTime;
     var openDt = current.OpenDateTime;
     if (startDt && openDt) {
       data.WaitingTime = data.WaitingTime || current.WaitingTime || calculateDuration(openDt, startDt);
-      data.WorkingTime = calculateDuration(startDt, data.CloseDateTime);
-      data.Downtime = calculateDuration(openDt, data.CloseDateTime);
+      data.WorkingTime = calculateDuration(startDt, now.toISOString());
+      data.Downtime = calculateDuration(openDt, now.toISOString());
       data.TotalDuration = data.Downtime;
     }
   }
@@ -511,6 +515,15 @@ function migrateJobCardDurations() {
     log: log.slice(0, 50),
     message: 'Migrated ' + updated + ' rows, skipped ' + skipped + ', errors ' + errors + '.'
   };
+}
+
+function removeApprovalRemarksValidation() {
+  var sheet = getSheet(CONFIG.SHEET_NAMES.JOBCARDS);
+  var headers = sheet.getDataRange().getValues()[0];
+  var col = headers.indexOf('ApprovalRemarks');
+  if (col === -1) return 'ApprovalRemarks column not found';
+  sheet.getRange(1, col + 1, sheet.getLastRow(), 1).clearDataValidations();
+  return 'Done';
 }
 
 function restructureJobCardsSheet() {

@@ -285,7 +285,7 @@ function _kpiFormatDays(minutes) {
   var d = Math.floor(m / 1440);
   var h = Math.floor((m % 1440) / 60);
   var rm = m % 60;
-  if (d > 0) return d + ' Days ' + String(h).padStart(2,'0') + ':' + String(rm).padStart(2,'0');
+  if (d > 0) return d + 'd ' + String(h).padStart(2,'0') + ':' + String(rm).padStart(2,'0');
   return h + 'h ' + rm + 'm';
 }
 function _kpiTick() {

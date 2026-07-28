@@ -9,23 +9,11 @@ var ClosedJobCard = (function() {
   var PAGE_SIZE = 10;
 
   function formatDuration(ms) {
-    if (!ms || ms < 0) ms = 0;
-    var totalMinutes = Math.floor(ms / 60000);
-    var days = Math.floor(totalMinutes / 1440);
-    var hours = Math.floor((totalMinutes % 1440) / 60);
-    var minutes = totalMinutes % 60;
-    var parts = [];
-    if (days > 0) parts.push(days + 'd');
-    if (hours > 0 || days > 0) parts.push(hours + 'h');
-    parts.push(minutes + 'm');
-    return parts.join(' ');
+    return Duration.fromMs(ms);
   }
 
   function formatDurationFromDates(startStr) {
-    if (!startStr) return '\u2014';
-    var start = new Date(startStr);
-    var end = new Date();
-    return formatDuration(end.getTime() - start.getTime());
+    return Duration.fromDates(startStr);
   }
 
   function hasPermission(perm) {
@@ -285,13 +273,13 @@ var ClosedJobCard = (function() {
 
     var columns = [
       { key: 'JobCardNo', label: 'Job Card No' },
-      { key: 'DateTime', label: 'Opened', datetime: true },
+      { key: 'OpenDateTime', label: 'Opened', datetime: true },
       { key: 'Machine', label: 'Machine' },
       { key: 'Department', label: 'Dept' },
       { key: 'AssignedTechnician', label: 'Technician' },
       { key: '_working', label: 'Working', format: function(val, row) {
-        var st = row.StartTime || row.StartDateTime;
-        return '<span class="live-timer" data-start="' + (st || '') + '">' + formatDurationFromDates(st) + '</span>';
+        var st = row.StartDateTime;
+        return Duration.cellFromDates(st);
       }}
     ];
 
@@ -346,13 +334,7 @@ var ClosedJobCard = (function() {
   }
 
   function startLiveTimers() {
-    if (state.timer) clearInterval(state.timer);
-    state.timer = setInterval(function() {
-      document.querySelectorAll('#closeJcTableContainer .live-timer').forEach(function(el) {
-        var start = el.getAttribute('data-start');
-        if (start) el.textContent = formatDurationFromDates(start);
-      });
-    }, 60000);
+    Duration.startRotation(3000);
   }
 
   function openCloseJc(id) {
@@ -385,24 +367,24 @@ var ClosedJobCard = (function() {
       if (state.data[i].JobCardNo === jobNo) { item = state.data[i]; break; }
     }
     if (!item) return;
-    var openedStr = item.DateTime || item.OpenTime || item.OpenDateTime;
-    var startStr = item.StartTime || item.StartDateTime;
+    var openedStr = item.OpenDateTime;
+    var startStr = item.StartDateTime;
     var now = new Date();
 
     if (openedStr) {
       var el = document.getElementById('closeJcOpenedDisplay'); if (el) el.textContent = Utils.formatDateTime(openedStr);
       var waitingMs = (startStr ? new Date(startStr) : now).getTime() - new Date(openedStr).getTime();
-      el = document.getElementById('closeJcWaitingDisplay'); if (el) el.textContent = formatDuration(waitingMs);
+      el = document.getElementById('closeJcWaitingDisplay'); if (el) { var m = Math.floor(waitingMs / 60000); Duration.setElement(el, m); }
     }
     if (startStr) {
       var el = document.getElementById('closeJcStartedDisplay'); if (el) el.textContent = Utils.formatDateTime(startStr);
       var workingMs = now.getTime() - new Date(startStr).getTime();
-      el = document.getElementById('closeJcWorkingDisplay'); if (el) el.textContent = formatDuration(workingMs);
+      el = document.getElementById('closeJcWorkingDisplay'); if (el) { var m = Math.floor(workingMs / 60000); Duration.setElement(el, m); }
     }
     var el = document.getElementById('closeJcClosedDisplay'); if (el) el.textContent = Utils.formatDateTime(now);
     if (openedStr) {
       var breakdownMs = now.getTime() - new Date(openedStr).getTime();
-      el = document.getElementById('closeJcBreakdownDisplay'); if (el) el.textContent = formatDuration(breakdownMs);
+      el = document.getElementById('closeJcBreakdownDisplay'); if (el) { var m = Math.floor(breakdownMs / 60000); Duration.setElement(el, m); }
     }
   }
 

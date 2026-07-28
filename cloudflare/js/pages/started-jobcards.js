@@ -8,23 +8,11 @@ var StartedJobCard = (function() {
   var PAGE_SIZE = 10;
 
   function formatDuration(ms) {
-    if (!ms || ms < 0) ms = 0;
-    var totalMinutes = Math.floor(ms / 60000);
-    var days = Math.floor(totalMinutes / 1440);
-    var hours = Math.floor((totalMinutes % 1440) / 60);
-    var minutes = totalMinutes % 60;
-    var parts = [];
-    if (days > 0) parts.push(days + 'd');
-    if (hours > 0 || days > 0) parts.push(hours + 'h');
-    parts.push(minutes + 'm');
-    return parts.join(' ');
+    return Duration.fromMs(ms);
   }
 
   function formatDurationFromDates(startStr) {
-    if (!startStr) return '\u2014';
-    var start = new Date(startStr);
-    var end = new Date();
-    return formatDuration(end.getTime() - start.getTime());
+    return Duration.fromDates(startStr);
   }
 
   function hasPermission(perm) {
@@ -225,13 +213,13 @@ var StartedJobCard = (function() {
 
     var columns = [
       { key: 'JobCardNo', label: 'Job Card No' },
-      { key: 'DateTime', label: 'Opened', datetime: true },
+      { key: 'OpenDateTime', label: 'Opened', datetime: true },
       { key: 'Machine', label: 'Machine' },
       { key: 'Department', label: 'Dept' },
       { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Low': 'success', 'Medium': 'warning', 'High': 'danger', 'Critical': 'danger' } },
       { key: '_waiting', label: 'Waiting', format: function(val, row) {
-        var dt = row.DateTime || row.OpenTime || row.OpenDateTime;
-        return '<span class="live-timer" data-start="' + (dt || '') + '">' + formatDurationFromDates(dt) + '</span>';
+        var dt = row.OpenDateTime;
+        return Duration.cellFromDates(dt);
       }},
       { key: 'ComplaintDescription', label: 'Description' }
     ];
@@ -287,13 +275,7 @@ var StartedJobCard = (function() {
   }
 
   function startLiveTimers() {
-    if (state.timer) clearInterval(state.timer);
-    state.timer = setInterval(function() {
-      document.querySelectorAll('#startJcTableContainer .live-timer').forEach(function(el) {
-        var start = el.getAttribute('data-start');
-        if (start) el.textContent = formatDurationFromDates(start);
-      });
-    }, 60000);
+    Duration.startRotation(3000);
   }
 
   function initMultiSelect(wrapperId, options) {
@@ -422,7 +404,7 @@ var StartedJobCard = (function() {
     var el = document.getElementById('startJcSkillDisplay'); if (el) el.value = '';
     el = document.getElementById('startJcJobNo'); if (el) el.value = id;
     el = document.getElementById('startJcRef'); if (el) el.textContent = id;
-    el = document.getElementById('startJcOpenedDisplay'); if (el) el.textContent = Utils.formatDateTime(item.DateTime || item.OpenTime || item.OpenDateTime);
+    el = document.getElementById('startJcOpenedDisplay'); if (el) el.textContent = Utils.formatDateTime(item.OpenDateTime);
     updateWaiting();
     document.getElementById('startJcModal').style.display = 'flex';
     setTimeout(function() { StartedJobCard.addVoiceButton('startJcInitialRemarks'); }, 100);
@@ -435,11 +417,11 @@ var StartedJobCard = (function() {
       if (state.data[i].JobCardNo === jobNo) { item = state.data[i]; break; }
     }
     if (!item) return;
-    var dt = item.DateTime || item.OpenTime || item.OpenDateTime;
+    var dt = item.OpenDateTime;
     if (!dt) return;
     var diff = Date.now() - new Date(dt).getTime();
     var el = document.getElementById('startJcWaitingDisplay');
-    if (el) el.textContent = formatDuration(diff);
+    if (el) { var m = Math.floor(diff / 60000); Duration.setElement(el, m); }
   }
 
   function saveStartJc(e) {

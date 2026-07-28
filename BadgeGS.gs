@@ -10,11 +10,18 @@ function getSidebarCounts(email) {
   for (var i = 0; i < jcData.length; i++) {
     var jc = jcData[i];
     var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
-    if (s === 'open') openCount++;
-    else if (s === 'running' || s === 'in progress') runningCount++;
-    else if (s === 'closed' || s === 'completed') closedCount++;
-    else if (s === 'pending') pendingCount++;
-    else if (s === 'approved') approvedCount++;
+    var isClosed = (s === 'closed' || s === 'approved');
+    var isOpen = (s === 'open');
+    var isRunning = (s === 'running' || s === 'in progress');
+    var isPending = (s === 'pending');
+    var as = (jc.ApprovalStatus || '').toLowerCase();
+    var isApproved = (as === 'approved');
+
+    if (isApproved) { approvedCount++; }
+    else if (isPending || (isClosed && !isApproved)) { pendingCount++; }
+    else if (isOpen) { openCount++; }
+    else if (isRunning) { runningCount++; }
+    else if (isClosed) { closedCount++; }
   }
 
   var unreadNotifications = 0;

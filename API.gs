@@ -362,7 +362,7 @@ function apiGetUsers(d) {
 
 var ALIAS_FIELDS = ['Status', 'DateTime', 'OpenTime', 'StartTime', 'CloseTime', 'BreakdownTime', 'DateCreated', 'Remarks', 'PartsUsed', 'ActualWorkingTime', 'Asset'];
 
-var CF_UNUSED_FIELDS = ['Section', 'CreatedBy', 'CreatedAt', 'AssignedTechnicianIDs', 'ComplaintByCode', 'ComplaintByEmail', 'StartedBy', 'MaintenanceTeam', 'InitialRemarks', 'ClosedBy', 'PendingDateTime', 'PendingBy', 'PendingRemarks', 'UpdatedBy', 'UpdatedAt'];
+var CF_UNUSED_FIELDS = ['CreatedAt', 'AssignedTechnicianIDs', 'ComplaintByCode', 'ComplaintByEmail', 'PendingRemarks'];
 
 var CF_STRIP_FIELDS = ALIAS_FIELDS.concat(CF_UNUSED_FIELDS);
 

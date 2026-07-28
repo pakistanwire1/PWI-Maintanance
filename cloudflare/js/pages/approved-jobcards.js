@@ -2,22 +2,12 @@ var ApproveJobCards = (function() {
   var state = { data: [], page: 1 };
 
   var ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
-  var ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>';
-  var ICON_RETURN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0016.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 002 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>';
+  var ICON_VIEW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
 
   var PAGE_SIZE = 10;
 
-  function formatDuration(ms) {
-    if (!ms || ms < 0) ms = 0;
-    var totalMinutes = Math.floor(ms / 60000);
-    var days = Math.floor(totalMinutes / 1440);
-    var hours = Math.floor((totalMinutes % 1440) / 60);
-    var minutes = totalMinutes % 60;
-    var parts = [];
-    if (days > 0) parts.push(days + 'd');
-    if (hours > 0 || days > 0) parts.push(hours + 'h');
-    parts.push(minutes + 'm');
-    return parts.join(' ');
+  function formatDuration(val) {
+    return Duration.format(val);
   }
 
   function hasPermission(perm) {
@@ -67,11 +57,11 @@ var ApproveJobCards = (function() {
           '<div class="modal-header">' +
             '<div class="modal-title">' +
               '<span class="status-dot status-completed"></span>' +
-              'Approve Job \u2014 <span id="jcaRef"></span>' +
+              'Job Card Details \u2014 <span id="jcaRef"></span>' +
             '</div>' +
             '<button class="modal-close" onclick="ApproveJobCards.hideModal()">&times;</button>' +
           '</div>' +
-          '<form id="jcaForm" onsubmit="return ApproveJobCards.saveForm(event)">' +
+          '<form id="jcaForm" onsubmit="return false">' +
             '<div class="modal-body">' +
               '<input type="hidden" name="JobCardNo" id="jcaJobNo">' +
               '<div class="time-summary-panel">' +
@@ -82,38 +72,17 @@ var ApproveJobCards = (function() {
                   '<div class="ts-stat"><span class="ts-stat-label">Technician</span><span class="ts-stat-value" id="jcaTech">\u2014</span></div>' +
                 '</div>' +
                 '<div class="ts-stats">' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Waiting Time</span><span class="ts-stat-value" id="jcaWaiting">0h 0m</span></div>' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Working Time</span><span class="ts-stat-value" id="jcaWorking">0h 0m</span></div>' +
-                  '<div class="ts-stat"><span class="ts-stat-label">Total Downtime</span><span class="ts-stat-value" id="jcaBreakdown">0h 0m</span></div>' +
+                  '<div class="ts-stat"><span class="ts-stat-label">Waiting Time</span><span class="ts-stat-value" id="jcaWaiting">0m</span></div>' +
+                  '<div class="ts-stat"><span class="ts-stat-label">Working Time</span><span class="ts-stat-value" id="jcaWorking">0m</span></div>' +
+                  '<div class="ts-stat"><span class="ts-stat-label">Total Downtime</span><span class="ts-stat-value" id="jcaBreakdown">0m</span></div>' +
                 '</div>' +
                 '<div class="ts-stats">' +
                   '<div class="ts-stat"><span class="ts-stat-label">Description</span><span class="ts-stat-value jc-desc-value" id="jcaDesc">\u2014</span></div>' +
                 '</div>' +
               '</div>' +
-              '<div class="form-group">' +
-                '<label>Decision *</label>' +
-                '<div class="radio-group" style="display:flex;gap:24px;margin-top:8px">' +
-                  '<label class="radio-inline" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="approveDecision" value="approve" checked><span class="jc-radio-text">Approve</span></label>' +
-                  '<label class="radio-inline" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="approveDecision" value="return"><span class="jc-radio-text">Return to Technician</span></label>' +
-                '</div>' +
-              '</div>' +
-              '<div class="form-group">' +
-                '<label>Approval Remarks</label>' +
-                '<textarea name="ApprovalRemarks" class="form-control" id="jcaApprovalRemarks" rows="3" placeholder="Enter your approval remarks..."></textarea>' +
-              '</div>' +
-              '<div class="form-group" id="jcaReturnReasonGroup" style="display:none">' +
-                '<label>Return Reason *</label>' +
-                '<textarea name="ReturnReason" class="form-control" id="jcaReturnReason" rows="2" placeholder="Why is the job card being returned?"></textarea>' +
-              '</div>' +
             '</div>' +
             '<div class="modal-footer">' +
-              '<button type="button" class="btn btn-secondary" onclick="ApproveJobCards.hideModal()">Cancel</button>' +
-              '<button type="button" class="btn btn-warning" id="jcaReturnBtn" onclick="ApproveJobCards.submitReview(\'return\')" style="display:none">' +
-                ICON_RETURN + ' Return to Technician' +
-              '</button>' +
-              '<button type="submit" class="btn btn-success" id="jcaApproveBtn">' +
-                ICON_CHECK + ' Approve' +
-              '</button>' +
+              '<button type="button" class="btn btn-secondary" onclick="ApproveJobCards.hideModal()">Close</button>' +
             '</div>' +
           '</form>' +
         '</div>' +
@@ -195,13 +164,13 @@ var ApproveJobCards = (function() {
 
     var columns = [
       { key: 'JobCardNo', label: 'Job Card No' },
-      { key: 'DateTime', label: 'Closed', datetime: true },
+      { key: 'OpenDateTime', label: 'Closed', datetime: true },
       { key: 'Machine', label: 'Machine' },
       { key: 'Department', label: 'Dept' },
       { key: 'AssignedTechnician', label: 'Technician' },
-      { key: 'WaitingTime', label: 'Waiting', format: function(val) { return formatDuration(val); } },
-      { key: 'WorkingTime', label: 'Working', format: function(val) { return formatDuration(val); } },
-      { key: '_breakdown', label: 'Breakdown', format: function(val, row) { return formatDuration(row.BreakdownTime || row.Downtime || row.TotalDuration || 0); } }
+      { key: 'WaitingTime', label: 'Waiting', format: function(val) { return Duration.cell(val); } },
+      { key: 'WorkingTime', label: 'Working', format: function(val) { return Duration.cell(val); } },
+      { key: '_breakdown', label: 'Breakdown', format: function(val, row) { return Duration.cell(row.Downtime || row.TotalDuration || 0); } }
     ];
 
     var html = '<div class="table-container"><table><thead><tr>';
@@ -230,7 +199,7 @@ var ApproveJobCards = (function() {
       });
 
       html += '<td><div class="actions-cell">';
-      html += '<button class="icon-btn icon-btn-success" onclick="ApproveJobCards.reviewCard(\'' + row.JobCardNo + '\')" title="Review">' + ICON_CHECK + '</button>';
+      html += '<button class="icon-btn" onclick="ApproveJobCards.reviewCard(\'' + row.JobCardNo + '\')" title="View">' + ICON_VIEW + '</button>';
       html += '</div></td>';
       html += '</tr>';
     });
@@ -252,18 +221,12 @@ var ApproveJobCards = (function() {
   }
 
   function reviewCard(id) {
-    var user = Session.getUser();
-    if (!user || (!user.isSystemAdmin && user.role !== 'Admin' && !user['canApproveJobCard'])) {
-      Notify.warning('You do not have permission to approve job cards');
-      return;
-    }
     var item = null;
     for (var i = 0; i < state.data.length; i++) {
       if (state.data[i].JobCardNo === id) { item = state.data[i]; break; }
     }
     if (!item) return;
 
-    document.getElementById('jcaForm').reset();
     document.getElementById('jcaJobNo').value = id;
     document.getElementById('jcaRef').textContent = id;
     var el;
@@ -272,17 +235,9 @@ var ApproveJobCards = (function() {
     el = document.getElementById('jcaTech'); if (el) el.textContent = item.AssignedTechnician || '-';
     var desc = (item.ComplaintDescription || '').substring(0, 100) + ((item.ComplaintDescription || '').length > 100 ? '...' : '');
     el = document.getElementById('jcaDesc'); if (el) el.textContent = desc;
-    el = document.getElementById('jcaWaiting'); if (el) el.textContent = formatDuration(item.WaitingTime);
-    el = document.getElementById('jcaWorking'); if (el) el.textContent = formatDuration(item.WorkingTime);
-    el = document.getElementById('jcaBreakdown'); if (el) el.textContent = formatDuration(item.BreakdownTime || item.Downtime || item.TotalDuration || 0);
-    el = document.getElementById('jcaReturnReason'); if (el) el.value = '';
-
-    var radios = document.querySelectorAll('input[name="approveDecision"]');
-    radios.forEach(function(r) {
-      r.checked = r.value === 'approve';
-      r.addEventListener('change', toggleDecision);
-    });
-    toggleDecision();
+    el = document.getElementById('jcaWaiting'); if (el) Duration.setElement(el, item.WaitingTime);
+    el = document.getElementById('jcaWorking'); if (el) Duration.setElement(el, item.WorkingTime);
+    el = document.getElementById('jcaBreakdown'); if (el) Duration.setElement(el, item.Downtime || item.TotalDuration || 0);
 
     document.getElementById('jcaModal').style.display = 'flex';
   }
@@ -300,70 +255,12 @@ var ApproveJobCards = (function() {
     document.getElementById('jcaModal').style.display = 'none';
   }
 
-  function submitReview(decision) {
-    var id = document.getElementById('jcaJobNo').value;
-    if (!id) return;
-
-    var remarks = (document.getElementById('jcaApprovalRemarks') ? document.getElementById('jcaApprovalRemarks').value.trim() : '');
-
-    if (decision === 'return') {
-      var reason = document.getElementById('jcaReturnReason').value.trim();
-      if (!reason) {
-        Notify.error('Please enter the return reason');
-        return;
-      }
-      var btn = document.getElementById('jcaReturnBtn');
-      if (btn) btn.disabled = true;
-      Loader.show();
-      API.post('returnJobCard', { id: id, ReturnReason: reason, ApprovalRemarks: remarks })
-        .then(function() {
-          Loader.hide();
-          if (btn) btn.disabled = false;
-          hideModal();
-          Notify.success('Job card returned to technician');
-          Badge.refresh();
-          loadData();
-        })
-        .catch(function() {
-          Loader.hide();
-          if (btn) btn.disabled = false;
-          Notify.error('Failed to return job card');
-        });
-    } else {
-      var btn = document.getElementById('jcaApproveBtn');
-      if (btn) btn.disabled = true;
-      Loader.show();
-      API.post('approveJobCard', { id: id, ApprovalStatus: 'Approved', ApprovalRemarks: remarks })
-        .then(function() {
-          Loader.hide();
-          if (btn) btn.disabled = false;
-          hideModal();
-          Notify.success('Job card approved successfully');
-          Badge.refresh();
-          loadData();
-        })
-        .catch(function() {
-          Loader.hide();
-          if (btn) btn.disabled = false;
-          Notify.error('Failed to approve job card');
-        });
-    }
-  }
-
-  function saveForm(e) {
-    e.preventDefault();
-    var decision = document.querySelector('input[name="approveDecision"]:checked');
-    submitReview(decision ? decision.value : 'approve');
-  }
-
   return {
     show: renderPage,
     filter: function() { state.page = 1; renderTable(); },
     search: function() { state.page = 1; renderTable(); },
     reviewCard: reviewCard,
-    submitReview: submitReview,
     hideModal: hideModal,
-    saveForm: saveForm,
     goPage: function(p) { state.page = p; renderTable(); }
   };
 })();
