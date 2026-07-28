@@ -47,6 +47,7 @@ var Dashboard = {
       '<div class="stat-card stat-danger"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div><div class="stat-info"><h3 id="statBreakdownHours">0</h3><p>Total Downtime</p></div></div></div>' +
       '<div class="stat-card stat-info"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M9 18l3 3 3-3"/><path d="M4 12h2l3-9 3 9h2"/></svg></div><div class="stat-info"><h3 id="statMTTR">N/A</h3><p>MTTR (hrs)</p></div></div></div>' +
       '<div class="stat-card stat-success"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M9 18l3 3 3-3"/><path d="M20 12h-2l-3-9L9 3l-3 9H4"/></svg></div><div class="stat-info"><h3 id="statMTBF">N/A</h3><p>MTBF (hrs)</p></div></div></div>' +
+      '<div class="stat-card stat-primary"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20L12 10"/><path d="M18 20L18 4"/><path d="M6 20L6 16"/></svg></div><div class="stat-info"><h3 id="statTotalOperatingHours">0</h3><p>Total Operating Hours</p></div></div></div>' +
       '<div class="stat-card stat-primary"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="stat-info"><h3 id="statAvailability">0%</h3><p>Availability</p></div></div></div>' +
       '<div class="stat-card stat-danger"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div><div class="stat-info"><h3 id="statBreakdownMaint">0</h3><p>Breakdown Maint.</p></div></div></div>' +
       '<div class="stat-card stat-success"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-info"><h3 id="statPreventiveMaint">0</h3><p>Preventive Maint.</p></div></div></div>' +
@@ -443,6 +444,7 @@ var Dashboard = {
     Dashboard._kpiStartToggle();
     Dashboard._setText('statMTTR', data.mttr !== null && data.mttr !== undefined ? data.mttr : 'N/A');
     Dashboard._setText('statMTBF', data.mtbf !== null && data.mtbf !== undefined ? data.mtbf : 'N/A');
+    Dashboard._setText('statTotalOperatingHours', data.totalMachineRuntimeHours !== null && data.totalMachineRuntimeHours !== undefined ? data.totalMachineRuntimeHours : 0);
     Dashboard._setText('statAvailability', (data.availability || 0) + '%');
     Dashboard._setText('statBreakdownMaint', data.breakdownMaintenanceCount || 0);
     Dashboard._setText('statPreventiveMaint', data.preventiveMaintenanceCount || 0);

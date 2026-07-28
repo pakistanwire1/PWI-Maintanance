@@ -1,4 +1,4 @@
-var MACHINE_COLS = ['MachineID','MachineCode','MachineName','MachineNumber','DeptID','Department','SectionID','Section','Location','MachineType','Manufacturer','Model','SerialNo','Capacity','PowerRating','InstallDate','WarrantyExpiry','Criticality','Status','QRCode','Barcode','QRGeneratedDate','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
+var MACHINE_COLS = ['MachineID','MachineCode','MachineName','MachineNumber','DeptID','Department','SectionID','Section','Location','MachineType','Manufacturer','Model','SerialNo','Capacity','PowerRating','InstallDate','WarrantyExpiry','Criticality','Status','QRCode','Barcode','QRGeneratedDate','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt','OperatingHoursPerDay','OperatingDaysPerWeek'];
 
 function initMachineSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -55,11 +55,11 @@ function initMachineSheet() {
   var pad = function(n) { return ('0' + n).slice(-2); };
   var ts = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
   var sampleData = [
-    ['MCH001','CNC-001','CNC Milling Machine','CNC-001','DEPT002','Spoke Production','SEC002','Spoke','Area A','CNC','HAAS','VF-2','SN-001','500 kg','50 kW','2025-01-01 00:00','2027-01-01 00:00','Critical','Active','','Admin',ts,'Admin',ts],
-    ['MCH002','HP-001','Hydraulic Press','HP-001','DEPT002','Spoke Production','SEC002','Spoke','Area B','Hydraulic','Enerpac','EP-100','SN-002','100 T','75 kW','2025-02-01 00:00','2027-02-01 00:00','High','Active','','Admin',ts,'Admin',ts],
-    ['MCH003','AC-001','Air Compressor','AC-001','DEPT008','Facility Maintenance','SEC008','Maintenance','Utility Room','Compressor','Atlas Copco','GA-30','SN-003','200 CFM','150 kW','2024-06-01 00:00','2027-06-01 00:00','Critical','Active','','Admin',ts,'Admin',ts],
-    ['MCH004','CB-001','Conveyor Belt','CB-001','DEPT005','Packing','SEC005','Spoke Packing','Packing Area','Mechanical','FlexLink','X85','SN-004','100 m','5 kW','2025-03-01 00:00','2027-03-01 00:00','Medium','Active','','Admin',ts,'Admin',ts],
-    ['MCH005','GEN-001','Generator Set','GEN-001','DEPT008','Facility Maintenance','SEC008','Maintenance','Power Room','Generator','Cummins','C20D5','SN-005','500 kVA','400 kW','2024-01-01 00:00','2029-01-01 00:00','Critical','Active','','Admin',ts,'Admin',ts]
+    ['MCH001','CNC-001','CNC Milling Machine','CNC-001','DEPT002','Spoke Production','SEC002','Spoke','Area A','CNC','HAAS','VF-2','SN-001','500 kg','50 kW','2025-01-01 00:00','2027-01-01 00:00','Critical','Active','','Admin',ts,'Admin',ts,24,7],
+    ['MCH002','HP-001','Hydraulic Press','HP-001','DEPT002','Spoke Production','SEC002','Spoke','Area B','Hydraulic','Enerpac','EP-100','SN-002','100 T','75 kW','2025-02-01 00:00','2027-02-01 00:00','High','Active','','Admin',ts,'Admin',ts,24,7],
+    ['MCH003','AC-001','Air Compressor','AC-001','DEPT008','Facility Maintenance','SEC008','Maintenance','Utility Room','Compressor','Atlas Copco','GA-30','SN-003','200 CFM','150 kW','2024-06-01 00:00','2027-06-01 00:00','Critical','Active','','Admin',ts,'Admin',ts,24,7],
+    ['MCH004','CB-001','Conveyor Belt','CB-001','DEPT005','Packing','SEC005','Spoke Packing','Packing Area','Mechanical','FlexLink','X85','SN-004','100 m','5 kW','2025-03-01 00:00','2027-03-01 00:00','Medium','Active','','Admin',ts,'Admin',ts,12,6],
+    ['MCH005','GEN-001','Generator Set','GEN-001','DEPT008','Facility Maintenance','SEC008','Maintenance','Power Room','Generator','Cummins','C20D5','SN-005','500 kVA','400 kW','2024-01-01 00:00','2029-01-01 00:00','Critical','Active','','Admin',ts,'Admin',ts,24,7]
   ];
   sheet.getRange(2, 1, sampleData.length, MACHINE_COLS.length).setValues(sampleData);
   SpreadsheetApp.flush();

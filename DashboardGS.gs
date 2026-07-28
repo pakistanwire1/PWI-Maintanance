@@ -469,6 +469,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
     var deptJobCounts = {};
 
     var breakdownJobCount = 0;
+    var approvedBreakdownJobCount = 0;
     var breakdownClosedCount = 0;
     var breakdownClosedRepairMinutes = 0;
     var breakdownTypeDowntimeMinutes = 0;
@@ -499,6 +500,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
       var classification = classifyMaintenance(n.raw);
       if (classification.isBreakdown) {
         breakdownMaintenanceCount++;
+        if (n.isApproved) approvedBreakdownJobCount++;
         if (n.isClosed) {
           breakdownJobCount++;
           breakdownClosedCount++;
@@ -517,7 +519,25 @@ function getDashboardData(filter, userDepartment, userEmail) {
       rangeHours = Math.max(1, Math.round((range.end - range.start) / 3600000));
     }
 
-    breakdownTypeDowntimeMinutes = Math.min(breakdownTypeDowntimeMinutes, rangeHours * 60);
+    // Report days in the filter range
+    var reportDays;
+    if (isAll) {
+      reportDays = earliestDate ? Math.max(1, Math.round((new Date() - earliestDate) / 86400000)) : 365;
+    } else {
+      reportDays = Math.max(1, Math.round((range.end - range.start) / 86400000));
+    }
+
+    // Fleet runtime = Σ(OperatingHoursPerDay × OperatingDaysPerWeek ÷ 7 × reportDays)
+    var totalMachineRuntimeHours = 0;
+    for (var mi = 0; mi < machines.length; mi++) {
+      var mph = parseFloat(machines[mi].OperatingHoursPerDay) || 0;
+      var mpw = parseFloat(machines[mi].OperatingDaysPerWeek) || 0;
+      if (mph > 0 && mpw > 0) {
+        totalMachineRuntimeHours += mph * mpw / 7 * reportDays;
+      } else {
+        console.warn('[DASHBOARD] OperatingHoursPerDay / OperatingDaysPerWeek missing for Machine ' + (machines[mi].MachineID || '?') + ' (' + (machines[mi].MachineName || '?') + ') — runtime contribution = 0');
+      }
+    }
 
     var totalRepairHours = totalRepairMinutes / 60;
     var totalDowntimeHours = totalDowntimeMinutes / 60;
@@ -526,42 +546,10 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
     var mttr = breakdownClosedCount > 0 ? Math.round((breakdownClosedRepairMinutes / breakdownClosedCount / 60) * 100) / 100 : null;
 
-    var totalRunningHours = Math.max(0, rangeHours - (breakdownTypeDowntimeMinutes / 60));
-    var mtbf = breakdownJobCount > 0 ? Math.round((totalRunningHours / breakdownJobCount) * 100) / 100 : null;
+    var totalRunningHours = totalMachineRuntimeHours;
+    var mtbf = approvedBreakdownJobCount > 0 ? Math.round((totalRunningHours / approvedBreakdownJobCount) * 100) / 100 : null;
 
-    console.log('');
-    console.log('===== P11.32 MTBF DEBUG =====');
-    console.log('breakdownMaintenanceCount=' + breakdownMaintenanceCount);
-    console.log('breakdownClosedCount=' + breakdownClosedCount);
-    console.log('breakdownJobCount=' + breakdownJobCount);
-    console.log('breakdownClosedRepairMinutes=' + breakdownClosedRepairMinutes);
-    console.log('breakdownTypeDowntimeMinutes=' + breakdownTypeDowntimeMinutes);
-    console.log('totalWorkingMinutes=' + totalWorkingMinutes);
-    console.log('totalDowntimeMinutes=' + totalDowntimeMinutes);
-    console.log('rangeHours=' + rangeHours);
-    console.log('totalRunningHours=' + totalRunningHours);
-    console.log('mtbf=' + mtbf);
-    console.log('mttr=' + mttr);
-    var bdDebugJobs = [];
-    for (var di = 0; di < filtered.length; di++) {
-      var dn = filtered[di];
-      var dClassification = classifyMaintenance(dn.raw);
-      if (dClassification.isBreakdown) {
-        bdDebugJobs.push({
-          JobCardNo: dn.raw.JobCardNo,
-          CurrentStatus: dn.raw.CurrentStatus || dn.raw.Status,
-          ApprovalStatus: dn.raw.ApprovalStatus,
-          isClosed: dn.isClosed,
-          isPending: dn.isPending,
-          isApproved: dn.isApproved,
-          isPendingApproval: dn.isPendingApproval,
-          downtimeMins: dn.downtimeMins,
-          repairMins: dn.repairMins,
-          workingMins: dn.workingMins
-        });
-      }
-    }
-    console.log('BD_JOBS=' + JSON.stringify(bdDebugJobs));
+    console.log('totalMachineRuntimeHours=' + totalMachineRuntimeHours + ' reportDays=' + reportDays + ' approvedBreakdownJobCount=' + approvedBreakdownJobCount + ' mtbf=' + mtbf);
 
     var availability = (totalWorkingMinutes + totalDowntimeMinutes) > 0 ? Math.round((totalWorkingMinutes / (totalWorkingMinutes + totalDowntimeMinutes)) * 10000) / 100 : 0;
 
@@ -610,6 +598,15 @@ function getDashboardData(filter, userDepartment, userEmail) {
       chartRangeEnd = new Date(range.end.getTime());
     }
     var periodMs = (chartRangeEnd.getTime() - chartRangeStart.getTime()) / numPeriods;
+    var periodDays = Math.max(1, Math.round(periodMs / 86400000));
+    var periodMachineRuntimeHours = 0;
+    for (var mi = 0; mi < machines.length; mi++) {
+      var mph = parseFloat(machines[mi].OperatingHoursPerDay) || 0;
+      var mpw = parseFloat(machines[mi].OperatingDaysPerWeek) || 0;
+      if (mph > 0 && mpw > 0) {
+        periodMachineRuntimeHours += mph * mpw / 7 * periodDays;
+      }
+    }
     var tz = Session.getScriptTimeZone();
     var useShortLabels = periodMs < 7 * 86400000;
 
@@ -683,8 +680,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
       var monthMttrVal = periodBreakdownClosedCount > 0 ? Math.round((periodBreakdownRepairMins / periodBreakdownClosedCount / 60) * 100) / 100 : null;
 
-      var periodUptimeHours = Math.max(0, (periodMs / 3600000) - (periodBreakdownTypeDownMins / 60));
-      var monthMtbfVal = periodBreakdownCount > 0 ? Math.round((periodUptimeHours / periodBreakdownCount) * 100) / 100 : null;
+      var monthMtbfVal = periodBreakdownCount > 0 ? Math.round((periodMachineRuntimeHours / periodBreakdownCount) * 100) / 100 : null;
 
       chartMttr.push(monthMttrVal);
       chartMtbf.push(monthMtbfVal);
@@ -835,6 +831,58 @@ function getDashboardData(filter, userDepartment, userEmail) {
     console.log('Breakdown jobs used in MTBF = ' + tracedMTBF);
     console.log('MTBF = ' + mtbf);
 
+    // ============================================
+    // P11.41 — MTBF FINAL TRACE
+    // ============================================
+    var closedBreakdownJobs = [];
+    var approvedBreakdownJobs = [];
+    for (var mi = 0; mi < filtered.length; mi++) {
+      var mn = filtered[mi];
+      var mc = classifyMaintenance(mn.raw);
+      if (!mc.isBreakdown) continue;
+      if (mn.isClosed) closedBreakdownJobs.push(mn);
+      if (mn.isApproved || (mn.raw.ApprovalStatus || '').toLowerCase() === 'approved') approvedBreakdownJobs.push(mn);
+    }
+    console.log('');
+    console.log('--------------------------------');
+    console.log('breakdownFailureCount = ' + breakdownJobCount);
+    console.log('closedBreakdownJobs.length = ' + closedBreakdownJobs.length);
+    console.log('breakdownTypeDowntimeMinutes = ' + breakdownTypeDowntimeMinutes);
+    console.log('rangeHours = ' + rangeHours);
+    console.log('totalRunningHours = ' + totalRunningHours);
+    console.log('totalWorkingHours = ' + totalWorkingHours);
+    console.log('approvedBreakdownJobs.length = ' + approvedBreakdownJobs.length);
+    console.log('returned MTBF = ' + mtbf);
+    console.log('');
+    console.log('--- PER JOB: breakdown jobs only ---');
+    for (var mi = 0; mi < filtered.length; mi++) {
+      var mn = filtered[mi];
+      var mc = classifyMaintenance(mn.raw);
+      if (!mc.isBreakdown) continue;
+      var includedInMTBF = mc.isBreakdown && mn.isClosed;
+      var reasons = [];
+      if (!mn.isClosed) reasons.push('not closed');
+      if (!mc.isBreakdown) reasons.push('not breakdown');
+      console.log(
+        'JobCardNo=' + (mn.raw.JobCardNo || 'N/A') +
+        ' | BT=' + JSON.stringify(mn.raw.BreakdownType) +
+        ' | ApprovalStatus=' + (mn.raw.ApprovalStatus || '') +
+        ' | Status=' + (mn.raw.CurrentStatus || mn.raw.Status || '') +
+        ' | WorkingTime=' + (mn.raw.WorkingTime) +
+        ' | Downtime=' + (mn.raw.Downtime) +
+        ' | IncludedInMTBF=' + includedInMTBF +
+        (reasons.length ? ' | Reason=' + reasons.join(',') : '')
+      );
+    }
+    console.log('');
+    // Identify first zero
+    var firstZero = null;
+    if (breakdownJobCount === 0) firstZero = 'breakdownJobCount';
+    else if (totalRunningHours === 0) firstZero = 'totalRunningHours';
+    else if (mtbf === 0 || mtbf === null) firstZero = 'mtbf';
+    console.log('FIRST ZERO VARIABLE: ' + (firstZero || 'none (MTBF > 0)'));
+    console.log('--------------------------------');
+
     return {
       totalMachines: totalMachines,
       runningMachines: runningMachines,
@@ -858,7 +906,10 @@ function getDashboardData(filter, userDepartment, userEmail) {
       totalRepairTimeMinutes: totalRepairMinutes,
       totalDowntimeMinutes: totalDowntimeMinutes,
       breakdownHours: Math.round(totalDowntimeHours * 100) / 100,
+      totalMachineRuntimeHours: Math.round(totalMachineRuntimeHours * 100) / 100,
+      reportDays: reportDays,
       breakdownJobCount: breakdownJobCount,
+      approvedBreakdownJobCount: approvedBreakdownJobCount,
       breakdownClosedCount: breakdownClosedCount,
       breakdownMaintenanceCount: breakdownMaintenanceCount,
       preventiveMaintenanceCount: preventiveMaintenanceCount,

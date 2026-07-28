@@ -234,7 +234,8 @@ var CONFIG = {
     'MachineID', 'MachineCode', 'MachineName', 'MachineNumber', 'DeptID', 'Department',
     'SectionID', 'Section', 'Location', 'MachineType', 'Manufacturer', 'Model', 'SerialNo',
     'Capacity', 'PowerRating', 'InstallDate', 'WarrantyExpiry', 'Criticality', 'Status',
-    'QRCode', 'Barcode', 'QRGeneratedDate', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
+    'QRCode', 'Barcode', 'QRGeneratedDate', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt',
+    'OperatingHoursPerDay', 'OperatingDaysPerWeek'
   ],
 
   TECHNICIAN_FIELDS: [
