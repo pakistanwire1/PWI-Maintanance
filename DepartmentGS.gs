@@ -1,4 +1,4 @@
-var DEPT_COLS = ['DepartmentID','Department','DepartmentCode','SectionID','Section','DepartmentHead','Description','SundayOff','HoursPerDay','Status','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
+var DEPT_COLS = ['DepartmentID','Department','DepartmentCode','SectionID','Section','Division','DepartmentHead','Description','SundayOff','HoursPerDay','Status','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
 
 function initDepartmentSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -55,14 +55,14 @@ function initDepartmentSheet() {
   var pad = function(n) { return ('0' + n).slice(-2); };
   var ts = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
   var sampleData = [
-    ['DEPT001','Admin','ADM','SEC001','Admin','Admin Head','Administration Department','Sunday','8','Active','Admin',ts,'Admin',ts],
-    ['DEPT002','Spoke Production','SPR','SEC002','Spoke','Spoke Manager','Spoke Production Department','Sunday','8','Active','Admin',ts,'Admin',ts],
-    ['DEPT003','Plating Line','PLT','SEC003','Auto Plating Line','Plating Supervisor','Auto Plating Department','Sunday','8','Active','Admin',ts,'Admin',ts],
-    ['DEPT004','Nipple Production','NPL','SEC004','Nipple','Nipple Manager','Nipple Production Department','Sunday','8','Active','Admin',ts,'Admin',ts],
-    ['DEPT005','Packing','PCK','SEC005','Spoke Packing','Packing Supervisor','Packing Department','Sunday','8','Active','Admin',ts,'Admin',ts],
-    ['DEPT006','Spiral Production','SPL','SEC006','Spiral','Spiral Manager','Spiral Production Department','Sunday','8','Active','Admin',ts,'Admin',ts],
-    ['DEPT007','PVC Production','PVC','SEC007','PVC','PVC Manager','PVC Production Department','Sunday','8','Active','Admin',ts,'Admin',ts],
-    ['DEPT008','Facility Maintenance','MNT','SEC008','Maintenance','Maintenance Head','Facility Maintenance Department','Sunday','8','Active','Admin',ts,'Admin',ts]
+    ['DEPT001','Admin','ADM','SEC001','Admin','Spoke Division','Admin Head','Administration Department','Sunday','8','Active','Admin',ts,'Admin',ts],
+    ['DEPT002','Spoke Production','SPR','SEC002','Spoke','Spoke Division','Spoke Manager','Spoke Production Department','Sunday','8','Active','Admin',ts,'Admin',ts],
+    ['DEPT003','Plating Line','PLT','SEC003','Auto Plating Line','Spoke Division','Plating Supervisor','Auto Plating Department','Sunday','8','Active','Admin',ts,'Admin',ts],
+    ['DEPT004','Nipple Production','NPL','SEC004','Nipple','Spoke Division','Nipple Manager','Nipple Production Department','Sunday','8','Active','Admin',ts,'Admin',ts],
+    ['DEPT005','Packing','PCK','SEC005','Spoke Packing','Spoke Division','Packing Supervisor','Packing Department','Sunday','8','Active','Admin',ts,'Admin',ts],
+    ['DEPT006','Spiral Production','SPL','SEC006','Spiral','Control Cable Division','Spiral Manager','Spiral Production Department','Sunday','8','Active','Admin',ts,'Admin',ts],
+    ['DEPT007','PVC Production','PVC','SEC007','PVC','Control Cable Division','PVC Manager','PVC Production Department','Sunday','8','Active','Admin',ts,'Admin',ts],
+    ['DEPT008','Facility Maintenance','MNT','SEC008','Maintenance','Spoke Division','Maintenance Head','Facility Maintenance Department','Sunday','8','Active','Admin',ts,'Admin',ts]
   ];
   sheet.getRange(2, 1, sampleData.length, DEPT_COLS.length).setValues(sampleData);
   SpreadsheetApp.flush();
@@ -119,6 +119,7 @@ function normalizeDepartment(dept) {
   out.DepartmentCode = out.DepartmentCode || '';
   out.SectionID = out.SectionID || '';
   out.Section = out.Section || '';
+  out.Division = out.Division || '';
   out.DepartmentHead = out.DepartmentHead || '';
   out.Description = out.Description || '';
   out.SundayOff = out.SundayOff || 'No';

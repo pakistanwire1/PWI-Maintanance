@@ -225,7 +225,7 @@ var CONFIG = {
   ],
 
   DEPARTMENT_FIELDS: [
-    'DepartmentID', 'Department', 'DepartmentCode', 'SectionID', 'Section',
+    'DepartmentID', 'Department', 'DepartmentCode', 'SectionID', 'Section', 'Division',
     'DepartmentHead', 'Description', 'SundayOff', 'HoursPerDay', 'Status',
     'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
   ],
