@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html data-theme="dark">
 <head>
   <base target="_top">
@@ -1036,7 +1036,6 @@
     }
 
     function wsEnterFail(msg) {
-      console.error('Welcome: Failed to load app -', msg);
       var btn = document.getElementById('wsBtn');
       if (btn) {
         btn.disabled = false;
@@ -1068,7 +1067,16 @@
       wsTimer = setTimeout(tick, 50);
     }
 
+    function wsAutoEnterOnQR() {
+      if (window.location.search && (window.location.search.indexOf('?machine=') !== -1 || window.location.search.indexOf('?qr=') !== -1)) {
+        setTimeout(function() {
+          if (!wsLoaded) wsEnter();
+        }, 300);
+      }
+    }
+
     wsStart();
+    wsAutoEnterOnQR();
   </script>
   <style>
     @keyframes spin { to { transform: rotate(360deg); } }

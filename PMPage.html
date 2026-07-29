@@ -1,4 +1,4 @@
-<div id="pmPage" class="page">
+﻿<div id="pmPage" class="page">
   <div class="dashboard-grid" id="pmSummaryCards" style="margin-bottom:16px">
     <div class="stat-card stat-primary">
       <div class="stat-inner">
@@ -67,8 +67,26 @@
         </div>
       </div>
       <div class="form-group">
+        <label>Division</label>
+        <select class="form-control" id="pmDivision" onchange="onPmDivChange()">
+          <option value="">All Divisions</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Section</label>
+        <select class="form-control" id="pmSection" onchange="onPmSecChange()">
+          <option value="">All Sections</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Department</label>
+        <select class="form-control" id="pmDepartment" onchange="onPmDeptChange()">
+          <option value="">All Departments</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label>Machine</label>
-        <select class="form-control" id="pmFilterMachine">
+        <select class="form-control" id="pmFilterMachine" onchange="applyPMFilter()">
           <option value="">All Machines</option>
         </select>
       </div>
@@ -151,21 +169,21 @@
   </div>
 
   <div id="pmComplianceView" style="display:none">
-    <div class="dashboard-grid" style="grid-template-columns:1fr 1fr;margin-bottom:16px">
-      <div class="card" style="margin-bottom:0">
+    <div class="dashboard-grid" style="grid-template-columns:1fr 1fr">
+      <div class="card">
         <div class="card-header">
           <div class="card-title">Compliance Rate</div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px">
-          <div id="pmComplianceLarge" style="font-size:72px;font-weight:800;line-height:1">0%</div>
-          <div style="font-size:14px;color:var(--text-muted);margin-top:8px">Overall PM Compliance</div>
+        <div class="pm-compliance-rate">
+          <div id="pmComplianceLarge" class="pm-compliance-percentage">0%</div>
+          <div class="pm-compliance-subtitle">Overall PM Compliance</div>
         </div>
       </div>
-      <div class="card" style="margin-bottom:0">
+      <div class="card">
         <div class="card-header">
           <div class="card-title">Breakdown</div>
         </div>
-        <div style="padding:16px;display:flex;flex-direction:column;gap:12px" id="pmComplianceBreakdown"></div>
+        <div class="pm-breakdown-list" id="pmComplianceBreakdown"></div>
       </div>
     </div>
     <div class="card">
@@ -440,22 +458,26 @@ function loadPMData() {
       showLoading(false);
       updatePMSummary();
       renderPMTable();
-      loadPMFilterSelects();
+      loadPmCascade();
+      loadPMTechFilter();
     })
     .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load PM records', 'error'); })
     .getPMRecords();
 }
 
-function loadPMFilterSelects() {
+function loadPmCascade(divId, secId, deptId) {
   google.script.run
-    .withSuccessHandler(function(m) {
-      pmMachinesCache = m || [];
-      var sel = document.getElementById('pmFilterMachine');
-      if (sel) sel.innerHTML = '<option value="">All Machines</option>';
-      if (sel) m.forEach(function(item) { sel.innerHTML += '<option value="' + (item.MachineID || item.id) + '">' + (item.MachineName || item.name) + '</option>'; });
+    .withSuccessHandler(function(c) {
+      populateSelect('pmDivision', c.divisions, 'id', 'name', 'All Divisions');
+      populateSelect('pmSection', c.sections, 'name', 'name', 'All Sections');
+      populateSelect('pmDepartment', c.departments, 'name', 'name', 'All Departments');
+      populateSelect('pmFilterMachine', c.machines, 'number', 'label', 'All Machines');
     })
     .withFailureHandler(function() {})
-    .getMachines();
+    .getMachineCascade(divId || '', secId || '', deptId || '');
+}
+
+function loadPMTechFilter() {
   google.script.run
     .withSuccessHandler(function(t) {
       pmTechsCache = t || [];
@@ -465,6 +487,30 @@ function loadPMFilterSelects() {
     })
     .withFailureHandler(function() {})
     .getTechnicians();
+}
+
+function onPmDivChange() {
+  var d = document.getElementById('pmDivision').value;
+  document.getElementById('pmSection').innerHTML = '<option value="">All Sections</option>';
+  document.getElementById('pmDepartment').innerHTML = '<option value="">All Departments</option>';
+  document.getElementById('pmFilterMachine').innerHTML = '<option value="">All Machines</option>';
+  loadPmCascade(d);
+}
+
+function onPmSecChange() {
+  var d = document.getElementById('pmDivision').value;
+  var s = document.getElementById('pmSection').value;
+  document.getElementById('pmDepartment').innerHTML = '<option value="">All Departments</option>';
+  document.getElementById('pmFilterMachine').innerHTML = '<option value="">All Machines</option>';
+  loadPmCascade(d, s);
+}
+
+function onPmDeptChange() {
+  var d = document.getElementById('pmDivision').value;
+  var s = document.getElementById('pmSection').value;
+  var dp = document.getElementById('pmDepartment').value;
+  document.getElementById('pmFilterMachine').innerHTML = '<option value="">All Machines</option>';
+  loadPmCascade(d, s, dp);
 }
 
 function updatePMSummary() {
@@ -679,7 +725,7 @@ function applyPMFilter() {
   pmFilter.priority = document.getElementById('pmFilterPriority').value;
   showLoading(true);
   var filtered = pmData;
-  if (pmFilter.machine) filtered = filtered.filter(function(r) { return r.MachineID === pmFilter.machine || r.MachineName === pmFilter.machine; });
+  if (pmFilter.machine) filtered = filtered.filter(function(r) { return r.MachineNumber === pmFilter.machine || r.MachineCode === pmFilter.machine || r.MachineID === pmFilter.machine || r.MachineName === pmFilter.machine; });
   if (pmFilter.technician) filtered = filtered.filter(function(r) { return r.AssignedTechnician === pmFilter.technician || r.AssignedTechnicianName === pmFilter.technician; });
   if (pmFilter.status) filtered = filtered.filter(function(r) { return r.Status === pmFilter.status; });
   if (pmFilter.priority) filtered = filtered.filter(function(r) { return r.Priority === pmFilter.priority; });
@@ -690,6 +736,9 @@ function applyPMFilter() {
 }
 
 function clearPMFilter() {
+  var d = document.getElementById('pmDivision'); if (d) d.value = '';
+  var s = document.getElementById('pmSection'); if (s) s.value = '';
+  var dp = document.getElementById('pmDepartment'); if (dp) dp.value = '';
   var el = document.getElementById('pmFilterMachine'); if (el) el.value = '';
   var el2 = document.getElementById('pmFilterTechnician'); if (el2) el2.value = '';
   var el3 = document.getElementById('pmFilterStatus'); if (el3) el3.value = '';
@@ -965,3 +1014,4 @@ function loadMachineCompliance() {
   ], null, 1, PAGE_SIZE, 'pmMachineComplianceContainer');
 }
 </script>
+

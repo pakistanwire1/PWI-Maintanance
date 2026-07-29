@@ -45,17 +45,32 @@
 
     <div class="filter-bar">
       <div class="form-group">
+        <select class="form-control" id="jcDivision" onchange="onJcDivChange()">
+          <option value="">All Divisions</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <select class="form-control" id="jcSection" onchange="onJcSecChange()">
+          <option value="">All Sections</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <select class="form-control" id="jcDepartment" onchange="onJcDeptChange()">
+          <option value="">All Departments</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <select class="form-control" id="jcMachineNumber" onchange="filterJobCards()">
+          <option value="">All Machines</option>
+        </select>
+      </div>
+      <div class="form-group">
         <select class="form-control" id="jcPriorityFilter" onchange="filterJobCards()">
           <option value="">All Priority</option>
           <option value="Low">Low</option>
           <option value="Medium">Medium</option>
           <option value="High">High</option>
           <option value="Critical">Critical</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <select class="form-control" id="jcDeptFilter" onchange="filterJobCards()">
-          <option value="">All Departments</option>
         </select>
       </div>
     </div>
@@ -112,21 +127,47 @@ function loadJobCardsData() {
     .withSuccessHandler(function(data) {
       jcData = data || [];
       showLoading(false);
-      populateJcSelects();
+      loadJCCascade();
       renderJcTabs();
     })
     .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load job cards', 'error'); })
     .getJobCards();
 }
 
-function populateJcSelects() {
-  var deptFilter = document.getElementById('jcDeptFilter');
-  if (deptFilter) deptFilter.innerHTML = '<option value="">All Departments</option>';
-  var depts = [];
-  jcData.forEach(function(jc) {
-    if (jc.Department && depts.indexOf(jc.Department) === -1) depts.push(jc.Department);
-  });
-  depts.sort().forEach(function(d) { if (deptFilter) deptFilter.innerHTML += '<option value="' + d + '">' + d + '</option>'; });
+function loadJCCascade(divId, secId, deptId) {
+  google.script.run
+    .withSuccessHandler(function(c) {
+      populateSelect('jcDivision', c.divisions, 'id', 'name', 'All Divisions');
+      populateSelect('jcSection', c.sections, 'id', 'name', 'All Sections');
+      populateSelect('jcDepartment', c.departments, 'id', 'name', 'All Departments');
+      populateSelect('jcMachineNumber', c.machines, 'number', 'label', 'All Machines');
+    })
+    .withFailureHandler(function() {})
+    .getMachineCascade(divId || '', secId || '', deptId || '');
+}
+
+function onJcDivChange() {
+  var d = document.getElementById('jcDivision').value;
+  document.getElementById('jcSection').innerHTML = '<option value="">Loading...</option>';
+  document.getElementById('jcDepartment').innerHTML = '<option value="">Loading...</option>';
+  document.getElementById('jcMachineNumber').innerHTML = '<option value="">Loading...</option>';
+  loadJCCascade(d);
+}
+
+function onJcSecChange() {
+  var d = document.getElementById('jcDivision').value;
+  var s = document.getElementById('jcSection').value;
+  document.getElementById('jcDepartment').innerHTML = '<option value="">Loading...</option>';
+  document.getElementById('jcMachineNumber').innerHTML = '<option value="">Loading...</option>';
+  loadJCCascade(d, s);
+}
+
+function onJcDeptChange() {
+  var d = document.getElementById('jcDivision').value;
+  var s = document.getElementById('jcSection').value;
+  var dp = document.getElementById('jcDepartment').value;
+  document.getElementById('jcMachineNumber').innerHTML = '<option value="">Loading...</option>';
+  loadJCCascade(d, s, dp);
 }
 
 function renderJcTabs() {
@@ -182,9 +223,9 @@ function renderJcTable() {
   });
 
   var priorityFilter = document.getElementById('jcPriorityFilter').value;
-  var deptFilter = document.getElementById('jcDeptFilter').value;
+  var machFilter = document.getElementById('jcMachineNumber').value;
   if (priorityFilter) list = list.filter(function(jc) { return jc.Priority === priorityFilter; });
-  if (deptFilter) list = list.filter(function(jc) { return jc.Department === deptFilter; });
+  if (machFilter) list = list.filter(function(jc) { return (jc.MachineNumber === machFilter || jc.MachineCode === machFilter || jc.Machine === machFilter); });
 
   var canApprove = isAdmin() || hasPermission('approveJobCard');
 

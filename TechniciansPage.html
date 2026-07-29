@@ -1,4 +1,4 @@
-<div id="techniciansPage" class="page">
+﻿<div id="techniciansPage" class="page">
   <div class="card">
     <div class="card-header">
       <div class="card-title">Technician Master</div>
@@ -145,7 +145,7 @@ function loadTechDepartments() {
         });
       }
     })
-    .withFailureHandler(function(err) { console.error('Failed to load departments'); })
+    .withFailureHandler(function(err) { })
     .getDepartmentList();
 }
 
@@ -162,7 +162,7 @@ function onTechDeptChange() {
         });
       }
     })
-    .withFailureHandler(function(err) { console.error('Failed to load sections'); })
+    .withFailureHandler(function(err) { })
     .getSectionList();
 }
 

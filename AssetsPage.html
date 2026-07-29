@@ -43,6 +43,18 @@
             <select name="Category" class="form-control" id="asCategory"></select>
           </div>
           <div class="form-group">
+            <label>Division</label>
+            <select class="form-control" id="asDivision" onchange="onAsDivChange()">
+              <option value="">All Divisions</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Section</label>
+            <select class="form-control" id="asFilterSection" onchange="onAsSecChange()">
+              <option value="">All Sections</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label>Filter Dept</label>
             <select class="form-control" id="asFilterDept" onchange="onAsFilterDeptChange()">
               <option value="">All Departments</option>
@@ -51,11 +63,7 @@
         </div>
         <div class="form-row-3">
           <div class="form-group">
-            <label>Filter Section</label>
-            <select class="form-control" id="asFilterSection" onchange="onAsFilterSectionChange()">
-              <option value="">All Sections</option>
-            </select>
-          </div>
+            <label>Linked Machine</label>
           <div class="form-group">
             <label>Linked Machine</label>
             <select name="MachineID" class="form-control" id="asMachine" onchange="onAssetMachineChange()">
@@ -163,7 +171,6 @@
 var assetsData = [];
 var assetsPage = 1;
 var assetMachineCache = null;
-var assetDeptCache = null;
 
 function loadAssetsData() {
   showLoading(true);
@@ -197,17 +204,6 @@ function renderAssetsTable() {
   registerPageState('assetsTableContainer', function(p) { assetsPage = p; renderAssetsTable(); });
 }
 
-function loadAssetDeptCache(callback) {
-  if (assetDeptCache) { if (callback) callback(assetDeptCache); return; }
-  google.script.run
-    .withSuccessHandler(function(depts) {
-      assetDeptCache = depts || [];
-      if (callback) callback(assetDeptCache);
-    })
-    .withFailureHandler(function() { assetDeptCache = []; if (callback) callback([]); })
-    .getDepartmentList();
-}
-
 function loadAssetMachineCache(callback) {
   if (assetMachineCache) { if (callback) callback(assetMachineCache); return; }
   google.script.run
@@ -220,87 +216,86 @@ function loadAssetMachineCache(callback) {
 }
 
 function populateAssetFilterDropdowns(selectedDeptId, selectedSectionId) {
-  loadAssetDeptCache(function(depts) {
-    var deptSel = document.getElementById('asFilterDept');
-    if (!deptSel) return;
-    deptSel.innerHTML = '<option value="">All Departments</option>';
-    var seen = {};
-    depts.forEach(function(d) {
-      if (seen[d.DeptID]) return;
-      seen[d.DeptID] = true;
-      var opt = document.createElement('option');
-      opt.value = d.DeptID;
-      opt.textContent = d.Department || '';
-      if (selectedDeptId && opt.value === selectedDeptId) opt.selected = true;
-      deptSel.appendChild(opt);
-    });
-    onAsFilterDeptChange(selectedSectionId);
-  });
+  loadAsCascade('', selectedDeptId, selectedSectionId);
 }
 
-function onAsFilterDeptChange(preselectSectionId) {
-  var deptId = document.getElementById('asFilterDept').value;
-  var secSel = document.getElementById('asFilterSection');
-  if (!secSel) return;
-  secSel.innerHTML = '<option value="">All Sections</option>';
-  if (deptId && assetDeptCache) {
-    var dept = assetDeptCache.find(function(d) { return d.DeptID === deptId; });
-    if (dept && dept.SectionID) {
-      var opt = document.createElement('option');
-      opt.value = dept.SectionID;
-      opt.textContent = dept.Section || '';
-      if (preselectSectionId && opt.value === preselectSectionId) opt.selected = true;
-      secSel.appendChild(opt);
-    }
-  }
-  onAsFilterSectionChange();
+function loadAsCascade(divId, deptId, sectionId) {
+  google.script.run
+    .withSuccessHandler(function(c) {
+      populateSelect('asDivision', c.divisions, 'id', 'name', 'All Divisions');
+      populateSelect('asFilterSection', c.sections, 'name', 'name', 'All Sections');
+      populateSelect('asFilterDept', c.departments, 'name', 'name', 'All Departments');
+      var machSel = document.getElementById('asMachine');
+      if (machSel) {
+        machSel.innerHTML = '<option value="">None</option>';
+        c.machines.forEach(function(m) {
+          var opt = document.createElement('option');
+          opt.value = m.number || m.id;
+          opt.textContent = m.label || m.number;
+          machSel.appendChild(opt);
+        });
+      }
+    })
+    .withFailureHandler(function() {})
+    .getMachineCascade(divId || '', sectionId || '', deptId || '');
 }
 
-function onAsFilterSectionChange() {
-  var deptId = document.getElementById('asFilterDept').value;
-  var sectionId = document.getElementById('asFilterSection').value;
-  var machineSel = document.getElementById('asMachine');
-  if (!machineSel) return;
-  var currentMachineId = machineSel.dataset.selectedId || '';
-  machineSel.innerHTML = '<option value="">None</option>';
-  if (assetMachineCache) {
-    assetMachineCache.forEach(function(m) {
-      if (deptId && m.DeptID !== deptId) return;
-      if (sectionId && m.SectionID !== sectionId) return;
-      var opt = document.createElement('option');
-      opt.value = m.MachineID;
-      opt.textContent = m.MachineName + ' (' + (m.MachineCode || '') + ')';
-      if (currentMachineId && opt.value === currentMachineId) opt.selected = true;
-      machineSel.appendChild(opt);
-    });
-  }
+function onAsDivChange() {
+  var d = document.getElementById('asDivision').value;
+  document.getElementById('asFilterSection').innerHTML = '<option value="">All Sections</option>';
+  document.getElementById('asFilterDept').innerHTML = '<option value="">All Departments</option>';
+  document.getElementById('asMachine').innerHTML = '<option value="">None</option>';
+  loadAsCascade(d);
 }
+
+function onAsSecChange() {
+  var d = document.getElementById('asDivision').value;
+  var s = document.getElementById('asFilterSection').value;
+  document.getElementById('asFilterDept').innerHTML = '<option value="">All Departments</option>';
+  document.getElementById('asMachine').innerHTML = '<option value="">None</option>';
+  loadAsCascade(d, '', s);
+}
+
+function onAsFilterDeptChange() {
+  var d = document.getElementById('asDivision').value;
+  var s = document.getElementById('asFilterSection').value;
+  var dp = document.getElementById('asFilterDept').value;
+  document.getElementById('asMachine').innerHTML = '<option value="">None</option>';
+  loadAsCascade(d, dp, s);
+}
+
+function onAsFilterSectionChange() { onAsFilterDeptChange(); }
 
 function populateAssetMachineDropdown(selectedMachineId) {
   var sel = document.getElementById('asMachine');
   if (!sel) return;
-  loadAssetMachineCache(function(machines) {
-    sel.innerHTML = '<option value="">None</option>';
-    machines.forEach(function(m) {
-      var opt = document.createElement('option');
-      opt.value = m.MachineID;
-      opt.textContent = m.MachineName + ' (' + (m.MachineCode || '') + ')';
-      if (selectedMachineId && (opt.value === selectedMachineId)) opt.selected = true;
-      sel.appendChild(opt);
-    });
-    if (selectedMachineId) onAssetMachineChange();
-  });
+  var divId = document.getElementById('asDivision').value;
+  var secName = document.getElementById('asFilterSection').value;
+  var deptName = document.getElementById('asFilterDept').value;
+  google.script.run
+    .withSuccessHandler(function(c) {
+      sel.innerHTML = '<option value="">None</option>';
+      c.machines.forEach(function(m) {
+        var opt = document.createElement('option');
+        opt.value = m.number || m.id;
+        opt.textContent = m.label || m.number;
+        if (selectedMachineId && (opt.value === selectedMachineId)) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      if (selectedMachineId) onAssetMachineChange();
+    })
+    .withFailureHandler(function() {})
+    .getMachineCascade(divId || '', secName || '', deptName || '');
 }
 
 function onAssetMachineChange() {
-  var machineId = document.getElementById('asMachine').value;
-    var el = document.getElementById('asMachine'); if (el) el.dataset.selectedId = machineId || '';
+  var machineVal = document.getElementById('asMachine').value;
   var machineNameEl = document.getElementById('asMachineName');
   var deptEl = document.getElementById('asDepartmentText');
   var deptIdEl = document.getElementById('asDept');
   var secEl = document.getElementById('asSectionText');
   var secIdEl = document.getElementById('asSection');
-  if (!machineId) {
+  if (!machineVal) {
     if (machineNameEl) machineNameEl.value = '';
     if (deptEl) deptEl.value = '';
     if (deptIdEl) deptIdEl.value = '';
@@ -308,9 +303,9 @@ function onAssetMachineChange() {
     if (secIdEl) secIdEl.value = '';
     return;
   }
-  var machine = assetMachineCache ? assetMachineCache.find(function(m) { return m.MachineID === machineId; }) : null;
+  var machine = assetMachineCache ? assetMachineCache.find(function(m) { return m.MachineNumber === machineVal || m.MachineCode === machineVal || m.MachineID === machineVal; }) : null;
   if (machine) {
-    if (machineNameEl) machineNameEl.value = machine.MachineName || '';
+    if (machineNameEl) machineNameEl.value = machine.MachineName || machine.name || '';
     if (deptEl) deptEl.value = machine.Department || '';
     if (deptIdEl) deptIdEl.value = machine.DeptID || '';
     if (secEl) secEl.value = machine.Section || '';
@@ -319,7 +314,7 @@ function onAssetMachineChange() {
     google.script.run
       .withSuccessHandler(function(m) {
         if (m) {
-          if (machineNameEl) machineNameEl.value = m.MachineName || '';
+          if (machineNameEl) machineNameEl.value = m.MachineName || m.name || '';
           if (deptEl) deptEl.value = m.Department || '';
           if (deptIdEl) deptIdEl.value = m.DeptID || '';
           if (secEl) secEl.value = m.Section || '';
@@ -327,7 +322,7 @@ function onAssetMachineChange() {
         }
       })
       .withFailureHandler(function() {})
-      .getMachineDetails(machineId);
+      .getMachineDetails(machineVal);
   }
 }
 
@@ -337,9 +332,7 @@ function openAssetForm() {
   var asc = document.getElementById('asCriticality'); if (asc) asc.value = 'Low';
   populateSelectFromList('asType', CONSTANTS.ASSET_TYPES || [], 'Select Type');
   populateSelectFromList('asCategory', CONSTANTS.ASSET_CATEGORIES || [], 'Select Category');
-  loadAssetMachineCache(function() {
-    populateAssetFilterDropdowns('', '');
-  });
+  loadAsCascade();
   openModalForm('assetForm', 'Add Asset');
 }
 
@@ -350,10 +343,8 @@ function editAsset(id) {
   populateSelectFromList('asCategory', CONSTANTS.ASSET_CATEGORIES || [], 'Select Category');
   setFormData('assetForm', item);
   var eai = document.getElementById('editAssetId'); if (eai) eai.value = id;
-  loadAssetMachineCache(function() {
-    populateAssetFilterDropdowns(item.DeptID || '', item.SectionID || '');
-    populateAssetMachineDropdown(item.MachineID || '');
-  });
+  loadAsCascade('', item.DeptID || '', item.SectionID || '');
+  populateAssetMachineDropdown(item.MachineID || '');
   openModalForm('assetForm', 'Edit Asset - ' + id);
 }
 
@@ -366,6 +357,7 @@ function saveAsset(e) {
   data.MachineName = document.getElementById('asMachineName').value;
   data.Department = document.getElementById('asDepartmentText').value;
   data.Section = document.getElementById('asSectionText').value;
+  data.DivisionID = document.getElementById('asDivision').value;
   showLoading(true);
   if (id) {
     google.script.run

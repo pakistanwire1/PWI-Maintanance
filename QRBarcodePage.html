@@ -1,4 +1,4 @@
-<div id="qrPage" class="page">
+﻿<div id="qrPage" class="page">
 <div class="page-content">
   <div class="page-header">
     <h2><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg> QR &amp; Barcode Center</h2>
@@ -19,9 +19,9 @@
       <button class="qr-tab" onclick="navigateTo('qrhistory')">History</button>
     </div>
     <div class="qr-actions">
-      <button class="filter-btn btn-primary" onclick="bulkGenerateQR()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg> Bulk Generate QR</button>
-      <button class="filter-btn btn-success" onclick="bulkGenerateBarcode()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M2 4h2v16H2zM6 4h1v16H6zM9 4h2v16H9zM13 4h1v16h-1zM16 4h2v16h-2zM20 4h2v16h-2z"/></svg> Bulk Barcode</button>
-      <button class="filter-btn btn-info" onclick="showQRScanDialog()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M1 7V4a3 3 0 0 1 3-3h3M1 17v3a3 3 0 0 0 3 3h3M23 17v3a3 3 0 0 1-3 3h-3M23 7V4a3 3 0 0 0-3-3h-3"/></svg> Scan</button>
+      <button class="btn btn-primary" onclick="bulkGenerateQR()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg> Bulk Generate QR</button>
+      <button class="btn btn-success" onclick="bulkGenerateBarcode()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M2 4h2v16H2zM6 4h1v16H6zM9 4h2v16H9zM13 4h1v16h-1zM16 4h2v16h-2zM20 4h2v16h-2z"/></svg> Bulk Barcode</button>
+      <button class="btn btn-info" onclick="showQRScanDialog()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M1 7V4a3 3 0 0 1 3-3h3M1 17v3a3 3 0 0 0 3 3h3M23 17v3a3 3 0 0 1-3 3h-3M23 7V4a3 3 0 0 0-3-3h-3"/></svg> Scan</button>
     </div>
   </div>
   <div class="qr-search-bar">
@@ -47,9 +47,9 @@
         <input type="text" id="qrScanInput" placeholder="Scan or type QR code / barcode..." style="width:100%;padding:10px 12px;font-size:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:monospace" onkeydown="if(event.key==='Enter')processQRScan()">
       </div>
       <div style="display:flex;gap:8px">
-        <button class="filter-btn btn-primary" onclick="processQRScan()" style="flex:1">Look Up</button>
-        <button class="filter-btn btn-info" onclick="openQRScannerFromDialog()" style="flex:1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg> Camera</button>
-        <button class="filter-btn btn-secondary" onclick="closeQRScanDialog()">Cancel</button>
+        <button class="btn btn-primary" onclick="processQRScan()" style="flex:1">Look Up</button>
+        <button class="btn btn-info" onclick="openQRScannerFromDialog()" style="flex:1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg> Camera</button>
+        <button class="btn btn-secondary" onclick="closeQRScanDialog()">Cancel</button>
       </div>
       <div id="qrScanResult" style="margin-top:12px"></div>
     </div>
@@ -68,10 +68,10 @@
           <option value="A4 Multiple">A4 Multiple Labels (8 per page)</option>
         </select>
       </div>
-      <div id="qrLabelPreview" style="display:flex;justify-content:center;padding:16px;background:#fff;border-radius:var(--radius-sm);margin-bottom:14px;min-height:120px;align-items:center;color:#999">Select label size to preview</div>
+      <div id="qrLabelPreview" style="display:flex;justify-content:center;padding:16px;background:var(--bg-primary);border-radius:var(--radius-sm);margin-bottom:14px;min-height:120px;align-items:center;color:var(--text-secondary)">Select label size to preview</div>
       <div style="display:flex;gap:8px">
-        <button class="filter-btn btn-primary" onclick="printQRLabel()" style="flex:1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print</button>
-        <button class="filter-btn btn-secondary" onclick="closeQRLabelDialog()">Cancel</button>
+        <button class="btn btn-primary" onclick="printQRLabel()" style="flex:1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print</button>
+        <button class="btn btn-secondary" onclick="closeQRLabelDialog()">Cancel</button>
       </div>
     </div>
   </div>
@@ -100,7 +100,7 @@ function loadQRStatistics() {
     var el = document.getElementById('qrStatGenerated'); if (el) el.textContent = s.generated || 0;
     var el2 = document.getElementById('qrStatPending'); if (el2) el2.textContent = s.pending || 0;
     var el3 = document.getElementById('qrStatScanned'); if (el3) el3.textContent = s.scanned || 0;
-  }).withFailureHandler(function(err) { console.warn('loadQRStatistics failed', err); }).getQRStatistics();
+  }).withFailureHandler(function(err) { }).getQRStatistics();
 }
 
 function loadAllQRModules() {
@@ -114,8 +114,8 @@ function loadAllQRModules() {
         (records || []).forEach(function(r) { r.module = mod; qrAllData.push(r); });
         loaded++;
         if (loaded === modules.length) filterQRTable();
-      } catch(e) { console.error('loadAllQRModules handler error:', e); loaded++; if (loaded === modules.length) filterQRTable(); }
-    }).withFailureHandler(function(err) { console.warn('loadAllQRModules failed for', mod, err); loaded++; if (loaded === modules.length) filterQRTable(); }).getQRModuleRecords(mod);
+      } catch(e) { loaded++; if (loaded === modules.length) filterQRTable(); }
+    }).withFailureHandler(function(err) { loaded++; if (loaded === modules.length) filterQRTable(); }).getQRModuleRecords(mod);
   });
 }
 
@@ -133,7 +133,7 @@ function filterQRTable() {
       return true;
     });
     renderQRTable();
-  } catch(e) { console.error('filterQRTable error:', e); }
+  } catch(e) { }
 }
 
 function renderQRTable() {
@@ -149,7 +149,7 @@ function renderQRTable() {
     for (var i = 0; i < qrFilteredData.length; i++) {
       var r = qrFilteredData[i];
       if (!r) continue;
-      var modTag = '<span style="background:' + (modColors[r.module] || '#999') + '22;color:' + (modColors[r.module] || '#999') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.module) + '</span>';
+      var modTag = '<span style="background:' + (modColors[r.module] || 'var(--text-muted)') + '22;color:' + (modColors[r.module] || 'var(--text-muted)') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.module) + '</span>';
       html += '<tr>';
       html += '<td>' + (i + 1) + '</td>';
       html += '<td><span class="mono">' + escapeHtml(r.code) + '</span></td>';
@@ -165,7 +165,7 @@ function renderQRTable() {
     }
     if (tbody) tbody.innerHTML = html;
     var pi = document.getElementById('qrPageInfo'); if (pi) pi.textContent = 'Showing ' + qrFilteredData.length + ' records';
-  } catch(e) { console.error('renderQRTable error:', e); }
+  } catch(e) { }
 }
 
 function generateSingleQR(mod, id) {
@@ -226,8 +226,8 @@ function previewQRCode(id, qrContent) {
   overlay.style.cssText = 'display:flex;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center';
   overlay.onclick = function(e) { if (e.target === overlay) closeQRPreview(overlay); };
   var box = document.createElement('div');
-  box.style.cssText = 'background:#fff;padding:24px;border-radius:8px;text-align:center;max-width:340px';
-  box.innerHTML = '<div style="font-size:11px;color:#999;margin-bottom:8px">PAKISTAN WIRE INDUSTRIES (PVT.) LTD.</div><div id="qrPreviewCanvas" style="margin:0 auto 12px;width:200px;height:200px"></div><div style="color:#333;font-size:13px;margin-bottom:8px;word-break:break-all">' + escapeHtml(qrContent) + '</div><div style="display:flex;gap:8px;justify-content:center"><button style="padding:6px 16px;border:none;border-radius:4px;background:#6366f1;color:#fff;cursor:pointer;font-size:12px" onclick="closeQRPreview(this.closest(\'.modal-overlay\'))">Close</button><button id="btnDownloadQR" style="padding:6px 16px;border:none;border-radius:4px;background:#22c55e;color:#fff;cursor:pointer;font-size:12px" onclick="downloadQRImage()">Download</button></div>';
+  box.style.cssText = 'background:var(--bg-card);padding:24px;border-radius:8px;text-align:center;max-width:340px;color:var(--text)';
+  box.innerHTML = '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px">PAKISTAN WIRE INDUSTRIES (PVT.) LTD.</div><div id="qrPreviewCanvas" style="margin:0 auto 12px;width:200px;height:200px"></div><div style="color:var(--text);font-size:13px;margin-bottom:8px;word-break:break-all">' + escapeHtml(qrContent) + '</div><div style="display:flex;gap:8px;justify-content:center"><button style="padding:6px 16px;border:none;border-radius:4px;background:#6366f1;color:var(--bg-primary);cursor:pointer;font-size:12px" onclick="closeQRPreview(this.closest(\'.modal-overlay\'))">Close</button><button id="btnDownloadQR" style="padding:6px 16px;border:none;border-radius:4px;background:#22c55e;color:var(--bg-primary);cursor:pointer;font-size:12px" onclick="downloadQRImage()">Download</button></div>';
   overlay.appendChild(box);
   document.body.appendChild(overlay);
   document.addEventListener('keydown', __previewEscHandler);
@@ -261,7 +261,7 @@ function downloadQRImage() {
 function showQRLabelDialog(mod, id) {
   qrLabelRecordId = { module: mod, id: id };
   var el = document.getElementById('qrLabelModal'); if (el) el.style.display = 'flex';
-  var el2 = document.getElementById('qrLabelPreview'); if (el2) el2.innerHTML = '<span style="color:#999">Loading preview...</span>';
+  var el2 = document.getElementById('qrLabelPreview'); if (el2) el2.innerHTML = '<span style="color:var(--text-secondary)">Loading preview...</span>';
   updateLabelPreview();
 }
 
@@ -274,7 +274,7 @@ function updateLabelPreview() {
   var size = document.getElementById('qrLabelSize').value;
   if (!qrLabelRecordId) return;
   google.script.run.withSuccessHandler(function(data) {
-    if (!data) { var lp = document.getElementById('qrLabelPreview'); if (lp) lp.innerHTML = '<span style="color:#999">No data</span>'; return; }
+    if (!data) { var lp = document.getElementById('qrLabelPreview'); if (lp) lp.innerHTML = '<span style="color:var(--text-secondary)">No data</span>'; return; }
     var preview = document.getElementById('qrLabelPreview');
     var isMulti = (size === 'A4 Multiple');
     if (preview) preview.innerHTML = '';
@@ -285,8 +285,8 @@ function updateLabelPreview() {
       var label = document.createElement('div');
       var w = isMulti ? '180px' : (size === '50x25mm' ? '200px' : size === '100x50mm' ? '400px' : '300px');
       var h = isMulti ? '100px' : (size === '50x25mm' ? '100px' : size === '100x50mm' ? '200px' : '200px');
-      label.style.cssText = 'border:1px solid #333;padding:6px;font-family:Arial,sans-serif;width:' + w + ';height:' + h + ';display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:' + (isMulti ? '7px' : size === '50x25mm' ? '8px' : '10px') + ';background:#fff;color:#333;overflow:hidden';
-      label.innerHTML = '<div style="font-weight:bold;font-size:0.7em;color:#1a237e;letter-spacing:0.3px;margin-bottom:1px">PAKISTAN WIRE INDUSTRIES (PVT.) LTD.</div><div style="font-weight:bold;font-size:1.2em;margin-bottom:1px;">' + escapeHtml(data.name) + '</div><div style="color:#666;margin-bottom:1px;">' + escapeHtml(data.code) + '</div><div style="color:#888;font-size:0.85em;margin-bottom:1px;">' + escapeHtml(data.module) + ' #' + escapeHtml(data.recordId) + '</div><div id="qrLabelImg' + i + '" style="margin:2px 0;width:60px;height:60px"></div><div style="font-family:monospace;font-size:0.85em;letter-spacing:1px;color:#555">' + escapeHtml(data.barcode || '') + '</div>';
+      label.style.cssText = 'border:1px solid var(--border);padding:6px;font-family:Arial,sans-serif;width:' + w + ';height:' + h + ';display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:' + (isMulti ? '7px' : size === '50x25mm' ? '8px' : '10px') + ';background:var(--bg-card);color:var(--text);overflow:hidden';
+      label.innerHTML = '<div style="font-weight:bold;font-size:0.7em;color:var(--primary);letter-spacing:0.3px;margin-bottom:1px">PAKISTAN WIRE INDUSTRIES (PVT.) LTD.</div><div style="font-weight:bold;font-size:1.2em;margin-bottom:1px;">' + escapeHtml(data.name) + '</div><div style="color:var(--text-secondary);margin-bottom:1px;">' + escapeHtml(data.code) + '</div><div style="color:var(--text-muted);font-size:0.85em;margin-bottom:1px;">' + escapeHtml(data.module) + ' #' + escapeHtml(data.recordId) + '</div><div id="qrLabelImg' + i + '" style="margin:2px 0;width:60px;height:60px"></div><div style="font-family:monospace;font-size:0.85em;letter-spacing:1px;color:var(--text-secondary)">' + escapeHtml(data.barcode || '') + '</div>';
       container.appendChild(label);
       setTimeout(function(idx) {
         var el = document.getElementById('qrLabelImg' + idx);
@@ -296,7 +296,7 @@ function updateLabelPreview() {
       }, 200, i);
     }
     preview.appendChild(container);
-  }).withFailureHandler(function() { var lp = document.getElementById('qrLabelPreview'); if (lp) lp.innerHTML = '<span style="color:#999">Error loading preview</span>'; }).getPrintLabelData(qrLabelRecordId.module, qrLabelRecordId.id, size);
+  }).withFailureHandler(function() { var lp = document.getElementById('qrLabelPreview'); if (lp) lp.innerHTML = '<span style="color:var(--text-secondary)">Error loading preview</span>'; }).getPrintLabelData(qrLabelRecordId.module, qrLabelRecordId.id, size);
 }
 
 var qrLabelSizeEl = document.getElementById('qrLabelSize'); if (qrLabelSizeEl) qrLabelSizeEl.addEventListener('change', updateLabelPreview);
@@ -312,23 +312,23 @@ function printQRLabel() {
     var html = '<!DOCTYPE html><html><head><title>Print Label - Pakistan Wire Industries</title>';
     html += '<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>';
     html += '<style>body{margin:0;padding:10px;font-family:Arial,sans-serif}';
-    html += '.label{border:1px solid #333;padding:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;';
+    html += '.label{border:1px solid var(--text);padding:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;';
     if (isMulti) { html += 'width:180px;height:100px;font-size:7px;float:left;margin:4px}'; }
     else if (size === '50x25mm') { html += 'width:200px;height:100px;font-size:8px;margin:auto}'; }
     else if (size === '100x50mm') { html += 'width:400px;height:200px;font-size:12px;margin:auto}'; }
     else { html += 'width:300px;height:200px;font-size:10px;margin:auto}'; }
     html += '.qr-wrap{margin:2px 0;display:flex;justify-content:center}';
     html += '.barcode{font-family:monospace;font-size:0.85em;letter-spacing:1px;color:#555}';
-    html += '.company{font-weight:bold;color:#1a237e;letter-spacing:0.3px}';
-    html += '@media print{body{margin:0;padding:5px}.label{page-break-inside:avoid;border:1px solid #000}}';
+    html += '.company{font-weight:bold;color:var(--primary);letter-spacing:0.3px}';
+    html += '@media print{body{margin:0;padding:5px}.label{page-break-inside:avoid;border:1px solid var(--text)}}';
     html += '</style></head><body>';
     html += '<div style="' + (isMulti ? '' : 'display:flex;flex-direction:column;align-items:center') + '">';
     for (var i = 0; i < labelCount; i++) {
       html += '<div class="label">';
       html += '<div class="company" style="font-size:0.75em">PAKISTAN WIRE INDUSTRIES (PVT.) LTD.</div>';
       html += '<div style="font-weight:bold;font-size:1.2em">' + escapeHtml(data.name) + '</div>';
-      html += '<div style="color:#666">' + escapeHtml(data.code) + '</div>';
-      if (!isMulti) html += '<div style="font-size:0.75em;color:#999">' + escapeHtml(data.module) + ' #' + escapeHtml(data.recordId) + '</div>';
+      html += '<div style="color:var(--text-secondary)">' + escapeHtml(data.code) + '</div>';
+      if (!isMulti) html += '<div style="font-size:0.75em;color:var(--text-secondary)">' + escapeHtml(data.module) + ' #' + escapeHtml(data.recordId) + '</div>';
       html += '<div class="qr-wrap"><div id="qrImg' + i + '" style="width:60px;height:60px"></div></div>';
       html += '<div class="barcode">' + escapeHtml(data.barcode || '') + '</div>';
       html += '</div>';
@@ -396,7 +396,7 @@ function buildQRScanResultUI(result, resultDiv) {
     '<div><span style="color:var(--text-secondary)">Status:</span> ' + escapeHtml(result.status) + '</div>' +
     '<div style="grid-column:span 2"><span style="color:var(--text-secondary)">Barcode:</span> <span class="mono">' + escapeHtml(result.barcode || '-') + '</span></div>' +
     '</div>' +
-    '<button class="filter-btn btn-primary" onclick="closeQRScanDialog();' + link + '" style="width:100%">Open ' + escapeHtml(mod) + ' Record</button>' +
+    '<button class="btn btn-primary" onclick="closeQRScanDialog();' + link + '" style="width:100%">Open ' + escapeHtml(mod) + ' Record</button>' +
     '</div>';
 }
 
@@ -416,7 +416,7 @@ function escapeHtml(str) {
   .qr-tabs { display:flex; gap:4px; flex-wrap:wrap; }
   .qr-tab { padding:7px 14px; font-size:12px; font-weight:500; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-input); color:var(--text-secondary); cursor:pointer; transition:var(--transition); font-family:inherit; }
   .qr-tab:hover { background:var(--bg-card-hover); color:var(--text); }
-  .qr-tab.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+  .qr-tab.active { background:var(--primary); color:var(--bg-primary); border-color:var(--primary); }
   .qr-actions { display:flex; gap:6px; flex-wrap:wrap; }
   .qr-search-bar { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
   .qr-search-bar input { flex:1; min-width:180px; padding:7px 10px; font-size:12px; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:inherit; }
@@ -430,7 +430,7 @@ function escapeHtml(str) {
   .qr-table-wrap tr:last-child td { border-bottom:none; }
   .qr-cell { text-align:center; min-width:80px; }
   .qr-check { display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--success-bg);color:var(--success);font-size:13px;cursor:pointer; }
-  .qr-check:hover { background:var(--success);color:#fff; }
+  .qr-check:hover { background:var(--success);color:var(--bg-primary); }
   .mono { font-family:monospace; font-size:11px; }
   .mono-sm { font-family:monospace; font-size:10px; color:var(--text-secondary); letter-spacing:0.5px; }
   .muted { color:var(--text-muted); font-size:11px; }
@@ -438,17 +438,14 @@ function escapeHtml(str) {
   .qr-empty svg { width:36px; height:36px; margin-bottom:10px; opacity:0.3; vertical-align:middle; }
   .qr-actions-cell { white-space:nowrap; }
   .btn-xs { padding:3px 8px; font-size:11px; border:none; border-radius:var(--radius-sm); cursor:pointer; font-family:inherit; transition:var(--transition); }
-  .btn-xs.btn-primary { background:var(--primary);color:#fff; }
+  .btn-xs.btn-primary { background:var(--primary);color:var(--bg-primary); }
   .btn-xs.btn-primary:hover { background:var(--primary-dark); }
-  .btn-xs.btn-success { background:var(--success);color:#fff; }
-  .btn-xs.btn-success:hover { background:#16a34a; }
+  .btn-xs.btn-success { background:var(--success);color:var(--bg-primary); }
+  .btn-xs.btn-success:hover { background:var(--success); opacity:0.9; }
   .btn-xs.btn-info { background:var(--primary-light);color:var(--primary); }
-  .btn-xs.btn-info:hover { background:var(--primary);color:#fff; }
+  .btn-xs.btn-info:hover { background:var(--primary);color:var(--bg-primary); }
   .btn-xs.btn-secondary { background:var(--bg-input);color:var(--text-secondary);border:1px solid var(--border); }
   .btn-xs.btn-secondary:hover { background:var(--bg-card-hover);color:var(--text); }
-  .badge { display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500; }
-  .badge-success { background:var(--success-bg);color:var(--success); }
-  .badge-danger { background:rgba(239,68,68,0.12);color:var(--danger); }
   .page-footer-actions { display:flex;align-items:center;justify-content:space-between;margin-top:10px; }
   .page-info { font-size:12px;color:var(--text-secondary); }
 </style>
@@ -469,14 +466,15 @@ function escapeHtml(str) {
       <button class="qr-tab" onclick="navigateTo('qrhistory')">History</button>
     </div>
     <div class="qr-actions">
-      <button class="filter-btn btn-primary" onclick="bulkGenForModule('Machine','QR')">Bulk Generate QR</button>
-      <button class="filter-btn btn-success" onclick="bulkGenForModule('Machine','Barcode')">Bulk Barcode</button>
+      <button class="btn btn-primary" onclick="bulkGenForModule('Machine','QR')">Bulk Generate QR</button>
+      <button class="btn btn-success" onclick="bulkGenForModule('Machine','Barcode')">Bulk Barcode</button>
     </div>
   </div>
   <div class="qr-search-bar">
     <input type="text" id="qrMachineSearch" placeholder="Search machines..." onkeyup="filterModTable()">
+    <select id="qrMachineDivision" onchange="onQrDivChange('Machine')"><option value="">All Divisions</option></select>
+    <select id="qrMachineSectionFilter" onchange="onQrSecChange('Machine')"><option value="">All Sections</option></select>
     <select id="qrMachineDeptFilter" onchange="filterModTable()"><option value="">All Departments</option></select>
-    <select id="qrMachineSectionFilter" onchange="filterModTable()"><option value="">All Sections</option></select>
     <select id="qrMachineStatusFilter" onchange="filterModTable()"><option value="">All Status</option></select>
   </div>
   <div class="qr-table-wrap"><table><thead><tr><th>#</th><th>Machine Code</th><th>Machine Name</th><th>Department</th><th>Section</th><th>Status</th><th>QR Code</th><th>Barcode</th><th>Actions</th></tr></thead><tbody id="qrMachineTableBody"><tr><td colspan="9" class="qr-empty">Loading...</td></tr></tbody></table></div>
@@ -498,14 +496,15 @@ function escapeHtml(str) {
       <button class="qr-tab" onclick="navigateTo('qrhistory')">History</button>
     </div>
     <div class="qr-actions">
-      <button class="filter-btn btn-primary" onclick="bulkGenForModule('Asset','QR')">Bulk Generate QR</button>
-      <button class="filter-btn btn-success" onclick="bulkGenForModule('Asset','Barcode')">Bulk Barcode</button>
+      <button class="btn btn-primary" onclick="bulkGenForModule('Asset','QR')">Bulk Generate QR</button>
+      <button class="btn btn-success" onclick="bulkGenForModule('Asset','Barcode')">Bulk Barcode</button>
     </div>
   </div>
   <div class="qr-search-bar">
     <input type="text" id="qrAssetSearch" placeholder="Search assets..." onkeyup="filterModTable()">
+    <select id="qrAssetDivision" onchange="onQrDivChange('Asset')"><option value="">All Divisions</option></select>
+    <select id="qrAssetSectionFilter" onchange="onQrSecChange('Asset')"><option value="">All Sections</option></select>
     <select id="qrAssetDeptFilter" onchange="filterModTable()"><option value="">All Departments</option></select>
-    <select id="qrAssetSectionFilter" onchange="filterModTable()"><option value="">All Sections</option></select>
     <select id="qrAssetStatusFilter" onchange="filterModTable()"><option value="">All Status</option></select>
   </div>
   <div class="qr-table-wrap"><table><thead><tr><th>#</th><th>Asset Code</th><th>Asset Name</th><th>Department</th><th>Section</th><th>Status</th><th>QR Code</th><th>Barcode</th><th>Actions</th></tr></thead><tbody id="qrAssetTableBody"><tr><td colspan="9" class="qr-empty">Loading...</td></tr></tbody></table></div>
@@ -527,8 +526,8 @@ function escapeHtml(str) {
       <button class="qr-tab" onclick="navigateTo('qrhistory')">History</button>
     </div>
     <div class="qr-actions">
-      <button class="filter-btn btn-primary" onclick="bulkGenForModule('Spare Part','QR')">Bulk Generate QR</button>
-      <button class="filter-btn btn-success" onclick="bulkGenForModule('Spare Part','Barcode')">Bulk Barcode</button>
+      <button class="btn btn-primary" onclick="bulkGenForModule('Spare Part','QR')">Bulk Generate QR</button>
+      <button class="btn btn-success" onclick="bulkGenForModule('Spare Part','Barcode')">Bulk Barcode</button>
     </div>
   </div>
   <div class="qr-search-bar">
@@ -555,8 +554,8 @@ function escapeHtml(str) {
       <button class="qr-tab" onclick="navigateTo('qrhistory')">History</button>
     </div>
     <div class="qr-actions">
-      <button class="filter-btn btn-primary" onclick="bulkGenForModule('Job Card','QR')">Bulk Generate QR</button>
-      <button class="filter-btn btn-success" onclick="bulkGenForModule('Job Card','Barcode')">Bulk Barcode</button>
+      <button class="btn btn-primary" onclick="bulkGenForModule('Job Card','QR')">Bulk Generate QR</button>
+      <button class="btn btn-success" onclick="bulkGenForModule('Job Card','Barcode')">Bulk Barcode</button>
     </div>
   </div>
   <div class="qr-search-bar">
@@ -651,22 +650,17 @@ function loadQRSpareParts() { if (window.qrDataChanged) loadQRBarcodeData(); cur
 function loadQRJobCards() { if (window.qrDataChanged) loadQRBarcodeData(); currentModPage = 'Job Card'; loadModPageData('Job Card'); }
 
 function showModRecordDetail(mod, id) {
-  console.log('[QR-DEBUG] showModRecordDetail called: module=' + mod + ', id=' + id);
   if (!mod || !id) {
-    console.warn('[QR-DEBUG] showModRecordDetail: missing mod or id');
     showToast('Record Not Found - missing identifier', 'error');
     return;
   }
   google.script.run
   .withSuccessHandler(function(result) {
-    console.log('[QR-DEBUG] getModuleRecordDetail response:', result ? JSON.stringify(result).substring(0, 200) : 'null');
     if (!result) {
-      console.warn('[QR-DEBUG] getModuleRecordDetail returned null');
       showToast('Record Not Found', 'error');
       return;
     }
     if (result.error) {
-      console.warn('[QR-DEBUG] getModuleRecordDetail error:', result.error);
       showToast('Record Not Found', 'error');
       return;
     }
@@ -674,19 +668,15 @@ function showModRecordDetail(mod, id) {
       if (typeof showQRDetail === 'function') {
         showQRDetail(result);
       } else {
-        console.warn('[QR-DEBUG] showQRDetail is not a function, using inline fallback');
         renderInlineDetail(result);
       }
     } catch(e) {
-      console.error('[QR-DEBUG] showQRDetail threw:', e.message);
       try { renderInlineDetail(result); } catch(e2) {
-        console.error('[QR-DEBUG] renderInlineDetail also failed:', e2.message);
         showToast('Record Loaded - Detail view error', 'error');
       }
     }
   })
   .withFailureHandler(function(err) {
-    console.error('[QR-DEBUG] showModRecordDetail server error:', err.message);
     showToast('Record Not Found', 'error');
   })
   .getModuleRecordDetail(mod, id);
@@ -694,14 +684,13 @@ function showModRecordDetail(mod, id) {
 
 function renderInlineDetail(result) {
   if (!result) { showToast('Record Not Found', 'error'); return; }
-  console.log('[QR-DEBUG] renderInlineDetail for module=' + result.module + ' id=' + result.id);
   var overlay = document.createElement('div');
   overlay.className = 'modal-overlay show';
   overlay.id = 'qrDetailOverlay';
   overlay.style.cssText = 'display:flex;align-items:center;justify-content:center';
   overlay.onclick = function(e) { if (e.target === overlay) closeRenderDetail(overlay); };
   var html = '<div class="qr-detail-card" onclick="event.stopPropagation()" style="max-width:520px;width:95vw;max-height:80vh;overflow-y:auto">';
-  html += '<div class="qr-detail-header"><div class="qr-detail-icon" style="background:#6366f122;color:#6366f1">&#9432;</div>';
+  html += '<div class="qr-detail-header"><div class="qr-detail-icon" style="background:var(--primary-light);color:var(--primary)">&#9432;</div>';
   html += '<div style="flex:1"><div class="qr-detail-title">' + escapeHtml(result.name || result.id) + '</div>';
   html += '<div class="qr-detail-subtitle">' + escapeHtml(result.module) + ' &middot; ' + escapeHtml(result.id || '') + '</div></div></div>';
   html += '<div class="qr-detail-rows">';
@@ -730,8 +719,8 @@ function __renderDetailEscHandler(e) {
 }
 
 function getModPageIds(mod) {
-  var map = { 'Machine': { search: 'qrMachineSearch', table: 'qrMachineTableBody', info: 'qrMachinePageInfo', deptFilter: 'qrMachineDeptFilter', sectionFilter: 'qrMachineSectionFilter', statusFilter: 'qrMachineStatusFilter' },
-              'Asset': { search: 'qrAssetSearch', table: 'qrAssetTableBody', info: 'qrAssetPageInfo', deptFilter: 'qrAssetDeptFilter', sectionFilter: 'qrAssetSectionFilter', statusFilter: 'qrAssetStatusFilter' },
+  var map = { 'Machine': { search: 'qrMachineSearch', table: 'qrMachineTableBody', info: 'qrMachinePageInfo', divisionFilter: 'qrMachineDivision', deptFilter: 'qrMachineDeptFilter', sectionFilter: 'qrMachineSectionFilter', statusFilter: 'qrMachineStatusFilter' },
+              'Asset': { search: 'qrAssetSearch', table: 'qrAssetTableBody', info: 'qrAssetPageInfo', divisionFilter: 'qrAssetDivision', deptFilter: 'qrAssetDeptFilter', sectionFilter: 'qrAssetSectionFilter', statusFilter: 'qrAssetStatusFilter' },
               'Spare Part': { search: 'qrSpareSearch', table: 'qrSpareTableBody', info: 'qrSparePageInfo', deptFilter: 'qrSpareDeptFilter', statusFilter: 'qrSpareStatusFilter' },
               'Job Card': { search: 'qrJCSearch', table: 'qrJCTableBody', info: 'qrJCPageInfo', statusFilter: 'qrJCStatusFilter', priorityFilter: 'qrJCPriorityFilter' } };
   return map[mod] || map['Machine'];
@@ -744,18 +733,15 @@ function loadModPageData(mod, retryCount) {
   var ids = getModPageIds(mod);
   var el = document.getElementById(ids.table);
   if (el) el.innerHTML = '<tr><td colspan="9" class="qr-empty">' + (retryCount > 0 ? 'Retrying (' + retryCount + '/2)...' : 'Loading...') + '</td></tr>';
-  console.log('loadModPageData(' + mod + ') calling getQRModuleRecords');
   google.script.run.withSuccessHandler(function(records) {
-    console.log('loadModPageData(' + mod + ') got ' + (records ? records.length : 0) + ' records' + (records && records.length > 0 ? ' first=' + JSON.stringify(records[0]) : ''));
     modDataCache = records || [];
     try {
       populateModFilters(mod, modDataCache);
+      if (mod === 'Machine' || mod === 'Asset') loadQrCascade(mod);
       filterModTable();
-    } catch(e) { console.error('loadModPageData render error:', e); }
+    } catch(e) { }
   }).withFailureHandler(function(err) {
-    console.error('loadModPageData(' + mod + ') FAILED:', err);
     if (retryCount < 2) {
-      console.log('loadModPageData retrying (' + (retryCount + 1) + '/2)...');
       setTimeout(function() { loadModPageData(mod, retryCount + 1); }, 1500);
     } else {
       var el = document.getElementById(ids.table);
@@ -764,26 +750,46 @@ function loadModPageData(mod, retryCount) {
   }).getQRModuleRecords(mod);
 }
 
+var qrCascadeCache = {};
+
+function loadQrCascade(mod, divId, secId, deptId) {
+  google.script.run
+    .withSuccessHandler(function(c) {
+      qrCascadeCache[mod] = c;
+      var ids = getModPageIds(mod);
+      populateSelect(ids.divisionFilter, c.divisions, 'name', 'name', 'All Divisions');
+      if (c.divisions.length === 0) { var sel = document.getElementById(ids.divisionFilter); if (sel) sel.innerHTML = '<option value="">No Divisions</option>'; }
+      populateSelect(ids.sectionFilter, c.sections, 'name', 'name', 'All Sections');
+      populateSelect(ids.deptFilter, c.departments, 'name', 'name', 'All Departments');
+    })
+    .withFailureHandler(function() {})
+    .getMachineCascade(divId || '', secId || '', deptId || '');
+}
+
+function onQrDivChange(mod) {
+  var ids = getModPageIds(mod);
+  var d = document.getElementById(ids.divisionFilter).value;
+  document.getElementById(ids.sectionFilter).innerHTML = '<option value="">All Sections</option>';
+  document.getElementById(ids.deptFilter).innerHTML = '<option value="">All Departments</option>';
+  loadQrCascade(mod, d, '', '');
+}
+
+function onQrSecChange(mod) {
+  var ids = getModPageIds(mod);
+  var d = document.getElementById(ids.divisionFilter).value;
+  var s = document.getElementById(ids.sectionFilter).value;
+  document.getElementById(ids.deptFilter).innerHTML = '<option value="">Loading...</option>';
+  loadQrCascade(mod, d, s, '');
+}
+
 function populateModFilters(mod, records) {
   try {
     var ids = getModPageIds(mod);
     if (!records || !records.length) return;
     if (mod === 'Machine' || mod === 'Asset') {
-      var depts = {}; var secs = {}; var stats = {};
-      records.forEach(function(r) { if (r && r.department) depts[r.department] = true; if (r && r.section) secs[r.section] = true; if (r && r.status) stats[r.status] = true; });
-      var deptKeys = Object.keys(depts).sort();
-      var secKeys = Object.keys(secs).sort();
+      var stats = {};
+      records.forEach(function(r) { if (r && r.status) stats[r.status] = true; });
       var statKeys = Object.keys(stats).sort();
-      var deptSel = document.getElementById(ids.deptFilter);
-      if (deptSel && deptSel.options.length <= 1) {
-        deptSel.innerHTML = '<option value="">All Departments</option>';
-        deptKeys.forEach(function(k) { deptSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
-      }
-      var secSel = document.getElementById(ids.sectionFilter);
-      if (secSel && secSel.options.length <= 1) {
-        secSel.innerHTML = '<option value="">All Sections</option>';
-        secKeys.forEach(function(k) { secSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
-      }
       var statSel = document.getElementById(ids.statusFilter);
       if (statSel && statSel.options.length <= 1) {
         statSel.innerHTML = '<option value="">All Status</option>';
@@ -820,7 +826,7 @@ function populateModFilters(mod, records) {
         priKeys.forEach(function(k) { priSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
       }
     }
-  } catch(e) { console.error('populateModFilters error:', e); }
+  } catch(e) { }
 }
 
 function filterModTable() {
@@ -846,7 +852,7 @@ function filterModTable() {
       return true;
     });
     renderModTable();
-  } catch(e) { console.error('filterModTable error:', e); }
+  } catch(e) { }
 }
 
 function renderModTable() {
@@ -905,7 +911,7 @@ function renderModTable() {
     }
     if (tbody) tbody.innerHTML = html;
     var pi = document.getElementById(ids.info); if (pi) pi.textContent = 'Showing ' + modFilteredCache.length + ' records';
-  } catch(e) { console.error('renderModTable error:', e); }
+  } catch(e) { }
 }
 
 function statusBadge(s) {
@@ -941,8 +947,8 @@ function loadQRPrint() {
         (records || []).forEach(function(r) { if (r && r.qrCode) { r.module = mod; printDataCache.push(r); } });
         loaded++;
         if (loaded === modules.length) filterPrintTable();
-      } catch(e) { console.error('loadQRPrint handler error:', e); loaded++; if (loaded === modules.length) filterPrintTable(); }
-    }).withFailureHandler(function(err) { console.warn('loadQRPrint failed for', mod, err); loaded++; if (loaded === modules.length) filterPrintTable(); }).getQRModuleRecords(mod);
+      } catch(e) { loaded++; if (loaded === modules.length) filterPrintTable(); }
+    }).withFailureHandler(function(err) { loaded++; if (loaded === modules.length) filterPrintTable(); }).getQRModuleRecords(mod);
   });
 }
 
@@ -969,14 +975,14 @@ function filterPrintTable() {
       var r = filtered[i];
       if (!r) continue;
       html += '<tr><td>' + (i + 1) + '</td><td><span class="mono">' + escapeHtml(r.id) + '</span></td><td><strong>' + escapeHtml(r.name) + '</strong></td>';
-      html += '<td><span style="background:' + (modColors[r.module] || '#999') + '22;color:' + (modColors[r.module] || '#999') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.module) + '</span></td>';
+      html += '<td><span style="background:' + (modColors[r.module] || 'var(--text-muted)') + '22;color:' + (modColors[r.module] || 'var(--text-muted)') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.module) + '</span></td>';
       html += '<td class="qr-cell"><span class="qr-check" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')">&#10003;</span></td>';
       html += '<td class="mono-sm">' + escapeHtml(r.barcode || '') + '</td>';
       html += '<td><button class="btn-xs btn-info" onclick="showQRLabelDialog(\'' + escapeHtml(r.module) + '\',\'' + escapeHtml(r.id) + '\')">Print Label</button></td></tr>';
     }
     if (tbody) tbody.innerHTML = html;
     var pi = document.getElementById('qrPrintPageInfo'); if (pi) pi.textContent = 'Showing ' + filtered.length + ' records';
-  } catch(e) { console.error('filterPrintTable error:', e); }
+  } catch(e) { }
 }
 
 function loadQRHistory() {
@@ -1001,7 +1007,7 @@ function loadQRHistoryData() {
         html += '<tr><td>' + ((result.page - 1) * result.pageSize + i + 1) + '</td>';
         html += '<td class="muted">' + escapeHtml(r.ScanDateTime || '') + '</td>';
         html += '<td>' + escapeHtml(r.UserName || r.UserEmail || '') + '</td>';
-        html += '<td><span style="background:' + (modColors[r.QRModule] || '#999') + '22;color:' + (modColors[r.QRModule] || '#999') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.QRModule || '') + '</span></td>';
+        html += '<td><span style="background:' + (modColors[r.QRModule] || 'var(--text-muted)') + '22;color:' + (modColors[r.QRModule] || 'var(--text-muted)') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.QRModule || '') + '</span></td>';
         html += '<td><strong>' + escapeHtml(r.RecordID || '') + '</strong> <span class="muted">' + escapeHtml(r.RecordName || '') + '</span></td>';
         html += '<td>' + escapeHtml(r.Action || '') + '</td>';
         html += '<td class="muted">' + escapeHtml(r.DeviceType || '') + '</td></tr>';
@@ -1011,9 +1017,8 @@ function loadQRHistoryData() {
       var pi = document.getElementById('qrHistPageInfo'); if (pi) pi.textContent = 'Page ' + (result.page || 1) + ' of ' + (result.totalPages || 1) + ' (' + (result.total || 0) + ' total)';
       var prevBtn = document.getElementById('qrHistPrevBtn'); if (prevBtn) prevBtn.disabled = !result.page || result.page <= 1;
       var nextBtn = document.getElementById('qrHistNextBtn'); if (nextBtn) nextBtn.disabled = !result.totalPages || result.page >= result.totalPages;
-    } catch(e) { console.error('loadQRHistoryData render error:', e); if (tb) tb.innerHTML = '<tr><td colspan="7" class="qr-empty">Error rendering history</td></tr>'; }
+    } catch(e) { if (tb) tb.innerHTML = '<tr><td colspan="7" class="qr-empty">Error rendering history</td></tr>'; }
   }).withFailureHandler(function(err) {
-    console.error('loadQRHistoryData failed:', err);
     if (tb) tb.innerHTML = '<tr><td colspan="7" class="qr-empty">Error loading history</td></tr>';
   }).getQRScanHistory({ module: mod, search: search, page: qrHistPage, pageSize: 25 });
 }
@@ -1023,3 +1028,10 @@ function qrHistPageNav(dir) {
   loadQRHistoryData();
 }
 </script>
+
+
+
+
+
+
+

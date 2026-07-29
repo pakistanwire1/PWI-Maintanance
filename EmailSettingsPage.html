@@ -1,4 +1,4 @@
-<div id="emailPage" class="page">
+﻿<div id="emailPage" class="page">
   <div class="card">
     <div class="card-header">
       <div class="card-title">
@@ -147,7 +147,7 @@
 function loadEmailSettingsData() {
   try {
     var emailPage = document.getElementById('emailPage');
-    if (!emailPage) { console.error('emailPage element not found'); return; }
+    if (!emailPage) { return; }
     if (!currentUser || !isAdmin()) {
       emailPage.innerHTML = '<div class="card" style="padding:40px;text-align:center"><h3 style="color:var(--danger);margin-bottom:12px">Access Denied</h3><p style="color:var(--text-secondary)">Only administrators can access Email Notification Settings.</p><button class="btn btn-primary" onclick="navigateTo(\'dashboard\')" style="margin-top:16px">Go to Dashboard</button></div>';
       return;
@@ -164,7 +164,6 @@ function loadEmailSettingsData() {
     emailLoadStats();
     emailRefreshLogs();
   } catch (e) {
-    console.error('loadEmailSettingsData error:', e);
     var emailContent = document.getElementById('emailPage');
     if (emailContent) emailContent.innerHTML = '<div class="card" style="padding:40px;text-align:center"><h3 style="color:var(--danger);margin-bottom:12px">Error Loading Page</h3><p style="color:var(--text-secondary)">' + escapeHtml(String(e.message || e)) + '</p><button class="btn btn-primary" onclick="navigateTo(\'dashboard\')" style="margin-top:16px">Go to Dashboard</button></div>';
   }
@@ -211,8 +210,7 @@ function emailLoadStats() {
     })
     .withFailureHandler(function(err) {
       clearTimeout(__statsTimer);
-      console.error('emailLoadStats error: ' + err);
-    })
+      })
     .emailGetDashboardStats();
 }
 

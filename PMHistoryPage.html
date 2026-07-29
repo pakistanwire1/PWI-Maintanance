@@ -35,8 +35,20 @@
       </div>
     </div>
     <div class="form-group">
+      <label>Division</label>
+      <select class="form-control" id="pmhDivision" onchange="onPmhDivChange()"><option value="">All Divisions</option></select>
+    </div>
+    <div class="form-group">
+      <label>Section</label>
+      <select class="form-control" id="pmhSection" onchange="onPmhSecChange()"><option value="">All Sections</option></select>
+    </div>
+    <div class="form-group">
+      <label>Department</label>
+      <select class="form-control" id="pmhDepartment" onchange="onPmhDeptChange()"><option value="">All Departments</option></select>
+    </div>
+    <div class="form-group">
       <label>Machine</label>
-      <select class="form-control" id="pmhFilterMachine"><option value="">All Machines</option></select>
+      <select class="form-control" id="pmhMachineNumber" onchange="applyPMHFilter()"><option value="">All Machines</option></select>
     </div>
     <div class="form-group">
       <label>Technician</label>
@@ -124,21 +136,26 @@ function loadPMHistoryData() {
       showLoading(false);
       updatePMHSummary();
       renderPMHTable();
-      loadPMHFilterSelects();
+      loadPmhCascade();
+      loadPmhTechnicians();
     })
     .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load PM history', 'error'); })
     .getPMHistory();
 }
 
-function loadPMHFilterSelects() {
+function loadPmhCascade(divId, secId, deptId) {
   google.script.run
-    .withSuccessHandler(function(m) {
-      var sel = document.getElementById('pmhFilterMachine');
-      if (sel) sel.innerHTML = '<option value="">All Machines</option>';
-      (m || []).forEach(function(item) { sel.innerHTML += '<option value="' + (item.MachineID || '') + '">' + escHtml(item.MachineName || '') + '</option>'; });
+    .withSuccessHandler(function(c) {
+      populateSelect('pmhDivision', c.divisions, 'id', 'name', 'All Divisions');
+      populateSelect('pmhSection', c.sections, 'id', 'name', 'All Sections');
+      populateSelect('pmhDepartment', c.departments, 'id', 'name', 'All Departments');
+      populateSelect('pmhMachineNumber', c.machines, 'number', 'label', 'All Machines');
     })
     .withFailureHandler(function() {})
-    .getMachines();
+    .getMachineCascade(divId || '', secId || '', deptId || '');
+}
+
+function loadPmhTechnicians() {
   google.script.run
     .withSuccessHandler(function(t) {
       var sel = document.getElementById('pmhFilterTechnician');
@@ -147,6 +164,30 @@ function loadPMHFilterSelects() {
     })
     .withFailureHandler(function() {})
     .getTechnicians();
+}
+
+function onPmhDivChange() {
+  var d = document.getElementById('pmhDivision').value;
+  document.getElementById('pmhSection').innerHTML = '<option value="">Loading...</option>';
+  document.getElementById('pmhDepartment').innerHTML = '<option value="">Loading...</option>';
+  document.getElementById('pmhMachineNumber').innerHTML = '<option value="">Loading...</option>';
+  loadPmhCascade(d);
+}
+
+function onPmhSecChange() {
+  var d = document.getElementById('pmhDivision').value;
+  var s = document.getElementById('pmhSection').value;
+  document.getElementById('pmhDepartment').innerHTML = '<option value="">Loading...</option>';
+  document.getElementById('pmhMachineNumber').innerHTML = '<option value="">Loading...</option>';
+  loadPmhCascade(d, s);
+}
+
+function onPmhDeptChange() {
+  var d = document.getElementById('pmhDivision').value;
+  var s = document.getElementById('pmhSection').value;
+  var dp = document.getElementById('pmhDepartment').value;
+  document.getElementById('pmhMachineNumber').innerHTML = '<option value="">Loading...</option>';
+  loadPmhCascade(d, s, dp);
 }
 
 function updatePMHSummary() {
@@ -213,7 +254,7 @@ function searchPMHistoryTable() {
 }
 
 function applyPMHFilter() {
-  pmhFilter.machine = document.getElementById('pmhFilterMachine').value;
+  pmhFilter.machine = document.getElementById('pmhMachineNumber').value;
   pmhFilter.technician = document.getElementById('pmhFilterTechnician').value;
   pmhFilter.status = document.getElementById('pmhFilterStatus').value;
   pmhPage = 1;
@@ -221,12 +262,16 @@ function applyPMHFilter() {
 }
 
 function clearPMHFilter() {
-  var el = document.getElementById('pmhFilterMachine'); if (el) el.value = '';
-  var el2 = document.getElementById('pmhFilterTechnician'); if (el2) el2.value = '';
-  var el3 = document.getElementById('pmhFilterStatus'); if (el3) el3.value = '';
-  var el4 = document.getElementById('pmhSearch'); if (el4) el4.value = '';
+  var d = document.getElementById('pmhDivision'); if (d) d.value = '';
+  var s = document.getElementById('pmhSection'); if (s) s.value = '';
+  var dp = document.getElementById('pmhDepartment'); if (dp) dp.value = '';
+  var m = document.getElementById('pmhMachineNumber'); if (m) m.value = '';
+  var t = document.getElementById('pmhFilterTechnician'); if (t) t.value = '';
+  var st = document.getElementById('pmhFilterStatus'); if (st) st.value = '';
+  var sr = document.getElementById('pmhSearch'); if (sr) sr.value = '';
   pmhFilter = { search: '', machine: '', technician: '', status: '' };
   pmhPage = 1;
+  loadPmhCascade();
   renderPMHTable();
 }
 
@@ -241,7 +286,7 @@ function applyPMHClientFilters(data) {
     });
   }
   if (pmhFilter.machine) {
-    data = data.filter(function(r) { return r.MachineName === pmhFilter.machine || r.MachineID === pmhFilter.machine; });
+    data = data.filter(function(r) { return (r.MachineNumber === pmhFilter.machine || r.MachineCode === pmhFilter.machine || r.MachineName === pmhFilter.machine || r.MachineID === pmhFilter.machine); });
   }
   if (pmhFilter.technician) {
     data = data.filter(function(r) { return r.TechnicianName === pmhFilter.technician || r.AssignedTechnician === pmhFilter.technician; });
@@ -279,7 +324,7 @@ function exportPMHCSV() {
 function exportPMHPDF() {
   var data = applyPMHClientFilters(pmhData);
   if (!data || data.length === 0) { showToast('No data to export', 'warning'); return; }
-  var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#1F4E78;color:#fff}</style></head><body>';
+  var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px}th,td{border:1px solid var(--border-light);padding:6px;text-align:left}th{background:#1F4E78;color:var(--bg-primary)}</style></head><body>';
   html += '<h2 style="text-align:center">PM History Report</h2><p style="text-align:center">Generated: ' + new Date().toLocaleString() + '</p>';
   html += '<table><thead><tr><th>PM No</th><th>Title</th><th>Machine</th><th>Completed</th><th>Technician</th><th>Status</th></tr></thead><tbody>';
   data.forEach(function(r) {
@@ -299,7 +344,7 @@ function exportPMHPDF() {
 function printPMH() {
   var data = applyPMHClientFilters(pmhData);
   if (!data || data.length === 0) { showToast('No data to print', 'warning'); return; }
-  var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px}th,td{border:1px solid #000;padding:4px;text-align:left}th{background:#1F4E78;color:#fff}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>';
+  var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px}th,td{border:1px solid var(--text);padding:4px;text-align:left}th{background:#1F4E78;color:var(--bg-primary)}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>';
   html += '<h2 style="text-align:center">PM History Report</h2><p style="text-align:center">Generated: ' + new Date().toLocaleString() + '</p>';
   html += '<table><thead><tr><th>PM No</th><th>Title</th><th>Machine</th><th>Completed</th><th>Technician</th><th>Status</th></tr></thead><tbody>';
   data.forEach(function(r) {

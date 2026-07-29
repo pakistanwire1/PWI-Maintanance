@@ -12,19 +12,19 @@
         <div class="form-group">
           <label>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Section *
+            Division *
           </label>
-          <select name="Section" class="form-control" id="jcSection" required onchange="onJcSectionChange()">
-            <option value="">Select Section</option>
+          <select class="form-control" id="jcDivision" required onchange="onOjcDivChange()">
+            <option value="">Select Division</option>
           </select>
         </div>
         <div class="form-group">
           <label>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
-            Department *
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Section *
           </label>
-          <select name="Department" class="form-control" id="jcDepartment" required onchange="onJcDeptChange()">
-            <option value="">Select Department</option>
+          <select name="Section" class="form-control" id="jcSection" required onchange="onOjcSecChange()">
+            <option value="">Select Section</option>
           </select>
         </div>
       </div>
@@ -32,13 +32,25 @@
       <div class="form-row">
         <div class="form-group">
           <label>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+            Department *
+          </label>
+          <select name="Department" class="form-control" id="jcDepartment" required onchange="onOjcDeptChange()">
+            <option value="">Select Department</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><rect x="2" y="2" width="20" height="20" rx="2" ry="2"/><path d="M12 18V6"/><path d="M6 12h12"/></svg>
             Machine *
           </label>
-          <select name="Machine" class="form-control" id="jcMachine" required onchange="onJcMachineChange()">
+          <select name="Machine" class="form-control" id="jcMachine" required onchange="onOjcMachineChange()">
             <option value="">Select Machine</option>
           </select>
         </div>
+      </div>
+
+      <div class="form-row">
         <div class="form-group">
           <label>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -181,38 +193,15 @@ var jcBreakdownTypes = [];
 
 function loadOpenJobCardsData() {
   showLoading(true);
-  var loaded = { sections: false, departments: false, machines: false, assets: false, breakdownTypes: false };
+  var loaded = { assets: false, breakdownTypes: false };
   function checkDone() {
-    if (loaded.sections && loaded.departments && loaded.machines && loaded.assets && loaded.breakdownTypes) {
+    if (loaded.assets && loaded.breakdownTypes) {
       showLoading(false);
       populateOpenForm();
+      loadOjcCascade();
       setTimeout(function() { addVoiceButton('jcComplaintDesc'); }, 100);
     }
   }
-  google.script.run
-    .withSuccessHandler(function(data) {
-      jcSections = data || [];
-      loaded.sections = true;
-      checkDone();
-    })
-    .withFailureHandler(function() { loaded.sections = true; checkDone(); showToast('Failed to load sections', 'error'); })
-    .getSectionList();
-  google.script.run
-    .withSuccessHandler(function(data) {
-      jcDepartments = data || [];
-      loaded.departments = true;
-      checkDone();
-    })
-    .withFailureHandler(function() { loaded.departments = true; checkDone(); showToast('Failed to load departments', 'error'); })
-    .getDepartmentList();
-  google.script.run
-    .withSuccessHandler(function(data) {
-      jcMachines = data || [];
-      loaded.machines = true;
-      checkDone();
-    })
-    .withFailureHandler(function() { loaded.machines = true; checkDone(); showToast('Failed to load machines', 'error'); })
-    .getMachines();
   google.script.run
     .withSuccessHandler(function(data) {
       jcAssets = data || [];
@@ -231,16 +220,28 @@ function loadOpenJobCardsData() {
     .getActiveBreakdownTypes();
 }
 
-function populateOpenForm() {
-  var secSel = document.getElementById('jcSection');
-  if (secSel) secSel.innerHTML = '<option value="">Select Section</option>';
-  jcSections.forEach(function(s) {
-    var opt = document.createElement('option');
-    opt.value = s.Section || '';
-    opt.textContent = s.Section || '';
-    secSel.appendChild(opt);
-  });
+function loadOjcCascade(divId, secId, deptId) {
+  google.script.run
+    .withSuccessHandler(function(c) {
+      populateSelect('jcDivision', c.divisions, 'id', 'name', 'Select Division');
+      populateSelect('jcSection', c.sections, 'name', 'name', 'Select Section');
+      populateSelect('jcDepartment', c.departments, 'name', 'name', 'Select Department');
+      var machSel = document.getElementById('jcMachine');
+      if (machSel) {
+        machSel.innerHTML = '<option value="">Select Machine</option>';
+        c.machines.forEach(function(m) {
+          var opt = document.createElement('option');
+          opt.value = m.number || '';
+          opt.textContent = m.label || m.number;
+          machSel.appendChild(opt);
+        });
+      }
+    })
+    .withFailureHandler(function() {})
+    .getMachineCascade(divId || '', secId || '', deptId || '');
+}
 
+function populateOpenForm() {
   var bdSel = document.getElementById('jcBreakdownType');
   if (bdSel) {
     bdSel.innerHTML = '<option value="">Select Breakdown Type</option>';
@@ -264,61 +265,42 @@ function populateOpenForm() {
   populateSelectFromList('jcComplaintCategory', cats, 'Select Category');
 }
 
-function onJcSectionChange() {
-  var sectionName = document.getElementById('jcSection').value;
-  var deptSel = document.getElementById('jcDepartment');
-  var machineSel = document.getElementById('jcMachine');
-  var assetSel = document.getElementById('jcAsset');
-
-  if (deptSel) deptSel.innerHTML = '<option value="">Select Department</option>';
-  if (machineSel) machineSel.innerHTML = '<option value="">Select Machine</option>';
-  if (assetSel) assetSel.innerHTML = '<option value="">Select Asset</option>';
-
-  if (!sectionName) return;
-
-  var filtered = jcDepartments.filter(function(d) {
-    return d.Section === sectionName || d.SectionID === sectionName;
-  });
-
-  filtered.forEach(function(d) {
-    var opt = document.createElement('option');
-    opt.value = d.Department || '';
-    opt.textContent = d.Department || '';
-    deptSel.appendChild(opt);
-  });
+function onOjcDivChange() {
+  var d = document.getElementById('jcDivision').value;
+  document.getElementById('jcSection').innerHTML = '<option value="">Select Section</option>';
+  document.getElementById('jcDepartment').innerHTML = '<option value="">Select Department</option>';
+  document.getElementById('jcMachine').innerHTML = '<option value="">Select Machine</option>';
+  document.getElementById('jcAsset').innerHTML = '<option value="">Select Asset</option>';
+  loadOjcCascade(d);
 }
 
-function onJcDeptChange() {
-  var deptName = document.getElementById('jcDepartment').value;
-  var machineSel = document.getElementById('jcMachine');
-  var assetSel = document.getElementById('jcAsset');
-
-  if (machineSel) machineSel.innerHTML = '<option value="">Select Machine</option>';
-  if (assetSel) assetSel.innerHTML = '<option value="">Select Asset</option>';
-
-  if (!deptName) return;
-
-  var filtered = jcMachines.filter(function(m) {
-    return m.Department === deptName;
-  });
-
-  filtered.forEach(function(m) {
-    var opt = document.createElement('option');
-    opt.value = m.MachineName || '';
-    opt.textContent = (m.MachineName || '') + (m.MachineCode ? ' (' + m.MachineCode + ')' : '');
-    machineSel.appendChild(opt);
-  });
+function onOjcSecChange() {
+  var d = document.getElementById('jcDivision').value;
+  var s = document.getElementById('jcSection').value;
+  document.getElementById('jcDepartment').innerHTML = '<option value="">Select Department</option>';
+  document.getElementById('jcMachine').innerHTML = '<option value="">Select Machine</option>';
+  document.getElementById('jcAsset').innerHTML = '<option value="">Select Asset</option>';
+  loadOjcCascade(d, s);
 }
 
-function onJcMachineChange() {
-  var machineName = document.getElementById('jcMachine').value;
+function onOjcDeptChange() {
+  var d = document.getElementById('jcDivision').value;
+  var s = document.getElementById('jcSection').value;
+  var dp = document.getElementById('jcDepartment').value;
+  document.getElementById('jcMachine').innerHTML = '<option value="">Select Machine</option>';
+  document.getElementById('jcAsset').innerHTML = '<option value="">Select Asset</option>';
+  loadOjcCascade(d, s, dp);
+}
+
+function onOjcMachineChange() {
+  var machineVal = document.getElementById('jcMachine').value;
   var assetSel = document.getElementById('jcAsset');
   if (assetSel) assetSel.innerHTML = '<option value="">Select Asset</option>';
 
-  if (!machineName) return;
+  if (!machineVal) return;
 
   var filtered = jcAssets.filter(function(a) {
-    return a.MachineName === machineName;
+    return a.MachineName === machineVal || a.MachineNumber === machineVal || a.MachineCode === machineVal;
   });
 
   filtered.forEach(function(a) {
@@ -373,9 +355,11 @@ function removeFaultImage() {
 }
 
 function resetOpenForm() {
-      var el = document.getElementById('createJobCardForm'); if (el) el.reset();
+  var el = document.getElementById('createJobCardForm'); if (el) el.reset();
   removeFaultImage();
-  var el = document.getElementById('jcDepartment'); if (el) el.innerHTML = '<option value="">Select Department</option>';
+  el = document.getElementById('jcDivision'); if (el) el.innerHTML = '<option value="">Select Division</option>';
+  el = document.getElementById('jcSection'); if (el) el.innerHTML = '<option value="">Select Section</option>';
+  el = document.getElementById('jcDepartment'); if (el) el.innerHTML = '<option value="">Select Department</option>';
   el = document.getElementById('jcMachine'); if (el) el.innerHTML = '<option value="">Select Machine</option>';
   el = document.getElementById('jcAsset'); if (el) el.innerHTML = '<option value="">Select Asset</option>';
   if (currentUser) {
@@ -386,6 +370,7 @@ function resetOpenForm() {
   el = document.getElementById('jcDateTime'); if (el) el.value =
     now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' +
     pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+  loadOjcCascade();
 }
 
 function saveJobCard(e) {
@@ -395,6 +380,9 @@ function saveJobCard(e) {
     return;
   }
   var data = getFormData('createJobCardForm');
+  var divisionId = document.getElementById('jcDivision').value;
+  if (!divisionId) { showToast('Please select a Division', 'error'); return; }
+  data.DivisionID = divisionId;
   if (!data.Section) { showToast('Please select a Section', 'error'); return; }
   if (!data.Department) { showToast('Please select a Department', 'error'); return; }
   if (!data.Machine) { showToast('Please select a Machine', 'error'); return; }
@@ -425,9 +413,9 @@ function saveJobCard(e) {
       showToast('\u2705 Job Card Saved Successfully', 'success');
       refreshAllBadges();
       refreshDashboardCounters();
-      // Stay on Open Job Card page, reset form for next entry
       var form = document.getElementById('createJobCardForm');
       if (form) form.reset();
+      loadOjcCascade();
       if (typeof refreshCommonDropdowns === 'function') {
         refreshCommonDropdowns();
       }

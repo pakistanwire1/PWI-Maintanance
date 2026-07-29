@@ -1,4 +1,4 @@
-<div id="whatsappPage" class="page">
+﻿<div id="whatsappPage" class="page">
   <div class="card">
     <div class="card-header">
       <div class="card-title">
@@ -191,7 +191,7 @@ function loadWhatsAppData() {
       renderWhatsAppTemplates(data.templates);
       renderWhatsAppLogs(data.logs, data.stats);
     })
-    .withFailureHandler(function(err) { console.error('loadWhatsAppData failed:', err); })
+    .withFailureHandler(function(err) { })
     .whatsappGetSettingsData();
 }
 

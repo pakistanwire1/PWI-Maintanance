@@ -1,4 +1,4 @@
-<div id="auditPage" class="page">
+﻿<div id="auditPage" class="page">
   <div class="dashboard-grid" id="auditSummaryCards" style="margin-bottom:16px;grid-template-columns:repeat(4,1fr)">
     <div class="stat-card stat-primary" style="cursor:pointer">
       <div class="stat-inner">
@@ -186,13 +186,11 @@ function loadAuditLogsData() {
         return;
       }
       // getUserAuditLogs returned empty — try getAuditLogs() as fallback
-      console.warn('getUserAuditLogs returned empty, trying getAuditLogs fallback');
       google.script.run
         .withSuccessHandler(function(fallbackData) {
           auditData = fallbackData || [];
           if (auditData.length === 0) {
-            console.warn('getAuditLogs also returned empty — sheet may have no data or pipeline issue');
-          }
+            }
           populateAuditFilterDropdowns();
           applyAuditFilter();
           updateAuditSummaryCards();
@@ -484,7 +482,7 @@ function exportAuditCSV() {
 
 function exportAuditPDF() {
   if (auditFiltered.length === 0) { showToast('No data to export', 'warning'); return; }
-  var printContent = '<html><head><style>body{font-family:Arial;font-size:11px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:4px 6px;text-align:left;}th{background:#1F4E78;color:#fff;}tr:nth-child(even){background:#f2f2f2;}</style></head><body>';
+  var printContent = '<html><head><style>body{font-family:Arial;font-size:11px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid var(--border);padding:4px 6px;text-align:left;}th{background:#1F4E78;color:var(--bg-primary);}tr:nth-child(even){background:#f2f2f2;}</style></head><body>';
   printContent += '<h2>Audit Trail Report</h2><p>Generated: ' + new Date().toLocaleString() + '</p>';
   printContent += '<table><thead><tr><th>DateTime</th><th>User</th><th>Role</th><th>Department</th><th>Module</th><th>Action</th><th>RecordID</th><th>Remarks</th></tr></thead><tbody>';
   auditFiltered.forEach(function(r) {
@@ -502,7 +500,7 @@ function exportAuditPDF() {
 
 function printAuditTable() {
   if (auditFiltered.length === 0) { showToast('No data to print', 'warning'); return; }
-  var printContent = '<html><head><style>body{font-family:Arial;font-size:10px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:3px 5px;text-align:left;font-size:10px}th{background:#1F4E78;color:#fff;}</style></head><body>';
+  var printContent = '<html><head><style>body{font-family:Arial;font-size:10px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid var(--border);padding:3px 5px;text-align:left;font-size:10px}th{background:#1F4E78;color:var(--bg-primary);}</style></head><body>';
   printContent += '<h3>Audit Trail</h3><p>' + new Date().toLocaleString() + '</p>';
   printContent += '<table><thead><tr><th>DateTime</th><th>User</th><th>Role</th><th>Module</th><th>Action</th><th>RecordID</th><th>Status</th><th>Remarks</th></tr></thead><tbody>';
   auditFiltered.forEach(function(r) {

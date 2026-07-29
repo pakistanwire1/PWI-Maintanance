@@ -7,19 +7,13 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
-  /* ---- Legacy HTML App routes ---- */
+  /* ---- QR scanned machine route: serve normal app, passport navigated client-side ---- */
   if (e && e.parameter && e.parameter.machine) {
-    var machineHtml = HtmlService.createHtmlOutput(
-      '<!DOCTYPE html><html><head><base target="_top"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-      '<script>localStorage.setItem("cmms_qr_url",window.location.href);' +
-      'google.script.run.withSuccessHandler(function(h){document.open();document.write(h);document.close();}).getAppHtml();' +
-      '</script><style>body{background:#03050a;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}' +
-      '.sp{width:32px;height:32px;border:3px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:s .6s linear infinite}' +
-      '@keyframes s{to{transform:rotate(360deg)}}</style></head><body><div class="sp"></div></body></html>'
-    )
-    .setTitle('Machine Digital Passport')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    var machineTemplate = HtmlService.createTemplateFromFile('WelcomePage');
+    var machineHtml = machineTemplate.evaluate()
+      .setTitle(CONFIG.APP_NAME + ' - Machine Passport')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     return machineHtml;
   }
 

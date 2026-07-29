@@ -398,7 +398,7 @@ function exportNotifCSV() {
 function exportNotifPDF() {
   var data = applyNotifClientFilters(notifData);
   if (!data || data.length === 0) { showToast('No data to export', 'warning'); return; }
-  var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#1F4E78;color:#fff}</style></head><body>';
+  var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px}th,td{border:1px solid var(--border-light);padding:6px;text-align:left}th{background:#1F4E78;color:var(--bg-primary)}</style></head><body>';
   html += '<h2 style="text-align:center">Notifications Report</h2><p style="text-align:center">Generated: ' + new Date().toLocaleString() + '</p>';
   html += '<table><thead><tr><th>ID</th><th>Module</th><th>Title</th><th>Priority</th><th>Read Status</th><th>Date</th></tr></thead><tbody>';
   data.forEach(function(r) {
@@ -418,7 +418,7 @@ function exportNotifPDF() {
 function printNotif() {
   var data = applyNotifClientFilters(notifData);
   if (!data || data.length === 0) { showToast('No data to print', 'warning'); return; }
-  var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px}th,td{border:1px solid #000;padding:4px;text-align:left}th{background:#1F4E78;color:#fff}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>';
+  var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px}th,td{border:1px solid var(--text);padding:4px;text-align:left}th{background:#1F4E78;color:var(--bg-primary)}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>';
   html += '<h2 style="text-align:center">Notifications Report</h2><p style="text-align:center">Generated: ' + new Date().toLocaleString() + '</p>';
   html += '<table><thead><tr><th>ID</th><th>Module</th><th>Title</th><th>Priority</th><th>Read Status</th></tr></thead><tbody>';
   data.forEach(function(r) {

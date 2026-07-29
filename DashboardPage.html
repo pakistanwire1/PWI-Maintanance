@@ -1,4 +1,4 @@
-<div id="dashboardPage" class="page active">
+﻿<div id="dashboardPage" class="page active">
   <div class="dashboard-filter-bar">
     <button class="filter-btn" onclick="setDashboardFilter('today', this)">Today</button>
     <button class="filter-btn" onclick="setDashboardFilter('week', this)">This Week</button>
@@ -354,26 +354,12 @@ function closeDashDetailModal() {
 }
 
 function loadDashboardData() {
-  console.log('loadDashboardData() called, filter:', globalDashboardFilter);
   var cards = document.querySelectorAll('#dashboardCards .stat-info');
   cards.forEach(function(el) { el.classList.add('loading'); });
   google.script.run
     .withSuccessHandler(function(data) {
-      console.log('loadDashboardData() received:', data);
       cards.forEach(function(el) { el.classList.remove('loading'); });
-
-      console.log('Dashboard Response', JSON.stringify(data, null, 2));
-      console.log('P11.32 GAS received pendingJobs=' + data.pendingJobs + ' approvedJobs=' + data.approvedJobs + ' mtbf=' + data.mtbf + ' breakdownJobCount=' + data.breakdownJobCount);
-      console.log('DashboardPage Fields check:', {
-        totalWaitingTimeMinutes: data.totalWaitingTimeMinutes,
-        totalWorkingTimeMinutes: data.totalWorkingTimeMinutes,
-        totalRepairTimeMinutes: data.totalRepairTimeMinutes,
-        totalDowntimeMinutes: data.totalDowntimeMinutes,
-        mttr: data.mttr,
-        mtbf: data.mtbf,
-        availability: data.availability
-      });
-      setText('statMachines', data.totalMachines);
+     setText('statMachines', data.totalMachines);
       setText('statRunningMachines', data.runningMachines);
       setText('statUnderMaintenance', data.breakdownMachines);
       setText('statOpenJobs', data.openJobs);
@@ -400,8 +386,6 @@ function loadDashboardData() {
       setText('statPMCompliance', (data.pmCompliance || 0) + '%');
       setText('statQRGenerated', data.qrGenerated);
       setText('statStockValue', formatCurrencyPKR(data.totalStockValue));
-      console.log('[DASHBOARD DEBUG] _debug:', JSON.stringify(data._debug, null, 2));
-
       drawDashboardCharts(data);
       loadDashboardNotifications();
       loadDashboardRecentActivities();
@@ -565,7 +549,6 @@ function dashNotifView(id) {
 function doDrawCharts(data) {
   try {
     if (typeof google === 'undefined' || !google.visualization) {
-      console.warn('[Dashboard] google.visualization not available in doDrawCharts, will retry');
       if (dashboardChartLoadRetries < dashboardChartLoadMaxRetries) {
         dashboardChartLoadRetries++;
         setTimeout(function() { doDrawCharts(data); }, 500);
@@ -590,7 +573,7 @@ function doDrawCharts(data) {
     var tooltipStyle = 'text-align:left;padding:10px 14px;font-size:13px;line-height:1.6;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:inherit;';
 
     /* ============================================================
-       1. JOB STATUS OVERVIEW — Column Chart
+       1. JOB STATUS OVERVIEW â€” Column Chart
        Colors: Open=Blue, Running=Green, Closed=Gray, Pending=Orange, Approved=Purple
        ============================================================ */
     var jobStatusDiv = document.getElementById('chartJobStatus');
@@ -622,10 +605,10 @@ function doDrawCharts(data) {
           backgroundColor: 'transparent',
           chartArea: { left: 40, right: 20, top: 20, bottom: 50, width: '90%', height: '65%' },
           legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 11 } },
-          hAxis: { textStyle: { color: '#9498b8', fontSize: 11 }, gridlines: { color: 'transparent' }, slantedText: false },
-          vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
+          hAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 11 }, gridlines: { color: 'transparent' }, slantedText: false },
+          vAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
           bar: { groupWidth: '60%' },
-          tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } },
+          tooltip: { isHtml: true, textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim(), fontSize: 12 } },
           animation: animCfg,
           enableInteractivity: true
         };
@@ -636,7 +619,7 @@ function doDrawCharts(data) {
     }
 
     /* ============================================================
-       2. PRIORITY DISTRIBUTION — Donut Chart
+       2. PRIORITY DISTRIBUTION â€” Donut Chart
        Colors: Critical=Red, High=Orange, Medium=Blue, Low=Green
        ============================================================ */
     var priorityDiv = document.getElementById('chartPriority');
@@ -670,7 +653,7 @@ function doDrawCharts(data) {
           legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 11 } },
           colors: pieColors,
           pieHole: 0.45,
-          tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } },
+          tooltip: { isHtml: true, textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim(), fontSize: 12 } },
           pieSliceText: 'none',
           animation: animCfg
         };
@@ -680,7 +663,7 @@ function doDrawCharts(data) {
     }
 
     /* ============================================================
-       3. MTTR TREND — Line Chart with Avg/Max/Min
+       3. MTTR TREND â€” Line Chart with Avg/Max/Min
        ============================================================ */
     var mttrDiv = document.getElementById('chartMTTR');
     if (mttrDiv) {
@@ -706,14 +689,14 @@ function doDrawCharts(data) {
           backgroundColor: 'transparent',
           chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' },
           legend: { position: 'none' },
-          hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } },
-          vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
-          colors: ['#3B82F6'],
+          hAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'transparent' } },
+          vAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
+          colors: [getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()],
           curveType: 'function',
           lineWidth: 3,
           pointSize: 6,
           pointShape: 'circle',
-          tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } },
+          tooltip: { isHtml: true, textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim(), fontSize: 12 } },
           animation: animCfg
         };
         if (stats.avg > 0) {
@@ -740,7 +723,7 @@ function doDrawCharts(data) {
     }
 
     /* ============================================================
-       4. MTBF TREND — Line Chart
+       4. MTBF TREND â€” Line Chart
        ============================================================ */
     var mtbfDiv = document.getElementById('chartMTBF');
     if (mtbfDiv) {
@@ -764,14 +747,14 @@ function doDrawCharts(data) {
           backgroundColor: 'transparent',
           chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' },
           legend: { position: 'none' },
-          hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } },
-          vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
-          colors: ['#22C55E'],
+          hAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'transparent' } },
+          vAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
+          colors: [getComputedStyle(document.documentElement).getPropertyValue('--success').trim()],
           curveType: 'function',
           lineWidth: 3,
           pointSize: 6,
           pointShape: 'circle',
-          tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } },
+          tooltip: { isHtml: true, textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim(), fontSize: 12 } },
           animation: animCfg
         };
         var mtbfChart = new google.visualization.LineChart(mtbfDiv);
@@ -787,7 +770,7 @@ function doDrawCharts(data) {
     }
 
     /* ============================================================
-       5. MONTHLY JOBS — Stacked Column Chart
+       5. MONTHLY JOBS â€” Stacked Column Chart
        Per-status colors
        ============================================================ */
     var monthlyDiv = document.getElementById('chartMonthlyJobs');
@@ -816,12 +799,12 @@ function doDrawCharts(data) {
           backgroundColor: 'transparent',
           chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' },
           legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 10 } },
-          hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } },
-          vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
-          colors: ['#3B82F6', '#22C55E', '#F97316', '#6B7280', '#A855F7'],
+          hAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'transparent' } },
+          vAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
+          colors: [getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(), getComputedStyle(document.documentElement).getPropertyValue('--success').trim(), getComputedStyle(document.documentElement).getPropertyValue('--orange').trim(), getComputedStyle(document.documentElement).getPropertyValue('--slate').trim(), getComputedStyle(document.documentElement).getPropertyValue('--purple').trim()],
           bar: { groupWidth: '65%' },
           isStacked: true,
-          tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } },
+          tooltip: { isHtml: true, textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim(), fontSize: 12 } },
           animation: animCfg
         };
         var monthlyChart = new google.visualization.ColumnChart(monthlyDiv);
@@ -830,7 +813,7 @@ function doDrawCharts(data) {
     }
 
     /* ============================================================
-       6. BREAKDOWN TREND — Smooth Area Chart
+       6. BREAKDOWN TREND â€” Smooth Area Chart
        ============================================================ */
     var breakdownDiv = document.getElementById('chartBreakdown');
     if (breakdownDiv) {
@@ -856,15 +839,15 @@ function doDrawCharts(data) {
           backgroundColor: 'transparent',
           chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' },
           legend: { position: 'none' },
-          hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } },
-          vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
-          colors: ['#EF4444'],
+          hAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'transparent' } },
+          vAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
+          colors: [getComputedStyle(document.documentElement).getPropertyValue('--danger').trim()],
           lineWidth: 2,
           curveType: 'function',
           pointSize: 5,
           pointShape: 'circle',
           areaOpacity: 0.15,
-          tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } },
+          tooltip: { isHtml: true, textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim(), fontSize: 12 } },
           animation: animCfg
         };
         var breakdownChart = new google.visualization.AreaChart(breakdownDiv);
@@ -891,7 +874,7 @@ function doDrawCharts(data) {
           wtRows.push([months[wti], wtVal, wtTip]);
         }
         var wtData = new google.visualization.arrayToDataTable(wtRows);
-        var wtOpts = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#F59E0B'], lineWidth: 2, curveType: 'function', pointSize: 5, pointShape: 'circle', areaOpacity: 0.15, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg };
+        var wtOpts = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: [getComputedStyle(document.documentElement).getPropertyValue('--warning').trim()], lineWidth: 2, curveType: 'function', pointSize: 5, pointShape: 'circle', areaOpacity: 0.15, tooltip: { isHtml: true, textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim(), fontSize: 12 } }, animation: animCfg };
         var wtChart = new google.visualization.AreaChart(wtDiv);
         wtChart.draw(wtData, wtOpts);
       }
@@ -909,7 +892,7 @@ function doDrawCharts(data) {
           dtRows.push([months[dti], dtVal, dtTip]);
         }
         var dtData = new google.visualization.arrayToDataTable(dtRows);
-        var dtOpts = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#EF4444'], lineWidth: 2, curveType: 'function', pointSize: 5, pointShape: 'circle', areaOpacity: 0.15, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg };
+        var dtOpts = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: [getComputedStyle(document.documentElement).getPropertyValue('--danger').trim()], lineWidth: 2, curveType: 'function', pointSize: 5, pointShape: 'circle', areaOpacity: 0.15, tooltip: { isHtml: true, textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim(), fontSize: 12 } }, animation: animCfg };
         var dtChart = new google.visualization.AreaChart(dtDiv);
         dtChart.draw(dtData, dtOpts);
       }
@@ -927,13 +910,12 @@ function doDrawCharts(data) {
           mmRows.push([months[mmi], mmVal, mmTip]);
         }
         var mmData = new google.visualization.arrayToDataTable(mmRows);
-        var mmOpts = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#3B82F6'], lineWidth: 3, curveType: 'function', pointSize: 6, pointShape: 'circle', tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg };
+        var mmOpts = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(), fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: [getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()], lineWidth: 3, curveType: 'function', pointSize: 6, pointShape: 'circle', tooltip: { isHtml: true, textStyle: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim(), fontSize: 12 } }, animation: animCfg };
         var mmChart = new google.visualization.LineChart(mmDiv);
         mmChart.draw(mmData, mmOpts);
       }
     }
   } catch (e) {
-    console.error('[Dashboard] Chart error:', e);
     _showDashboardChartError();
   }
 }
@@ -956,7 +938,7 @@ function addDataLabels(divEl, items, total) {
     textEl.setAttribute('x', rx);
     textEl.setAttribute('y', ry < 10 ? 14 : ry);
     textEl.setAttribute('text-anchor', 'middle');
-    textEl.setAttribute('fill', '#ccc');
+    textEl.setAttribute('fill', 'var(--text-secondary)');
     textEl.setAttribute('font-size', '12');
     textEl.setAttribute('font-weight', '600');
     textEl.textContent = count;
@@ -994,7 +976,6 @@ function _startDashboardChartLoadTimeout(data) {
     if (dashboardChartsLoaded) return;
     if (dashboardChartLoadRetries < dashboardChartLoadMaxRetries) {
       dashboardChartLoadRetries++;
-      console.log('[Dashboard] Google Charts load timeout, retry ' + dashboardChartLoadRetries + '/' + dashboardChartLoadMaxRetries);
       _loadDashboardGoogleCharts(function() {
         _clearDashboardChartLoadTimer();
         dashboardChartsLoaded = true;
@@ -1003,7 +984,6 @@ function _startDashboardChartLoadTimeout(data) {
       });
     } else {
       _clearDashboardChartLoadTimer();
-      console.error('[Dashboard] Google Charts failed to load after ' + dashboardChartLoadMaxRetries + ' retries');
       _showDashboardChartError();
     }
   }, dashboardChartLoadTimeoutMs);
@@ -1035,8 +1015,7 @@ function _loadDashboardGoogleCharts(callback) {
       } else if (attempts < 20) {
         setTimeout(function() { checkGoogle(attempts + 1); }, 250);
       } else {
-        console.error('[Dashboard] Google Charts loader found but google.charts not available');
-      }
+        }
     };
     checkGoogle(0);
     return;
@@ -1048,12 +1027,10 @@ function _loadDashboardGoogleCharts(callback) {
       google.charts.load('current', { packages: ['corechart'] });
       google.charts.setOnLoadCallback(callback);
     } else {
-      console.error('[Dashboard] loader.js loaded but google.charts not defined');
-    }
+      }
   };
   script.onerror = function() {
-    console.error('[Dashboard] Failed to load Google Charts from CDN');
-  };
+    };
   document.head.appendChild(script);
 }
 
@@ -1172,3 +1149,7 @@ document.addEventListener('visibilitychange', function() {
   }
 });
 </script>
+
+
+
+

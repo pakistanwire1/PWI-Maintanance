@@ -162,6 +162,7 @@ function renderMachinesTable() {
     { key: 'Criticality', label: 'Criticality', badge: true, badgeMap: { 'Critical': 'danger', 'High': 'warning', 'Medium': 'primary', 'Low': 'success' } },
     { key: 'Status', label: 'Status', badge: true, badgeMap: { 'Active': 'success', 'Inactive': 'secondary', 'Under Maintenance': 'warning', 'Retired': 'danger' } }
   ], [
+    { label: 'Passport', icon: 'view', color: 'info', onclick: "viewMachinePassport('{id}')", idField: 'MachineID' },
     { label: 'Edit', icon: 'edit', color: 'primary', onclick: "editMachine('{id}')", idField: 'MachineID' },
     { label: 'Del', icon: 'trash', color: 'danger', onclick: "deleteMachine('{id}')", idField: 'MachineID' }
   ], machinesPage, PAGE_SIZE, 'machinesTableContainer');
@@ -223,6 +224,12 @@ function openMachineForm() {
   });
   populateMachineDeptDropdown('');
   openModalForm('machineForm', 'Add Machine');
+}
+
+function viewMachinePassport(machineId) {
+  sessionStorage.setItem('passportPrevPage', currentPage);
+  sessionStorage.setItem('passportMachineId', machineId);
+  navigateTo('machinepassport');
 }
 
 function editMachine(id) {

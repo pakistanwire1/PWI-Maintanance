@@ -1,16 +1,24 @@
-<div id="breakdownPage" class="page">
+﻿<div id="breakdownPage" class="page">
   <div class="card">
     <div class="card-header">
       <div class="card-title">Breakdown History</div>
     </div>
     <div class="filter-bar">
       <div class="form-group">
-        <label>Machine</label>
-        <select class="form-control" id="bdMachine" onchange="filterBreakdowns()"><option value="">All Machines</option></select>
+        <label>Division</label>
+        <select class="form-control" id="bdDivision" onchange="onBdDivChange()"><option value="">All Divisions</option></select>
+      </div>
+      <div class="form-group">
+        <label>Section</label>
+        <select class="form-control" id="bdSection" onchange="onBdSecChange()"><option value="">All Sections</option></select>
       </div>
       <div class="form-group">
         <label>Department</label>
-        <select class="form-control" id="bdDepartment" onchange="filterBreakdowns()"><option value="">All Departments</option></select>
+        <select class="form-control" id="bdDepartment" onchange="onBdDeptChange()"><option value="">All Departments</option></select>
+      </div>
+      <div class="form-group">
+        <label>Machine</label>
+        <select class="form-control" id="bdMachineNumber" onchange="filterBreakdowns()"><option value="">All Machines</option></select>
       </div>
       <div class="form-group">
         <label>From</label>
@@ -53,28 +61,49 @@ function loadBreakdownData() {
   showLoading(true);
   google.script.run
     .withSuccessHandler(function(data) {
-      console.log('=== PIPELINE: getBreakdownHistory() returned', data ? data.length : 'null/undefined', 'records');
-      if (data && data.length > 0) {
-        console.log('=== PIPELINE: First record =', JSON.stringify(data[0]));
-      } else if (data && data.length === 0) {
-        console.warn('=== PIPELINE: Backend returned EMPTY ARRAY for BreakdownHistory');
-      } else {
-        console.error('=== PIPELINE: Backend returned null/undefined for BreakdownHistory');
-      }
       breakdownData = data || [];
       showLoading(false);
-      populateBreakdownFilters();
+      loadBDCascade();
       renderBreakdownTable();
     })
     .withFailureHandler(function(err) { showLoading(false); showToast('Failed to load breakdown history', 'error'); })
     .getBreakdownHistory();
 }
 
-function populateBreakdownFilters() {
-  var machines = getUniqueValues(breakdownData, 'Machine');
-  populateSelectFromList('bdMachine', machines, 'All Machines');
-  var depts = getUniqueValues(breakdownData, 'Department');
-  populateSelectFromList('bdDepartment', depts, 'All Departments');
+function loadBDCascade(divId, secId, deptId) {
+  google.script.run
+    .withSuccessHandler(function(c) {
+      populateSelect('bdDivision', c.divisions, 'id', 'name', 'All Divisions');
+      populateSelect('bdSection', c.sections, 'id', 'name', 'All Sections');
+      populateSelect('bdDepartment', c.departments, 'id', 'name', 'All Departments');
+      populateSelect('bdMachineNumber', c.machines, 'number', 'label', 'All Machines');
+    })
+    .withFailureHandler(function() {})
+    .getMachineCascade(divId || '', secId || '', deptId || '');
+}
+
+function onBdDivChange() {
+  var d = document.getElementById('bdDivision').value;
+  document.getElementById('bdSection').innerHTML = '<option value="">Loading...</option>';
+  document.getElementById('bdDepartment').innerHTML = '<option value="">Loading...</option>';
+  document.getElementById('bdMachineNumber').innerHTML = '<option value="">Loading...</option>';
+  loadBDCascade(d);
+}
+
+function onBdSecChange() {
+  var d = document.getElementById('bdDivision').value;
+  var s = document.getElementById('bdSection').value;
+  document.getElementById('bdDepartment').innerHTML = '<option value="">Loading...</option>';
+  document.getElementById('bdMachineNumber').innerHTML = '<option value="">Loading...</option>';
+  loadBDCascade(d, s);
+}
+
+function onBdDeptChange() {
+  var d = document.getElementById('bdDivision').value;
+  var s = document.getElementById('bdSection').value;
+  var dp = document.getElementById('bdDepartment').value;
+  document.getElementById('bdMachineNumber').innerHTML = '<option value="">Loading...</option>';
+  loadBDCascade(d, s, dp);
 }
 
 function renderBreakdownTable() {
@@ -97,13 +126,13 @@ function renderBreakdownTable() {
 function breakdownTablePage(p) { breakdownPage = p; renderBreakdownTable(); }
 
 function getFilteredBreakdownData() {
-  var machine = document.getElementById('bdMachine').value;
+  var machine = document.getElementById('bdMachineNumber').value;
   var dept = document.getElementById('bdDepartment').value;
   var from = document.getElementById('bdFrom').value;
   var to = document.getElementById('bdTo').value;
   var priority = document.getElementById('bdPriority').value;
   return breakdownData.filter(function(row) {
-    if (machine && row.Machine !== machine) return false;
+    if (machine && row.MachineNumber !== machine && row.MachineCode !== machine && row.Machine !== machine) return false;
     if (dept && row.Department !== dept) return false;
     if (priority && row.Priority !== priority) return false;
     var dateStr = row.OpenDateTime || row.DateCreated || row.Date;
@@ -123,3 +152,4 @@ function updateBreakdownStats(filtered) {
     el = document.getElementById('bdTotalDowntime'); if (el) el.textContent = displayDuration(downtime);
 }
 </script>
+

@@ -1,9 +1,9 @@
-<div id="startjobcardPage" class="page">
+﻿<div id="startjobcardPage" class="page">
   <div class="card">
     <div class="card-header">
       <div class="card-title">
         <span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--warning);box-shadow:0 0 8px rgba(245,158,11,0.4);vertical-align:middle;margin-right:8px"></span>
-        Start Job Card — Open Jobs
+        Start Job Card â€” Open Jobs
       </div>
       <div class="card-actions">
         <div class="search-box">
@@ -39,7 +39,7 @@
     <div class="modal-header">
       <div class="modal-title">
         <span class="status-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--warning);box-shadow:0 0 8px rgba(245,158,11,0.4);vertical-align:middle;margin-right:8px"></span>
-        Start Job — <span id="startJcRef"></span>
+        Start Job â€” <span id="startJcRef"></span>
       </div>
       <button class="modal-close" onclick="hideModal('startJcModal')">&times;</button>
     </div>
@@ -111,14 +111,11 @@ function loadStartJobCardsData() {
   showLoading(true);
   google.script.run
     .withSuccessHandler(function(data) {
-      console.log('[START-JC] Total records loaded:', data ? data.length : 0);
       var openRecords = (data || []).filter(function(jc) {
         var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
         return s === 'open' || s === 'waiting';
       });
-      console.log('[START-JC] Open records found:', openRecords.length);
       if (openRecords.length === 0 && data && data.length > 0) {
-        console.log('[START-JC] SAMPLE STATUSES:', data.slice(0, 5).map(function(j) { return j.JobCardNo + '=' + (j.CurrentStatus || '') + '/' + (j.Status || ''); }));
       }
       startJcData = openRecords;
       showLoading(false);
@@ -237,7 +234,7 @@ function saveStartJc(e) {
 
   if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
     OfflineSync.add({ fn: 'updateJobCard', args: [id, data] });
-    showToast('Saved offline — will sync when connected', 'warning');
+    showToast('Saved offline â€” will sync when connected', 'warning');
     hideModal('startJcModal');
     return;
   }
@@ -248,7 +245,7 @@ function saveStartJc(e) {
       startJcData = result || [];
       showLoading(false);
       hideModal('startJcModal');
-      showToast('Job started — Status: Running');
+      showToast('Job started â€” Status: Running');
       renderStartJc();
       if (typeof refreshDashboardCounters === 'function') refreshDashboardCounters();
     })
@@ -269,3 +266,4 @@ function searchStartJc() {
   renderStartJc();
 }
 </script>
+

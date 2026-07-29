@@ -1,4 +1,4 @@
-<script>
+﻿<script>
 var LOGO_URL = '?img=logo';
 
 (function() {
@@ -79,7 +79,6 @@ function capitalize(str) {
 }
 
 function showApp() {
-  console.log('showApp() called, currentUser:', currentUser);
   var loginPage = document.getElementById('loginPage'); if (loginPage) loginPage.style.display = 'none';
   var appContainer = document.getElementById('appContainer'); if (appContainer) appContainer.style.display = 'flex';
   applyTheme();
@@ -106,9 +105,7 @@ function showApp() {
 }
 
 function updateUserInfo() {
-  console.log('updateUserInfo() called, currentUser:', currentUser);
   if (!currentUser) {
-    console.warn('updateUserInfo(): currentUser is null');
     return;
   }
   var initial = currentUser.name.charAt(0).toUpperCase();
@@ -210,7 +207,7 @@ function formatCurrencyPKR(value) {
 
 function setHtml(id, html) {
   var el = document.getElementById(id);
-  if (el) el.innerHTML = html; else console.warn('Element not found:', id);
+  if (el) el.innerHTML = html;
 }
 
 function getVal(id) {
@@ -220,42 +217,42 @@ function getVal(id) {
 
 function setVal(id, val) {
   var el = document.getElementById(id);
-  if (el) el.value = val; else console.warn('Element not found:', id);
+  if (el) el.value = val;
 }
 
 function showEl(id, displayType) {
   var el = document.getElementById(id);
-  if (el) el.style.display = displayType || 'block'; else console.warn('Element not found:', id);
+  if (el) el.style.display = displayType || 'block';
 }
 
 function hideEl(id) {
   var el = document.getElementById(id);
-  if (el) el.style.display = 'none'; else console.warn('Element not found:', id);
+  if (el) el.style.display = 'none';
 }
 
 function addClass(id, cls) {
   var el = document.getElementById(id);
-  if (el) el.classList.add(cls); else console.warn('Element not found:', id);
+  if (el) el.classList.add(cls);
 }
 
 function removeClass(id, cls) {
   var el = document.getElementById(id);
-  if (el) el.classList.remove(cls); else console.warn('Element not found:', id);
+  if (el) el.classList.remove(cls);
 }
 
 function toggleClass(id, cls) {
   var el = document.getElementById(id);
-  if (el) el.classList.toggle(cls); else console.warn('Element not found:', id);
+  if (el) el.classList.toggle(cls);
 }
 
 function setStyle(id, prop, val) {
   var el = document.getElementById(id);
-  if (el) el.style[prop] = val; else console.warn('Element not found:', id);
+  if (el) el.style[prop] = val;
 }
 
 function setTextContent(id, val) {
   var el = document.getElementById(id);
-  if (el) el.textContent = val; else console.warn('Element not found:', id);
+  if (el) el.textContent = val;
 }
 
 var __sessionMonitorTimer = null;
@@ -268,7 +265,6 @@ function startSessionMonitor() {
     google.script.run
       .withSuccessHandler(function(result) {
         if (!result || !result.valid) {
-          console.warn('Session monitor: session invalid, logging out');
           stopSessionMonitor();
           currentUser = null;
           localStorage.removeItem('cmms_user');
@@ -308,9 +304,7 @@ function handleLogout() {
 }
 
 function navigateTo(page) {
-  console.log('navigateTo() called: ' + page);
   if (!currentUser) {
-    console.warn('navigateTo(): no session, redirecting to login');
     var lp = document.getElementById('loginPage'); if (lp) lp.style.display = 'block';
     var ac = document.getElementById('appContainer'); if (ac) ac.style.display = 'none';
     return;
@@ -326,10 +320,7 @@ function navigateTo(page) {
 
   var pageEl = document.getElementById(page + 'Page');
   if (pageEl) {
-    console.log('navigateTo() found page element: #' + page + 'Page');
     pageEl.classList.add('active');
-  } else {
-    console.error('navigateTo() MISSING page element: #' + page + 'Page');
   }
 
   var menuItem = document.querySelector('.sidebar-item[data-page="' + page + '"]');
@@ -392,10 +383,8 @@ function navigateTo(page) {
     machinepassport: 'loadMachinePassportPage'
   };
   var fnName = window.__loadFnMap[page] || 'load' + capitalize(page) + 'Data';
-  console.log('navigateTo() looking for function: ' + fnName + ' exists:', typeof window[fnName] === 'function');
   var loadFn = window[fnName];
-  if (loadFn) { console.log('navigateTo() calling: ' + fnName); loadFn(); }
-  else console.error('navigateTo() FUNCTION NOT FOUND: ' + fnName);
+  if (loadFn) { loadFn(); }
 
   document.querySelector('.sidebar').classList.remove('open');
   closeUserMenu();
@@ -782,7 +771,7 @@ function getUserDept() {
 
 function getFormData(formId) {
   var form = document.getElementById(formId);
-  if (!form) { console.warn('Form not found:', formId); return {}; }
+  if (!form) { return {}; }
   var data = {};
   var elements = form.elements;
   for (var i = 0; i < elements.length; i++) {
@@ -817,8 +806,7 @@ function installPWA() {
   deferredInstallPrompt.prompt();
   deferredInstallPrompt.userChoice.then(function(choice) {
     if (choice.outcome === 'accepted') {
-      console.log('PWA installed');
-    }
+      }
     deferredInstallPrompt = null;
     var banner = document.getElementById('installBanner');
     if (banner) banner.style.display = 'none';
@@ -834,8 +822,7 @@ window.addEventListener('appinstalled', function() {
   deferredInstallPrompt = null;
   var banner = document.getElementById('installBanner');
   if (banner) banner.style.display = 'none';
-  console.log('CMMS PWA installed');
-});
+  });
 
 /* ========================================================
    PART-4: CAMERA QR SCANNER
@@ -927,6 +914,7 @@ function processQRScanResult(decodedText) {
 
 function showQRDetail(result) {
   if (result.module === 'Machine') {
+    sessionStorage.setItem('passportPrevPage', currentPage);
     sessionStorage.setItem('passportMachineId', result.id || result.code);
     navigateTo('machinepassport');
     return;
@@ -1392,6 +1380,7 @@ function checkQRUrlParameter() {
     var params = new URLSearchParams(window.location.search);
     var machineParam = params.get('machine');
     if (machineParam) {
+      sessionStorage.setItem('passportPrevPage', currentPage);
       sessionStorage.setItem('passportMachineId', machineParam);
       if (window.history && window.history.replaceState) {
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -1413,7 +1402,7 @@ function checkQRUrlParameter() {
 
 function setFormData(formId, data) {
   var form = document.getElementById(formId);
-  if (!form) { console.warn('Form not found:', formId); return; }
+  if (!form) { return; }
   form.querySelectorAll('[name]').forEach(function(el) {
     if (data[el.name] !== undefined) {
       el.value = data[el.name];
@@ -1439,25 +1428,11 @@ function closeModalForm(formId) {
 function renderTable(data, columns, actions, page, pageSize, containerId) {
   containerId = containerId || 'tableContainer';
   var container = document.getElementById(containerId);
-  if (!container) { console.error('renderTable() container not found: #' + containerId); return; }
+  if (!container) { return; }
   page = page || 1;
   pageSize = pageSize || PAGE_SIZE;
 
-  console.log('renderTable() [' + containerId + '] INPUT data type:', typeof data, 'length:', data ? data.length : 'N/A', 'isArray:', Array.isArray(data));
-  if (data && data.length > 0) {
-    console.log('renderTable() [' + containerId + '] first record keys:', Object.keys(data[0]).join(','));
-    console.log('renderTable() [' + containerId + '] first record:', JSON.stringify(data[0]));
-  } else if (data && data.length === 0) {
-    console.warn('renderTable() [' + containerId + '] DATA IS AN EMPTY ARRAY');
-  } else if (!data) {
-    console.error('renderTable() [' + containerId + '] DATA IS NULL/UNDEFINED');
-  }
-
   if (!data || data.length === 0) {
-    console.warn('renderTable() [' + containerId + '] No data to render. typeof data:', typeof data, 'isArray:', Array.isArray(data), 'isNull:', data === null, 'isUndefined:', data === undefined);
-    if (data && typeof data === 'object' && !Array.isArray(data)) {
-      console.warn('renderTable() [' + containerId + '] data is an OBJECT (not array) with keys:', Object.keys(data).join(','));
-    }
     container.innerHTML =
       '<div class="empty-state">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>' +
@@ -2249,7 +2224,6 @@ function refreshAllBadges() {
     .withSuccessHandler(function(data) {
       if (!data) return;
       if (data.success === false) {
-        console.warn('refreshAllBadges: backend returned error:', data.message);
         return;
       }
       updateSidebarCounters(data);
@@ -2258,8 +2232,7 @@ function refreshAllBadges() {
       updateWaBadge(data.pendingWhatsApp);
     })
     .withFailureHandler(function(err) {
-      console.error('refreshAllBadges: backend call failed:', err);
-    })
+      })
     .getSidebarCounts(email);
 }
 
@@ -2371,16 +2344,12 @@ function startBadgeRefresh() {
 
 function runBadgeDiagnostic() {
   var email = (currentUser && currentUser.email) || '';
-  if (!email) { console.error('No user email'); return; }
-  console.log('Running badge diagnostic for:', email);
+  if (!email) { return; }
   google.script.run
     .withSuccessHandler(function(data) {
-      console.log('=== BADGE DIAGNOSTIC RESULT ===');
-      console.log(JSON.stringify(data, null, 2));
       alert('Diagnostic complete. Check console (F12) for full results.\n\nSheets found: ' + (data.existingSheets || []).length + '\nSuccess: ' + data.success);
     })
     .withFailureHandler(function(err) {
-      console.error('Diagnostic failed:', err);
       alert('Diagnostic failed: ' + err);
     })
     .diagnoseBadgeCounts(email);
@@ -2589,69 +2558,11 @@ function loadAreasForSelect(selectId) {
 }
 
 function runFrontendDiagnostic(context) {
-  console.log('=== FRONTEND DIAGNOSTIC [' + context + '] ===');
-  
-  var pageIds = ['dashboardPage', 'assetsPage', 'machinesPage', 'techniciansPage',
-                 'departmentsPage', 'sectionsPage',
-                 'jobcardsPage', 'openjobcardPage', 'startjobcardPage', 'closejobcardPage',
-                 'pendingjobcardPage',
-                  'checklistsPage', 'pmPage', 'sparepartsPage', 
-                 'inventorytransactionsPage', 'stockhistoryPage', 'goodsreceiptPage', 'pmhistoryPage', 'notificationsPage',
-                 'breakdownPage', 'reportsPage', 'settingsPage', 'auditPage', 'qrPage', 'qrmachinesPage', 'qrassetsPage', 'qrsparepartsPage', 'qrjobcardsPage', 'qrprintPage', 'qrhistoryPage', 'emailPage'];
-  var missing = [];
-  pageIds.forEach(function(id) {
-    if (!document.getElementById(id)) missing.push(id);
-  });
-  if (missing.length > 0) console.error('MISSING page elements:', missing);
-  else console.log('All page elements exist');
-  
-  var ac = document.getElementById('appContainer');
-  if (ac) {
-    var acStyle = window.getComputedStyle(ac);
-    console.log('appContainer display:', acStyle.display, '| inline style:', ac.style.display);
-    if (acStyle.display === 'none') console.error('appContainer has display:none!');
-  } else console.error('appContainer not found!');
-  
-  var lp = document.getElementById('loginPage');
-  if (lp) console.log('loginPage display:', window.getComputedStyle(lp).display);
-  
-  var dp = document.getElementById('dashboardPage');
-  if (dp) {
-    var dpStyle = window.getComputedStyle(dp);
-    console.log('dashboardPage classes:', dp.className, '| display:', dpStyle.display);
-    if (dpStyle.display === 'none') console.error('dashboardPage display:none!');
-    if (!dp.classList.contains('active')) console.error('dashboardPage missing active class!');
-  } else console.error('dashboardPage not found!');
-  
-  var lo = document.getElementById('loadingOverlay');
-  if (lo) {
-    var loStyle = window.getComputedStyle(lo);
-    console.log('loadingOverlay classes:', lo.className, '| display:', loStyle.display, '| z-index:', loStyle.zIndex);
-    if (loStyle.display !== 'none') console.warn('loadingOverlay is VISIBLE - may cause blank page!');
-  }
-  
-  var pages = document.querySelectorAll('.page');
-  console.log('Elements with .page class:', pages.length);
-  pages.forEach(function(p) {
-    if (p.classList.contains('active')) {
-      var cs = window.getComputedStyle(p);
-      if (cs.display === 'none') console.warn('Active page "' + p.id + '" has display:none!');
-    }
-  });
-  
-  var bodyStyle = window.getComputedStyle(document.body);
-  console.log('body background:', bodyStyle.backgroundColor, '| body height:', bodyStyle.height);
-  
-  console.log('=== END DIAGNOSTIC [' + context + '] ===');
 }
 
 function diagnoseDataPipeline() {
-  console.log('=== DATA PIPELINE DIAGNOSTIC ===');
-  console.log('Step 1: Testing google.script.run connectivity...');
   google.script.run
     .withSuccessHandler(function(result) {
-      console.log('Step 1: PING OK - server responded:', result);
-      console.log('Step 2: Fetching data from all modules...');
       var modules = [
         { name: 'getUsers', fn: 'getUsers' },
         { name: 'getMachines', fn: 'getMachines' },
@@ -2666,7 +2577,6 @@ function diagnoseDataPipeline() {
       var idx = 0;
       function fetchNext() {
         if (idx >= modules.length) {
-          console.log('=== END DATA PIPELINE DIAGNOSTIC ===');
           return;
         }
         var mod = modules[idx];
@@ -2674,19 +2584,11 @@ function diagnoseDataPipeline() {
         google.script.run
           .withSuccessHandler(function(modName) {
             return function(data) {
-              console.log('Module "' + modName + '": typeof=' + typeof data, 'isArray=' + Array.isArray(data), 'length=' + (data ? data.length : 'N/A'));
-              if (data && data.length > 0) {
-                console.log('Module "' + modName + '": FIRST RECORD KEYS:', Object.keys(data[0]).join(','));
-                console.log('Module "' + modName + '": FIRST RECORD:', JSON.stringify(data[0]).substring(0, 200));
-              } else {
-                console.warn('Module "' + modName + '": NO DATA (null, undefined, or empty array)');
-              }
               fetchNext();
             };
           }(mod.name))
           .withFailureHandler(function(modName) {
             return function(err) {
-              console.error('Module "' + modName + '": CALL FAILED:', err);
               fetchNext();
             };
           }(mod.name))
@@ -2695,14 +2597,11 @@ function diagnoseDataPipeline() {
       fetchNext();
     })
     .withFailureHandler(function(err) {
-      console.error('Step 1: PING FAILED - google.script.run is not responding:', err);
-      console.log('=== END DATA PIPELINE DIAGNOSTIC ===');
-    })
+      })
     .testPing();
 }
 
 (function() {
-  console.log('IIFE startup: always showing login page, auto-login disabled');
   localStorage.removeItem('cmms_user');
   currentUser = null;
   var loginPage = document.getElementById('loginPage');

@@ -1,3 +1,26 @@
+function updateMachineDocument(machineId, fieldKey, url) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAMES.MACHINES);
+    var data = sheet.getDataRange().getValues();
+    if (!data || data.length < 2) return { error: 'No data' };
+    var headers = data[0];
+    var colIdx = headers.indexOf(fieldKey);
+    if (colIdx === -1) return { error: 'Field not found: ' + fieldKey };
+    for (var r = 1; r < data.length; r++) {
+      var id = String(data[r][0] || '');
+      if (id === machineId) {
+        sheet.getRange(r + 1, colIdx + 1).setValue(url);
+        return { success: true };
+      }
+    }
+    return { error: 'Machine not found' };
+  } catch(e) { return { error: e.message }; }
+}
+
+function saveMachinePhoto(machineId, dataUrl) {
+  return updateMachineDocument(machineId, 'MachinePhoto', dataUrl);
+}
+
 function getMachinePassport(machineId) {
   var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
   var machine = null;
@@ -23,12 +46,17 @@ function getMachinePassport(machineId) {
   });
 
   var sparePartsAll = getAllData(CONFIG.SHEET_NAMES.SPARE_PARTS) || [];
+  var pmRecords = [];
+  try {
+    pmRecords = getAllData(CONFIG.SHEET_NAMES.PREVENTIVE_MAINTENANCE) || [];
+  } catch(e) {}
+  var machinePMs = pmRecords.filter(function(p) { return p.MachineID === machine.MachineID || p.MachineName === machine.MachineName; });
 
   var totalJobs = machineJobs.length;
   var openJobs = 0, closedJobs = 0, pendingApproval = 0;
   var breakdownJobs = 0, preventiveJobs = 0, electricalJobs = 0, mechanicalJobs = 0;
   var totalWaiting = 0, totalWorking = 0, totalDowntime = 0, totalRepair = 0;
-  var closedBreakdownCount = 0;
+  var closedBreakdownCount = 0, closedPMCount = 0;
   var lastBreakdownDate = null, lastPMDate = null;
 
   var monthlyBreakdown = {};
@@ -36,13 +64,17 @@ function getMachinePassport(machineId) {
   var failureCategory = {};
   var monthlyMttr = {};
   var monthlyMtbf = {};
+  var monthlySparesCost = {};
   var breakdownCountByPeriod = {};
   var timelineEvents = [];
 
+  var totalClosedJobs = 0;
+
   machineJobs.forEach(function(j) {
     var s = (j.CurrentStatus || j.Status || '').toLowerCase();
+    var isClosed = s === 'closed' || s === 'completed';
     if (s === 'open') openJobs++;
-    else if (s === 'closed' || s === 'completed') closedJobs++;
+    else if (isClosed) { closedJobs++; totalClosedJobs++; }
     var as = (j.ApprovalStatus || '').toLowerCase();
     if (as === 'pending' || s === 'pending') pendingApproval++;
 
@@ -64,6 +96,7 @@ function getMachinePassport(machineId) {
     if (mt === 'mechanical') mechanicalJobs++;
 
     var jd = j.OpenDateTime || j.DateCreated || j.Date || '';
+    var cd = j.CloseDateTime || '';
     if (jd) {
       var d = new Date(jd);
       if (!isNaN(d.getTime())) {
@@ -72,7 +105,8 @@ function getMachinePassport(machineId) {
           monthlyBreakdown[mk] = (monthlyBreakdown[mk] || 0) + 1;
           monthlyDowntime[mk] = (monthlyDowntime[mk] || 0) + dm;
           breakdownCountByPeriod[mk] = (breakdownCountByPeriod[mk] || 0) + 1;
-          if (s === 'closed' || s === 'completed') {
+          if (isClosed) {
+            closedBreakdownCount++;
             if (!monthlyMttr[mk]) monthlyMttr[mk] = { repair: 0, count: 0 };
             monthlyMttr[mk].repair += rm;
             monthlyMttr[mk].count++;
@@ -80,9 +114,10 @@ function getMachinePassport(machineId) {
           if (!lastBreakdownDate || d > new Date(lastBreakdownDate)) lastBreakdownDate = jd;
         }
         if (isPreventive) {
+          if (isClosed) closedPMCount++;
           if (!lastPMDate || d > new Date(lastPMDate)) lastPMDate = jd;
         }
-        if (s === 'closed' || s === 'completed') {
+        if (isClosed) {
           if (!monthlyMtbf[mk]) monthlyMtbf[mk] = { count: 0, jobsWithBreakdown: 0 };
           monthlyMtbf[mk].count++;
           if (isBreakdown) monthlyMtbf[mk].jobsWithBreakdown++;
@@ -95,13 +130,45 @@ function getMachinePassport(machineId) {
 
     timelineEvents.push({
       date: jd,
-      type: mt === 'breakdown' || mt === 'electrical' || mt === 'mechanical' || mt === 'emergency' || mt === 'corrective' ? 'Breakdown' :
-            mt === 'preventive' || mt === 'routine' ? 'Preventive Maintenance' :
-            mt === 'overhaul' ? 'Overhaul' : 'Job Card',
+      type: isBreakdown ? 'Breakdown' : isPreventive ? 'Preventive Maintenance' : mt === 'overhaul' ? 'Overhaul' : 'Job Card',
       title: (j.ComplaintDescription || j.BreakdownType || 'Job') + ' - ' + (j.JobCardNo || ''),
       status: j.CurrentStatus || j.Status || '',
-      jobCardNo: j.JobCardNo || ''
+      jobCardNo: j.JobCardNo || '',
+      subType: j.BreakdownType || j.MaintenanceType || ''
     });
+
+    if (isBreakdown) {
+      timelineEvents.push({
+        date: jd,
+        type: 'Repair Started',
+        title: 'Repair started for ' + (j.JobCardNo || ''),
+        status: '',
+        jobCardNo: j.JobCardNo || '',
+        subType: ''
+      });
+    }
+    if (cd) {
+      timelineEvents.push({
+        date: cd,
+        type: isBreakdown ? 'Repair Completed' : 'Job Completed',
+        title: (isBreakdown ? 'Repair' : 'Job') + ' completed - ' + (j.JobCardNo || ''),
+        status: 'completed',
+        jobCardNo: j.JobCardNo || '',
+        subType: ''
+      });
+    }
+
+    var sp = j.SpareParts || '';
+    if (sp) {
+      timelineEvents.push({
+        date: cd || jd,
+        type: 'Spare Parts Changed',
+        title: 'Spare parts: ' + sp + ' - ' + (j.JobCardNo || ''),
+        status: '',
+        jobCardNo: j.JobCardNo || '',
+        subType: ''
+      });
+    }
   });
 
   var sparePartsUsed = [];
@@ -117,14 +184,23 @@ function getMachinePassport(machineId) {
             break;
           }
         }
+        var spDate = j.CloseDateTime || j.OpenDateTime || j.DateCreated || '';
+        var spCost = matched ? (parseFloat(matched.UnitCost || matched.Cost) || 0) : 0;
         sparePartsUsed.push({
-          date: j.CloseDateTime || j.OpenDateTime || j.DateCreated || '',
+          date: spDate,
           jobCardNo: j.JobCardNo || '',
           partName: pn,
           quantity: 1,
-          cost: matched ? (parseFloat(matched.UnitCost || matched.Cost) || 0) : 0,
+          cost: spCost,
           technician: j.AssignedTechnician || ''
         });
+        if (spDate) {
+          var spd = new Date(spDate);
+          if (!isNaN(spd.getTime())) {
+            var spmk = spd.getFullYear() + '-' + String(spd.getMonth() + 1).padStart(2, '0');
+            monthlySparesCost[spmk] = (monthlySparesCost[spmk] || 0) + spCost;
+          }
+        }
       });
     }
   });
@@ -140,9 +216,27 @@ function getMachinePassport(machineId) {
 
   var mttr = closedBreakdownCount > 0 ? Math.round((totalRepair / closedBreakdownCount / 60) * 100) / 100 : null;
   var mtbf = breakdownJobs > 0 ? Math.round((machineRuntimeHours / breakdownJobs) * 100) / 100 : null;
-  var availability = (totalWorking + totalDowntime) > 0 ? Math.round((totalWorking / (totalWorking + totalDowntime)) * 10000) / 100 : null;
+  var availability = machineRuntimeHours > 0 ? Math.round(((machineRuntimeHours - (totalDowntime / 60)) / machineRuntimeHours) * 10000) / 100 : null;
+
+  var nextPMDue = null;
+  machinePMs.sort(function(a, b) {
+    var da = a.NextDueDate ? new Date(a.NextDueDate) : new Date(864e14);
+    var db = b.NextDueDate ? new Date(b.NextDueDate) : new Date(864e14);
+    return da - db;
+  });
+  if (machinePMs.length > 0) {
+    var nearest = machinePMs[0];
+    if (nearest.NextDueDate) nextPMDue = nearest.NextDueDate;
+  }
+
+  var totalOperatingHours = Math.round(machineRuntimeHours * 100) / 100;
+  var runningHours = Math.round((totalWorking / 60) * 100) / 100;
+  var totalDowntimeHours = Math.round((totalDowntime / 60) * 100) / 100;
 
   var sortedMonths = Object.keys(monthlyBreakdown).sort();
+  var allMonths = sortedMonths.slice();
+  Object.keys(monthlySparesCost).forEach(function(m) { if (allMonths.indexOf(m) === -1) allMonths.push(m); });
+  allMonths.sort();
   var breakdownTrendData = sortedMonths.map(function(m) { return { label: m, value: monthlyBreakdown[m] || 0 }; });
   var downtimeTrendData = sortedMonths.map(function(m) { return { label: m, value: Math.round(((monthlyDowntime[m] || 0) / 60) * 100) / 100 }; });
   var failureCatData = Object.keys(failureCategory).map(function(k) { return { label: k, value: failureCategory[k] }; });
@@ -151,11 +245,33 @@ function getMachinePassport(machineId) {
     var val = d && d.count > 0 ? Math.round((d.repair / d.count / 60) * 100) / 100 : null;
     return { label: m, value: val };
   });
-  var mtbfTrendData = sortedMonths.map(function(m) {
+  var mtbfTrendData = allMonths.map(function(m) {
     var d = monthlyMtbf[m];
-    var val = d && d.jobsWithBreakdown > 0 ? Math.round((machineRuntimeHours / d.jobsWithBreakdown / sortedMonths.length) * 100) / 100 : null;
+    var val = d && d.count > 0 && d.jobsWithBreakdown > 0 ? Math.round((machineRuntimeHours / d.jobsWithBreakdown / allMonths.length) * 100) / 100 : null;
     return { label: m, value: val };
   });
+  var sparesCostTrendData = allMonths.map(function(m) { return { label: m, value: Math.round((monthlySparesCost[m] || 0) * 100) / 100 }; });
+  var pmComplianceData = [
+    { label: 'Completed', value: closedPMCount },
+    { label: 'Open / Overdue', value: Math.max(0, machinePMs.length - closedPMCount) }
+  ];
+
+  var pmHistory = [];
+  machinePMs.forEach(function(p) {
+    pmHistory.push({
+      pmID: p.PMID || p.PMID || '',
+      title: p.Title || p.PMName || 'PM Schedule',
+      frequency: p.Frequency || '',
+      status: p.Status || '',
+      assignedTo: p.AssignedTo || p.AssignedTechnician || '',
+      lastDone: p.LastDoneDate || p.CompletionDate || '',
+      nextDue: p.NextDueDate || '',
+      machineName: p.MachineName || ''
+    });
+  });
+
+  var totalPartsCost = 0;
+  sparePartsUsed.forEach(function(sp) { totalPartsCost += (sp.cost * sp.quantity) || 0; });
 
   var timeline = [
     { date: machine.InstallDate || '', type: 'Installation', title: 'Machine Installed - ' + (machine.MachineName || ''), icon: 'install' }
@@ -246,13 +362,23 @@ function getMachinePassport(machineId) {
       };
     }),
     spareParts: sparePartsUsed,
+    totalPartsCost: Math.round(totalPartsCost * 100) / 100,
+    pmHistory: pmHistory,
     charts: {
       breakdownTrend: breakdownTrendData,
       downtimeTrend: downtimeTrendData,
       failureCategory: failureCatData,
       mttrTrend: mttrTrendData,
-      mtbfTrend: mtbfTrendData
+      mtbfTrend: mtbfTrendData,
+      sparesCostTrend: sparesCostTrendData,
+      pmCompliance: pmComplianceData
     },
+    nextPMDue: nextPMDue,
+    totalOperatingHours: totalOperatingHours,
+    runningHours: runningHours,
+    totalDowntimeHours: totalDowntimeHours,
+    closedBreakdownCount: closedBreakdownCount,
+    pmTotalScheduled: machinePMs.length,
     timeline: timeline,
     searchOptions: uniqueSearch
   };

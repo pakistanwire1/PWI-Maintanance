@@ -13,32 +13,26 @@
           </div>
           <div class="rpt-filter-group">
             <label>Division</label>
-            <select class="form-control" id="rptDivision" onchange="onRptDivisionChange()">
+            <select class="form-control" id="rptDivision" onchange="onRptDivChange()">
               <option value="">All Divisions</option>
             </select>
           </div>
           <div class="rpt-filter-group">
             <label>Section</label>
-            <select class="form-control" id="rptSection" onchange="onRptSectionChange()">
+            <select class="form-control" id="rptSection" onchange="onRptSecChange()">
               <option value="">All Sections</option>
             </select>
           </div>
           <div class="rpt-filter-group">
             <label>Department</label>
-            <select class="form-control" id="rptDepartment" onchange="onRptDepartmentChange()">
+            <select class="form-control" id="rptDepartment" onchange="onRptDeptChange()">
               <option value="">All Departments</option>
             </select>
           </div>
           <div class="rpt-filter-group">
-            <label>Machine</label>
-            <select class="form-control" id="rptMachine" onchange="onRptMachineChange()">
-              <option value="">All Machines</option>
-            </select>
-          </div>
-          <div class="rpt-filter-group">
             <label>Machine Number</label>
-            <select class="form-control" id="rptMachineNumber">
-              <option value="">All</option>
+            <select class="form-control" id="rptMachineNumber" onchange="onRptMachChange()">
+              <option value="">All Machines</option>
             </select>
           </div>
         </div>
@@ -116,44 +110,35 @@
 <script src="https://www.gstatic.com/charts/loader.js"></script>
 <script>
 var rptData = null;
-var rptFilterOptions = null;
 var rptChartsLoaded = false;
 
 function loadReportsData() {
-  loadRptFilterOptions();
-}
-
-function loadRptFilterOptions() {
+  var d = new Date(); var y = d.getFullYear();
+  document.getElementById('rptFromDate').value = y + '-01-01';
+  document.getElementById('rptToDate').value = formatDate(d);
   google.script.run
     .withSuccessHandler(function(opts) {
-      rptFilterOptions = opts;
       populateRptSelect('rptType', opts.reportTypes.map(function(r) { return { value: r.value, label: r.label }; }), 'Select Report Type');
-      populateRptSelect('rptDivision', opts.divisions.map(function(d) { return { value: d, label: d }; }), 'All Divisions');
-      populateRptSelect('rptSection', opts.sections.map(function(s) { return { value: s, label: s }; }), 'All Sections');
-      populateRptSelect('rptDepartment', opts.departments.map(function(d) { return { value: d, label: d }; }), 'All Departments');
-      populateRptSelect('rptMachine', opts.machines.map(function(m) { return { value: m, label: m }; }), 'All Machines');
-      populateRptSelect('rptMachineNumber', opts.machineNumbers.map(function(n) { return { value: n, label: n }; }), 'All');
       populateRptSelect('rptTechnician', opts.technicians.map(function(t) { return { value: t, label: t }; }), 'All Technicians');
       populateRptSelect('rptMaintType', opts.maintenanceTypes.map(function(m) { return { value: m, label: m }; }), 'All Types');
       populateRptSelect('rptPriority', opts.priorities.map(function(p) { return { value: p, label: p }; }), 'All Priorities');
       populateRptSelect('rptStatus', opts.statuses.map(function(s) { return { value: s, label: s }; }), 'All Statuses');
-      var d = new Date(); var y = d.getFullYear();
-      document.getElementById('rptFromDate').value = y + '-01-01';
-      document.getElementById('rptToDate').value = formatDate(d);
     })
     .withFailureHandler(function(err) { showToast('Failed to load filter options', 'error'); })
     .getReportFilterOptions();
+  loadMachineCascade();
 }
 
-function initRptCharts() {
-  if (rptChartsLoaded) return;
-  var script = document.createElement('script');
-  script.src = 'https://www.gstatic.com/charts/loader.js';
-  script.onload = function() {
-    google.charts.load('current', { packages: ['corechart', 'bar'] });
-    google.charts.setOnLoadCallback(function() { rptChartsLoaded = true; });
-  };
-  document.head.appendChild(script);
+function loadMachineCascade(divId, secId, deptId) {
+  google.script.run
+    .withSuccessHandler(function(c) {
+      populateRptSelect('rptDivision', c.divisions.map(function(d) { return { value: d.id, label: d.name }; }), 'All Divisions');
+      populateRptSelect('rptSection', c.sections.map(function(s) { return { value: s.id, label: s.name }; }), 'All Sections');
+      populateRptSelect('rptDepartment', c.departments.map(function(d) { return { value: d.id, label: d.name }; }), 'All Departments');
+      populateRptSelect('rptMachineNumber', c.machines.map(function(m) { return { value: m.number, label: m.label }; }), 'All Machines');
+    })
+    .withFailureHandler(function(err) { showToast('Failed to load machine filters', 'error'); })
+    .getMachineCascade(divId || '', secId || '', deptId || '');
 }
 
 function populateRptSelect(id, items, placeholder) {
@@ -168,73 +153,44 @@ function populateRptSelect(id, items, placeholder) {
   });
 }
 
-function onRptDivisionChange() {
-  var div = document.getElementById('rptDivision').value;
-  var sections = [];
-  var depts = [];
-  if (div) {
-    google.script.run
-      .withSuccessHandler(function(filtered) {
-        populateRptSelect('rptSection', filtered.sections.map(function(s) { return { value: s, label: s }; }), 'All Sections');
-        populateRptSelect('rptDepartment', filtered.departments.map(function(d) { return { value: d, label: d }; }), 'All Departments');
-      })
-      .withFailureHandler(function() {})
-      .getFilteredByDivision(div);
-  } else {
-    populateRptSelect('rptSection', (rptFilterOptions.sections || []).map(function(s) { return { value: s, label: s }; }), 'All Sections');
-    populateRptSelect('rptDepartment', (rptFilterOptions.departments || []).map(function(d) { return { value: d, label: d }; }), 'All Departments');
-  }
-  populateRptSelect('rptMachine', (rptFilterOptions.machines || []).map(function(m) { return { value: m, label: m }; }), 'All Machines');
-  populateRptSelect('rptMachineNumber', (rptFilterOptions.machineNumbers || []).map(function(n) { return { value: n, label: n }; }), 'All');
-}
-
-function onRptSectionChange() {
-  var sec = document.getElementById('rptSection').value;
-  var div = document.getElementById('rptDivision').value;
-  if (sec || div) {
-    google.script.run
-      .withSuccessHandler(function(filtered) {
-        populateRptSelect('rptDepartment', filtered.departments.map(function(d) { return { value: d, label: d }; }), 'All Departments');
-        populateRptSelect('rptMachine', filtered.machines.map(function(m) { return { value: m, label: m }; }), 'All Machines');
-        populateRptSelect('rptMachineNumber', filtered.machineNumbers.map(function(n) { return { value: n, label: n }; }), 'All');
-      })
-      .withFailureHandler(function() {})
-      .getFilteredBySection(sec, div);
-  } else {
-    onRptDivisionChange();
-  }
-}
-
-function onRptDepartmentChange() {
-  var dept = document.getElementById('rptDepartment').value;
-  if (dept) {
-    google.script.run
-      .withSuccessHandler(function(filtered) {
-        populateRptSelect('rptMachine', filtered.machines.map(function(m) { return { value: m, label: m }; }), 'All Machines');
-        populateRptSelect('rptMachineNumber', filtered.machineNumbers.map(function(n) { return { value: n, label: n }; }), 'All');
-      })
-      .withFailureHandler(function() {})
-      .getFilteredByDepartment(dept);
-  } else {
-    onRptSectionChange();
-  }
-}
-
-function onRptMachineChange() {
-  var mach = document.getElementById('rptMachine').value;
-  if (mach) {
-    google.script.run
-      .withSuccessHandler(function(filtered) {
-        populateRptSelect('rptMachineNumber', filtered.machineNumbers.map(function(n) { return { value: n, label: n }; }), 'All');
-      })
-      .withFailureHandler(function() {})
-      .getMachineNumbersForMachine(mach);
-  } else {
-    populateRptSelect('rptMachineNumber', (rptFilterOptions.machineNumbers || []).map(function(n) { return { value: n, label: n }; }), 'All');
-  }
-}
-
 function onRptTypeChange() {}
+
+function onRptDivChange() {
+  var div = document.getElementById('rptDivision').value;
+  document.getElementById('rptSection').innerHTML = '<option value="">Loading...</option>';
+  document.getElementById('rptDepartment').innerHTML = '<option value="">Loading...</option>';
+  document.getElementById('rptMachineNumber').innerHTML = '<option value="">Loading...</option>';
+  loadMachineCascade(div);
+}
+
+function onRptSecChange() {
+  var div = document.getElementById('rptDivision').value;
+  var sec = document.getElementById('rptSection').value;
+  document.getElementById('rptDepartment').innerHTML = '<option value="">Loading...</option>';
+  document.getElementById('rptMachineNumber').innerHTML = '<option value="">Loading...</option>';
+  loadMachineCascade(div, sec);
+}
+
+function onRptDeptChange() {
+  var div = document.getElementById('rptDivision').value;
+  var sec = document.getElementById('rptSection').value;
+  var dept = document.getElementById('rptDepartment').value;
+  document.getElementById('rptMachineNumber').innerHTML = '<option value="">Loading...</option>';
+  loadMachineCascade(div, sec, dept);
+}
+
+function onRptMachChange() {}
+
+function initRptCharts() {
+  if (rptChartsLoaded) return;
+  var script = document.createElement('script');
+  script.src = 'https://www.gstatic.com/charts/loader.js';
+  script.onload = function() {
+    google.charts.load('current', { packages: ['corechart', 'bar'] });
+    google.charts.setOnLoadCallback(function() { rptChartsLoaded = true; });
+  };
+  document.head.appendChild(script);
+}
 
 function getFilters() {
   return {
@@ -242,7 +198,6 @@ function getFilters() {
     division: document.getElementById('rptDivision').value,
     section: document.getElementById('rptSection').value,
     department: document.getElementById('rptDepartment').value,
-    machine: document.getElementById('rptMachine').value,
     machineNumber: document.getElementById('rptMachineNumber').value,
     technician: document.getElementById('rptTechnician').value,
     maintenanceType: document.getElementById('rptMaintType').value,
@@ -306,16 +261,45 @@ function renderRptKpi(kpi) {
   }).join('');
 }
 
+var rptSortCol = -1, rptSortDir = 1;
+
 function renderRptTable(columns, rows) {
   if (!columns || !rows) return;
   var title = document.getElementById('rptType').options[document.getElementById('rptType').selectedIndex]?.text || 'Report';
   document.getElementById('rptTableTitle').textContent = title;
   document.getElementById('rptRecordCount').textContent = rows.length + ' records';
+  rptSortCol = -1; rptSortDir = 1;
 
   var thead = document.getElementById('rptTableHead');
   var tbody = document.getElementById('rptTableBody');
-  thead.innerHTML = '<tr>' + columns.map(function(c) { return '<th>' + c.label + '</th>'; }).join('') + '</tr>';
+  thead.innerHTML = '<tr>' + columns.map(function(c, i) {
+    return '<th onclick="rptSortTable(' + i + ')" style="cursor:pointer;user-select:none">' + c.label + '<span class="rpt-sort-icon"></span></th>';
+  }).join('') + '</tr>';
 
+  rptRenderRows(columns, rows);
+}
+
+function rptSortTable(colIdx) {
+  if (rptSortCol === colIdx) rptSortDir *= -1;
+  else { rptSortCol = colIdx; rptSortDir = 1; }
+  var columns = rptData.columns;
+  var rows = rptData.rows.slice().sort(function(a, b) {
+    var va = a[columns[colIdx].key], vb = b[columns[colIdx].key];
+    if (va == null) va = '';
+    if (vb == null) vb = '';
+    if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * rptSortDir;
+    return String(va).localeCompare(String(vb)) * rptSortDir;
+  });
+  var ths = document.querySelectorAll('#rptTableHead th');
+  ths.forEach(function(th, i) {
+    var icon = th.querySelector('.rpt-sort-icon');
+    if (icon) icon.textContent = i === rptSortCol ? (rptSortDir === 1 ? ' ▲' : ' ▼') : '';
+  });
+  rptRenderRows(columns, rows);
+}
+
+function rptRenderRows(columns, rows) {
+  var tbody = document.getElementById('rptTableBody');
   tbody.innerHTML = rows.map(function(row) {
     return '<tr>' + columns.map(function(col) {
       var val = row[col.key];
@@ -445,15 +429,23 @@ function drawRptChart(container, data, type, title) {
 }
 
 function getThemeColors() {
-  var isLight = (document.documentElement.getAttribute('data-theme') || 'dark') === 'light';
+  var s = getComputedStyle(document.documentElement);
   return {
-    bg: isLight ? '#ffffff' : '#151829',
-    label: isLight ? '#52566e' : '#9498b8',
-    title: isLight ? '#1a1c2e' : '#eef0f6',
-    grid: isLight ? '#e8ecf1' : '#1e2140',
-    primary: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#6366f1',
-    secondary: getComputedStyle(document.documentElement).getPropertyValue('--orange').trim() || '#f97316',
-    palette: ['#6366f1','#22c55e','#f59e0b','#ef4444','#06b6d4','#a855f7','#f97316']
+    bg: s.getPropertyValue('--bg-card').trim() || '#151829',
+    label: s.getPropertyValue('--text-secondary').trim() || '#9498b8',
+    title: s.getPropertyValue('--text').trim() || '#eef0f6',
+    grid: s.getPropertyValue('--border').trim() || '#1e2140',
+    primary: s.getPropertyValue('--primary').trim() || '#6366f1',
+    secondary: s.getPropertyValue('--orange').trim() || '#f97316',
+    palette: [
+      s.getPropertyValue('--primary').trim() || '#6366f1',
+      s.getPropertyValue('--success').trim() || '#22c55e',
+      s.getPropertyValue('--warning').trim() || '#f59e0b',
+      s.getPropertyValue('--danger').trim() || '#ef4444',
+      s.getPropertyValue('--info').trim() || '#06b6d4',
+      s.getPropertyValue('--purple').trim() || '#a855f7',
+      s.getPropertyValue('--orange').trim() || '#f97316'
+    ]
   };
 }
 
@@ -475,7 +467,20 @@ function exportCSV() {
 }
 
 function exportExcel() {
-  exportCSV();
+  if (!rptData || !rptData.rows || rptData.rows.length === 0) { showToast('No data to export', 'warning'); return; }
+  var cols = rptData.columns;
+  var html = '<table>';
+  html += '<tr>' + cols.map(function(c) { return '<th>' + c.label + '</th>'; }).join('') + '</tr>';
+  rptData.rows.forEach(function(row) {
+    html += '<tr>' + cols.map(function(col) {
+      var val = row[col.key];
+      if (val === null || val === undefined) val = '';
+      if (col.type === 'duration' && typeof val === 'number') val = displayDuration(val);
+      return '<td>' + String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</td>';
+    }).join('') + '</tr>';
+  });
+  html += '</table>';
+  downloadBlob('<html><meta charset="utf-8"><body>' + html + '</body></html>', 'application/vnd.ms-excel', 'report.xls');
 }
 
 function exportPDF() {
@@ -538,9 +543,9 @@ function formatTime(d) {
   .sidebar, .topbar, .rpt-filter-card, .rpt-filter-actions, .card-actions, .btn { display: none !important; }
   .rpt-kpi-row .stat-card { break-inside: avoid; }
   .rpt-table-wrapper { overflow: visible; }
-  .rpt-table thead th { background: #e8ecf1 !important; color: #1a1c2e !important; }
-  .rpt-table tbody td { color: #1a1c2e !important; }
+  .rpt-table thead th { background: var(--bg-secondary) !important; color: var(--text) !important; }
+  .rpt-table tbody td { color: var(--text) !important; }
   .rpt-chart-canvas { break-inside: avoid; page-break-inside: avoid; }
-  body { background: #fff !important; }
+  body { background: var(--bg-primary) !important; }
 }
 </style>

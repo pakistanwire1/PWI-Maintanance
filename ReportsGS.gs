@@ -1,16 +1,7 @@
 function getReportFilterOptions() {
-  var divisionsData = getAllData(CONFIG.SHEET_NAMES.DIVISIONS) || [];
-  var depts = getAllData(CONFIG.SHEET_NAMES.DEPARTMENTS) || [];
-  var sections = getAllData(CONFIG.SHEET_NAMES.SECTIONS) || [];
-  var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
   var techs = getAllData(CONFIG.SHEET_NAMES.TECHNICIANS) || [];
   var jcs = getAllData(CONFIG.SHEET_NAMES.JOBCARDS) || [];
 
-  var divisions = divisionsData.map(function(d) { return d.DivisionName || ''; }).filter(function(d) { return d; }).sort();
-  var sectionList = sections.map(function(s) { return s.Section || ''; }).filter(function(s) { return s; }).sort();
-  var deptList = depts.map(function(d) { return d.Department || ''; }).filter(function(d) { return d; }).sort();
-  var machineList = machines.map(function(m) { return m.MachineName || ''; }).filter(function(m) { return m; }).sort();
-  var machineNumberList = machines.map(function(m) { return m.MachineNumber || m.MachineCode || ''; }).filter(function(n) { return n; }).sort();
   var techList = techs.map(function(t) { return t.TechnicianName || t.Name || ''; }).filter(function(t) { return t; }).sort();
   var priorityList = [];
   var seenPri = {};
@@ -27,11 +18,6 @@ function getReportFilterOptions() {
   });
 
   return {
-    divisions: divisions,
-    sections: sectionList,
-    departments: deptList,
-    machines: machineList,
-    machineNumbers: machineNumberList,
     technicians: techList,
     maintenanceTypes: ['All','Breakdown','Preventive','Electrical','Mechanical','Corrective','Emergency','Routine'],
     priorities: priorityList,
@@ -418,64 +404,4 @@ function getMachineNumberForJobCard(jc, machineMap) {
   return m.MachineNumber || m.MachineCode || '';
 }
 
-function getFilteredByDivision(division) {
-  var divisionsData = getAllData(CONFIG.SHEET_NAMES.DIVISIONS) || [];
-  var depts = getAllData(CONFIG.SHEET_NAMES.DEPARTMENTS) || [];
-  var sections = getAllData(CONFIG.SHEET_NAMES.SECTIONS) || [];
-  var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
-  var divRecord = divisionsData.find(function(d) { return d.DivisionName === division; });
-  var divId = divRecord ? divRecord.DivisionID : '';
-  var filteredDepts = divId ? depts.filter(function(d) { return d.DivisionID === divId; }) : depts.filter(function(d) { return d.Division === division; });
-  var deptNames = {};
-  filteredDepts.forEach(function(d) { deptNames[d.Department] = true; });
-  var sections = {};
-  filteredDepts.forEach(function(d) { if (d.Section) sections[d.Section] = true; });
-  var filteredMachines = machines.filter(function(m) { return deptNames[m.Department]; });
-  return {
-    sections: Object.keys(sections).sort(),
-    departments: filteredDepts.map(function(d) { return d.Department || ''; }).filter(function(n) { return n; }).sort(),
-    machines: filteredMachines.map(function(m) { return m.MachineName || ''; }).filter(function(n) { return n; }).sort(),
-    machineNumbers: filteredMachines.map(function(m) { return m.MachineNumber || m.MachineCode || ''; }).filter(function(n) { return n; }).sort()
-  };
-}
 
-function getFilteredBySection(section, division) {
-  var divisionsData = getAllData(CONFIG.SHEET_NAMES.DIVISIONS) || [];
-  var depts = getAllData(CONFIG.SHEET_NAMES.DEPARTMENTS) || [];
-  var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
-  var divRecord = division ? divisionsData.find(function(d) { return d.DivisionName === division; }) : null;
-  var divId = divRecord ? divRecord.DivisionID : '';
-  var filteredDepts = depts.filter(function(d) {
-    if (division) {
-      if (divId) { if (d.DivisionID !== divId) return false; }
-      else { if (d.Division !== division) return false; }
-    }
-    if (section && d.Section !== section) return false;
-    return true;
-  });
-  var deptNames = {};
-  filteredDepts.forEach(function(d) { deptNames[d.Department] = true; });
-  var filteredMachines = machines.filter(function(m) { return deptNames[m.Department]; });
-  return {
-    departments: filteredDepts.map(function(d) { return d.Department || ''; }).filter(function(n) { return n; }).sort(),
-    machines: filteredMachines.map(function(m) { return m.MachineName || ''; }).filter(function(n) { return n; }).sort(),
-    machineNumbers: filteredMachines.map(function(m) { return m.MachineNumber || m.MachineCode || ''; }).filter(function(n) { return n; }).sort()
-  };
-}
-
-function getFilteredByDepartment(department) {
-  var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
-  var filtered = machines.filter(function(m) { return m.Department === department; });
-  return {
-    machines: filtered.map(function(m) { return m.MachineName || ''; }).filter(function(n) { return n; }).sort(),
-    machineNumbers: filtered.map(function(m) { return m.MachineNumber || m.MachineCode || ''; }).filter(function(n) { return n; }).sort()
-  };
-}
-
-function getMachineNumbersForMachine(machine) {
-  var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
-  var filtered = machines.filter(function(m) { return m.MachineName === machine; });
-  return {
-    machineNumbers: filtered.map(function(m) { return m.MachineNumber || m.MachineCode || ''; }).filter(function(n) { return n; }).sort()
-  };
-}

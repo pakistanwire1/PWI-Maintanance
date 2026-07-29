@@ -1,4 +1,4 @@
-<div id="checklistsPage" class="page">
+﻿<div id="checklistsPage" class="page">
   <div class="card">
     <div class="card-header">
       <div class="card-title">Checklist Templates</div>
@@ -125,14 +125,10 @@ function loadChecklistsData() {
   showLoading(true);
   google.script.run
     .withSuccessHandler(function(data) {
-      console.log('=== PIPELINE: getChecklistTemplates() returned', data ? data.length : 'null/undefined', 'records');
       if (data && data.length > 0) {
-        console.log('=== PIPELINE: First record =', JSON.stringify(data[0]));
       } else if (data && data.length === 0) {
-        console.warn('=== PIPELINE: Backend returned EMPTY ARRAY for ChecklistTemplates');
-      } else {
-        console.error('=== PIPELINE: Backend returned null/undefined for ChecklistTemplates');
-      }
+        } else {
+        }
       templateData = data || [];
       showLoading(false);
       renderTemplatesTable();
@@ -145,14 +141,10 @@ function loadChecklistsData() {
 function loadChecklistsSub() {
   google.script.run
     .withSuccessHandler(function(data) { 
-      console.log('=== PIPELINE: getChecklists() returned', data ? data.length : 'null/undefined', 'records');
       if (data && data.length > 0) {
-        console.log('=== PIPELINE: First record =', JSON.stringify(data[0]));
       } else if (data && data.length === 0) {
-        console.warn('=== PIPELINE: Backend returned EMPTY ARRAY for Checklists');
-      } else {
-        console.error('=== PIPELINE: Backend returned null/undefined for Checklists');
-      }
+        } else {
+        }
       checklistData = data || []; renderChecklistsTable(); 
     })
     .withFailureHandler(function(err) { showToast('Failed to load checklists', 'error'); })
@@ -329,3 +321,4 @@ function deleteChecklist(id) {
   });
 }
 </script>
+

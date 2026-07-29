@@ -1,4 +1,4 @@
-<style>
+﻿<style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
@@ -1045,6 +1045,18 @@
     overflow-x: auto;
     border-radius: var(--radius);
     border: 1px solid var(--border);
+    -webkit-overflow-scrolling: touch;
+  }
+  .table-container .table-scroll-hint {
+    display: none;
+    padding: 6px 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  @media (max-width: 768px) {
+    .table-container .table-scroll-hint { display: block; }
   }
 
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -1061,6 +1073,7 @@
     letter-spacing: 0.5px;
     white-space: nowrap;
     position: sticky;
+    position: -webkit-sticky;
     top: 0;
     z-index: 2;
   }
@@ -1117,6 +1130,13 @@
   .pagination-btns button:hover:not(:disabled) { background: var(--bg-input); color: var(--text); border-color: var(--primary); }
   .pagination-btns button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
   .pagination-btns button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+
+  /* ===== PM COMPLIANCE ===== */
+  .pm-compliance-rate { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; }
+  .pm-compliance-percentage { font-size: 72px; font-weight: 800; line-height: 1; }
+  .pm-compliance-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 8px; }
+  .pm-breakdown-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 
   /* ===== MODAL ===== */
   .modal-overlay {
@@ -1278,7 +1298,7 @@
   .filter-bar {
     display: flex;
     gap: 10px;
-    align-items: flex-end;
+    align-items: center;
     flex-wrap: wrap;
     margin-bottom: 18px;
   }
@@ -1485,6 +1505,17 @@
     .workflow-stepper .step .step-label { display: none; }
     .workflow-stepper .step .step-title { font-size: 11px; }
     .workflow-stepper .step-connector { max-width: 30px; }
+  }
+
+  /* ===== RESPONSIVE TABLE: card layout on mobile ===== */
+  @media (max-width: 768px) {
+    table.responsive-card thead { display: none; }
+    table.responsive-card tbody tr { display: block; padding: 12px; margin-bottom: 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-card); }
+    table.responsive-card tbody td { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border: none; border-bottom: 1px solid var(--border); text-align: right; }
+    table.responsive-card tbody td:last-child { border-bottom: none; }
+    table.responsive-card tbody td::before { content: attr(data-label); font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; text-align: left; }
+    table.responsive-card tbody tr:hover { background: var(--bg-card-hover); }
+    .table-container.responsive-card { border: none; background: transparent; }
   }
 
   /* ===== WORKFLOW TABS ===== */
@@ -1854,6 +1885,8 @@
     .topbar-datetime { display: none; }
     .topbar-brand { display: none; }
     .notification-panel { width: 100%; right: -100%; }
+    table:not(.responsive-card) { min-width: 600px; }
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   }
 
   /* ===== IMAGE UPLOAD AREA ===== */
@@ -2168,4 +2201,7 @@
     .filter-btn { padding: 5px 8px; font-size: 10px; }
   }
 </style>
+
+
+
 
