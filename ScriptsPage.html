@@ -353,7 +353,7 @@ function navigateTo(page) {
     qrprint: 'Print QR Labels',
     qrhistory: 'QR Scan History',
     email: 'Email Notification Settings',
-    reports: 'Reports', backuprestore: 'Backup & Restore', settings: 'Settings', openjobcard: 'Open Job Card',
+    reports: 'Reports', machinepassport: 'Machine Digital Passport', backuprestore: 'Backup & Restore', settings: 'Settings', openjobcard: 'Open Job Card',
     users: 'Users',
     startjobcard: 'Start Job Card', closejobcard: 'Close Job Card',
     pendingjobcard: 'Pending Review',
@@ -388,7 +388,8 @@ function navigateTo(page) {
     users: 'loadUsersData',
     whatsapp: 'loadWhatsAppData',
     approvejobcard: 'loadApproveJobCardData',
-    backuprestore: 'loadBackupRestoreData'
+    backuprestore: 'loadBackupRestoreData',
+    machinepassport: 'loadMachinePassportPage'
   };
   var fnName = window.__loadFnMap[page] || 'load' + capitalize(page) + 'Data';
   console.log('navigateTo() looking for function: ' + fnName + ' exists:', typeof window[fnName] === 'function');
@@ -925,10 +926,16 @@ function processQRScanResult(decodedText) {
 }
 
 function showQRDetail(result) {
+  if (result.module === 'Machine') {
+    sessionStorage.setItem('passportMachineId', result.id || result.code);
+    navigateTo('machinepassport');
+    return;
+  }
+
   var existing = document.getElementById('qrDetailOverlay');
   if (existing) existing.remove();
 
-  var moduleColors = { 'Machine': '#6366f1', 'Asset': '#06b6d4', 'Job Card': '#f59e0b', 'Spare Part': '#22c55e' };
+  var moduleColors = { 'Asset': '#06b6d4', 'Job Card': '#f59e0b', 'Spare Part': '#22c55e' };
   var moduleIcons = {
     'Machine': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
     'Asset': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
@@ -1149,21 +1156,19 @@ function showQRDetail(result) {
   }
 
   var actions = '';
-  if (result.module === 'Machine') {
-    actions += '<button class="btn btn-primary" onclick="navigateTo(\'machines\');closeQRDetail()">View Machine</button>';
-    actions += '<button class="btn btn-success" onclick="createJobCardFromQR(\'' + escapeHtml(result.id) + '\',\'' + escapeHtml(result.name) + '\')">Create Job Card</button>';
-  } else if (result.module === 'Asset') {
+  if (result.module === 'Asset') {
     actions += '<button class="btn btn-primary" onclick="navigateTo(\'assets\');closeQRDetail()">View Asset</button>';
   } else if (result.module === 'Job Card') {
     actions += '<button class="btn btn-primary" onclick="navigateTo(\'jobcards\');closeQRDetail()">View Job Cards</button>';
   } else if (result.module === 'Spare Part') {
     actions += '<button class="btn btn-primary" onclick="navigateTo(\'spareparts\');closeQRDetail()">View Spare Parts</button>';
   }
-  actions += '<button class="btn btn-secondary" onclick="closeQRDetail()">Close</button>';
+  actions += '<button class="btn btn-secondary" id="qrDetailCloseBtn" onclick="closeQRDetail()">Close</button>';
 
   var overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
+  overlay.className = 'modal-overlay show';
   overlay.id = 'qrDetailOverlay';
+  overlay.style.cssText = 'display:flex;align-items:center;justify-content:center';
   overlay.innerHTML =
     '<div class="qr-detail-card" onclick="event.stopPropagation()" style="max-width:560px;width:95vw;max-height:85vh;overflow-y:auto">' +
       '<div class="qr-detail-header">' +
@@ -1179,11 +1184,13 @@ function showQRDetail(result) {
       purchaseHtml +
       '<div class="qr-detail-actions" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">' + actions + '</div>' +
     '</div>';
-  overlay.style.display = 'flex';
-  overlay.style.alignItems = 'center';
-  overlay.style.justifyContent = 'center';
-  overlay.onclick = function() { closeQRDetail(); };
+  overlay.onclick = function(e) { if (e.target === overlay) closeQRDetail(); };
   document.body.appendChild(overlay);
+  document.addEventListener('keydown', __qrEscHandler);
+}
+
+function __qrEscHandler(e) {
+  if (e.key === 'Escape') closeQRDetail();
 }
 
 function buildDetailRow(label, value) {
@@ -1193,7 +1200,8 @@ function buildDetailRow(label, value) {
 
 function closeQRDetail() {
   var overlay = document.getElementById('qrDetailOverlay');
-  if (overlay) overlay.remove();
+  if (overlay) { overlay.remove(); }
+  document.removeEventListener('keydown', __qrEscHandler);
 }
 
 function createJobCardFromQR(machineId, machineName) {
@@ -1380,12 +1388,20 @@ function checkQRUrlParameter() {
       processQRScanResult(savedQrUrl);
       return;
     }
-    // Check current URL for ?qr= parameter
+    // Check current URL for ?machine= parameter (direct external scan of Machine QR)
     var params = new URLSearchParams(window.location.search);
+    var machineParam = params.get('machine');
+    if (machineParam) {
+      sessionStorage.setItem('passportMachineId', machineParam);
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      navigateTo('machinepassport');
+      return;
+    }
+    // Check current URL for ?qr= parameter (legacy format)
     var qrParam = params.get('qr');
     if (qrParam) {
-      // Pass the FULL URL to processQRScanResult so scanQRCode can match
-      // against the stored QRCode value in the sheet
       var fullUrl = window.location.origin + window.location.pathname + window.location.search;
       processQRScanResult(fullUrl);
       if (window.history && window.history.replaceState) {

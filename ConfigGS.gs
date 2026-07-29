@@ -25,6 +25,7 @@ var CONFIG = {
     EMAIL_LOGS: 'EmailLogs',
     MAINTENANCE_TEAMS: 'MaintenanceTeams',
     BREAKDOWN_TYPES: 'BreakdownTypes',
+    DIVISIONS: 'Divisions',
     QR_HISTORY: 'QRHistory'
   },
 
@@ -115,6 +116,7 @@ var CONFIG = {
     ASSET: 'AST',
     MACHINE: 'MCH',
     DEPARTMENT: 'DEPT',
+    DIVISION: 'DIV',
     JOBCARD: 'JC',
     CHECKLIST_TEMPLATE: 'CT',
     CHECKLIST: 'CL',
@@ -126,6 +128,15 @@ var CONFIG = {
     MAINTEAM: 'MT',
     BRKDOWN: 'BT'
   },
+
+  DIVISION_FIELDS: [
+    'DivisionID', 'DivisionCode', 'DivisionName', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
+  ],
+
+  DEFAULT_DIVISIONS: [
+    { DivisionCode: 'SPD', DivisionName: 'Spoke Division' },
+    { DivisionCode: 'CCD', DivisionName: 'Control Cable Division' }
+  ],
 
   PAGE_SIZE: 10,
 
@@ -209,7 +220,7 @@ var CONFIG = {
   ],
 
   SECTION_FIELDS: [
-    'SectionID', 'Section', 'Description', 'Status', 'CreatedBy', 'CreatedAt',
+    'SectionID', 'DivisionID', 'Section', 'Description', 'Status', 'CreatedBy', 'CreatedAt',
     'SundayOff', 'HoursPerDay', 'SectionCode', 'DepartmentCount', 'UpdatedBy', 'UpdatedAt'
   ],
 
@@ -225,17 +236,19 @@ var CONFIG = {
   ],
 
   DEPARTMENT_FIELDS: [
-    'DepartmentID', 'Department', 'DepartmentCode', 'SectionID', 'Section', 'Division',
+    'DepartmentID', 'Department', 'DepartmentCode', 'DivisionID', 'SectionID', 'Section', 'Division',
     'DepartmentHead', 'Description', 'SundayOff', 'HoursPerDay', 'Status',
     'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt'
   ],
 
   MACHINE_FIELDS: [
-    'MachineID', 'MachineCode', 'MachineName', 'MachineNumber', 'DeptID', 'Department',
+    'MachineID', 'MachineCode', 'MachineName', 'MachineNumber', 'DivisionID', 'DeptID', 'Department',
     'SectionID', 'Section', 'Location', 'MachineType', 'Manufacturer', 'Model', 'SerialNo',
     'Capacity', 'PowerRating', 'InstallDate', 'WarrantyExpiry', 'Criticality', 'Status',
     'QRCode', 'Barcode', 'QRGeneratedDate', 'CreatedBy', 'CreatedAt', 'UpdatedBy', 'UpdatedAt',
-    'OperatingHoursPerDay', 'OperatingDaysPerWeek'
+    'OperatingHoursPerDay', 'OperatingDaysPerWeek',
+    'MachinePhoto', 'MachineManual', 'ElectricalDrawing', 'MechanicalDrawing',
+    'SOP', 'SafetyInstructions', 'WarrantyDocuments'
   ],
 
   TECHNICIAN_FIELDS: [

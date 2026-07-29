@@ -1009,7 +1009,7 @@
       wsLoaded = true;
       if (wsTimer) { clearTimeout(wsTimer); wsTimer = null; }
       // Preserve QR scan URL parameters across page load
-      if (window.location.search && window.location.search.indexOf('qr=') !== -1) {
+      if (window.location.search) {
         localStorage.setItem('cmms_qr_url', window.location.href);
       }
       var btn = document.getElementById('wsBtn');

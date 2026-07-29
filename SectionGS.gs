@@ -1,4 +1,4 @@
-var SECTION_COLS = ['SectionID','Section','Description','Status','CreatedBy','CreatedAt','SundayOff','HoursPerDay','SectionCode','DepartmentCount','UpdatedBy','UpdatedAt'];
+var SECTION_COLS = ['SectionID','DivisionID','Section','Description','Status','CreatedBy','CreatedAt','SundayOff','HoursPerDay','SectionCode','DepartmentCount','UpdatedBy','UpdatedAt'];
 
 function initSectionSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -29,6 +29,13 @@ function initSectionSheet() {
       var startCol = existingHeaders.length + 1;
       sheet.getRange(1, startCol, 1, missingHeaders.length).setValues([missingHeaders]);
       SpreadsheetApp.flush();
+      for (var mci = 0; mci < missingHeaders.length; mci++) {
+        var targetCol = startCol + mci;
+        var sourceCol = targetCol > 1 ? targetCol - 1 : targetCol + 1;
+        if (sourceCol >= 1 && sourceCol !== targetCol) {
+          copyColumnFormat(sheet, sourceCol, targetCol);
+        }
+      }
       Logger.log('Missing headers added: ' + missingHeaders.join(', '));
     } else {
       Logger.log('Headers already exist \u2014 none missing.');
@@ -54,14 +61,14 @@ function initSectionSheet() {
     var pad = function(n) { return ('0' + n).slice(-2); };
     var ts = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
     var sampleData = [
-      ['SEC001', 'Admin', 'Administration', 'Active', 'Admin', ts, 'Sunday', '8', 'ADM', '1', 'Admin', ts],
-      ['SEC002', 'Spoke', 'Spoke Production', 'Active', 'Admin', ts, 'Sunday', '8', 'SPK', '1', 'Admin', ts],
-      ['SEC003', 'Auto Plating Line', 'Auto Plating', 'Active', 'Admin', ts, 'Sunday', '8', 'APL', '1', 'Admin', ts],
-      ['SEC004', 'Nipple', 'Nipple Production', 'Active', 'Admin', ts, 'Sunday', '8', 'NPL', '1', 'Admin', ts],
-      ['SEC005', 'Spoke Packing', 'Packing', 'Active', 'Admin', ts, 'Sunday', '8', 'SPP', '1', 'Admin', ts],
-      ['SEC006', 'Spiral', 'Spiral Line', 'Active', 'Admin', ts, 'Sunday', '8', 'SPR', '1', 'Admin', ts],
-      ['SEC007', 'PVC', 'PVC Line', 'Active', 'Admin', ts, 'Sunday', '8', 'PVC', '1', 'Admin', ts],
-      ['SEC008', 'Maintenance', 'Maintenance Department', 'Active', 'Admin', ts, 'Sunday', '8', 'MNT', '1', 'Admin', ts]
+      ['SEC001', 'DIV001', 'Admin', 'Administration', 'Active', 'Admin', ts, 'Sunday', '8', 'ADM', '1', 'Admin', ts],
+      ['SEC002', 'DIV001', 'Spoke', 'Spoke Production', 'Active', 'Admin', ts, 'Sunday', '8', 'SPK', '1', 'Admin', ts],
+      ['SEC003', 'DIV001', 'Auto Plating Line', 'Auto Plating', 'Active', 'Admin', ts, 'Sunday', '8', 'APL', '1', 'Admin', ts],
+      ['SEC004', 'DIV001', 'Nipple', 'Nipple Production', 'Active', 'Admin', ts, 'Sunday', '8', 'NPL', '1', 'Admin', ts],
+      ['SEC005', 'DIV001', 'Spoke Packing', 'Packing', 'Active', 'Admin', ts, 'Sunday', '8', 'SPP', '1', 'Admin', ts],
+      ['SEC006', 'DIV002', 'Spiral', 'Spiral Line', 'Active', 'Admin', ts, 'Sunday', '8', 'SPR', '1', 'Admin', ts],
+      ['SEC007', 'DIV002', 'PVC', 'PVC Line', 'Active', 'Admin', ts, 'Sunday', '8', 'PVC', '1', 'Admin', ts],
+      ['SEC008', 'DIV001', 'Maintenance', 'Maintenance Department', 'Active', 'Admin', ts, 'Sunday', '8', 'MNT', '1', 'Admin', ts]
     ];
     sheet.getRange(2, 1, sampleData.length, SECTION_COLS.length).setValues(sampleData);
     SpreadsheetApp.flush();
@@ -120,6 +127,7 @@ function normalizeSection(s) {
   var out = {};
   SECTION_COLS.forEach(function(c) { out[c] = s[c] || ''; });
   out.SectionID = out.SectionID || '';
+  out.DivisionID = out.DivisionID || '';
   out.Section = out.Section || '';
   out.Description = out.Description || '';
   out.Status = out.Status || CONFIG.STATUS.ACTIVE;

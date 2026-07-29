@@ -362,3 +362,122 @@ function appendRows(sheetName, rows) {
   invalidateCache(sheetName);
   return getAllData(sheetName);
 }
+
+function copyColumnFormat(sheet, sourceColIndex, targetColIndex) {
+  if (!sheet || sourceColIndex < 1 || targetColIndex < 1 || sourceColIndex === targetColIndex) return;
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 1) return;
+  var sourceRange = sheet.getRange(1, sourceColIndex, lastRow, 1);
+  var targetRange = sheet.getRange(1, targetColIndex, lastRow, 1);
+  sourceRange.copyTo(targetRange, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+  sourceRange.copyTo(targetRange, SpreadsheetApp.CopyPasteType.PASTE_VALIDATION, false);
+  try {
+    var srcDataValidation = sourceRange.getCell(1, 1).getDataValidation();
+    if (srcDataValidation) targetRange.getCell(1, 1).setDataValidation(srcDataValidation);
+  } catch(e) {}
+  try {
+    var srcNumFormat = sourceRange.getCell(1, 1).getNumberFormat();
+    if (srcNumFormat) targetRange.setNumberFormat(srcNumFormat);
+  } catch(e) {}
+  try {
+    var srcCondFormats = sheet.getConditionalFormatRules();
+    if (srcCondFormats && srcCondFormats.length > 0) {
+      var newRules = [];
+      for (var ri = 0; ri < srcCondFormats.length; ri++) {
+        var rule = srcCondFormats[ri];
+        var ranges = rule.getRanges();
+        var newRanges = [];
+        for (var rri = 0; rri < ranges.length; rri++) {
+          var rng = ranges[rri];
+          if (rng.getColumn() === sourceColIndex) {
+            newRanges.push(sheet.getRange(rng.getRow(), targetColIndex, rng.getNumRows(), 1));
+            break;
+          }
+        }
+        if (newRanges.length > 0) {
+          try {
+            var copiedRule = rule.copy().setRanges(newRanges).build();
+            newRules.push(copiedRule);
+          } catch(e) {}
+        }
+      }
+      if (newRules.length > 0) {
+        sheet.setConditionalFormatRules(sheet.getConditionalFormatRules().concat(newRules));
+      }
+    }
+  } catch(e) {}
+  for (var r = 1; r <= lastRow; r++) {
+    try {
+      sheet.setRowHeight(r, sheet.getRowHeight(r));
+    } catch(e) {}
+  }
+  SpreadsheetApp.flush();
+}
+
+function applySheetFormatting(targetSheet, sourceSheetName) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sourceSheet = ss.getSheetByName(sourceSheetName);
+  if (!sourceSheet || !targetSheet) return;
+  var sourceLastRow = sourceSheet.getLastRow();
+  var sourceLastCol = sourceSheet.getLastColumn();
+  var targetLastRow = targetSheet.getLastRow();
+  var targetLastCol = targetSheet.getLastColumn();
+  if (targetLastCol < 1) return;
+  var copyCols = Math.min(sourceLastCol, targetLastCol);
+  if (sourceLastRow > 0 && copyCols > 0) {
+    var srcHeader = sourceSheet.getRange(1, 1, 1, copyCols);
+    var tgtHeader = targetSheet.getRange(1, 1, 1, copyCols);
+    srcHeader.copyTo(tgtHeader, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+    if (sourceLastRow >= 2 && targetLastRow >= 2) {
+      var copyDataRows = Math.min(sourceLastRow - 1, targetLastRow - 1, 2);
+      if (copyDataRows > 0) {
+        var srcData = sourceSheet.getRange(2, 1, copyDataRows, copyCols);
+        var tgtData = targetSheet.getRange(2, 1, Math.min(copyDataRows * 10, targetLastRow - 1), copyCols);
+        srcData.copyTo(tgtData, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+      }
+    }
+  }
+  targetSheet.setFrozenRows(sourceSheet.getFrozenRows());
+  targetSheet.setFrozenColumns(0);
+  if (targetLastCol > 0) {
+    for (var c = 1; c <= targetLastCol; c++) {
+      var srcCol = Math.min(c, sourceLastCol);
+      targetSheet.setColumnWidth(c, sourceSheet.getColumnWidth(srcCol));
+    }
+  }
+  if (targetLastRow > 0) {
+    for (var r = 1; r <= targetLastRow; r++) {
+      var srcRow = Math.min(r, sourceLastRow);
+      targetSheet.setRowHeight(r, sourceSheet.getRowHeight(srcRow));
+    }
+  }
+  try {
+    var srcFilter = sourceSheet.getFilter();
+    if (!targetSheet.getFilter() && srcFilter) {
+      targetSheet.getRange(1, 1, targetLastRow, targetLastCol).createFilter();
+    }
+  } catch(e) {}
+  try {
+    var srcCondFormats = sourceSheet.getConditionalFormatRules();
+    if (srcCondFormats && srcCondFormats.length > 0) {
+      targetSheet.setConditionalFormatRules(srcCondFormats);
+    }
+  } catch(e) {}
+  try {
+    var srcProtections = sourceSheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+    for (var p = 0; p < srcProtections.length; p++) {
+      try {
+        var srcRange = srcProtections[p].getRange();
+        var tgtProt = targetSheet.getRange(srcRange.getRow(), 1, srcRange.getNumRows(), targetLastCol).protect();
+        tgtProt.setDescription(srcProtections[p].getDescription());
+        var editors = srcProtections[p].getEditors();
+        if (editors && editors.length > 0) {
+          tgtProt.addEditors(editors);
+          tgtProt.removeEditors(tgtProt.getEditors());
+          tgtProt.addEditors(editors);
+        }
+      } catch(e) {}
+    }
+  } catch(e) {}
+  SpreadsheetApp.flush();
+}

@@ -1,18 +1,12 @@
 function getReportFilterOptions() {
+  var divisionsData = getAllData(CONFIG.SHEET_NAMES.DIVISIONS) || [];
   var depts = getAllData(CONFIG.SHEET_NAMES.DEPARTMENTS) || [];
   var sections = getAllData(CONFIG.SHEET_NAMES.SECTIONS) || [];
   var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
   var techs = getAllData(CONFIG.SHEET_NAMES.TECHNICIANS) || [];
   var jcs = getAllData(CONFIG.SHEET_NAMES.JOBCARDS) || [];
 
-  var divisions = [];
-  var seenDiv = {};
-  depts.forEach(function(d) {
-    var dv = d.Division || '';
-    if (dv && !seenDiv[dv]) { seenDiv[dv] = true; divisions.push(dv); }
-  });
-  divisions.sort();
-
+  var divisions = divisionsData.map(function(d) { return d.DivisionName || ''; }).filter(function(d) { return d; }).sort();
   var sectionList = sections.map(function(s) { return s.Section || ''; }).filter(function(s) { return s; }).sort();
   var deptList = depts.map(function(d) { return d.Department || ''; }).filter(function(d) { return d; }).sort();
   var machineList = machines.map(function(m) { return m.MachineName || ''; }).filter(function(m) { return m; }).sort();
@@ -425,9 +419,13 @@ function getMachineNumberForJobCard(jc, machineMap) {
 }
 
 function getFilteredByDivision(division) {
+  var divisionsData = getAllData(CONFIG.SHEET_NAMES.DIVISIONS) || [];
   var depts = getAllData(CONFIG.SHEET_NAMES.DEPARTMENTS) || [];
+  var sections = getAllData(CONFIG.SHEET_NAMES.SECTIONS) || [];
   var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
-  var filteredDepts = depts.filter(function(d) { return d.Division === division; });
+  var divRecord = divisionsData.find(function(d) { return d.DivisionName === division; });
+  var divId = divRecord ? divRecord.DivisionID : '';
+  var filteredDepts = divId ? depts.filter(function(d) { return d.DivisionID === divId; }) : depts.filter(function(d) { return d.Division === division; });
   var deptNames = {};
   filteredDepts.forEach(function(d) { deptNames[d.Department] = true; });
   var sections = {};
@@ -442,10 +440,16 @@ function getFilteredByDivision(division) {
 }
 
 function getFilteredBySection(section, division) {
+  var divisionsData = getAllData(CONFIG.SHEET_NAMES.DIVISIONS) || [];
   var depts = getAllData(CONFIG.SHEET_NAMES.DEPARTMENTS) || [];
   var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
+  var divRecord = division ? divisionsData.find(function(d) { return d.DivisionName === division; }) : null;
+  var divId = divRecord ? divRecord.DivisionID : '';
   var filteredDepts = depts.filter(function(d) {
-    if (division && d.Division !== division) return false;
+    if (division) {
+      if (divId) { if (d.DivisionID !== divId) return false; }
+      else { if (d.Division !== division) return false; }
+    }
     if (section && d.Section !== section) return false;
     return true;
   });

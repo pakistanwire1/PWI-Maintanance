@@ -183,6 +183,14 @@ var API_ROUTES = {
   'removeSection':         { auth: true,  handler: function(d) { return removeSection(d.id); } },
   'searchSections':        { auth: true,  handler: function(d) { return searchSections(d.query); } },
 
+  /* ---- Divisions ---- */
+  'getDivisionList':       { auth: true,  handler: function(d) { return getDivisionList(); } },
+  'getDivision':           { auth: true,  handler: function(d) { return getDivision(d.id); } },
+  'createDivision':        { auth: true,  handler: function(d) { return createDivision(d); } },
+  'modifyDivision':        { auth: true,  handler: function(d) { return modifyDivision(d.id, d); } },
+  'removeDivision':        { auth: true,  handler: function(d) { return removeDivision(d.id); } },
+  'searchDivisions':       { auth: true,  handler: function(d) { return searchDivisions(d.query); } },
+
   /* ---- Technicians ---- */
   'getTechnicians':        { auth: true,  handler: function(d) { return getTechnicians(); } },
   'getTechnician':         { auth: true,  handler: function(d) { return getTechnician(d.id); } },

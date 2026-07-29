@@ -20,7 +20,9 @@ function generateQRCodeForRecord(module, recordId) {
   var record = getRecordById(cfg.sheet, cfg.idField, recordId);
   if (!record) return null;
   var appUrl = ScriptApp.getService().getUrl();
-  var qrContent = appUrl + '?qr=' + module.toLowerCase() + '&id=' + encodeURIComponent(recordId);
+  var qrContent = module === 'Machine'
+    ? appUrl + '?machine=' + encodeURIComponent(recordId)
+    : appUrl + '?qr=' + module.toLowerCase() + '&id=' + encodeURIComponent(recordId);
   var now = getCurrentTimestamp();
   var updateData = { QRCode: qrContent, QRGeneratedDate: now, UpdatedBy: Session.getActiveUser().getEmail(), UpdatedAt: now };
   updateRow(cfg.sheet, cfg.idField, recordId, updateData);
@@ -48,7 +50,9 @@ function generateQRBarcodeForNewRecord(module, recordId, record) {
     if (!cfg) return;
     var code = record[cfg.codeField] || recordId;
   var appUrl = ScriptApp.getService().getUrl();
-  var qrContent = appUrl + '?qr=' + module.toLowerCase() + '&id=' + encodeURIComponent(recordId);
+  var qrContent = module === 'Machine'
+    ? appUrl + '?machine=' + encodeURIComponent(recordId)
+    : appUrl + '?qr=' + module.toLowerCase() + '&id=' + encodeURIComponent(recordId);
     var barcode = String(code).replace(/[^A-Za-z0-9]/g, '') + '-' + String(Math.floor(Math.random() * 9000) + 1000);
     var now = getCurrentTimestamp();
     var updateData = { QRCode: qrContent, Barcode: barcode, QRGeneratedDate: now, UpdatedBy: Session.getActiveUser().getEmail(), UpdatedAt: now };
@@ -235,6 +239,33 @@ function scanQRCode(qrContent) {
       }
     }
   }
+
+  /* ---- machine=ID format fallback (external scan) ---- */
+  if (qrContent.indexOf('?machine=') !== -1) {
+    var parts = qrContent.split('?machine=');
+    if (parts.length > 1) {
+      var machineId = decodeURIComponent(parts[1].split('&')[0].split('#')[0]);
+      var mCfg = getQRModuleSheet('Machine');
+      if (mCfg) {
+        var mRec = getRecordById(mCfg.sheet, mCfg.idField, machineId);
+        if (mRec) {
+          return {
+            module: 'Machine',
+            recordId: mRec[mCfg.idField] || '',
+            name: mRec[mCfg.nameField] || '',
+            code: mRec[mCfg.codeField] || '',
+            department: mRec.Department || '',
+            qrContent: qrContent,
+            barcode: mRec.Barcode || '',
+            status: mRec.Status || '',
+            section: mRec.Section || '',
+            location: mRec.Location || ''
+          };
+        }
+      }
+    }
+  }
+
   return null;
 }
 

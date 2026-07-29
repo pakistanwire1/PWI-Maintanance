@@ -222,19 +222,30 @@ function bulkGenerateBarcode() {
 
 function previewQRCode(id, qrContent) {
   var overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
+  overlay.className = 'modal-overlay show';
   overlay.style.cssText = 'display:flex;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center';
-  overlay.onclick = function(e) { if (e.target === overlay) document.body.removeChild(overlay); };
+  overlay.onclick = function(e) { if (e.target === overlay) closeQRPreview(overlay); };
   var box = document.createElement('div');
   box.style.cssText = 'background:#fff;padding:24px;border-radius:8px;text-align:center;max-width:340px';
-  box.innerHTML = '<div style="font-size:11px;color:#999;margin-bottom:8px">PAKISTAN WIRE INDUSTRIES (PVT.) LTD.</div><div id="qrPreviewCanvas" style="margin:0 auto 12px;width:200px;height:200px"></div><div style="color:#333;font-size:13px;margin-bottom:8px;word-break:break-all">' + escapeHtml(qrContent) + '</div><div style="display:flex;gap:8px;justify-content:center"><button style="padding:6px 16px;border:none;border-radius:4px;background:#6366f1;color:#fff;cursor:pointer;font-size:12px" onclick="document.body.removeChild(this.parentNode.parentNode)">Close</button><button id="btnDownloadQR" style="padding:6px 16px;border:none;border-radius:4px;background:#22c55e;color:#fff;cursor:pointer;font-size:12px" onclick="downloadQRImage()">Download</button></div>';
+  box.innerHTML = '<div style="font-size:11px;color:#999;margin-bottom:8px">PAKISTAN WIRE INDUSTRIES (PVT.) LTD.</div><div id="qrPreviewCanvas" style="margin:0 auto 12px;width:200px;height:200px"></div><div style="color:#333;font-size:13px;margin-bottom:8px;word-break:break-all">' + escapeHtml(qrContent) + '</div><div style="display:flex;gap:8px;justify-content:center"><button style="padding:6px 16px;border:none;border-radius:4px;background:#6366f1;color:#fff;cursor:pointer;font-size:12px" onclick="closeQRPreview(this.closest(\'.modal-overlay\'))">Close</button><button id="btnDownloadQR" style="padding:6px 16px;border:none;border-radius:4px;background:#22c55e;color:#fff;cursor:pointer;font-size:12px" onclick="downloadQRImage()">Download</button></div>';
   overlay.appendChild(box);
   document.body.appendChild(overlay);
+  document.addEventListener('keydown', __previewEscHandler);
   setTimeout(function() {
     if (typeof QRCode !== 'undefined') {
       new QRCode(document.getElementById('qrPreviewCanvas'), { text: qrContent, width: 200, height: 200, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
     }
   }, 100);
+}
+
+function closeQRPreview(overlay) {
+  if (!overlay) overlay = document.querySelector('.modal-overlay.show');
+  if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+  document.removeEventListener('keydown', __previewEscHandler);
+}
+
+function __previewEscHandler(e) {
+  if (e.key === 'Escape') closeQRPreview();
 }
 
 function downloadQRImage() {
@@ -685,10 +696,10 @@ function renderInlineDetail(result) {
   if (!result) { showToast('Record Not Found', 'error'); return; }
   console.log('[QR-DEBUG] renderInlineDetail for module=' + result.module + ' id=' + result.id);
   var overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
+  overlay.className = 'modal-overlay show';
   overlay.id = 'qrDetailOverlay';
   overlay.style.cssText = 'display:flex;align-items:center;justify-content:center';
-  overlay.onclick = function() { var el = document.getElementById('qrDetailOverlay'); if(el) el.remove(); };
+  overlay.onclick = function(e) { if (e.target === overlay) closeRenderDetail(overlay); };
   var html = '<div class="qr-detail-card" onclick="event.stopPropagation()" style="max-width:520px;width:95vw;max-height:80vh;overflow-y:auto">';
   html += '<div class="qr-detail-header"><div class="qr-detail-icon" style="background:#6366f122;color:#6366f1">&#9432;</div>';
   html += '<div style="flex:1"><div class="qr-detail-title">' + escapeHtml(result.name || result.id) + '</div>';
@@ -701,10 +712,21 @@ function renderInlineDetail(result) {
     }
   }
   html += '</div>';
-  html += '<div class="qr-detail-actions" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">Close</button></div>';
+  html += '<div class="qr-detail-actions" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)"><button class="btn btn-secondary" id="renderDetailCloseBtn" onclick="closeRenderDetail(this.closest(\'.modal-overlay\'))">Close</button></div>';
   html += '</div>';
   overlay.innerHTML = html;
   document.body.appendChild(overlay);
+  document.addEventListener('keydown', __renderDetailEscHandler);
+}
+
+function closeRenderDetail(overlay) {
+  if (!overlay) overlay = document.getElementById('qrDetailOverlay');
+  if (overlay) overlay.remove();
+  document.removeEventListener('keydown', __renderDetailEscHandler);
+}
+
+function __renderDetailEscHandler(e) {
+  if (e.key === 'Escape') closeRenderDetail();
 }
 
 function getModPageIds(mod) {

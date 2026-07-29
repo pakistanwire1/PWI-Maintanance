@@ -20,6 +20,7 @@ function onOpen() {
   var toolsMenu = ui.createMenu('CMMS Tools');
   toolsMenu.addItem('Initialize Sample Data', 'initializeAllSampleData');
   toolsMenu.addSeparator();
+  toolsMenu.addItem('Initialize Division Data', 'initializeDivisionMaster');
   toolsMenu.addItem('Initialize Section Data', 'initializeSectionMaster');
   toolsMenu.addItem('Initialize Department Data', 'initializeDepartmentMaster');
   toolsMenu.addItem('Initialize Machine Data', 'initializeMachineMaster');
@@ -49,6 +50,7 @@ function onOpen() {
 
 function initializeSystem() {
   var results = [];
+  results.push(initDivisionSheet());
   results.push(initSectionSheet());
   results.push(initDepartmentSheet());
   results.push(initMachineSheet());
@@ -83,6 +85,7 @@ function reinitializeDatabase() {
   if (response !== ui.Button.YES) return;
   var results = [];
   try {
+    results.push(initDivisionSheet());
     results.push(initSectionSheet());
     results.push(initDepartmentSheet());
     results.push(initMachineSheet());
