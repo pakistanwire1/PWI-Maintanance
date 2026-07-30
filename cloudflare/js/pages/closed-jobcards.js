@@ -322,9 +322,7 @@ var ClosedJobCard = (function() {
         '<div class="pagination-info">Showing ' + (start + 1) + ' to ' + end + ' of ' + list.length + ' entries</div>' +
         '<div class="pagination-btns">' +
         '<button onclick="ClosedJobCard.goPage(' + (p - 1) + ')" ' + (p <= 1 ? 'disabled' : '') + '>Prev</button>';
-      for (var i = 1; i <= totalPages; i++) {
-        html += '<button class="' + (i === p ? 'active' : '') + '" onclick="ClosedJobCard.goPage(' + i + ')">' + i + '</button>';
-      }
+      html += '<span style="margin:0 8px;font-size:13px;color:var(--text-secondary)">Page ' + p + ' of ' + totalPages + '</span>';
       html += '<button onclick="ClosedJobCard.goPage(' + (p + 1) + ')" ' + (p >= totalPages ? 'disabled' : '') + '>Next</button>' +
         '</div></div>';
     }

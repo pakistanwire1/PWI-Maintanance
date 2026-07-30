@@ -1,8 +1,14 @@
 (function() {
+  console.log('[TRACE] app.js IIFE starting');
+
   function initApp() {
+    console.log('[TRACE] initApp entered');
     Theme.apply();
+    console.log('[TRACE] initApp: Theme.apply done');
     Nav.initSidebar();
+    console.log('[TRACE] initApp: Nav.initSidebar done');
     Nav.init();
+    console.log('[TRACE] initApp: Nav.init done');
 
     Router.register('dashboard', function(el) {
       Dashboard.init(el);
@@ -148,7 +154,9 @@
       BackupRestore.show(el);
     });
 
+    console.log('[TRACE] initApp: Loader.hide');
     Loader.hide();
+    console.log('[TRACE] initApp: Badge.startAutoRefresh');
     Badge.startAutoRefresh();
 
     var welcomeEl = document.getElementById('welcomePage');
@@ -157,43 +165,60 @@
 
     var wasWelcomed = false;
     try { wasWelcomed = !!localStorage.getItem('cmms_welcomed'); } catch(e) {}
+    console.log('[TRACE] initApp: wasWelcomed=' + wasWelcomed + ', Session.isLoggedIn=' + Session.isLoggedIn());
 
     if (wasWelcomed) {
+      console.log('[TRACE] initApp: wasWelcomed path');
       if (welcomeEl) welcomeEl.style.display = 'none';
       if (!Session.isLoggedIn()) {
+        console.log('[TRACE] initApp: not logged in, showing login');
         loginEl.style.display = 'block';
         appEl.style.display = 'none';
         try { window.location.hash = ''; } catch(e) {}
       } else {
+        console.log('[TRACE] initApp: logged in, starting app');
         loginEl.style.display = 'none';
         appEl.style.display = 'flex';
         Nav.updateUserInfo();
+        console.log('[TRACE] initApp: calling Router.init');
         Router.init();
+        console.log('[TRACE] initApp: Router.init returned');
       }
     } else if (welcomeEl && welcomeEl.style.display !== 'none') {
+      console.log('[TRACE] initApp: welcome page shown, hiding app');
       loginEl.style.display = 'none';
       appEl.style.display = 'none';
     } else {
+      console.log('[TRACE] initApp: welcome already dismissed, checking session');
       if (!Session.isLoggedIn()) {
+        console.log('[TRACE] initApp: not logged in, showing login');
         loginEl.style.display = 'block';
         appEl.style.display = 'none';
         try { window.location.hash = ''; } catch(e) {}
       } else {
+        console.log('[TRACE] initApp: logged in, starting app');
         loginEl.style.display = 'none';
         appEl.style.display = 'flex';
         Nav.updateUserInfo();
+        console.log('[TRACE] initApp: calling Router.init');
         Router.init();
+        console.log('[TRACE] initApp: Router.init returned');
       }
     }
+    console.log('[TRACE] initApp: EXIT');
   }
 
   window.startApp = function() {
+    console.log('[TRACE] startApp entered');
     var loginEl = document.getElementById('loginPage');
     var appEl = document.getElementById('appContainer');
+    console.log('[TRACE] startApp: hiding login, showing app');
     loginEl.style.display = 'none';
     appEl.style.display = 'flex';
     Nav.updateUserInfo();
+    console.log('[TRACE] startApp: calling Router.init');
     Router.init();
+    console.log('[TRACE] startApp: Router.init returned');
   };
 
   window.handleSessionExpired = function() {

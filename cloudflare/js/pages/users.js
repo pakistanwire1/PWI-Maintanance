@@ -85,17 +85,11 @@ var User = (function() {
     if (totalPages > 1) {
       html += '<div class="pagination">';
       html += '<button class="btn-sm" ' + (state.page <= 1 ? 'disabled' : '') + ' onclick="User.prevPage()">&#8249;</button>';
-      for (var i = 1; i <= totalPages; i++) {
-        if (totalPages <= 7 || Math.abs(i - state.page) <= 2 || i === 1 || i === totalPages) {
-          html += '<button class="btn-sm ' + (i === state.page ? 'active' : '') + '" onclick="User.goToPage(' + i + ')">' + i + '</button>';
-        } else if (Math.abs(i - state.page) === 3) {
-          html += '<span class="pagination-ellipsis">...</span>';
-        }
-      }
+      html += '<span style="margin:0 8px;font-size:13px;color:var(--text-secondary)">Page ' + state.page + ' of ' + totalPages + '</span>';
       html += '<button class="btn-sm" ' + (state.page >= totalPages ? 'disabled' : '') + ' onclick="User.nextPage()">&#8250;</button>';
       html += '</div>';
+      html += '<div class="table-info">Showing ' + (rows.length > 0 ? (start + 1) : 0) + '-' + Math.min(state.page * PAGE_SIZE, rows.length) + ' of ' + rows.length + ' records</div>';
     }
-    html += '<div class="table-info">Showing ' + (rows.length > 0 ? (start + 1) : 0) + '-' + Math.min(state.page * PAGE_SIZE, rows.length) + ' of ' + rows.length + ' records</div>';
 
     var container = document.getElementById('userTableBody');
     if (container) container.innerHTML = html;

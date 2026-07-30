@@ -299,9 +299,7 @@ var Notifications = (function() {
         '<div class="pagination-info">Showing ' + (start + 1) + ' to ' + end + ' of ' + data.length + ' entries</div>' +
         '<div class="pagination-btns">' +
         '<button onclick="Notifications.goPage(' + (notifPage - 1) + ')" ' + (notifPage <= 1 ? 'disabled' : '') + '>Prev</button>';
-      for (var p = 1; p <= totalPages; p++) {
-        html += '<button class="' + (p === notifPage ? 'active' : '') + '" onclick="Notifications.goPage(' + p + ')">' + p + '</button>';
-      }
+      html += '<span style="margin:0 8px;font-size:13px;color:var(--text-secondary)">Page ' + notifPage + ' of ' + totalPages + '</span>';
       html += '<button onclick="Notifications.goPage(' + (notifPage + 1) + ')" ' + (notifPage >= totalPages ? 'disabled' : '') + '>Next</button>' +
         '</div></div>';
     }

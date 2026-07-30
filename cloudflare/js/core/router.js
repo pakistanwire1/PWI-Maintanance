@@ -8,9 +8,11 @@ var Router = {
   },
 
   navigate: function(page) {
+    console.log('[TRACE] Router.navigate entered, page=' + page);
     if (!page) page = 'dashboard';
 
     if (typeof Session !== 'undefined' && !Session.isLoggedIn()) {
+      console.log('[TRACE] Router.navigate: not logged in, redirecting to login');
       var loginEl = document.getElementById('loginPage');
       var appEl = document.getElementById('appContainer');
       if (loginEl) loginEl.style.display = 'block';
@@ -21,13 +23,24 @@ var Router = {
 
     var handler = Router.pages[page];
     if (!handler) {
+      console.log('[TRACE] Router.navigate: page not found, falling back to dashboard');
       page = 'dashboard';
       handler = Router.pages['dashboard'];
     }
-    if (!handler) return;
+    if (!handler) {
+      console.log('[TRACE] Router.navigate: no handler for dashboard either, aborting');
+      return;
+    }
 
     Nav.setActivePage(page);
     Router.current = page;
+
+    var notifPanel = document.getElementById('notificationPanel');
+    if (notifPanel) notifPanel.classList.remove('open');
+    var notifOverlay = document.getElementById('notificationOverlay');
+    if (notifOverlay) notifOverlay.classList.remove('show');
+    var emailPanel = document.getElementById('emailPanel');
+    if (emailPanel) emailPanel.classList.remove('open');
 
     var content = document.getElementById('pageContent');
     if (!content) return;
@@ -39,15 +52,20 @@ var Router = {
     Router._prevPage = page;
 
     try { history.pushState({ page: page }, '', '#' + page); } catch(e) {}
+    try { localStorage.setItem('cmms_last_page', page); } catch(e) {}
 
+    console.log('[TRACE] Router.navigate: setting loading HTML');
     content.innerHTML = '<div class="empty-state"><div class="spinner" style="width:36px;height:36px;margin:0 auto 14px"></div><p>Loading...</p></div>';
+    console.log('[TRACE] Router.navigate: about to call handler');
 
     try {
+      console.log('[TRACE] Router.navigate: handler call enter');
       handler(content, page);
+      console.log('[TRACE] Router.navigate: handler returned successfully');
     } catch(e) {
-      console.error('Router error:', e);
-      content.innerHTML = '<div class="empty-state"><h3>Error loading page</h3><p>' + Utils.escapeHtml(e.message) + '</p></div>';
+      console.log('[TRACE] Router.navigate: EXCEPTION caught! message=' + e.message + ', stack=' + (e.stack || 'no stack'));
     }
+    console.log('[TRACE] Router.navigate: function end');
   },
 
   handleHash: function() {
@@ -56,14 +74,18 @@ var Router = {
   },
 
   init: function() {
+    console.log('[TRACE] Router.init entered');
     window.addEventListener('popstate', function(e) {
+      console.log('[TRACE] popstate fired, hash=' + window.location.hash);
       if (e.state && e.state.page) {
         Router.navigate(e.state.page);
       } else {
         Router.handleHash();
       }
     });
+    console.log('[TRACE] Router.init: calling handleHash');
     Router.handleHash();
+    console.log('[TRACE] Router.init: finished');
   }
 };
 

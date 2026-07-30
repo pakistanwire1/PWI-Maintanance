@@ -92,7 +92,7 @@ function loadSectionsData() {
     })
     .withFailureHandler(function(err) {
       showLoading(false);
-      showNotification('Error loading sections: ' + err.message, 'danger');
+      showToast('Error loading sections: ' + err.message, 'error');
     })
     .getSectionList();
 }

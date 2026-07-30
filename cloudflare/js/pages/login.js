@@ -263,7 +263,6 @@
     API.post('login', { email: email, password: password })
       .then(function(result) {
         setLoginLoading(false);
-        console.log('[LOGIN] API.post login result:', JSON.stringify(result).slice(0, 300));
         if (result && result.success) {
           if (LoginPage.slideshowInterval) { clearInterval(LoginPage.slideshowInterval); LoginPage.slideshowInterval = null; }
           Session.setToken(result.token);
@@ -275,7 +274,6 @@
       })
       .catch(function(err) {
         setLoginLoading(false);
-        console.error('[LOGIN] API.post login failed:', err.message || err);
         showLoginError('Invalid Email or Password.');
       });
 
@@ -295,7 +293,7 @@
     if (!btn) return;
     btn.disabled = loading;
     var btnText = btn.querySelector('.login-btn-text');
-    var spnr = btn.querySelector('.login-spinner');
+    var spnr = btn.querySelector('.spinner');
     if (btnText) btnText.textContent = loading ? 'Signing in...' : 'Sign In';
     if (spnr) spnr.style.display = loading ? 'inline-block' : 'none';
   }

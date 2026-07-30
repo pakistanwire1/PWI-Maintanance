@@ -95,7 +95,7 @@ function loadDepartmentsData() {
     })
     .withFailureHandler(function(err) {
       showLoading(false);
-      showNotification('Error loading departments: ' + err.message, 'danger');
+      showToast('Error loading departments: ' + err.message, 'error');
     })
     .getDepartmentList();
 }

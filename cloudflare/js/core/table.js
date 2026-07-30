@@ -87,12 +87,12 @@ var Table = {
 
       if (result.totalPages > 1) {
         html += '<div class="pagination" id="' + containerId + '-pagination">';
-        html += '<button class="btn-sm" ' + (result.page <= 1 ? 'disabled' : '') + ' onclick="' + (options.onPrev || '') + '">‹ Prev</button>';
-        html += '<button class="btn-sm" ' + (result.page >= result.totalPages ? 'disabled' : '') + ' onclick="' + (options.onNext || '') + '">Next ›</button>';
-        html += '</div>';
+        html += '<div class="pagination-info">Showing ' + (((result.page - 1) * pageSize) + 1) + '-' + Math.min(result.page * pageSize, result.total) + ' of ' + result.total + ' entries</div>';
+        html += '<div class="pagination-btns">';
+        html += '<button class="btn-sm" ' + (result.page <= 1 ? 'disabled' : '') + ' onclick="' + (options.onPrev || '') + '">Prev</button>';
+        html += '<button class="btn-sm" ' + (result.page >= result.totalPages ? 'disabled' : '') + ' onclick="' + (options.onNext || '') + '">Next</button>';
+        html += '</div></div>';
       }
-
-      html += '<div class="table-info">Showing ' + (((result.page - 1) * pageSize) + 1) + '-' + Math.min(result.page * pageSize, result.total) + ' of ' + result.total + ' records</div>';
     }
 
     container.innerHTML = html;

@@ -388,6 +388,11 @@ function navigateTo(page) {
 
   document.querySelector('.sidebar').classList.remove('open');
   closeUserMenu();
+  var notifPanel = document.getElementById('notificationPanel');
+  if (notifPanel) notifPanel.classList.remove('open');
+  var notifOverlay = document.getElementById('notificationOverlay');
+  if (notifOverlay) notifOverlay.classList.remove('show');
+  closeEmailPanel();
 }
 
 function openApproveJobCard() {

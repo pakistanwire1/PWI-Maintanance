@@ -198,9 +198,7 @@ var BreakdownHistory = (function() {
         '<div class="pagination-info">Showing ' + (start + 1) + ' to ' + end + ' of ' + list.length + ' entries</div>' +
         '<div class="pagination-btns">' +
         '<button onclick="BreakdownHistory.goPage(' + (p - 1) + ')" ' + (p <= 1 ? 'disabled' : '') + '>Prev</button>';
-      for (var i = 1; i <= totalPages; i++) {
-        html += '<button class="' + (i === p ? 'active' : '') + '" onclick="BreakdownHistory.goPage(' + i + ')">' + i + '</button>';
-      }
+      html += '<span style="margin:0 8px;font-size:13px;color:var(--text-secondary)">Page ' + p + ' of ' + totalPages + '</span>';
       html += '<button onclick="BreakdownHistory.goPage(' + (p + 1) + ')" ' + (p >= totalPages ? 'disabled' : '') + '>Next</button>';
       html += '</div></div>';
     }

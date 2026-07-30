@@ -182,17 +182,11 @@ var Settings = (function() {
     if (result.totalPages > 1) {
       html += '<div class="pagination">';
       html += '<button class="btn-sm" ' + (result.page <= 1 ? 'disabled' : '') + ' onclick="Settings.usersPrevPage()">&#8249;</button>';
-      for (var i = 1; i <= result.totalPages; i++) {
-        if (result.totalPages <= 7 || Math.abs(i - result.page) <= 2 || i === 1 || i === result.totalPages) {
-          html += '<button class="btn-sm ' + (i === result.page ? 'active' : '') + '" onclick="Settings.usersGoToPage(' + i + ')">' + i + '</button>';
-        } else if (Math.abs(i - result.page) === 3) {
-          html += '<span class="pagination-ellipsis">...</span>';
-        }
-      }
+      html += '<span style="margin:0 8px;font-size:13px;color:var(--text-secondary)">Page ' + result.page + ' of ' + result.totalPages + '</span>';
       html += '<button class="btn-sm" ' + (result.page >= result.totalPages ? 'disabled' : '') + ' onclick="Settings.usersNextPage()">&#8250;</button>';
       html += '</div>';
+      html += '<div class="table-info">Showing ' + (list.length > 0 ? ((result.page - 1) * PAGE_SIZE + 1) : 0) + '-' + Math.min(result.page * PAGE_SIZE, result.total) + ' of ' + result.total + ' records</div>';
     }
-    html += '<div class="table-info">Showing ' + (list.length > 0 ? ((result.page - 1) * PAGE_SIZE + 1) : 0) + '-' + Math.min(result.page * PAGE_SIZE, result.total) + ' of ' + result.total + ' records</div>';
 
     container.innerHTML = html;
   }

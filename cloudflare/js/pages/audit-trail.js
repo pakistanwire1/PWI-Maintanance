@@ -312,15 +312,17 @@ var AuditTrail = (function() {
 
     html += '</tbody></table></div>';
 
-    html += '<div class="table-footer">';
-    html += '<div class="pagination-info">Showing ' + (start + 1) + '-' + end + ' of ' + list.length + '</div>';
-    html += '<div class="pagination-controls">';
-    html += '<button class="btn btn-sm btn-secondary" ' + (p <= 1 ? 'disabled' : '') + ' onclick="AuditTrail.goPage(1)">&laquo;</button>';
-    html += '<button class="btn btn-sm btn-secondary" ' + (p <= 1 ? 'disabled' : '') + ' onclick="AuditTrail.goPage(' + (p - 1) + ')">&lsaquo;</button>';
-    html += '<span class="audit-pg-text">Page ' + p + ' of ' + totalPages + '</span>';
-    html += '<button class="btn btn-sm btn-secondary" ' + (p >= totalPages ? 'disabled' : '') + ' onclick="AuditTrail.goPage(' + (p + 1) + ')">&rsaquo;</button>';
-    html += '<button class="btn btn-sm btn-secondary" ' + (p >= totalPages ? 'disabled' : '') + ' onclick="AuditTrail.goPage(' + totalPages + ')">&raquo;</button>';
-    html += '</div></div>';
+    if (totalPages > 1) {
+      html += '<div class="table-footer">';
+      html += '<div class="pagination-info">Showing ' + (start + 1) + '-' + end + ' of ' + list.length + '</div>';
+      html += '<div class="pagination-controls">';
+      html += '<button class="btn btn-sm btn-secondary" ' + (p <= 1 ? 'disabled' : '') + ' onclick="AuditTrail.goPage(1)">&laquo;</button>';
+      html += '<button class="btn btn-sm btn-secondary" ' + (p <= 1 ? 'disabled' : '') + ' onclick="AuditTrail.goPage(' + (p - 1) + ')">&lsaquo;</button>';
+      html += '<span class="audit-pg-text">Page ' + p + ' of ' + totalPages + '</span>';
+      html += '<button class="btn btn-sm btn-secondary" ' + (p >= totalPages ? 'disabled' : '') + ' onclick="AuditTrail.goPage(' + (p + 1) + ')">&rsaquo;</button>';
+      html += '<button class="btn btn-sm btn-secondary" ' + (p >= totalPages ? 'disabled' : '') + ' onclick="AuditTrail.goPage(' + totalPages + ')">&raquo;</button>';
+      html += '</div></div>';
+    }
 
     container.innerHTML = html;
   }

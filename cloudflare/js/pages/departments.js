@@ -7,7 +7,7 @@ var Department = (function() {
     if (!q) return state.data;
     return state.data.filter(function(d) {
       return (d.Department || '').toLowerCase().indexOf(q) >= 0 ||
-             (d.DepartmentID || '').toLowerCase().indexOf(q) >= 0 ||
+              String(d.DepartmentID || '').toLowerCase().indexOf(q) >= 0 ||
              (d.DepartmentCode || '').toLowerCase().indexOf(q) >= 0 ||
              (d.Section || '').toLowerCase().indexOf(q) >= 0 ||
              (d.DepartmentHead || '').toLowerCase().indexOf(q) >= 0 ||

@@ -236,9 +236,7 @@ var Nav = {
       if (totalPages > 1) {
         var pg = '';
         pg += '<button class="btn btn-xs btn-secondary" onclick="Nav._notifGoPage(' + (Nav._notifPage - 1) + ')"' + (Nav._notifPage <= 1 ? ' disabled' : '') + '>Prev</button>';
-        for (var p = 1; p <= totalPages; p++) {
-          pg += '<button class="btn btn-xs' + (p === Nav._notifPage ? ' btn-primary' : ' btn-secondary') + '" onclick="Nav._notifGoPage(' + p + ')">' + p + '</button>';
-        }
+        pg += '<span style="margin:0 8px;font-size:13px;color:var(--text-secondary)">Page ' + Nav._notifPage + ' of ' + totalPages + '</span>';
         pg += '<button class="btn btn-xs btn-secondary" onclick="Nav._notifGoPage(' + (Nav._notifPage + 1) + ')"' + (Nav._notifPage >= totalPages ? ' disabled' : '') + '>Next</button>';
         footer.innerHTML = pg;
       } else {

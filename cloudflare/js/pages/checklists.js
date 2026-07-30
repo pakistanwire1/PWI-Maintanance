@@ -213,9 +213,7 @@ var Checklists = (function() {
         '<div class="pagination-info">Showing ' + (start + 1) + ' to ' + end + ' of ' + data.length + ' entries</div>' +
         '<div class="pagination-btns">' +
         '<button onclick="Checklists.changePage(\'' + containerId + '\',' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>Prev</button>';
-      for (var p = 1; p <= totalPages; p++) {
-        html += '<button class="' + (p === page ? 'active' : '') + '" onclick="Checklists.changePage(\'' + containerId + '\',' + p + ')">' + p + '</button>';
-      }
+      html += '<span style="margin:0 8px;font-size:13px;color:var(--text-secondary)">Page ' + page + ' of ' + totalPages + '</span>';
       html += '<button onclick="Checklists.changePage(\'' + containerId + '\',' + (page + 1) + ')" ' + (page >= totalPages ? 'disabled' : '') + '>Next</button>' +
         '</div></div>';
     }

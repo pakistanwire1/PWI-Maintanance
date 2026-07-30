@@ -12,9 +12,13 @@ var Dashboard = {
   _activityAllItems: [],
 
   init: function(el) {
+    console.log('[TRACE] Dashboard.init entered, el=' + (el ? el.id : 'null'));
     el.innerHTML = Dashboard.html();
+    console.log('[TRACE] Dashboard.init: html set');
     Dashboard.bind();
+    console.log('[TRACE] Dashboard.init: bind done');
     Dashboard.load();
+    console.log('[TRACE] Dashboard.init: load called, returning');
   },
 
   html: function() {
@@ -111,31 +115,48 @@ var Dashboard = {
   },
 
   load: function() {
+    console.log('[TRACE] Dashboard.load entered');
     var cards = document.querySelectorAll('#dashboardCards .stat-info');
+    console.log('[TRACE] Dashboard.load: found ' + cards.length + ' cards');
     for (var i = 0; i < cards.length; i++) cards[i].classList.add('loading');
 
     var user = Session.getUser();
     var dept = user && user.department ? user.department : '';
+    console.log('[TRACE] Dashboard.load: user=' + (user ? user.email : 'null') + ', dept=' + dept + ', filter=' + Dashboard.filter);
+    console.log('[TRACE] Dashboard.load: about to call API.post');
 
     API.post('getDashboardData', { filter: Dashboard.filter, department: dept, email: user ? user.email : '' })
-      .then(function(data) {
-        console.log('===== P11.32 CF RECEIVED =====');
-        console.log('pendingJobs=' + data.pendingJobs);
-        console.log('approvedJobs=' + data.approvedJobs);
-        console.log('mtbf=' + data.mtbf);
-        console.log('breakdownJobCount=' + data.breakdownJobCount);
-        console.log('breakdownMaintenanceCount=' + data.breakdownMaintenanceCount);
-        console.log('_debug=', JSON.stringify(data._debug));
+      .then(function(result) {
+        console.log('[TRACE] Dashboard.load API.then - ENTERED with result type=' + typeof result);
+        console.log('[TRACE] Dashboard.load API.then - result keys=' + Object.keys(result || {}).join(','));
         for (var i = 0; i < cards.length; i++) cards[i].classList.remove('loading');
-        Dashboard._renderStats(data);
-        Dashboard._drawCharts(data);
-        Dashboard.loadNotifications();
-        Dashboard.loadActivities();
+        console.log('[TRACE] Dashboard.load API.then - cards loading removed, calling _renderStats');
+        try {
+          Dashboard._renderStats(result);
+          console.log('[TRACE] Dashboard.load API.then - _renderStats OK');
+        } catch(e) { console.error('[TRACE] Dashboard.load _renderStats THREW: ' + e.message + ' ' + e.stack); }
+        try {
+          Dashboard._drawCharts(result);
+          console.log('[TRACE] Dashboard.load API.then - _drawCharts OK');
+        } catch(e) { console.error('[TRACE] Dashboard.load _drawCharts THREW: ' + e.message + ' ' + e.stack); }
+        try {
+          Dashboard.loadNotifications();
+          console.log('[TRACE] Dashboard.load API.then - loadNotifications OK');
+        } catch(e) { console.error('[TRACE] Dashboard.load loadNotifications THREW: ' + e.message + ' ' + e.stack); }
+        try {
+          Dashboard.loadActivities();
+          console.log('[TRACE] Dashboard.load API.then - loadActivities OK');
+        } catch(e) { console.error('[TRACE] Dashboard.load loadActivities THREW: ' + e.message + ' ' + e.stack); }
+        console.log('[TRACE] Dashboard.load API.then - ALL DONE');
       })
       .catch(function(err) {
+        console.log('[TRACE] Dashboard.load API.catch - ENTERED');
+        console.log('[TRACE] Dashboard.load API.catch - err=' + (err ? err.message || err : 'null'));
         for (var i = 0; i < cards.length; i++) cards[i].classList.remove('loading');
         Notify.error('Failed to load dashboard data');
+        console.log('[TRACE] Dashboard.load API.catch - DONE');
       });
+    console.log('[TRACE] Dashboard.load: API.post returned (async), function end');
   },
 
   loadNotifications: function() {

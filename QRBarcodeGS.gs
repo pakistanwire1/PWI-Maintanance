@@ -240,6 +240,34 @@ function scanQRCode(qrContent) {
     }
   }
 
+  /* ---- code/id/name fallback (plain text codes like M001, ABC-123, etc.) ---- */
+  for (var mi2 = 0; mi2 < CONFIG.QR_MODULES.length; mi2++) {
+    var mod2 = CONFIG.QR_MODULES[mi2];
+    var cfg2 = getQRModuleSheet(mod2);
+    if (!cfg2) continue;
+    var records2 = getAllData(cfg2.sheet) || [];
+    for (var j = 0; j < records2.length; j++) {
+      var r2 = records2[j];
+      var codeVal = r2[cfg2.codeField] || '';
+      var idVal = r2[cfg2.idField] || '';
+      var nameVal = r2[cfg2.nameField] || '';
+      if (String(codeVal) === qrContent || String(idVal) === qrContent || String(nameVal) === qrContent) {
+        return {
+          module: mod2,
+          recordId: idVal,
+          name: nameVal,
+          code: codeVal,
+          department: r2.Department || '',
+          qrContent: qrContent,
+          barcode: r2.Barcode || '',
+          status: r2.Status || '',
+          section: r2.Section || '',
+          location: r2.Location || ''
+        };
+      }
+    }
+  }
+
   /* ---- machine=ID format fallback (external scan) ---- */
   if (qrContent.indexOf('?machine=') !== -1) {
     var parts = qrContent.split('?machine=');
@@ -290,6 +318,33 @@ function scanBarcode(barcode) {
           status: r.Status || '',
           section: r.Section || '',
           location: r.Location || ''
+        };
+      }
+    }
+  }
+  /* ---- code/id/name fallback (plain text codes) ---- */
+  for (var mi3 = 0; mi3 < CONFIG.QR_MODULES.length; mi3++) {
+    var mod3 = CONFIG.QR_MODULES[mi3];
+    var cfg3 = getQRModuleSheet(mod3);
+    if (!cfg3) continue;
+    var records3 = getAllData(cfg3.sheet) || [];
+    for (var k = 0; k < records3.length; k++) {
+      var r3 = records3[k];
+      var codeVal3 = r3[cfg3.codeField] || '';
+      var idVal3 = r3[cfg3.idField] || '';
+      var nameVal3 = r3[cfg3.nameField] || '';
+      if (String(codeVal3) === barcode || String(idVal3) === barcode || String(nameVal3) === barcode) {
+        return {
+          module: mod3,
+          recordId: idVal3,
+          name: nameVal3,
+          code: codeVal3,
+          department: r3.Department || '',
+          qrContent: r3.QRCode || '',
+          barcode: barcode,
+          status: r3.Status || '',
+          section: r3.Section || '',
+          location: r3.Location || ''
         };
       }
     }
