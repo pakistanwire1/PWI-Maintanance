@@ -94,11 +94,13 @@ var Inventory = (function() {
     if (isNaN(d.getTime())) return '';
     var day = String(d.getDate()).padStart(2, '0');
     var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return day + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
-  }
-
-  function formatCurrency(val) {
-    return 'Rs. ' + parseFloat(val || 0).toFixed(2);
+    var month = months[d.getMonth()];
+    var year = d.getFullYear();
+    var hours = d.getHours();
+    var ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    var mins = String(d.getMinutes()).padStart(2, '0');
+    return day + ' ' + month + ' ' + year + ' | ' + String(hours).padStart(2, '0') + ':' + mins + ' ' + ampm;
   }
 
   function renderTableLocal(data, columns, actions, page, pageSize, containerId) {
@@ -187,9 +189,8 @@ var Inventory = (function() {
       html += '<div class="pagination">' +
         '<div class="pagination-info">Showing ' + (start + 1) + ' to ' + end + ' of ' + data.length + ' entries</div>' +
         '<div class="pagination-btns">' +
-        '<button onclick="Inventory.changePage(\'' + containerId + '\',' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>Prev</button>';
-      html += '<span style="margin:0 8px;font-size:13px;color:var(--text-secondary)">Page ' + page + ' of ' + totalPages + '</span>';
-      html += '<button onclick="Inventory.changePage(\'' + containerId + '\',' + (page + 1) + ')" ' + (page >= totalPages ? 'disabled' : '') + '>Next</button>' +
+        '<button onclick="Inventory.changePage(\'' + containerId + '\',' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>Prev</button>' +
+        '<button onclick="Inventory.changePage(\'' + containerId + '\',' + (page + 1) + ')" ' + (page >= totalPages ? 'disabled' : '') + '>Next</button>' +
         '</div></div>';
     }
 
@@ -207,8 +208,8 @@ var Inventory = (function() {
         { key: 'PartCode', label: 'Part Code' },
         { key: 'PartName', label: 'Part Name' },
         { key: 'Quantity', label: 'Qty' },
-        { key: 'UnitCost', label: 'Unit Cost', format: function(v) { return formatCurrency(v); } },
-        { key: 'TotalCost', label: 'Total Cost', format: function(v) { return formatCurrency(v); } },
+        { key: 'UnitCost', label: 'Unit Cost', format: function(v) { return parseFloat(v || 0).toFixed(2); } },
+        { key: 'TotalCost', label: 'Total Cost', format: function(v) { return parseFloat(v || 0).toFixed(2); } },
         { key: 'ReferenceNo', label: 'Reference No' },
         { key: 'Remarks', label: 'Remarks' }
       ];
@@ -219,8 +220,8 @@ var Inventory = (function() {
         { key: 'PartCode', label: 'Part Code' },
         { key: 'PartName', label: 'Part Name' },
         { key: 'Quantity', label: 'Qty' },
-        { key: 'UnitCost', label: 'Unit Cost', format: function(v) { return formatCurrency(v); } },
-        { key: 'TotalCost', label: 'Total Cost', format: function(v) { return formatCurrency(v); } },
+        { key: 'UnitCost', label: 'Unit Cost', format: function(v) { return parseFloat(v || 0).toFixed(2); } },
+        { key: 'TotalCost', label: 'Total Cost', format: function(v) { return parseFloat(v || 0).toFixed(2); } },
         { key: 'Supplier', label: 'Supplier' },
         { key: 'InvoiceNo', label: 'Invoice No' },
         { key: 'CreatedAt', label: 'Received Date', datetime: true },
@@ -574,7 +575,7 @@ var Inventory = (function() {
     el.innerHTML =
       '<div id="inventoryPage" class="page">' +
         '<div class="dashboard-grid" id="invDashboardCards" style="margin-bottom:16px">' +
-          '<div class="stat-card stat-primary" onclick="Inventory.switchInvTab(\'all\', document.querySelector(\'#inventoryPage .workflow-tab[data-tab=all]\'))" style="cursor:pointer">' +
+          '<div class="stat-card stat-primary" onclick="Inventory.switchInvTab(\'all\')" style="cursor:pointer">' +
             '<div class="stat-inner">' +
               '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg></div>' +
               '<div class="stat-info"><h3 id="invTotalStockValue">Rs. 0</h3><p>Total Stock Value</p></div>' +

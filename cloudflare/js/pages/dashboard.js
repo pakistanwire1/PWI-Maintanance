@@ -12,13 +12,10 @@ var Dashboard = {
   _activityAllItems: [],
 
   init: function(el) {
-    console.log('[TRACE] Dashboard.init entered, el=' + (el ? el.id : 'null'));
     el.innerHTML = Dashboard.html();
-    console.log('[TRACE] Dashboard.init: html set');
     Dashboard.bind();
-    console.log('[TRACE] Dashboard.init: bind done');
+    Dashboard._requestNotificationPermission();
     Dashboard.load();
-    console.log('[TRACE] Dashboard.init: load called, returning');
   },
 
   html: function() {
@@ -29,7 +26,7 @@ var Dashboard = {
       '<button class="filter-btn' + (Dashboard.filter==='lastmonth'?' active':'') + '" onclick="Dashboard.setFilter(\'lastmonth\',this)">Last Month</button>' +
       '<button class="filter-btn' + (Dashboard.filter==='all'?' active':'') + '" onclick="Dashboard.setFilter(\'all\',this)">All Time</button>' +
       '<div style="flex:1"></div>' +
-      '<button class="scan-qr-btn" onclick="navigateTo(\'qr\')" title="Scan QR Code">' +
+      '<button class="scan-qr-btn" onclick="QRCodes.openCameraScanner()" title="Scan QR Code">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>' +
         ' Scan QR' +
       '</button>' +
@@ -115,48 +112,32 @@ var Dashboard = {
   },
 
   load: function() {
-    console.log('[TRACE] Dashboard.load entered');
     var cards = document.querySelectorAll('#dashboardCards .stat-info');
-    console.log('[TRACE] Dashboard.load: found ' + cards.length + ' cards');
     for (var i = 0; i < cards.length; i++) cards[i].classList.add('loading');
 
     var user = Session.getUser();
     var dept = user && user.department ? user.department : '';
-    console.log('[TRACE] Dashboard.load: user=' + (user ? user.email : 'null') + ', dept=' + dept + ', filter=' + Dashboard.filter);
-    console.log('[TRACE] Dashboard.load: about to call API.post');
 
-    API.post('getDashboardData', { filter: Dashboard.filter, department: dept, email: user ? user.email : '' })
+    API.post('getDashboardData', { filter: Dashboard.filter, department: dept })
       .then(function(result) {
-        console.log('[TRACE] Dashboard.load API.then - ENTERED with result type=' + typeof result);
-        console.log('[TRACE] Dashboard.load API.then - result keys=' + Object.keys(result || {}).join(','));
         for (var i = 0; i < cards.length; i++) cards[i].classList.remove('loading');
-        console.log('[TRACE] Dashboard.load API.then - cards loading removed, calling _renderStats');
         try {
           Dashboard._renderStats(result);
-          console.log('[TRACE] Dashboard.load API.then - _renderStats OK');
-        } catch(e) { console.error('[TRACE] Dashboard.load _renderStats THREW: ' + e.message + ' ' + e.stack); }
+        } catch(e) { console.error(e); }
         try {
           Dashboard._drawCharts(result);
-          console.log('[TRACE] Dashboard.load API.then - _drawCharts OK');
-        } catch(e) { console.error('[TRACE] Dashboard.load _drawCharts THREW: ' + e.message + ' ' + e.stack); }
+        } catch(e) { console.error(e); }
         try {
           Dashboard.loadNotifications();
-          console.log('[TRACE] Dashboard.load API.then - loadNotifications OK');
-        } catch(e) { console.error('[TRACE] Dashboard.load loadNotifications THREW: ' + e.message + ' ' + e.stack); }
+        } catch(e) { console.error(e); }
         try {
           Dashboard.loadActivities();
-          console.log('[TRACE] Dashboard.load API.then - loadActivities OK');
-        } catch(e) { console.error('[TRACE] Dashboard.load loadActivities THREW: ' + e.message + ' ' + e.stack); }
-        console.log('[TRACE] Dashboard.load API.then - ALL DONE');
+        } catch(e) { console.error(e); }
       })
       .catch(function(err) {
-        console.log('[TRACE] Dashboard.load API.catch - ENTERED');
-        console.log('[TRACE] Dashboard.load API.catch - err=' + (err ? err.message || err : 'null'));
         for (var i = 0; i < cards.length; i++) cards[i].classList.remove('loading');
         Notify.error('Failed to load dashboard data');
-        console.log('[TRACE] Dashboard.load API.catch - DONE');
       });
-    console.log('[TRACE] Dashboard.load: API.post returned (async), function end');
   },
 
   loadNotifications: function() {
@@ -164,25 +145,60 @@ var Dashboard = {
     var user = Session.getUser();
     var email = user ? user.email : '';
 
-    API.post('getNotifications', {})
+    API.post('getDashboardNotifications', { count: 50, email: email })
       .then(function(result) {
-        var items = Array.isArray(result) ? result : (result.data || result.records || []);
-        Dashboard._notifAllItems = items;
+        Dashboard._notifAllItems = result.data || [];
         Dashboard._renderNotifications();
-        var unread = 0, critical = 0, approval = 0;
-        for (var i = 0; i < items.length; i++) {
-          if ((items[i].ReadStatus || '').toLowerCase() !== 'read') unread++;
-          if (items[i].Priority === 'Critical') critical++;
-          if (items[i].NotificationType === 'Approval' || (items[i].Title && items[i].Title.toLowerCase().indexOf('approval') > -1)) approval++;
+        Dashboard._checkForNewNotifications(result);
+        if (result.stats) {
+          Dashboard._setText('dashNotifUnreadNum', result.stats.unread || 0);
+          Dashboard._setText('dashNotifCriticalNum', result.stats.critical || 0);
+          Dashboard._setText('dashNotifApprovalNum', result.stats.pendingApproval || 0);
         }
-        Dashboard._setText('dashNotifUnreadNum', unread);
-        Dashboard._setText('dashNotifCriticalNum', critical);
-        Dashboard._setText('dashNotifApprovalNum', approval);
       })
       .catch(function() {
         var el = document.getElementById('dashboardNotifications');
         if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Failed to load</div>';
       });
+  },
+
+  _lastNotifIds: [],
+
+  _checkForNewNotifications: function(data) {
+    if (!data || !data.data) return;
+    var newIds = [];
+    for (var i = 0; i < data.data.length; i++) newIds.push(data.data[i].NotificationID);
+    if (Dashboard._lastNotifIds.length > 0) {
+      for (var j = 0; j < data.data.length; j++) {
+        var n = data.data[j];
+        if (Dashboard._lastNotifIds.indexOf(n.NotificationID) === -1 && (n.Priority === 'Critical' || n.Priority === 'High')) {
+          Dashboard._sendBrowserNotification(n.Title, n.Message, n.NotificationID);
+        }
+      }
+    }
+    Dashboard._lastNotifIds = newIds;
+  },
+
+  _sendBrowserNotification: function(title, body, tag) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    try {
+      var n = new Notification(title, {
+        body: body,
+        tag: tag || 'cmms-' + Date.now(),
+        requireInteraction: false,
+        silent: false
+      });
+      n.onclick = function() { window.focus(); n.close(); };
+      setTimeout(function() { n.close(); }, 8000);
+    } catch(e) {}
+  },
+
+  _requestNotificationPermission: function() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') return;
+    if (Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
   },
 
   _updateNotifCounters: function() {
@@ -418,21 +434,26 @@ var Dashboard = {
     if (el) el.textContent = v;
   },
 
+  _cssVar: function(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  },
+
   _showDetailModal: function(title, bodyHtml, onClose) {
     var existing = document.getElementById('dashDetailModal');
     if (existing) existing.remove();
     var backdrop = document.createElement('div');
     backdrop.id = 'dashDetailModal';
-    backdrop.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;backdrop-filter:blur(4px)';
+    backdrop.className = 'modal-overlay';
+    backdrop.style.display = 'flex';
     backdrop.innerHTML =
-      '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;width:90%;max-width:520px;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5)">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">' +
-          '<div style="font-size:15px;font-weight:600;color:var(--text)">' + title + '</div>' +
-          '<button onclick="Dashboard._closeDetailModal()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;padding:0 4px">&times;</button>' +
+      '<div class="modal modal-wide">' +
+        '<div class="modal-header">' +
+          '<div class="modal-title">' + title + '</div>' +
+          '<button class="modal-close" onclick="Dashboard._closeDetailModal()">&times;</button>' +
         '</div>' +
-        '<div style="padding:20px">' + bodyHtml + '</div>' +
-        '<div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end">' +
-          '<button class="btn btn-secondary" onclick="Dashboard._closeDetailModal()">Close</button>' +
+        '<div class="modal-body">' + bodyHtml + '</div>' +
+        '<div class="modal-footer">' +
+          '<button type="button" class="btn btn-secondary" onclick="Dashboard._closeDetailModal()">Close</button>' +
         '</div>' +
       '</div>';
     backdrop.onclick = function(e) { if (e.target === backdrop) Dashboard._closeDetailModal(); };
@@ -479,11 +500,21 @@ var Dashboard = {
   },
 
   _kpiFormatHours: function(minutes) {
-    return Duration.formatHours(minutes);
+    if (!minutes && minutes !== 0) return '0h 0m';
+    var m = Math.round(minutes);
+    var h = Math.floor(m / 60);
+    var rm = m % 60;
+    return h + 'h ' + rm + 'm';
   },
 
   _kpiFormatDays: function(minutes) {
-    return Duration.formatDays(minutes);
+    if (!minutes && minutes !== 0) return '0 Days 00:00';
+    var m = Math.round(minutes);
+    var d = Math.floor(m / 1440);
+    var h = Math.floor((m % 1440) / 60);
+    var rm = m % 60;
+    if (d > 0) return d + 'd ' + String(h).padStart(2, '0') + ':' + String(rm).padStart(2, '0');
+    return h + 'h ' + rm + 'm';
   },
 
   _kpiTick: function() {
@@ -685,7 +716,7 @@ var Dashboard = {
     }
     var dt = google.visualization.arrayToDataTable(rows);
     var chart = new google.visualization.ColumnChart(div);
-    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 20, bottom: 50, width: '90%', height: '65%' }, legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 11 } }, hAxis: { textStyle: { color: '#9498b8', fontSize: 11 }, gridlines: { color: 'transparent' }, slantedText: false }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, bar: { groupWidth: '60%' }, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg, enableInteractivity: true });
+    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 20, bottom: 50, width: '90%', height: '65%' }, legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 11 } }, hAxis: { textStyle: { color: '#9498b8', fontSize: 11 }, gridlines: { color: 'transparent' }, slantedText: false }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, bar: { groupWidth: '60%' }, tooltip: { isHtml: true, textStyle: { color: Dashboard._cssVar('--text'), fontSize: 12 } }, animation: animCfg, enableInteractivity: true });
     Dashboard._addDataLabels(div, statusCounts, statusTotal);
   },
 
@@ -713,7 +744,7 @@ var Dashboard = {
     var colors = [];
     for (var i = 0; i < priCounts.length; i++) colors.push(priCounts[i].color);
     var chart = new google.visualization.PieChart(div);
-    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 10, right: 10, top: 10, bottom: 40, width: '90%', height: '70%' }, legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 11 } }, colors: colors, pieHole: 0.45, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, pieSliceText: 'none', animation: animCfg });
+    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 10, right: 10, top: 10, bottom: 40, width: '90%', height: '70%' }, legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 11 } }, colors: colors, pieHole: 0.45, tooltip: { isHtml: true, textStyle: { color: Dashboard._cssVar('--text'), fontSize: 12 } }, pieSliceText: 'none', animation: animCfg });
   },
 
   _drawMTTR: function(mt, months, data, animCfg, tooltipStyle) {
@@ -738,7 +769,7 @@ var Dashboard = {
       rows.push([months[i], val, tip]);
     }
     var dt = google.visualization.arrayToDataTable(rows);
-    var opts = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#3B82F6'], curveType: 'function', lineWidth: 3, pointSize: 6, pointShape: 'circle', tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg };
+    var opts = { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: [Dashboard._cssVar('--primary')], curveType: 'function', lineWidth: 3, pointSize: 6, pointShape: 'circle', tooltip: { isHtml: true, textStyle: { color: Dashboard._cssVar('--text'), fontSize: 12 } }, animation: animCfg };
     if (stats.avg > 0) {
       dt.addColumn('number', 'Average');
       dt.addColumn({ type: 'string', role: 'tooltip', p: { html: true } });
@@ -781,7 +812,7 @@ var Dashboard = {
     }
     var dt = google.visualization.arrayToDataTable(rows);
     var chart = new google.visualization.LineChart(div);
-    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#22C55E'], curveType: 'function', lineWidth: 3, pointSize: 6, pointShape: 'circle', tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg });
+    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#22C55E'], curveType: 'function', lineWidth: 3, pointSize: 6, pointShape: 'circle', tooltip: { isHtml: true, textStyle: { color: Dashboard._cssVar('--text'), fontSize: 12 } }, animation: animCfg });
     var badge = document.getElementById('mtbfBadge');
     if (badge) {
       var last = mf[mf.length - 1];
@@ -811,7 +842,7 @@ var Dashboard = {
     }
     var dt = google.visualization.arrayToDataTable(rows);
     var chart = new google.visualization.ColumnChart(div);
-    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 10 } }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#3B82F6', '#22C55E', '#F97316', '#6B7280', '#A855F7'], bar: { groupWidth: '65%' }, isStacked: true, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg });
+    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 10 } }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: [Dashboard._cssVar('--primary'), Dashboard._cssVar('--success'), Dashboard._cssVar('--orange'), Dashboard._cssVar('--slate'), Dashboard._cssVar('--purple')], bar: { groupWidth: '65%' }, isStacked: true, tooltip: { isHtml: true, textStyle: { color: Dashboard._cssVar('--text'), fontSize: 12 } }, animation: animCfg });
   },
 
   _drawBreakdown: function(bd, months, animCfg, tooltipStyle) {
@@ -830,7 +861,7 @@ var Dashboard = {
     }
     var dt = google.visualization.arrayToDataTable(rows);
     var chart = new google.visualization.AreaChart(div);
-    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#EF4444'], lineWidth: 2, curveType: 'function', pointSize: 5, pointShape: 'circle', areaOpacity: 0.15, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg });
+    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#EF4444'], lineWidth: 2, curveType: 'function', pointSize: 5, pointShape: 'circle', areaOpacity: 0.15, tooltip: { isHtml: true, textStyle: { color: Dashboard._cssVar('--text'), fontSize: 12 } }, animation: animCfg });
   },
 
   _drawWaitingTime: function(wt, months, animCfg, tooltipStyle) {
@@ -847,7 +878,7 @@ var Dashboard = {
     }
     var dt = google.visualization.arrayToDataTable(rows);
     var chart = new google.visualization.AreaChart(div);
-    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#F59E0B'], lineWidth: 2, curveType: 'function', pointSize: 5, pointShape: 'circle', areaOpacity: 0.15, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg });
+    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#F59E0B'], lineWidth: 2, curveType: 'function', pointSize: 5, pointShape: 'circle', areaOpacity: 0.15, tooltip: { isHtml: true, textStyle: { color: Dashboard._cssVar('--text'), fontSize: 12 } }, animation: animCfg });
   },
 
   _drawDowntime: function(dtArr, months, animCfg, tooltipStyle) {
@@ -864,7 +895,7 @@ var Dashboard = {
     }
     var dt = google.visualization.arrayToDataTable(rows);
     var chart = new google.visualization.AreaChart(div);
-    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#EF4444'], lineWidth: 2, curveType: 'function', pointSize: 5, pointShape: 'circle', areaOpacity: 0.15, tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg });
+    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#EF4444'], lineWidth: 2, curveType: 'function', pointSize: 5, pointShape: 'circle', areaOpacity: 0.15, tooltip: { isHtml: true, textStyle: { color: Dashboard._cssVar('--text'), fontSize: 12 } }, animation: animCfg });
   },
 
   _drawMonthlyMaintenance: function(mmArr, months, animCfg, tooltipStyle) {
@@ -881,7 +912,7 @@ var Dashboard = {
     }
     var dt = google.visualization.arrayToDataTable(rows);
     var chart = new google.visualization.LineChart(div);
-    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: ['#3B82F6'], lineWidth: 3, curveType: 'function', pointSize: 6, pointShape: 'circle', tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } }, animation: animCfg });
+    chart.draw(dt, { backgroundColor: 'transparent', chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' }, legend: { position: 'none' }, hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } }, vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 }, colors: [Dashboard._cssVar('--primary')], lineWidth: 3, curveType: 'function', pointSize: 6, pointShape: 'circle', tooltip: { isHtml: true, textStyle: { color: Dashboard._cssVar('--text'), fontSize: 12 } }, animation: animCfg });
   },
 
   _addDataLabels: function(divEl, items, total) {
@@ -904,7 +935,7 @@ var Dashboard = {
       textEl.setAttribute('x', rx);
       textEl.setAttribute('y', ry < 10 ? 14 : ry);
       textEl.setAttribute('text-anchor', 'middle');
-      textEl.setAttribute('fill', '#ccc');
+      textEl.setAttribute('fill', 'var(--text-secondary)');
       textEl.setAttribute('font-size', '12');
       textEl.setAttribute('font-weight', '600');
       textEl.textContent = count;

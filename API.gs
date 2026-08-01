@@ -166,6 +166,9 @@ var API_ROUTES = {
   'getInventoryDashboardData': { auth: true, handler: function(d) { return getInventoryDashboardData(); } },
   'searchTransactions':    { auth: true,  handler: function(d) { return searchTransactions(d.query); } },
   'exportTransactionsCSV': { auth: true,  handler: function(d) { return exportTransactionsCSV(); } },
+  'getTransactionsByType': { auth: true,  handler: function(d) { return getTransactionsByType(d.type); } },
+  'getTransactionsByPart': { auth: true,  handler: function(d) { return getTransactionsByPart(d.partCode); } },
+  'getTransactionsByDateRange': { auth: true, handler: function(d) { return getTransactionsByDateRange(d.startDate, d.endDate); } },
 
   /* ---- Departments ---- */
   'getDepartmentList':     { auth: true,  handler: function(d) { return getDepartmentList(); } },
@@ -231,6 +234,7 @@ var API_ROUTES = {
 
   /* ---- Notifications ---- */
   'getNotifications':      { auth: true,  handler: function(d) { return apiGetNotifications(d); } },
+  'getDashboardNotifications': { auth: true, handler: function(d) { return getDashboardNotifications(parseInt(d.count) || 50, d._userEmail || d.email || ''); } },
   'getUnreadCount':        { auth: true,  handler: function(d) { return getUnreadCount(d._userEmail); } },
   'markNotificationRead':  { auth: true,  handler: function(d) { return markNotificationRead(d.id); } },
   'markAllNotificationsRead': { auth: true, handler: function(d) { return markAllNotificationsRead(d._userEmail); } },
@@ -238,7 +242,9 @@ var API_ROUTES = {
   'clearAllNotifications': { auth: true,  handler: function(d) { return clearAllNotifications(d._userEmail); } },
 
   /* ---- Reports ---- */
-  'getReportData':         { auth: true,  handler: function(d) { return getReportData(d.reportType, d.filters); } },
+  'getReportData':         { auth: true,  handler: function(d) { return getReportData(d); } },
+  'getReportFilterOptions': { auth: true, handler: function(d) { return getReportFilterOptions(); } },
+  'getMachineCascade':     { auth: true,  handler: function(d) { return getMachineCascade(d.divisionId || '', d.sectionId || '', d.deptId || ''); } },
 
   /* ---- Settings ---- */
   'getSettings':           { auth: true,  handler: function(d) { return getSettings(); } },
@@ -261,6 +267,7 @@ var API_ROUTES = {
 
   /* ---- Audit Trail ---- */
   'getAuditLogs':          { auth: true,  handler: function(d) { return getAuditLogs(); } },
+  'getRecentAuditLogs':    { auth: true,  handler: function(d) { return getRecentAuditLogs(parseInt(d.count) || 50); } },
   'getAuditLogStats':      { auth: true,  handler: function(d) { return getAuditLogStats(d._userEmail); } },
 
   /* ---- QR & Barcode ---- */

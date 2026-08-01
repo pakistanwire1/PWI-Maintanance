@@ -1,0 +1,2270 @@
+{
+  "cfMasterApi": 5,
+  "cf": {
+    "rows": [
+      {
+        "y": 165,
+        "labels": [
+          "Report Type",
+          "Division",
+          "Section",
+          "Department",
+          "Machine Number"
+        ]
+      },
+      {
+        "y": 228,
+        "labels": [
+          "Technician",
+          "Maintenance Type",
+          "Priority",
+          "Status",
+          "From Date",
+          "To Date"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "label": "Report Type",
+        "x": 129,
+        "y": 165,
+        "w": 242,
+        "h": 53,
+        "ctrlW": 242,
+        "ctrlH": 36
+      },
+      {
+        "label": "Division",
+        "x": 381,
+        "y": 165,
+        "w": 242,
+        "h": 53,
+        "ctrlW": 242,
+        "ctrlH": 36
+      },
+      {
+        "label": "Section",
+        "x": 633,
+        "y": 165,
+        "w": 242,
+        "h": 53,
+        "ctrlW": 242,
+        "ctrlH": 36
+      },
+      {
+        "label": "Department",
+        "x": 885,
+        "y": 165,
+        "w": 242,
+        "h": 53,
+        "ctrlW": 242,
+        "ctrlH": 36
+      },
+      {
+        "label": "Machine Number",
+        "x": 1137,
+        "y": 165,
+        "w": 242,
+        "h": 53,
+        "ctrlW": 242,
+        "ctrlH": 36
+      },
+      {
+        "label": "Technician",
+        "x": 129,
+        "y": 228,
+        "w": 200,
+        "h": 55,
+        "ctrlW": 200,
+        "ctrlH": 36
+      },
+      {
+        "label": "Maintenance Type",
+        "x": 339,
+        "y": 228,
+        "w": 200,
+        "h": 55,
+        "ctrlW": 200,
+        "ctrlH": 36
+      },
+      {
+        "label": "Priority",
+        "x": 549,
+        "y": 228,
+        "w": 200,
+        "h": 55,
+        "ctrlW": 200,
+        "ctrlH": 36
+      },
+      {
+        "label": "Status",
+        "x": 759,
+        "y": 228,
+        "w": 200,
+        "h": 55,
+        "ctrlW": 200,
+        "ctrlH": 36
+      },
+      {
+        "label": "From Date",
+        "x": 969,
+        "y": 228,
+        "w": 200,
+        "h": 55,
+        "ctrlW": 200,
+        "ctrlH": 38
+      },
+      {
+        "label": "To Date",
+        "x": 1179,
+        "y": 228,
+        "w": 200,
+        "h": 55,
+        "ctrlW": 200,
+        "ctrlH": 38
+      }
+    ],
+    "dropdowns": {
+      "rptType": [
+        {
+          "value": "",
+          "text": "Select Report Type"
+        },
+        {
+          "value": "machine_history",
+          "text": "Machine History"
+        },
+        {
+          "value": "breakdown_history",
+          "text": "Breakdown History"
+        },
+        {
+          "value": "preventive_maintenance",
+          "text": "Preventive Maintenance"
+        },
+        {
+          "value": "technician_performance",
+          "text": "Technician Performance"
+        },
+        {
+          "value": "department_performance",
+          "text": "Department Performance"
+        },
+        {
+          "value": "machine_performance",
+          "text": "Machine Performance"
+        },
+        {
+          "value": "machine_utilization",
+          "text": "Machine Utilization"
+        },
+        {
+          "value": "mttr",
+          "text": "MTTR Report"
+        },
+        {
+          "value": "mtbf",
+          "text": "MTBF Report"
+        },
+        {
+          "value": "availability",
+          "text": "Availability Report"
+        },
+        {
+          "value": "pending_jobs",
+          "text": "Pending Jobs"
+        },
+        {
+          "value": "closed_jobs",
+          "text": "Closed Jobs"
+        },
+        {
+          "value": "approval_history",
+          "text": "Approval History"
+        },
+        {
+          "value": "downtime_analysis",
+          "text": "Downtime Analysis"
+        },
+        {
+          "value": "complaint_analysis",
+          "text": "Complaint Analysis"
+        },
+        {
+          "value": "root_cause_analysis",
+          "text": "Root Cause Analysis"
+        },
+        {
+          "value": "spare_parts_consumption",
+          "text": "Spare Parts Consumption"
+        },
+        {
+          "value": "maintenance_cost",
+          "text": "Maintenance Cost"
+        },
+        {
+          "value": "asset_history",
+          "text": "Asset History"
+        }
+      ],
+      "rptDivision": [
+        {
+          "value": "",
+          "text": "All Divisions"
+        },
+        {
+          "value": "DIV001",
+          "text": "Spoke Division"
+        },
+        {
+          "value": "DIV002",
+          "text": "Control Cable Division"
+        }
+      ],
+      "rptSection": [
+        {
+          "value": "",
+          "text": "All Sections"
+        },
+        {
+          "value": "SEC001",
+          "text": "Admin"
+        },
+        {
+          "value": "SEC002",
+          "text": "Spoke"
+        },
+        {
+          "value": "SEC003",
+          "text": "Nipple"
+        },
+        {
+          "value": "SEC004",
+          "text": "Auto Plating"
+        },
+        {
+          "value": "SEC005",
+          "text": "SPD Packing"
+        },
+        {
+          "value": "SEC006",
+          "text": "Spiral"
+        },
+        {
+          "value": "SEC007",
+          "text": "PVC"
+        },
+        {
+          "value": "SEC008",
+          "text": "CCD Packing"
+        },
+        {
+          "value": "SEC009",
+          "text": "Maintenance"
+        }
+      ],
+      "rptDepartment": [
+        {
+          "value": "",
+          "text": "All Departments"
+        },
+        {
+          "value": "DEPT001",
+          "text": "Admin"
+        },
+        {
+          "value": "DEPT002",
+          "text": "Straightener"
+        },
+        {
+          "value": "DEPT003",
+          "text": "Swagging"
+        },
+        {
+          "value": "DEPT004",
+          "text": "Spoke"
+        },
+        {
+          "value": "DEPT005",
+          "text": "Spoke Plating"
+        },
+        {
+          "value": "DEPT006",
+          "text": "Header"
+        },
+        {
+          "value": "DEPT007",
+          "text": "Nipple"
+        },
+        {
+          "value": "DEPT008",
+          "text": "Nipple Plating"
+        },
+        {
+          "value": "DEPT009",
+          "text": "Spoke Packing"
+        },
+        {
+          "value": "DEPT010",
+          "text": "Flattening"
+        },
+        {
+          "value": "DEPT011",
+          "text": "Spiral"
+        },
+        {
+          "value": "DEPT012",
+          "text": "PVC"
+        },
+        {
+          "value": "DEPT013",
+          "text": "CCD Packing"
+        },
+        {
+          "value": "DEPT014",
+          "text": "Facility Maintenance"
+        }
+      ],
+      "rptMachineNumber": [
+        {
+          "value": "",
+          "text": "All Machines"
+        },
+        {
+          "value": "APS-01",
+          "text": "APS-01 — Spoke Plating"
+        },
+        {
+          "value": "APS-01",
+          "text": "APS-01 — Nipple Plating"
+        },
+        {
+          "value": "BL # 01",
+          "text": "BL # 01 — Barrel"
+        },
+        {
+          "value": "BL # 02",
+          "text": "BL # 02 — Barrel"
+        },
+        {
+          "value": "BL # 03",
+          "text": "BL # 03 — Barrel"
+        },
+        {
+          "value": "BL # 04",
+          "text": "BL # 04 — Barrel"
+        },
+        {
+          "value": "BL # 05",
+          "text": "BL # 05 — Barrel"
+        },
+        {
+          "value": "BL # 06",
+          "text": "BL # 06 — Barrel"
+        },
+        {
+          "value": "BL # 07",
+          "text": "BL # 07 — Barrel"
+        },
+        {
+          "value": "BL # 08",
+          "text": "BL # 08 — Barrel"
+        },
+        {
+          "value": "BL # 09",
+          "text": "BL # 09 — Barrel"
+        },
+        {
+          "value": "BL # 10",
+          "text": "BL # 10 — Barrel"
+        },
+        {
+          "value": "BL # 11",
+          "text": "BL # 11 — Barrel"
+        },
+        {
+          "value": "BL # 12",
+          "text": "BL # 12 — Barrel"
+        },
+        {
+          "value": "FT# 01",
+          "text": "FT# 01 — Flattening"
+        },
+        {
+          "value": "FT# 02",
+          "text": "FT# 02 — Flattening"
+        },
+        {
+          "value": "FT# 03",
+          "text": "FT# 03 — Flattening"
+        },
+        {
+          "value": "FT# 04",
+          "text": "FT# 04 — Flattening"
+        },
+        {
+          "value": "FT# 05",
+          "text": "FT# 05 — Flattening"
+        },
+        {
+          "value": "PK # 01",
+          "text": "PK # 01 — Packing"
+        },
+        {
+          "value": "PK # 02",
+          "text": "PK # 02 — Packing"
+        },
+        {
+          "value": "PKS # 01",
+          "text": "PKS # 01 — Packing"
+        },
+        {
+          "value": "PKS # 02",
+          "text": "PKS # 02 — Packing"
+        },
+        {
+          "value": "PVC # 01",
+          "text": "PVC # 01 — PVC"
+        },
+        {
+          "value": "PVC # 02",
+          "text": "PVC # 02 — PVC"
+        },
+        {
+          "value": "SP # 01",
+          "text": "SP # 01 — Straightener"
+        },
+        {
+          "value": "SP # 01",
+          "text": "SP # 01 — Spoke"
+        },
+        {
+          "value": "SP # 02",
+          "text": "SP # 02 — Straightener"
+        },
+        {
+          "value": "SP # 02",
+          "text": "SP # 02 — Spoke"
+        },
+        {
+          "value": "SP # 03",
+          "text": "SP # 03 — Straightener"
+        },
+        {
+          "value": "SP # 03",
+          "text": "SP # 03 — Spoke"
+        },
+        {
+          "value": "SP # 04",
+          "text": "SP # 04 — Straightener"
+        },
+        {
+          "value": "SP # 04",
+          "text": "SP # 04 — Spoke"
+        },
+        {
+          "value": "SP # 05",
+          "text": "SP # 05 — Straightener"
+        },
+        {
+          "value": "SP # 05",
+          "text": "SP # 05 — Spoke"
+        },
+        {
+          "value": "SP # 06",
+          "text": "SP # 06 — Spoke"
+        },
+        {
+          "value": "SP # 07",
+          "text": "SP # 07 — Spoke"
+        },
+        {
+          "value": "SP# 01",
+          "text": "SP# 01 — Spiral"
+        },
+        {
+          "value": "SP# 02",
+          "text": "SP# 02 — Spiral"
+        },
+        {
+          "value": "SP# 03",
+          "text": "SP# 03 — Spiral"
+        },
+        {
+          "value": "SP# 04",
+          "text": "SP# 04 — Spiral"
+        },
+        {
+          "value": "SP# 05",
+          "text": "SP# 05 — Spiral"
+        },
+        {
+          "value": "SP# 06",
+          "text": "SP# 06 — Spiral"
+        },
+        {
+          "value": "SP# 07",
+          "text": "SP# 07 — Spiral"
+        },
+        {
+          "value": "SP# 08",
+          "text": "SP# 08 — Spiral"
+        },
+        {
+          "value": "SP# 09",
+          "text": "SP# 09 — Spiral"
+        },
+        {
+          "value": "SP# 10",
+          "text": "SP# 10 — Spiral"
+        },
+        {
+          "value": "SP# 11",
+          "text": "SP# 11 — Spiral"
+        },
+        {
+          "value": "SP# 12",
+          "text": "SP# 12 — Spiral"
+        },
+        {
+          "value": "SP# 13",
+          "text": "SP# 13 — Spiral"
+        },
+        {
+          "value": "SP# 14",
+          "text": "SP# 14 — Spiral"
+        },
+        {
+          "value": "SW # 01",
+          "text": "SW # 01 — Swagging"
+        },
+        {
+          "value": "SW # 02",
+          "text": "SW # 02 — Swagging"
+        },
+        {
+          "value": "SW # 03",
+          "text": "SW # 03 — Swagging"
+        },
+        {
+          "value": "SW # 04",
+          "text": "SW # 04 — Swagging"
+        },
+        {
+          "value": "SW # 05",
+          "text": "SW # 05 — Swagging"
+        },
+        {
+          "value": "SW # 06",
+          "text": "SW # 06 — Swagging"
+        }
+      ],
+      "rptTechnician": [
+        {
+          "value": "",
+          "text": "All Technicians"
+        },
+        {
+          "value": "ARIF",
+          "text": "ARIF"
+        },
+        {
+          "value": "ARSALAN",
+          "text": "ARSALAN"
+        },
+        {
+          "value": "ASHRAF",
+          "text": "ASHRAF"
+        },
+        {
+          "value": "JAVED",
+          "text": "JAVED"
+        },
+        {
+          "value": "MEHMOUD",
+          "text": "MEHMOUD"
+        },
+        {
+          "value": "MOEES",
+          "text": "MOEES"
+        },
+        {
+          "value": "ZUBAIR",
+          "text": "ZUBAIR"
+        }
+      ],
+      "rptMaintType": [
+        {
+          "value": "",
+          "text": "All Types"
+        },
+        {
+          "value": "All",
+          "text": "All"
+        },
+        {
+          "value": "Breakdown",
+          "text": "Breakdown"
+        },
+        {
+          "value": "Preventive",
+          "text": "Preventive"
+        },
+        {
+          "value": "Electrical",
+          "text": "Electrical"
+        },
+        {
+          "value": "Mechanical",
+          "text": "Mechanical"
+        },
+        {
+          "value": "Corrective",
+          "text": "Corrective"
+        },
+        {
+          "value": "Emergency",
+          "text": "Emergency"
+        },
+        {
+          "value": "Routine",
+          "text": "Routine"
+        }
+      ],
+      "rptPriority": [
+        {
+          "value": "",
+          "text": "All Priorities"
+        },
+        {
+          "value": "Medium",
+          "text": "Medium"
+        },
+        {
+          "value": "Low",
+          "text": "Low"
+        },
+        {
+          "value": "Critical",
+          "text": "Critical"
+        },
+        {
+          "value": "High",
+          "text": "High"
+        }
+      ],
+      "rptStatus": [
+        {
+          "value": "",
+          "text": "All Statuses"
+        },
+        {
+          "value": "APPROVED",
+          "text": "APPROVED"
+        },
+        {
+          "value": "PENDING",
+          "text": "PENDING"
+        },
+        {
+          "value": "RUNNING",
+          "text": "RUNNING"
+        },
+        {
+          "value": "OPEN",
+          "text": "OPEN"
+        }
+      ]
+    },
+    "styles": {
+      "label": {
+        "font": "Inter",
+        "size": "11px",
+        "weight": "400",
+        "color": "rgb(92, 96, 133)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "height": "14px"
+      },
+      "select": {
+        "font": "Inter",
+        "size": "13px",
+        "weight": "400",
+        "color": "rgb(238, 240, 246)",
+        "bg": "rgb(26, 29, 49)",
+        "height": "36px"
+      },
+      "dateInput": {
+        "font": "Inter",
+        "size": "13px",
+        "weight": "400",
+        "color": "rgb(238, 240, 246)",
+        "bg": "rgb(26, 29, 49)",
+        "height": "38px"
+      }
+    },
+    "loading": [],
+    "title": "PWI CMMS",
+    "shots": {
+      "filterPanel": "D:\\CLASP\\CMMS\\PWI-Maintanance\\verify_shots\\side_by_side_CF_reports.png"
+    },
+    "cascade": {
+      "divisionCount": 2,
+      "after120ms": {
+        "division": "DIV001",
+        "sectionOpts": [
+          "All Sections",
+          "Admin",
+          "Spoke",
+          "Nipple",
+          "Auto Plating",
+          "SPD Packing",
+          "Maintenance"
+        ],
+        "deptOpts": [
+          "All Departments",
+          "Admin",
+          "Straightener",
+          "Swagging",
+          "Spoke",
+          "Spoke Plating",
+          "Header",
+          "Nipple",
+          "Nipple Plating",
+          "Spoke Packing",
+          "Facility Maintenance"
+        ],
+        "machOpts": [
+          "All Machines",
+          "APS-01 — Spoke Plating",
+          "APS-01 — Nipple Plating",
+          "BL # 01 — Barrel",
+          "BL # 02 — Barrel",
+          "BL # 03 — Barrel"
+        ]
+      },
+      "settleMs": 3020,
+      "seenLoading": false,
+      "settled": {
+        "division": "DIV001",
+        "sectionCount": 6,
+        "sectionValues": [
+          "SEC001",
+          "SEC002",
+          "SEC003",
+          "SEC004",
+          "SEC005",
+          "SEC009"
+        ],
+        "deptCount": 10,
+        "deptLabels": [
+          "All Departments",
+          "Admin",
+          "Straightener",
+          "Swagging",
+          "Spoke",
+          "Spoke Plating",
+          "Header",
+          "Nipple",
+          "Nipple Plating",
+          "Spoke Packing",
+          "Facility Maintenance"
+        ],
+        "machCount": 34,
+        "hasLoading": false
+      },
+      "afterSection300ms": {
+        "section": "SEC002",
+        "deptOpts": [
+          "All Departments",
+          "Straightener",
+          "Swagging",
+          "Spoke"
+        ],
+        "machOpts": [
+          "All Machines",
+          "SP # 01 — Straightener",
+          "SP # 02 — Straightener",
+          "SP # 02 — Spoke",
+          "SP # 03 — Straightener",
+          "SP # 03 — Spoke"
+        ]
+      },
+      "sectionSettleMs": 3024,
+      "sectionSettled": {
+        "section": "SEC002",
+        "division": "DIV001",
+        "deptCount": 3,
+        "deptLabels": [
+          "All Departments",
+          "Straightener",
+          "Swagging",
+          "Spoke"
+        ],
+        "machCount": 11,
+        "machLabels": [
+          "All Machines",
+          "SP # 01 — Straightener",
+          "SP # 02 — Straightener",
+          "SP # 02 — Spoke",
+          "SP # 03 — Straightener",
+          "SP # 03 — Spoke",
+          "SP # 04 — Straightener",
+          "SP # 04 — Spoke"
+        ]
+      }
+    },
+    "masterCallsBeforeNav": 5,
+    "masterCallsAfterNav": 5,
+    "navDelta": 0,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiCalls": {
+      "login": 1,
+      "getDepartmentList": 1,
+      "getSectionList": 1,
+      "getMachines": 1,
+      "getReportFilterOptions": 1,
+      "getMachineCascade": 1,
+      "getDashboardData": 2,
+      "getAuditLogs": 2,
+      "getDashboardNotifications": 2,
+      "getInventoryDashboardData": 1,
+      "getSpareParts": 1,
+      "getAssets": 1,
+      "getSidebarCounts": 1
+    },
+    "summary": {
+      "rptType": {
+        "total": 20,
+        "nonEmpty": 19,
+        "values": [
+          "machine_history",
+          "breakdown_history",
+          "preventive_maintenance",
+          "technician_performance",
+          "department_performance",
+          "machine_performance",
+          "machine_utilization",
+          "mttr",
+          "mtbf",
+          "availability",
+          "pending_jobs",
+          "closed_jobs",
+          "approval_history",
+          "downtime_analysis",
+          "complaint_analysis",
+          "root_cause_analysis",
+          "spare_parts_consumption",
+          "maintenance_cost",
+          "asset_history"
+        ],
+        "labels": [
+          "Machine History",
+          "Breakdown History",
+          "Preventive Maintenance",
+          "Technician Performance",
+          "Department Performance",
+          "Machine Performance",
+          "Machine Utilization",
+          "MTTR Report",
+          "MTBF Report",
+          "Availability Report",
+          "Pending Jobs",
+          "Closed Jobs",
+          "Approval History",
+          "Downtime Analysis",
+          "Complaint Analysis",
+          "Root Cause Analysis",
+          "Spare Parts Consumption",
+          "Maintenance Cost",
+          "Asset History"
+        ]
+      },
+      "rptDivision": {
+        "total": 3,
+        "nonEmpty": 2,
+        "values": [
+          "DIV001",
+          "DIV002"
+        ],
+        "labels": [
+          "Spoke Division",
+          "Control Cable Division"
+        ]
+      },
+      "rptSection": {
+        "total": 10,
+        "nonEmpty": 9,
+        "values": [
+          "SEC001",
+          "SEC002",
+          "SEC003",
+          "SEC004",
+          "SEC005",
+          "SEC006",
+          "SEC007",
+          "SEC008",
+          "SEC009"
+        ],
+        "labels": [
+          "Admin",
+          "Spoke",
+          "Nipple",
+          "Auto Plating",
+          "SPD Packing",
+          "Spiral",
+          "PVC",
+          "CCD Packing",
+          "Maintenance"
+        ]
+      },
+      "rptDepartment": {
+        "total": 15,
+        "nonEmpty": 14,
+        "values": [
+          "DEPT001",
+          "DEPT002",
+          "DEPT003",
+          "DEPT004",
+          "DEPT005",
+          "DEPT006",
+          "DEPT007",
+          "DEPT008",
+          "DEPT009",
+          "DEPT010",
+          "DEPT011",
+          "DEPT012",
+          "DEPT013",
+          "DEPT014"
+        ],
+        "labels": [
+          "Admin",
+          "Straightener",
+          "Swagging",
+          "Spoke",
+          "Spoke Plating",
+          "Header",
+          "Nipple",
+          "Nipple Plating",
+          "Spoke Packing",
+          "Flattening",
+          "Spiral",
+          "PVC",
+          "CCD Packing",
+          "Facility Maintenance"
+        ]
+      },
+      "rptMachineNumber": {
+        "total": 58,
+        "nonEmpty": 57,
+        "values": [
+          "APS-01",
+          "APS-01",
+          "BL # 01",
+          "BL # 02",
+          "BL # 03",
+          "BL # 04",
+          "BL # 05",
+          "BL # 06",
+          "BL # 07",
+          "BL # 08",
+          "BL # 09",
+          "BL # 10",
+          "BL # 11",
+          "BL # 12",
+          "FT# 01",
+          "FT# 02",
+          "FT# 03",
+          "FT# 04",
+          "FT# 05",
+          "PK # 01",
+          "PK # 02",
+          "PKS # 01",
+          "PKS # 02",
+          "PVC # 01",
+          "PVC # 02",
+          "SP # 01",
+          "SP # 01",
+          "SP # 02",
+          "SP # 02",
+          "SP # 03",
+          "SP # 03",
+          "SP # 04",
+          "SP # 04",
+          "SP # 05",
+          "SP # 05",
+          "SP # 06",
+          "SP # 07",
+          "SP# 01",
+          "SP# 02",
+          "SP# 03",
+          "SP# 04",
+          "SP# 05",
+          "SP# 06",
+          "SP# 07",
+          "SP# 08",
+          "SP# 09",
+          "SP# 10",
+          "SP# 11",
+          "SP# 12",
+          "SP# 13",
+          "SP# 14",
+          "SW # 01",
+          "SW # 02",
+          "SW # 03",
+          "SW # 04",
+          "SW # 05",
+          "SW # 06"
+        ],
+        "labels": [
+          "APS-01 — Spoke Plating",
+          "APS-01 — Nipple Plating",
+          "BL # 01 — Barrel",
+          "BL # 02 — Barrel",
+          "BL # 03 — Barrel",
+          "BL # 04 — Barrel",
+          "BL # 05 — Barrel",
+          "BL # 06 — Barrel",
+          "BL # 07 — Barrel",
+          "BL # 08 — Barrel",
+          "BL # 09 — Barrel",
+          "BL # 10 — Barrel",
+          "BL # 11 — Barrel",
+          "BL # 12 — Barrel",
+          "FT# 01 — Flattening",
+          "FT# 02 — Flattening",
+          "FT# 03 — Flattening",
+          "FT# 04 — Flattening",
+          "FT# 05 — Flattening",
+          "PK # 01 — Packing",
+          "PK # 02 — Packing",
+          "PKS # 01 — Packing",
+          "PKS # 02 — Packing",
+          "PVC # 01 — PVC",
+          "PVC # 02 — PVC",
+          "SP # 01 — Straightener",
+          "SP # 01 — Spoke",
+          "SP # 02 — Straightener",
+          "SP # 02 — Spoke",
+          "SP # 03 — Straightener",
+          "SP # 03 — Spoke",
+          "SP # 04 — Straightener",
+          "SP # 04 — Spoke",
+          "SP # 05 — Straightener",
+          "SP # 05 — Spoke",
+          "SP # 06 — Spoke",
+          "SP # 07 — Spoke",
+          "SP# 01 — Spiral",
+          "SP# 02 — Spiral",
+          "SP# 03 — Spiral",
+          "SP# 04 — Spiral",
+          "SP# 05 — Spiral",
+          "SP# 06 — Spiral",
+          "SP# 07 — Spiral",
+          "SP# 08 — Spiral",
+          "SP# 09 — Spiral",
+          "SP# 10 — Spiral",
+          "SP# 11 — Spiral",
+          "SP# 12 — Spiral",
+          "SP# 13 — Spiral",
+          "SP# 14 — Spiral",
+          "SW # 01 — Swagging",
+          "SW # 02 — Swagging",
+          "SW # 03 — Swagging",
+          "SW # 04 — Swagging",
+          "SW # 05 — Swagging",
+          "SW # 06 — Swagging"
+        ]
+      },
+      "rptTechnician": {
+        "total": 8,
+        "nonEmpty": 7,
+        "values": [
+          "ARIF",
+          "ARSALAN",
+          "ASHRAF",
+          "JAVED",
+          "MEHMOUD",
+          "MOEES",
+          "ZUBAIR"
+        ],
+        "labels": [
+          "ARIF",
+          "ARSALAN",
+          "ASHRAF",
+          "JAVED",
+          "MEHMOUD",
+          "MOEES",
+          "ZUBAIR"
+        ]
+      },
+      "rptMaintType": {
+        "total": 9,
+        "nonEmpty": 8,
+        "values": [
+          "All",
+          "Breakdown",
+          "Preventive",
+          "Electrical",
+          "Mechanical",
+          "Corrective",
+          "Emergency",
+          "Routine"
+        ],
+        "labels": [
+          "All",
+          "Breakdown",
+          "Preventive",
+          "Electrical",
+          "Mechanical",
+          "Corrective",
+          "Emergency",
+          "Routine"
+        ]
+      },
+      "rptPriority": {
+        "total": 5,
+        "nonEmpty": 4,
+        "values": [
+          "Medium",
+          "Low",
+          "Critical",
+          "High"
+        ],
+        "labels": [
+          "Medium",
+          "Low",
+          "Critical",
+          "High"
+        ]
+      },
+      "rptStatus": {
+        "total": 5,
+        "nonEmpty": 4,
+        "values": [
+          "APPROVED",
+          "PENDING",
+          "RUNNING",
+          "OPEN"
+        ],
+        "labels": [
+          "APPROVED",
+          "PENDING",
+          "RUNNING",
+          "OPEN"
+        ]
+      }
+    }
+  },
+  "gas": {
+    "rows": [
+      {
+        "y": 203,
+        "labels": [
+          "Report Type",
+          "Division",
+          "Section",
+          "Department",
+          "Machine Number"
+        ]
+      },
+      {
+        "y": 268,
+        "labels": [
+          "Technician",
+          "Maintenance Type",
+          "Priority",
+          "Status",
+          "From Date",
+          "To Date"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "label": "Report Type",
+        "x": 129,
+        "y": 203,
+        "w": 242,
+        "h": 55,
+        "ctrlW": 242,
+        "ctrlH": 37
+      },
+      {
+        "label": "Division",
+        "x": 381,
+        "y": 203,
+        "w": 242,
+        "h": 55,
+        "ctrlW": 242,
+        "ctrlH": 37
+      },
+      {
+        "label": "Section",
+        "x": 633,
+        "y": 203,
+        "w": 242,
+        "h": 55,
+        "ctrlW": 242,
+        "ctrlH": 37
+      },
+      {
+        "label": "Department",
+        "x": 885,
+        "y": 203,
+        "w": 242,
+        "h": 55,
+        "ctrlW": 242,
+        "ctrlH": 37
+      },
+      {
+        "label": "Machine Number",
+        "x": 1137,
+        "y": 203,
+        "w": 242,
+        "h": 55,
+        "ctrlW": 242,
+        "ctrlH": 37
+      },
+      {
+        "label": "Technician",
+        "x": 129,
+        "y": 268,
+        "w": 200,
+        "h": 57,
+        "ctrlW": 200,
+        "ctrlH": 37
+      },
+      {
+        "label": "Maintenance Type",
+        "x": 339,
+        "y": 268,
+        "w": 200,
+        "h": 57,
+        "ctrlW": 200,
+        "ctrlH": 37
+      },
+      {
+        "label": "Priority",
+        "x": 549,
+        "y": 268,
+        "w": 200,
+        "h": 57,
+        "ctrlW": 200,
+        "ctrlH": 37
+      },
+      {
+        "label": "Status",
+        "x": 759,
+        "y": 268,
+        "w": 200,
+        "h": 57,
+        "ctrlW": 200,
+        "ctrlH": 37
+      },
+      {
+        "label": "From Date",
+        "x": 969,
+        "y": 268,
+        "w": 200,
+        "h": 57,
+        "ctrlW": 200,
+        "ctrlH": 39
+      },
+      {
+        "label": "To Date",
+        "x": 1179,
+        "y": 268,
+        "w": 200,
+        "h": 57,
+        "ctrlW": 200,
+        "ctrlH": 39
+      }
+    ],
+    "dropdowns": {
+      "rptType": [
+        {
+          "value": "",
+          "text": "Select Report Type"
+        },
+        {
+          "value": "machine_history",
+          "text": "Machine History"
+        },
+        {
+          "value": "breakdown_history",
+          "text": "Breakdown History"
+        },
+        {
+          "value": "preventive_maintenance",
+          "text": "Preventive Maintenance"
+        },
+        {
+          "value": "technician_performance",
+          "text": "Technician Performance"
+        },
+        {
+          "value": "department_performance",
+          "text": "Department Performance"
+        },
+        {
+          "value": "machine_performance",
+          "text": "Machine Performance"
+        },
+        {
+          "value": "machine_utilization",
+          "text": "Machine Utilization"
+        },
+        {
+          "value": "mttr",
+          "text": "MTTR Report"
+        },
+        {
+          "value": "mtbf",
+          "text": "MTBF Report"
+        },
+        {
+          "value": "availability",
+          "text": "Availability Report"
+        },
+        {
+          "value": "pending_jobs",
+          "text": "Pending Jobs"
+        },
+        {
+          "value": "closed_jobs",
+          "text": "Closed Jobs"
+        },
+        {
+          "value": "approval_history",
+          "text": "Approval History"
+        },
+        {
+          "value": "downtime_analysis",
+          "text": "Downtime Analysis"
+        },
+        {
+          "value": "complaint_analysis",
+          "text": "Complaint Analysis"
+        },
+        {
+          "value": "root_cause_analysis",
+          "text": "Root Cause Analysis"
+        },
+        {
+          "value": "spare_parts_consumption",
+          "text": "Spare Parts Consumption"
+        },
+        {
+          "value": "maintenance_cost",
+          "text": "Maintenance Cost"
+        },
+        {
+          "value": "asset_history",
+          "text": "Asset History"
+        }
+      ],
+      "rptDivision": [
+        {
+          "value": "",
+          "text": "All Divisions"
+        },
+        {
+          "value": "DIV001",
+          "text": "Spoke Division"
+        },
+        {
+          "value": "DIV002",
+          "text": "Control Cable Division"
+        }
+      ],
+      "rptSection": [
+        {
+          "value": "",
+          "text": "All Sections"
+        },
+        {
+          "value": "SEC001",
+          "text": "Admin"
+        },
+        {
+          "value": "SEC002",
+          "text": "Spoke"
+        },
+        {
+          "value": "SEC003",
+          "text": "Nipple"
+        },
+        {
+          "value": "SEC004",
+          "text": "Auto Plating"
+        },
+        {
+          "value": "SEC005",
+          "text": "SPD Packing"
+        },
+        {
+          "value": "SEC006",
+          "text": "Spiral"
+        },
+        {
+          "value": "SEC007",
+          "text": "PVC"
+        },
+        {
+          "value": "SEC008",
+          "text": "CCD Packing"
+        },
+        {
+          "value": "SEC009",
+          "text": "Maintenance"
+        }
+      ],
+      "rptDepartment": [
+        {
+          "value": "",
+          "text": "All Departments"
+        },
+        {
+          "value": "DEPT001",
+          "text": "Admin"
+        },
+        {
+          "value": "DEPT002",
+          "text": "Straightener"
+        },
+        {
+          "value": "DEPT003",
+          "text": "Swagging"
+        },
+        {
+          "value": "DEPT004",
+          "text": "Spoke"
+        },
+        {
+          "value": "DEPT005",
+          "text": "Spoke Plating"
+        },
+        {
+          "value": "DEPT006",
+          "text": "Header"
+        },
+        {
+          "value": "DEPT007",
+          "text": "Nipple"
+        },
+        {
+          "value": "DEPT008",
+          "text": "Nipple Plating"
+        },
+        {
+          "value": "DEPT009",
+          "text": "Spoke Packing"
+        },
+        {
+          "value": "DEPT010",
+          "text": "Flattening"
+        },
+        {
+          "value": "DEPT011",
+          "text": "Spiral"
+        },
+        {
+          "value": "DEPT012",
+          "text": "PVC"
+        },
+        {
+          "value": "DEPT013",
+          "text": "CCD Packing"
+        },
+        {
+          "value": "DEPT014",
+          "text": "Facility Maintenance"
+        }
+      ],
+      "rptMachineNumber": [
+        {
+          "value": "",
+          "text": "All Machines"
+        },
+        {
+          "value": "APS-01",
+          "text": "APS-01 — Spoke Plating"
+        },
+        {
+          "value": "APS-01",
+          "text": "APS-01 — Nipple Plating"
+        },
+        {
+          "value": "BL # 01",
+          "text": "BL # 01 — Barrel"
+        },
+        {
+          "value": "BL # 02",
+          "text": "BL # 02 — Barrel"
+        },
+        {
+          "value": "BL # 03",
+          "text": "BL # 03 — Barrel"
+        },
+        {
+          "value": "BL # 04",
+          "text": "BL # 04 — Barrel"
+        },
+        {
+          "value": "BL # 05",
+          "text": "BL # 05 — Barrel"
+        },
+        {
+          "value": "BL # 06",
+          "text": "BL # 06 — Barrel"
+        },
+        {
+          "value": "BL # 07",
+          "text": "BL # 07 — Barrel"
+        },
+        {
+          "value": "BL # 08",
+          "text": "BL # 08 — Barrel"
+        },
+        {
+          "value": "BL # 09",
+          "text": "BL # 09 — Barrel"
+        },
+        {
+          "value": "BL # 10",
+          "text": "BL # 10 — Barrel"
+        },
+        {
+          "value": "BL # 11",
+          "text": "BL # 11 — Barrel"
+        },
+        {
+          "value": "BL # 12",
+          "text": "BL # 12 — Barrel"
+        },
+        {
+          "value": "FT# 01",
+          "text": "FT# 01 — Flattening"
+        },
+        {
+          "value": "FT# 02",
+          "text": "FT# 02 — Flattening"
+        },
+        {
+          "value": "FT# 03",
+          "text": "FT# 03 — Flattening"
+        },
+        {
+          "value": "FT# 04",
+          "text": "FT# 04 — Flattening"
+        },
+        {
+          "value": "FT# 05",
+          "text": "FT# 05 — Flattening"
+        },
+        {
+          "value": "PK # 01",
+          "text": "PK # 01 — Packing"
+        },
+        {
+          "value": "PK # 02",
+          "text": "PK # 02 — Packing"
+        },
+        {
+          "value": "PKS # 01",
+          "text": "PKS # 01 — Packing"
+        },
+        {
+          "value": "PKS # 02",
+          "text": "PKS # 02 — Packing"
+        },
+        {
+          "value": "PVC # 01",
+          "text": "PVC # 01 — PVC"
+        },
+        {
+          "value": "PVC # 02",
+          "text": "PVC # 02 — PVC"
+        },
+        {
+          "value": "SP # 01",
+          "text": "SP # 01 — Straightener"
+        },
+        {
+          "value": "SP # 01",
+          "text": "SP # 01 — Spoke"
+        },
+        {
+          "value": "SP # 02",
+          "text": "SP # 02 — Straightener"
+        },
+        {
+          "value": "SP # 02",
+          "text": "SP # 02 — Spoke"
+        },
+        {
+          "value": "SP # 03",
+          "text": "SP # 03 — Straightener"
+        },
+        {
+          "value": "SP # 03",
+          "text": "SP # 03 — Spoke"
+        },
+        {
+          "value": "SP # 04",
+          "text": "SP # 04 — Straightener"
+        },
+        {
+          "value": "SP # 04",
+          "text": "SP # 04 — Spoke"
+        },
+        {
+          "value": "SP # 05",
+          "text": "SP # 05 — Straightener"
+        },
+        {
+          "value": "SP # 05",
+          "text": "SP # 05 — Spoke"
+        },
+        {
+          "value": "SP # 06",
+          "text": "SP # 06 — Spoke"
+        },
+        {
+          "value": "SP # 07",
+          "text": "SP # 07 — Spoke"
+        },
+        {
+          "value": "SP# 01",
+          "text": "SP# 01 — Spiral"
+        },
+        {
+          "value": "SP# 02",
+          "text": "SP# 02 — Spiral"
+        },
+        {
+          "value": "SP# 03",
+          "text": "SP# 03 — Spiral"
+        },
+        {
+          "value": "SP# 04",
+          "text": "SP# 04 — Spiral"
+        },
+        {
+          "value": "SP# 05",
+          "text": "SP# 05 — Spiral"
+        },
+        {
+          "value": "SP# 06",
+          "text": "SP# 06 — Spiral"
+        },
+        {
+          "value": "SP# 07",
+          "text": "SP# 07 — Spiral"
+        },
+        {
+          "value": "SP# 08",
+          "text": "SP# 08 — Spiral"
+        },
+        {
+          "value": "SP# 09",
+          "text": "SP# 09 — Spiral"
+        },
+        {
+          "value": "SP# 10",
+          "text": "SP# 10 — Spiral"
+        },
+        {
+          "value": "SP# 11",
+          "text": "SP# 11 — Spiral"
+        },
+        {
+          "value": "SP# 12",
+          "text": "SP# 12 — Spiral"
+        },
+        {
+          "value": "SP# 13",
+          "text": "SP# 13 — Spiral"
+        },
+        {
+          "value": "SP# 14",
+          "text": "SP# 14 — Spiral"
+        },
+        {
+          "value": "SW # 01",
+          "text": "SW # 01 — Swagging"
+        },
+        {
+          "value": "SW # 02",
+          "text": "SW # 02 — Swagging"
+        },
+        {
+          "value": "SW # 03",
+          "text": "SW # 03 — Swagging"
+        },
+        {
+          "value": "SW # 04",
+          "text": "SW # 04 — Swagging"
+        },
+        {
+          "value": "SW # 05",
+          "text": "SW # 05 — Swagging"
+        },
+        {
+          "value": "SW # 06",
+          "text": "SW # 06 — Swagging"
+        }
+      ],
+      "rptTechnician": [
+        {
+          "value": "",
+          "text": "All Technicians"
+        },
+        {
+          "value": "ARIF",
+          "text": "ARIF"
+        },
+        {
+          "value": "ARSALAN",
+          "text": "ARSALAN"
+        },
+        {
+          "value": "ASHRAF",
+          "text": "ASHRAF"
+        },
+        {
+          "value": "JAVED",
+          "text": "JAVED"
+        },
+        {
+          "value": "MEHMOUD",
+          "text": "MEHMOUD"
+        },
+        {
+          "value": "MOEES",
+          "text": "MOEES"
+        },
+        {
+          "value": "ZUBAIR",
+          "text": "ZUBAIR"
+        }
+      ],
+      "rptMaintType": [
+        {
+          "value": "",
+          "text": "All Types"
+        },
+        {
+          "value": "All",
+          "text": "All"
+        },
+        {
+          "value": "Breakdown",
+          "text": "Breakdown"
+        },
+        {
+          "value": "Preventive",
+          "text": "Preventive"
+        },
+        {
+          "value": "Electrical",
+          "text": "Electrical"
+        },
+        {
+          "value": "Mechanical",
+          "text": "Mechanical"
+        },
+        {
+          "value": "Corrective",
+          "text": "Corrective"
+        },
+        {
+          "value": "Emergency",
+          "text": "Emergency"
+        },
+        {
+          "value": "Routine",
+          "text": "Routine"
+        }
+      ],
+      "rptPriority": [
+        {
+          "value": "",
+          "text": "All Priorities"
+        },
+        {
+          "value": "Medium",
+          "text": "Medium"
+        },
+        {
+          "value": "Low",
+          "text": "Low"
+        },
+        {
+          "value": "Critical",
+          "text": "Critical"
+        },
+        {
+          "value": "High",
+          "text": "High"
+        }
+      ],
+      "rptStatus": [
+        {
+          "value": "",
+          "text": "All Statuses"
+        },
+        {
+          "value": "APPROVED",
+          "text": "APPROVED"
+        },
+        {
+          "value": "PENDING",
+          "text": "PENDING"
+        },
+        {
+          "value": "RUNNING",
+          "text": "RUNNING"
+        },
+        {
+          "value": "OPEN",
+          "text": "OPEN"
+        }
+      ]
+    },
+    "styles": {
+      "label": {
+        "font": "Inter",
+        "size": "11px",
+        "weight": "400",
+        "color": "rgb(92, 96, 133)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "height": "15px"
+      },
+      "select": {
+        "font": "Inter",
+        "size": "13px",
+        "weight": "400",
+        "color": "rgb(238, 240, 246)",
+        "bg": "rgb(26, 29, 49)",
+        "height": "37px"
+      },
+      "dateInput": {
+        "font": "Inter",
+        "size": "13px",
+        "weight": "400",
+        "color": "rgb(238, 240, 246)",
+        "bg": "rgb(26, 29, 49)",
+        "height": "39px"
+      }
+    },
+    "loading": [],
+    "title": "",
+    "shots": {
+      "filterPanel": "D:\\CLASP\\CMMS\\PWI-Maintanance\\verify_shots\\side_by_side_GAS_reports.png"
+    },
+    "cascade": {
+      "divisionCount": 2,
+      "after120ms": {
+        "division": "DIV001",
+        "sectionOpts": [
+          "Loading..."
+        ],
+        "deptOpts": [
+          "Loading..."
+        ],
+        "machOpts": [
+          "Loading..."
+        ]
+      },
+      "settleMs": 7133,
+      "seenLoading": true,
+      "settled": {
+        "division": "DIV001",
+        "sectionCount": 6,
+        "sectionValues": [
+          "SEC001",
+          "SEC002",
+          "SEC003",
+          "SEC004",
+          "SEC005",
+          "SEC009"
+        ],
+        "deptCount": 10,
+        "deptLabels": [
+          "All Departments",
+          "Admin",
+          "Straightener",
+          "Swagging",
+          "Spoke",
+          "Spoke Plating",
+          "Header",
+          "Nipple",
+          "Nipple Plating",
+          "Spoke Packing",
+          "Facility Maintenance"
+        ],
+        "machCount": 34,
+        "hasLoading": false
+      },
+      "afterSection300ms": {
+        "section": "SEC002",
+        "deptOpts": [
+          "Loading..."
+        ],
+        "machOpts": [
+          "Loading..."
+        ]
+      },
+      "sectionSettleMs": 7067,
+      "sectionSettled": {
+        "section": "SEC002",
+        "division": "DIV001",
+        "deptCount": 3,
+        "deptLabels": [
+          "All Departments",
+          "Straightener",
+          "Swagging",
+          "Spoke"
+        ],
+        "machCount": 11,
+        "machLabels": [
+          "All Machines",
+          "SP # 01 — Straightener",
+          "SP # 02 — Straightener",
+          "SP # 02 — Spoke",
+          "SP # 03 — Straightener",
+          "SP # 03 — Spoke",
+          "SP # 04 — Straightener",
+          "SP # 04 — Spoke"
+        ]
+      }
+    },
+    "consoleErrors": [],
+    "pageErrors": [],
+    "summary": {
+      "rptType": {
+        "total": 20,
+        "nonEmpty": 19,
+        "values": [
+          "machine_history",
+          "breakdown_history",
+          "preventive_maintenance",
+          "technician_performance",
+          "department_performance",
+          "machine_performance",
+          "machine_utilization",
+          "mttr",
+          "mtbf",
+          "availability",
+          "pending_jobs",
+          "closed_jobs",
+          "approval_history",
+          "downtime_analysis",
+          "complaint_analysis",
+          "root_cause_analysis",
+          "spare_parts_consumption",
+          "maintenance_cost",
+          "asset_history"
+        ],
+        "labels": [
+          "Machine History",
+          "Breakdown History",
+          "Preventive Maintenance",
+          "Technician Performance",
+          "Department Performance",
+          "Machine Performance",
+          "Machine Utilization",
+          "MTTR Report",
+          "MTBF Report",
+          "Availability Report",
+          "Pending Jobs",
+          "Closed Jobs",
+          "Approval History",
+          "Downtime Analysis",
+          "Complaint Analysis",
+          "Root Cause Analysis",
+          "Spare Parts Consumption",
+          "Maintenance Cost",
+          "Asset History"
+        ]
+      },
+      "rptDivision": {
+        "total": 3,
+        "nonEmpty": 2,
+        "values": [
+          "DIV001",
+          "DIV002"
+        ],
+        "labels": [
+          "Spoke Division",
+          "Control Cable Division"
+        ]
+      },
+      "rptSection": {
+        "total": 10,
+        "nonEmpty": 9,
+        "values": [
+          "SEC001",
+          "SEC002",
+          "SEC003",
+          "SEC004",
+          "SEC005",
+          "SEC006",
+          "SEC007",
+          "SEC008",
+          "SEC009"
+        ],
+        "labels": [
+          "Admin",
+          "Spoke",
+          "Nipple",
+          "Auto Plating",
+          "SPD Packing",
+          "Spiral",
+          "PVC",
+          "CCD Packing",
+          "Maintenance"
+        ]
+      },
+      "rptDepartment": {
+        "total": 15,
+        "nonEmpty": 14,
+        "values": [
+          "DEPT001",
+          "DEPT002",
+          "DEPT003",
+          "DEPT004",
+          "DEPT005",
+          "DEPT006",
+          "DEPT007",
+          "DEPT008",
+          "DEPT009",
+          "DEPT010",
+          "DEPT011",
+          "DEPT012",
+          "DEPT013",
+          "DEPT014"
+        ],
+        "labels": [
+          "Admin",
+          "Straightener",
+          "Swagging",
+          "Spoke",
+          "Spoke Plating",
+          "Header",
+          "Nipple",
+          "Nipple Plating",
+          "Spoke Packing",
+          "Flattening",
+          "Spiral",
+          "PVC",
+          "CCD Packing",
+          "Facility Maintenance"
+        ]
+      },
+      "rptMachineNumber": {
+        "total": 58,
+        "nonEmpty": 57,
+        "values": [
+          "APS-01",
+          "APS-01",
+          "BL # 01",
+          "BL # 02",
+          "BL # 03",
+          "BL # 04",
+          "BL # 05",
+          "BL # 06",
+          "BL # 07",
+          "BL # 08",
+          "BL # 09",
+          "BL # 10",
+          "BL # 11",
+          "BL # 12",
+          "FT# 01",
+          "FT# 02",
+          "FT# 03",
+          "FT# 04",
+          "FT# 05",
+          "PK # 01",
+          "PK # 02",
+          "PKS # 01",
+          "PKS # 02",
+          "PVC # 01",
+          "PVC # 02",
+          "SP # 01",
+          "SP # 01",
+          "SP # 02",
+          "SP # 02",
+          "SP # 03",
+          "SP # 03",
+          "SP # 04",
+          "SP # 04",
+          "SP # 05",
+          "SP # 05",
+          "SP # 06",
+          "SP # 07",
+          "SP# 01",
+          "SP# 02",
+          "SP# 03",
+          "SP# 04",
+          "SP# 05",
+          "SP# 06",
+          "SP# 07",
+          "SP# 08",
+          "SP# 09",
+          "SP# 10",
+          "SP# 11",
+          "SP# 12",
+          "SP# 13",
+          "SP# 14",
+          "SW # 01",
+          "SW # 02",
+          "SW # 03",
+          "SW # 04",
+          "SW # 05",
+          "SW # 06"
+        ],
+        "labels": [
+          "APS-01 — Spoke Plating",
+          "APS-01 — Nipple Plating",
+          "BL # 01 — Barrel",
+          "BL # 02 — Barrel",
+          "BL # 03 — Barrel",
+          "BL # 04 — Barrel",
+          "BL # 05 — Barrel",
+          "BL # 06 — Barrel",
+          "BL # 07 — Barrel",
+          "BL # 08 — Barrel",
+          "BL # 09 — Barrel",
+          "BL # 10 — Barrel",
+          "BL # 11 — Barrel",
+          "BL # 12 — Barrel",
+          "FT# 01 — Flattening",
+          "FT# 02 — Flattening",
+          "FT# 03 — Flattening",
+          "FT# 04 — Flattening",
+          "FT# 05 — Flattening",
+          "PK # 01 — Packing",
+          "PK # 02 — Packing",
+          "PKS # 01 — Packing",
+          "PKS # 02 — Packing",
+          "PVC # 01 — PVC",
+          "PVC # 02 — PVC",
+          "SP # 01 — Straightener",
+          "SP # 01 — Spoke",
+          "SP # 02 — Straightener",
+          "SP # 02 — Spoke",
+          "SP # 03 — Straightener",
+          "SP # 03 — Spoke",
+          "SP # 04 — Straightener",
+          "SP # 04 — Spoke",
+          "SP # 05 — Straightener",
+          "SP # 05 — Spoke",
+          "SP # 06 — Spoke",
+          "SP # 07 — Spoke",
+          "SP# 01 — Spiral",
+          "SP# 02 — Spiral",
+          "SP# 03 — Spiral",
+          "SP# 04 — Spiral",
+          "SP# 05 — Spiral",
+          "SP# 06 — Spiral",
+          "SP# 07 — Spiral",
+          "SP# 08 — Spiral",
+          "SP# 09 — Spiral",
+          "SP# 10 — Spiral",
+          "SP# 11 — Spiral",
+          "SP# 12 — Spiral",
+          "SP# 13 — Spiral",
+          "SP# 14 — Spiral",
+          "SW # 01 — Swagging",
+          "SW # 02 — Swagging",
+          "SW # 03 — Swagging",
+          "SW # 04 — Swagging",
+          "SW # 05 — Swagging",
+          "SW # 06 — Swagging"
+        ]
+      },
+      "rptTechnician": {
+        "total": 8,
+        "nonEmpty": 7,
+        "values": [
+          "ARIF",
+          "ARSALAN",
+          "ASHRAF",
+          "JAVED",
+          "MEHMOUD",
+          "MOEES",
+          "ZUBAIR"
+        ],
+        "labels": [
+          "ARIF",
+          "ARSALAN",
+          "ASHRAF",
+          "JAVED",
+          "MEHMOUD",
+          "MOEES",
+          "ZUBAIR"
+        ]
+      },
+      "rptMaintType": {
+        "total": 9,
+        "nonEmpty": 8,
+        "values": [
+          "All",
+          "Breakdown",
+          "Preventive",
+          "Electrical",
+          "Mechanical",
+          "Corrective",
+          "Emergency",
+          "Routine"
+        ],
+        "labels": [
+          "All",
+          "Breakdown",
+          "Preventive",
+          "Electrical",
+          "Mechanical",
+          "Corrective",
+          "Emergency",
+          "Routine"
+        ]
+      },
+      "rptPriority": {
+        "total": 5,
+        "nonEmpty": 4,
+        "values": [
+          "Medium",
+          "Low",
+          "Critical",
+          "High"
+        ],
+        "labels": [
+          "Medium",
+          "Low",
+          "Critical",
+          "High"
+        ]
+      },
+      "rptStatus": {
+        "total": 5,
+        "nonEmpty": 4,
+        "values": [
+          "APPROVED",
+          "PENDING",
+          "RUNNING",
+          "OPEN"
+        ],
+        "labels": [
+          "APPROVED",
+          "PENDING",
+          "RUNNING",
+          "OPEN"
+        ]
+      }
+    }
+  }
+}

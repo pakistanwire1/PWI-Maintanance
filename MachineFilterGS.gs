@@ -9,13 +9,6 @@ function getSections(divisionId) {
   return data.map(function(s) { return { id: s.SectionID || '', name: s.Section || '', code: s.SectionCode || '' }; }).filter(function(s) { return s.id; });
 }
 
-function getDepartments(divisionId, sectionId) {
-  var data = getAllData(CONFIG.SHEET_NAMES.DEPARTMENTS) || [];
-  if (divisionId) data = data.filter(function(d) { return d.DivisionID === divisionId; });
-  if (sectionId) data = data.filter(function(d) { return d.SectionID === sectionId; });
-  return data.map(function(d) { return { id: d.DepartmentID || '', name: d.Department || '', code: d.DepartmentCode || '' }; }).filter(function(d) { return d.id; });
-}
-
 function getMachineOptions(divisionId, sectionId, deptId) {
   var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
   if (divisionId) machines = machines.filter(function(m) { return m.DivisionID === divisionId; });

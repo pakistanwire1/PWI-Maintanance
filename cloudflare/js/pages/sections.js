@@ -41,30 +41,19 @@ var Section = (function() {
   }
 
   function loadData() {
-    console.log('[TRACE] Section.loadData entered');
     Loader.show();
-    console.log('[TRACE] Section.loadData: calling API.post');
     API.post('getSectionList', {})
       .then(function(result) {
-        console.log('[TRACE] Section.loadData API.then ENTERED, result type=' + typeof result);
         Loader.hide();
         state.data = Array.isArray(result) ? result : (result.data || []);
-        console.log('[TRACE] Section.loadData: rows=' + state.data.length);
-        try {
-          renderTable();
-          console.log('[TRACE] Section.loadData: renderTable OK');
-        } catch(e) { console.error('[TRACE] Section.loadData renderTable THREW: ' + e.message); }
-        console.log('[TRACE] Section.loadData API.then DONE');
+        renderTable();
       })
       .catch(function(err) {
-        console.log('[TRACE] Section.loadData API.catch ENTERED: ' + (err ? err.message : 'null'));
         Loader.hide();
         Notify.error('Failed to load sections');
         state.data = [];
         renderTable();
-        console.log('[TRACE] Section.loadData API.catch DONE');
       });
-    console.log('[TRACE] Section.loadData: API.post returned (async)');
   }
 
   function renderPage(el) {
@@ -150,11 +139,8 @@ var Section = (function() {
 
   return {
     init: function(el) {
-      console.log('[TRACE] Section.init entered');
       renderPage(el);
-      console.log('[TRACE] Section.init: renderPage done');
       loadData();
-      console.log('[TRACE] Section.init: loadData called, returning');
     },
 
     show: function() {

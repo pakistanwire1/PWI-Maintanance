@@ -1008,10 +1008,6 @@
       if (wsLoaded) return;
       wsLoaded = true;
       if (wsTimer) { clearTimeout(wsTimer); wsTimer = null; }
-      // Preserve QR scan URL parameters across page load
-      if (window.location.search) {
-        localStorage.setItem('cmms_qr_url', window.location.href);
-      }
       var btn = document.getElementById('wsBtn');
       if (btn) {
         btn.disabled = true;

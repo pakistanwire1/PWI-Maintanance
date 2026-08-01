@@ -45,7 +45,6 @@ var Department = (function() {
   }
 
   function loadData() {
-    console.log('[DEPARTMENTS] loadData called');
     Loader.show();
     Promise.all([
       API.post('getDepartmentList', {}),
@@ -54,11 +53,9 @@ var Department = (function() {
       Loader.hide();
       state.data = Array.isArray(results[0]) ? results[0] : [];
       state.sections = Array.isArray(results[1]) ? results[1] : [];
-      console.log('[DEPARTMENTS] Depts received: ' + state.data.length + ', Sections: ' + state.sections.length + ', sample:', state.data.length > 0 ? state.data[0] : 'empty');
       renderTable();
     }).catch(function(err) {
       Loader.hide();
-      console.error('[DEPARTMENTS] loadData FAILED:', err.message);
       Notify.error('Failed to load departments');
       state.data = [];
       renderTable();
@@ -245,6 +242,7 @@ var Department = (function() {
       });
       var overlay = document.getElementById('deptFormModal');
       if (overlay) overlay.classList.add('show');
+      if (item.SectionID) onDeptSectionChange();
     },
 
     closeModal: function() {

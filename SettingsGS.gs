@@ -41,13 +41,15 @@ function saveSetting(key, value) {
   invalidateCache(CONFIG.SHEET_NAMES.SETTINGS);
 }
 
-function getDepartments() {
+function getDepartments(divisionId, sectionId) {
   var data = getAllData(CONFIG.SHEET_NAMES.DEPARTMENTS);
   if (data.length === 0) {
     initializeDepartmentMaster();
     invalidateCache(CONFIG.SHEET_NAMES.DEPARTMENTS);
     data = getAllData(CONFIG.SHEET_NAMES.DEPARTMENTS);
   }
+  if (divisionId) data = data.filter(function(d) { return d.DivisionID === divisionId; });
+  if (sectionId) data = data.filter(function(d) { return d.SectionID === sectionId; });
   var result = [];
   for (var i = 0; i < data.length; i++) {
     result.push({

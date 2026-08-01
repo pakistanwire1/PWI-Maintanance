@@ -11,7 +11,7 @@ var InventoryTransactions = (function() {
   var ICON_PDF = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg>';
   var ICON_PRINT = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg>';
   var ICON_REFRESH = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg>';
-  var ICON_VIEW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var ICON_VIEW = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M1 10s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7z"/><circle cx="10" cy="10" r="2.5"/></svg>';
 
   function showModal(id) {
     var el = document.getElementById(id);
@@ -216,7 +216,7 @@ var InventoryTransactions = (function() {
       { key: 'TotalCost', label: 'Total Cost', format: function(v) { return parseFloat(v || 0).toFixed(2); } },
       { key: 'ReferenceNo', label: 'Reference' }
     ], [
-      { label: 'View', icon: 'view', class: 'btn-primary', onclick: "InventoryTransactions.view('{id}')", idField: 'TransactionID' }
+      { label: 'View', icon: 'view', color: 'primary', onclick: "InventoryTransactions.view('{id}')", idField: 'TransactionID' }
     ], itPage, PAGE_SIZE, 'itTableContainer');
     registerPageState('itTableContainer', function(p) { itPage = p; renderTable(); });
   }
@@ -305,9 +305,21 @@ var InventoryTransactions = (function() {
     return data;
   }
 
+  function downloadBlob(content, mime, filename) {
+    var blob = new Blob([content], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 100);
+  }
+
   function exportCSV() {
     var data = applyClientFilters(itData);
-    if (!data || data.length === 0) { Notify.error('No data to export'); return; }
+    if (!data || data.length === 0) { Notify.warning('No data to export'); return; }
     var headers = ['TransactionID','TransactionType','PartCode','PartName','Quantity','UnitCost','TotalCost','ReferenceNo','ReferenceType','FromLocation','ToLocation','Remarks','ProcessedBy','ProcessedAt','CreatedAt'];
     var csv = headers.join(',') + '\n';
     data.forEach(function(r) {
@@ -319,40 +331,28 @@ var InventoryTransactions = (function() {
       });
       csv += row.join(',') + '\n';
     });
-    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'InventoryTransactions_' + new Date().toISOString().slice(0, 10) + '.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(csv, 'text/csv;charset=utf-8;', 'InventoryTransactions_' + new Date().toISOString().slice(0, 10) + '.csv');
     Notify.success('Export completed');
   }
 
   function exportPDF() {
     var data = applyClientFilters(itData);
-    if (!data || data.length === 0) { Notify.error('No data to export'); return; }
-    var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#1F4E78;color:#fff}</style></head><body>';
+    if (!data || data.length === 0) { Notify.warning('No data to export'); return; }
+    var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px}th,td{border:1px solid var(--border-light);padding:6px;text-align:left}th{background:#1F4E78;color:var(--bg-primary)}</style></head><body>';
     html += '<h2 style="text-align:center">Inventory Transactions Report</h2><p style="text-align:center">Generated: ' + new Date().toLocaleString() + '</p>';
     html += '<table><thead><tr><th>Txn ID</th><th>Type</th><th>Part Code</th><th>Part Name</th><th>Qty</th><th>Unit Cost</th><th>Total Cost</th><th>Reference</th></tr></thead><tbody>';
     data.forEach(function(r) {
       html += '<tr><td>' + Utils.escapeHtml(r.TransactionID || '') + '</td><td>' + Utils.escapeHtml(r.TransactionType || '') + '</td><td>' + Utils.escapeHtml(r.PartCode || '') + '</td><td>' + Utils.escapeHtml(r.PartName || '') + '</td><td>' + Utils.escapeHtml(String(r.Quantity || '')) + '</td><td>' + (r.UnitCost ? parseFloat(r.UnitCost).toFixed(2) : '0.00') + '</td><td>' + (r.TotalCost ? parseFloat(r.TotalCost).toFixed(2) : '0.00') + '</td><td>' + Utils.escapeHtml(r.ReferenceNo || '') + '</td></tr>';
     });
     html += '</tbody></table></body></html>';
-    var blob = new Blob([html], { type: 'text/html' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'InventoryTransactions_' + new Date().toISOString().slice(0, 10) + '.html';
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(html, 'text/html', 'InventoryTransactions_' + new Date().toISOString().slice(0, 10) + '.html');
     Notify.success('PDF export completed');
   }
 
   function printPage() {
     var data = applyClientFilters(itData);
-    if (!data || data.length === 0) { Notify.error('No data to print'); return; }
-    var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px}th,td{border:1px solid #000;padding:4px;text-align:left}th{background:#1F4E78;color:#fff}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>';
+    if (!data || data.length === 0) { Notify.warning('No data to print'); return; }
+    var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px}th,td{border:1px solid var(--text);padding:4px;text-align:left}th{background:#1F4E78;color:var(--bg-primary)}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>';
     html += '<h2 style="text-align:center">Inventory Transactions Report</h2><p style="text-align:center">Generated: ' + new Date().toLocaleString() + '</p>';
     html += '<table><thead><tr><th>Txn ID</th><th>Type</th><th>Part Code</th><th>Part Name</th><th>Qty</th><th>Unit Cost</th><th>Total Cost</th></tr></thead><tbody>';
     data.forEach(function(r) {
@@ -402,14 +402,17 @@ var InventoryTransactions = (function() {
 
         if (col.badge) {
           var badgeClass = 'badge badge-primary';
+          var badgeText = val;
           if (col.badgeMap) {
+            var bm = col.badgeMap;
             var mapKey = val;
-            if (!(mapKey in col.badgeMap)) {
-              mapKey = Object.keys(col.badgeMap).find(function(k) { return k.toLowerCase() === String(val).toLowerCase(); }) || mapKey;
+            if (!(mapKey in bm)) {
+              mapKey = Object.keys(bm).find(function(k) { return k.toLowerCase() === String(val).toLowerCase(); }) || mapKey;
             }
-            badgeClass = 'badge badge-' + (col.badgeMap[mapKey] || 'primary');
+            badgeClass = 'badge badge-' + (bm[mapKey] || 'primary');
+            badgeText = bm[mapKey] || val;
           }
-          val = '<span class="' + badgeClass + '">' + Utils.escapeHtml(String(val)) + '</span>';
+          val = '<span class="' + badgeClass + '">' + Utils.escapeHtml(String(badgeText)) + '</span>';
         }
 
         if (col.format) val = col.format(val, row);
@@ -429,7 +432,7 @@ var InventoryTransactions = (function() {
           var idField = action.idField || Object.keys(row)[0];
           var onclick = action.onclick ? action.onclick.replace(/\{id\}/g, row[idField]) : '';
           if (action.icon === 'view') {
-            html += '<button class="btn btn-sm ' + (action.class || 'btn-primary') + '" onclick="' + onclick + '" title="' + (action.label || '') + '">' + ICON_VIEW + ' ' + action.label + '</button>';
+            html += '<button class="icon-btn icon-btn-' + (action.color || 'primary') + '" onclick="' + onclick + '" title="' + (action.label || '') + '">' + ICON_VIEW + '</button>';
           } else {
             html += '<button class="btn btn-sm ' + (action.class || 'btn-primary') + '" onclick="' + onclick + '">' + action.label + '</button>';
           }
@@ -444,9 +447,8 @@ var InventoryTransactions = (function() {
       html += '<div class="pagination">' +
         '<div class="pagination-info">Showing ' + (start + 1) + ' to ' + end + ' of ' + data.length + ' entries</div>' +
         '<div class="pagination-btns">' +
-        '<button onclick="InventoryTransactions.changePage(\'' + containerId + '\',' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>Prev</button>';
-      html += '<span style="margin:0 8px;font-size:13px;color:var(--text-secondary)">Page ' + page + ' of ' + totalPages + '</span>';
-      html += '<button onclick="InventoryTransactions.changePage(\'' + containerId + '\',' + (page + 1) + ')" ' + (page >= totalPages ? 'disabled' : '') + '>Next</button>' +
+        '<button onclick="InventoryTransactions.changePage(\'' + containerId + '\',' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>Prev</button>' +
+        '<button onclick="InventoryTransactions.changePage(\'' + containerId + '\',' + (page + 1) + ')" ' + (page >= totalPages ? 'disabled' : '') + '>Next</button>' +
         '</div></div>';
     }
     container.innerHTML = html;

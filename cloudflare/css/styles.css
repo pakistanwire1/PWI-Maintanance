@@ -1012,7 +1012,7 @@
   .btn-group { display: flex; gap: 4px; }
 
   .btn-xs { padding: 3px 8px; font-size: 11px; border: none; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; transition: var(--transition); display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; letter-spacing: 0.15px; position: relative; overflow: hidden; }
-  .btn-xs.btn-primary { background: var(--primary); color: #fff; }
+  .btn-xs.btn-primary { background: var(--primary); color: var(--bg-primary); }
   .btn-xs.btn-primary:hover { background: var(--primary-dark); }
   .btn-xs.btn-success { background: var(--success); color: #fff; }
   .btn-xs.btn-success:hover { background: #16a34a; }
@@ -1048,10 +1048,6 @@
     color: var(--text);
     transform: translateY(-1px);
   }
-  .icon-btn-primary { color: var(--primary); }
-  .icon-btn-danger { color: var(--danger); }
-  .icon-btn-success { color: var(--success); }
-  .icon-btn-warning { color: var(--warning); }
   .icon-btn-primary:hover, .btn-icon.btn-primary:hover { background: var(--primary-light); color: var(--primary); }
   .icon-btn-danger:hover, .btn-icon.btn-danger:hover { background: var(--danger); color: #fff; }
   .icon-btn-success:hover, .btn-icon.btn-success:hover { background: var(--success-bg); color: var(--success); }

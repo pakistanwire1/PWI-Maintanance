@@ -129,28 +129,43 @@ function loadReportsData() {
   loadMachineCascade();
 }
 
+var rptCascadeSeq = 0;
+
 function loadMachineCascade(divId, secId, deptId) {
+  var seq = ++rptCascadeSeq;
   google.script.run
     .withSuccessHandler(function(c) {
-      populateRptSelect('rptDivision', c.divisions.map(function(d) { return { value: d.id, label: d.name }; }), 'All Divisions');
-      populateRptSelect('rptSection', c.sections.map(function(s) { return { value: s.id, label: s.name }; }), 'All Sections');
-      populateRptSelect('rptDepartment', c.departments.map(function(d) { return { value: d.id, label: d.name }; }), 'All Departments');
-      populateRptSelect('rptMachineNumber', c.machines.map(function(m) { return { value: m.number, label: m.label }; }), 'All Machines');
+      if (seq !== rptCascadeSeq) return;
+      var divisions = (c.divisions || []).map(function(d) { return { value: d.id || d.ID, label: d.name || d.Name }; });
+      var sections = (c.sections || []).map(function(s) { return { value: s.id || s.ID, label: s.name || s.Name }; });
+      var departments = (c.departments || []).map(function(d) { return { value: d.id || d.ID, label: d.name || d.Name }; });
+      var machines = (c.machines || []).map(function(m) { return { value: m.number || m.Number, label: m.label || m.Label }; });
+      populateRptSelect('rptDivision', divisions, 'All Divisions', true);
+      populateRptSelect('rptSection', sections, 'All Sections', true);
+      populateRptSelect('rptDepartment', departments, 'All Departments', true);
+      populateRptSelect('rptMachineNumber', machines, 'All Machines', true);
     })
-    .withFailureHandler(function(err) { showToast('Failed to load machine filters', 'error'); })
+    .withFailureHandler(function(err) {
+      if (seq !== rptCascadeSeq) return;
+      showToast('Failed to load machine filters', 'error');
+    })
     .getMachineCascade(divId || '', secId || '', deptId || '');
 }
 
-function populateRptSelect(id, items, placeholder) {
+function populateRptSelect(id, items, placeholder, preserveValue) {
   var el = document.getElementById(id);
   if (!el) return;
+  var prev = el.value;
   el.innerHTML = '<option value="">' + placeholder + '</option>';
+  var keep = (prev === '');
   items.forEach(function(item) {
     var opt = document.createElement('option');
     opt.value = item.value;
     opt.textContent = item.label || item.value;
     el.appendChild(opt);
+    if (item.value === prev) keep = true;
   });
+  if (keep) el.value = prev;
 }
 
 function onRptTypeChange() {}
