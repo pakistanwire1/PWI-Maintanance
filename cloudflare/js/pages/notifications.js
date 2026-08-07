@@ -1,13 +1,30 @@
-var Notifications = (function() {
+﻿var Notifications = (function() {
   var notifData = [];
   var notifPage = 1;
   var notifFilter = { search: '', type: '', notifType: '', status: '', priority: '' };
   var notifSearchDebounce = null;
-  var PAGE_SIZE = 25;
+  var PAGE_SIZE = 10;
+  var __pageStates = {};
+
+  var ICONS = {
+    view: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M1 10s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7z"/><circle cx="10" cy="10" r="2.5"/></svg>',
+    start: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="10" cy="10" r="9"/><path d="M8 6l6 4-6 4V6z"/></svg>',
+    trash: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M3 5h14"/><path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M16 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5"/><path d="M8 8v6"/><path d="M12 8v6"/></svg>',
+    check: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><polyline points="4 10 8 14 16 6"/></svg>'
+  };
+
+  var ICON_MARK_ALL = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M7 10l2 2 4-4"/></svg>';
+  var ICON_CLEAR_ALL = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M3 5h14"/><path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M16 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5"/></svg>';
+  var ICON_EXPORT = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg>';
+  var ICON_PRINTER = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg>';
+  var ICON_REFRESH = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg>';
 
   function renderPage() {
     var el = document.getElementById('pageContent');
     if (!el) return;
+    notifFilter = { search: '', type: '', notifType: '', status: '', priority: '' };
+    notifPage = 1;
+    __pageStates = {};
 
     el.innerHTML =
       '<div id="notificationsPage" class="page">' +
@@ -103,26 +120,22 @@ var Notifications = (function() {
           '<div class="card-header">' +
             '<div class="card-title">Notifications</div>' +
             '<div class="card-actions">' +
-              '<button class="btn btn-success btn-sm" onclick="Notifications.markAllRead()">' +
-                '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><circle cx="10" cy="10" r="9"/><path d="M7 10l2 2 4-4"/></svg> Mark All Read</button>' +
-              '<button class="btn btn-danger btn-sm" onclick="Notifications.clearAll()">' +
-                '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><path d="M3 5h14"/><path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M16 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5"/></svg> Clear All</button>' +
-              '<button class="btn btn-secondary btn-sm" onclick="Notifications.exportCSV()">' +
-                '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><path d="M10 2v11"/><path d="M6 9l4 4 4-4"/><path d="M3 15v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg> Export CSV</button>' +
-              '<button class="btn btn-secondary btn-sm" onclick="Notifications.exportPDF()">PDF</button>' +
-              '<button class="btn btn-secondary btn-sm" onclick="Notifications.printPage()">Print</button>' +
-              '<button class="btn btn-secondary btn-sm" onclick="Notifications.load()">' +
-                '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg> Refresh</button>' +
+              '<button class="btn btn-success" onclick="Notifications.markAllRead()">' + ICON_MARK_ALL + ' Mark All Read</button>' +
+              '<button class="btn btn-danger" onclick="Notifications.clearAll()">' + ICON_CLEAR_ALL + ' Clear All</button>' +
+              '<button class="btn btn-secondary" onclick="Notifications.exportCSV()">' + ICON_EXPORT + ' Export CSV</button>' +
+              '<button class="btn btn-secondary" onclick="Notifications.exportPDF()">' + ICON_PRINTER + ' PDF</button>' +
+              '<button class="btn btn-secondary" onclick="Notifications.printPage()">' + ICON_PRINTER + ' Print</button>' +
+              '<button class="btn btn-secondary" onclick="Notifications.load()">' + ICON_REFRESH + ' Refresh</button>' +
             '</div>' +
           '</div>' +
           '<div id="notifTableContainer"></div>' +
         '</div>' +
       '</div>' +
 
-      '<div class="modal-overlay" id="notifViewModal">' +
+      '<div class="modal-overlay" id="notifViewModal" style="display:none">' +
         '<div class="modal modal-wide">' +
           '<div class="modal-header">' +
-            '<div class="modal-title">Notification Details</div>' +
+            '<div class="modal-title" id="notifViewTitle">Notification Details</div>' +
             '<button class="modal-close" onclick="Modal.hide(\'notifViewModal\')">&times;</button>' +
           '</div>' +
           '<div class="modal-body">' +
@@ -147,7 +160,7 @@ var Notifications = (function() {
             '<div class="view-grid" style="margin-top:16px">' +
               '<div class="view-section" style="grid-column:1/-1">' +
                 '<h4>Message</h4>' +
-                '<p id="notifViewMessage" class="view-text" style="white-space:pre-wrap">-</p>' +
+                '<p id="notifViewMessage" style="color:var(--text);font-size:13px;line-height:1.5;white-space:pre-wrap">-</p>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -162,7 +175,7 @@ var Notifications = (function() {
 
   function load() {
     Loader.show();
-    API.post('getNotifications', {})
+    API.post('getNotifications', { pageSize: 100000 })
       .then(function(data) {
         notifData = (data && data.records) || data || [];
         if (!Array.isArray(notifData)) notifData = [];
@@ -187,6 +200,19 @@ var Notifications = (function() {
     el = document.getElementById('notifUnread'); if (el) el.textContent = unread;
     el = document.getElementById('notifRead'); if (el) el.textContent = read;
     el = document.getElementById('notifTypes'); if (el) el.textContent = Object.keys(modules).length;
+    syncNotifBadge();
+  }
+
+  function syncNotifBadge() {
+    var badge = document.getElementById('notificationBadge');
+    if (!badge) return;
+    var unread = notifData.filter(function(r) { return (r.ReadStatus || '').toLowerCase() !== 'read'; }).length;
+    if (unread > 0) {
+      badge.textContent = unread > 99 ? '99+' : unread;
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
   }
 
   function renderTable() {
@@ -207,34 +233,44 @@ var Notifications = (function() {
       { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Critical': 'danger', 'High': 'warning', 'Medium': 'info', 'Low': 'success' } },
       { key: 'ReadStatus', label: 'Read', badge: true, badgeMap: { 'Unread': 'danger', 'Read': 'success' } }
     ];
+    var actions = [
+      { label: 'View', icon: 'view', color: 'primary', onclick: "Notifications.view('{id}')", idField: 'NotificationID' },
+      { label: 'Open', icon: 'start', color: 'info', onclick: "Notifications.openAction('{id}')", idField: 'NotificationID', condition: function(r) { return !!r.ActionURL; } },
+      { label: 'Delete', icon: 'trash', color: 'danger', onclick: "Notifications.deleteItem('{id}')", idField: 'NotificationID' },
+      { label: 'Mark Read', icon: 'check', color: 'success', onclick: "Notifications.markRead('{id}')", idField: 'NotificationID', condition: function(r) { return (r.ReadStatus || '').toLowerCase() !== 'read'; } }
+    ];
 
-    renderTableLocal(data, columns, 'notifTableContainer');
+    renderTableLocal(data, columns, actions, notifPage, PAGE_SIZE, 'notifTableContainer');
+    registerPageState('notifTableContainer', function(p) { notifPage = p; renderTable(); });
   }
 
-  function renderTableLocal(data, columns, containerId) {
+  function renderTableLocal(data, columns, actions, page, pageSize, containerId) {
+    containerId = containerId || 'tableContainer';
     var container = document.getElementById(containerId);
     if (!container) return;
+    page = page || 1;
+    pageSize = pageSize || PAGE_SIZE;
 
     if (!data || data.length === 0) {
       container.innerHTML =
         '<div class="empty-state">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>' +
-          '<h3>No Notifications Found</h3>' +
-          '<p>No records match your filter criteria.</p>' +
+          '<h3>No Data Found</h3>' +
+          '<p>No records available in this module.</p>' +
         '</div>';
       return;
     }
 
-    var totalPages = Math.ceil(data.length / PAGE_SIZE);
-    var start = (notifPage - 1) * PAGE_SIZE;
-    var end = Math.min(start + PAGE_SIZE, data.length);
+    var totalPages = Math.ceil(data.length / pageSize);
+    var start = (page - 1) * pageSize;
+    var end = Math.min(start + pageSize, data.length);
     var pageData = data.slice(start, end);
 
     var html = '<div class="table-container"><table><thead><tr>';
     columns.forEach(function(col) {
       html += '<th>' + (col.label || col) + '</th>';
     });
-    html += '<th style="width:120px">Actions</th>';
+    if (actions) html += '<th style="width:120px">Actions</th>';
     html += '</tr></thead><tbody>';
 
     pageData.forEach(function(row) {
@@ -245,14 +281,17 @@ var Notifications = (function() {
 
         if (col.badge) {
           var badgeClass = 'badge badge-primary';
+          var badgeText = val;
           if (col.badgeMap) {
+            var bm = col.badgeMap;
             var mapKey = val;
-            if (!(mapKey in col.badgeMap)) {
-              mapKey = Object.keys(col.badgeMap).find(function(k) { return k.toLowerCase() === String(val).toLowerCase(); }) || mapKey;
+            if (!(mapKey in bm)) {
+              mapKey = Object.keys(bm).find(function(k) { return k.toLowerCase() === String(val).toLowerCase(); }) || mapKey;
             }
-            badgeClass = 'badge badge-' + (col.badgeMap[mapKey] || 'primary');
+            badgeClass = 'badge badge-' + (bm[mapKey] || 'primary');
+            badgeText = bm[mapKey] || val;
           }
-          val = '<span class="' + badgeClass + '">' + Utils.escapeHtml(String(val)) + '</span>';
+          val = '<span class="' + badgeClass + '">' + Utils.escapeHtml(String(badgeText)) + '</span>';
         }
 
         if (col.format) val = col.format(val, row);
@@ -272,24 +311,26 @@ var Notifications = (function() {
           }
         }
 
-        if (typeof val === 'string' && !col.badge && !col.format && !col.datetime) {
-          val = Utils.escapeHtml(val);
-        }
-
         html += '<td>' + val + '</td>';
       });
 
-      var id = row.NotificationID || '';
-      html += '<td class="actions">';
-      html += '<button class="btn-icon btn-primary" onclick="Notifications.view(\'' + Utils.escapeHtml(id) + '\')" title="View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>';
-      if (row.ActionURL) {
-        html += '<button class="btn-icon btn-info" onclick="Notifications.openAction(\'' + Utils.escapeHtml(id) + '\')" title="Open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></button>';
+      if (actions) {
+        html += '<td><div class="actions-cell">';
+        actions.forEach(function(action) {
+          if (action.condition && !action.condition(row)) return;
+          var idField = action.idField || Object.keys(row)[0];
+          var onclick = action.onclick ? action.onclick.replace(/\{id\}/g, row[idField]) : '';
+          if (action.icon && ICONS[action.icon]) {
+            var svg = ICONS[action.icon];
+            var cls = 'icon-btn icon-btn-' + (action.color || 'primary');
+            html += '<button class="' + cls + '" onclick="' + onclick + '" title="' + (action.label || '') + '">' + svg + '</button>';
+          } else {
+            var cls = action.class || 'btn-primary';
+            html += '<button class="btn btn-sm ' + cls + '" onclick="' + onclick + '" title="' + (action.label || '') + '">' + action.label + '</button>';
+          }
+        });
+        html += '</div></td>';
       }
-      html += '<button class="btn-icon btn-danger" onclick="Notifications.deleteItem(\'' + Utils.escapeHtml(id) + '\')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>';
-      if ((row.ReadStatus || '').toLowerCase() !== 'read') {
-        html += '<button class="btn-icon btn-success" onclick="Notifications.markRead(\'' + Utils.escapeHtml(id) + '\')" title="Mark Read"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg></button>';
-      }
-      html += '</td>';
       html += '</tr>';
     });
     html += '</tbody></table></div>';
@@ -298,23 +339,28 @@ var Notifications = (function() {
       html += '<div class="pagination">' +
         '<div class="pagination-info">Showing ' + (start + 1) + ' to ' + end + ' of ' + data.length + ' entries</div>' +
         '<div class="pagination-btns">' +
-        '<button onclick="Notifications.goPage(' + (notifPage - 1) + ')" ' + (notifPage <= 1 ? 'disabled' : '') + '>Prev</button>';
-      html += '<span style="margin:0 8px;font-size:13px;color:var(--text-secondary)">Page ' + notifPage + ' of ' + totalPages + '</span>';
-      html += '<button onclick="Notifications.goPage(' + (notifPage + 1) + ')" ' + (notifPage >= totalPages ? 'disabled' : '') + '>Next</button>' +
+        '<button onclick="Notifications.changePage(\'' + containerId + '\',' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>Prev</button>' +
+        '<button onclick="Notifications.changePage(\'' + containerId + '\',' + (page + 1) + ')" ' + (page >= totalPages ? 'disabled' : '') + '>Next</button>' +
         '</div></div>';
     }
     container.innerHTML = html;
   }
 
-  function goPage(p) {
-    notifPage = p;
-    renderTable();
+  function registerPageState(containerId, renderFn) {
+    __pageStates[containerId] = renderFn;
+  }
+
+  function changePage(containerId, page) {
+    if (__pageStates[containerId]) {
+      __pageStates[containerId](page);
+    }
   }
 
   function view(id) {
     var item = notifData.find(function(r) { return r.NotificationID === id; });
     if (!item) { Notify.error('Record not found'); return; }
     var el;
+    el = document.getElementById('notifViewTitle'); if (el) el.textContent = 'Notification - ' + id;
     el = document.getElementById('notifViewId'); if (el) el.textContent = item.NotificationID || '-';
     el = document.getElementById('notifViewType'); if (el) el.textContent = item.Module || '-';
     el = document.getElementById('notifViewNotifType'); if (el) el.textContent = item.NotificationType || '-';
@@ -333,7 +379,7 @@ var Notifications = (function() {
     Loader.show();
     API.post('markNotificationRead', { id: id })
       .then(function() {
-        return API.post('getNotifications', {});
+        return API.post('getNotifications', { pageSize: 100000 });
       })
       .then(function(data) {
         notifData = (data && data.records) || data || [];
@@ -354,7 +400,7 @@ var Notifications = (function() {
       Loader.show();
       API.post('markAllNotificationsRead', {})
         .then(function() {
-          return API.post('getNotifications', {});
+          return API.post('getNotifications', { pageSize: 100000 });
         })
         .then(function(data) {
           notifData = (data && data.records) || data || [];
@@ -376,7 +422,7 @@ var Notifications = (function() {
       Loader.show();
       API.post('deleteNotification', { id: id })
         .then(function() {
-          return API.post('getNotifications', {});
+          return API.post('getNotifications', { pageSize: 100000 });
         })
         .then(function(data) {
           notifData = (data && data.records) || data || [];
@@ -512,7 +558,7 @@ var Notifications = (function() {
   function exportPDF() {
     var data = applyClientFilters(notifData);
     if (!data || data.length === 0) { Notify.warning('No data to export'); return; }
-    var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#1F4E78;color:#fff}</style></head><body>';
+    var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px}th,td{border:1px solid var(--border-light);padding:6px;text-align:left}th{background:#1F4E78;color:var(--bg-primary)}</style></head><body>';
     html += '<h2 style="text-align:center">Notifications Report</h2><p style="text-align:center">Generated: ' + new Date().toLocaleString() + '</p>';
     html += '<table><thead><tr><th>ID</th><th>Module</th><th>Title</th><th>Priority</th><th>Read Status</th><th>Date</th></tr></thead><tbody>';
     data.forEach(function(r) {
@@ -532,7 +578,7 @@ var Notifications = (function() {
   function printPage() {
     var data = applyClientFilters(notifData);
     if (!data || data.length === 0) { Notify.warning('No data to print'); return; }
-    var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px}th,td{border:1px solid #000;padding:4px;text-align:left}th{background:#1F4E78;color:#fff}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>';
+    var html = '<html><head><style>table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px}th,td{border:1px solid var(--text);padding:4px;text-align:left}th{background:#1F4E78;color:var(--bg-primary)}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>';
     html += '<h2 style="text-align:center">Notifications Report</h2><p style="text-align:center">Generated: ' + new Date().toLocaleString() + '</p>';
     html += '<table><thead><tr><th>ID</th><th>Module</th><th>Title</th><th>Priority</th><th>Read Status</th></tr></thead><tbody>';
     data.forEach(function(r) {
@@ -559,7 +605,7 @@ var Notifications = (function() {
     clearFilter: clearFilter,
     filterByType: filterByType,
     filterByRead: filterByRead,
-    goPage: goPage,
+    changePage: changePage,
     exportCSV: exportCSV,
     exportPDF: exportPDF,
     printPage: printPage

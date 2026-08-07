@@ -1,0 +1,152 @@
+[
+  {
+    "name": "default",
+    "gas": {
+      "reportType": "machine_history",
+      "division": "",
+      "section": "",
+      "department": "",
+      "machineNumber": "",
+      "technician": "",
+      "maintenanceType": "All",
+      "priority": "",
+      "status": "",
+      "fromDate": "2026-01-01",
+      "toDate": "2026-08-07"
+    },
+    "cf": {
+      "reportType": "machine_history",
+      "division": "",
+      "section": "",
+      "department": "",
+      "machineNumber": "",
+      "technician": "",
+      "maintenanceType": "",
+      "priority": "",
+      "status": "",
+      "fromDate": "2026-01-01T00:00:00",
+      "toDate": "2026-08-07T23:59:59",
+      "_userEmail": "supervisor@cmms.com"
+    }
+  },
+  {
+    "name": "date_JUL2026",
+    "gas": {
+      "reportType": "machine_history",
+      "division": "",
+      "section": "",
+      "department": "",
+      "machineNumber": "",
+      "technician": "",
+      "maintenanceType": "All",
+      "priority": "",
+      "status": "",
+      "fromDate": "2026-07-01",
+      "toDate": "2026-07-31"
+    },
+    "cf": {
+      "reportType": "machine_history",
+      "division": "",
+      "section": "",
+      "department": "",
+      "machineNumber": "",
+      "technician": "",
+      "maintenanceType": "",
+      "priority": "",
+      "status": "",
+      "fromDate": "2026-07-01T00:00:00",
+      "toDate": "2026-07-31T23:59:59",
+      "_userEmail": "supervisor@cmms.com"
+    }
+  },
+  {
+    "name": "combo_DIV_SEC_DEPT_MACH",
+    "gas": {
+      "reportType": "machine_history",
+      "division": "DIV001",
+      "section": "SEC002",
+      "department": "DEPT003",
+      "machineNumber": "SW # 06",
+      "technician": "",
+      "maintenanceType": "All",
+      "priority": "",
+      "status": "",
+      "fromDate": "2026-07-01",
+      "toDate": "2026-07-31"
+    },
+    "cf": {
+      "reportType": "machine_history",
+      "division": "Spoke Division",
+      "section": "Spoke",
+      "department": "Swagging",
+      "machineNumber": "SW # 06",
+      "technician": "",
+      "maintenanceType": "",
+      "priority": "",
+      "status": "",
+      "fromDate": "2026-07-01T00:00:00",
+      "toDate": "2026-07-31T23:59:59",
+      "_userEmail": "supervisor@cmms.com"
+    }
+  },
+  {
+    "name": "maint_TYPE",
+    "gas": {
+      "reportType": "machine_history",
+      "division": "DIV001",
+      "section": "SEC002",
+      "department": "DEPT003",
+      "machineNumber": "SW # 06",
+      "technician": "",
+      "maintenanceType": "Preventive Maintenance",
+      "priority": "",
+      "status": "",
+      "fromDate": "2026-07-01",
+      "toDate": "2026-07-31"
+    },
+    "cf": {
+      "reportType": "machine_history",
+      "division": "Spoke Division",
+      "section": "Spoke",
+      "department": "Swagging",
+      "machineNumber": "SW # 06",
+      "technician": "",
+      "maintenanceType": "Preventive Maintenance",
+      "priority": "",
+      "status": "",
+      "fromDate": "2026-07-01T00:00:00",
+      "toDate": "2026-07-31T23:59:59",
+      "_userEmail": "supervisor@cmms.com"
+    }
+  },
+  {
+    "name": "all_filters",
+    "gas": {
+      "reportType": "machine_history",
+      "division": "DIV001",
+      "section": "SEC002",
+      "department": "DEPT003",
+      "machineNumber": "SW # 06",
+      "technician": "ARIF",
+      "maintenanceType": "All",
+      "priority": "High",
+      "status": "RUNNING",
+      "fromDate": "2026-07-01",
+      "toDate": "2026-07-31"
+    },
+    "cf": {
+      "reportType": "machine_history",
+      "division": "Spoke Division",
+      "section": "Spoke",
+      "department": "Swagging",
+      "machineNumber": "SW # 06",
+      "technician": "ARIF",
+      "maintenanceType": "All",
+      "priority": "High",
+      "status": "RUNNING",
+      "fromDate": "2026-07-01T00:00:00",
+      "toDate": "2026-07-31T23:59:59",
+      "_userEmail": "supervisor@cmms.com"
+    }
+  }
+]

@@ -1,8 +1,7 @@
 var Constants = {
   MACHINE_TYPES: [
-    'Pump', 'Motor', 'Compressor', 'Conveyor', 'Gearbox', 'Fan', 'Mixer', 'Valve',
-    'Heat Exchanger', 'Boiler', 'Chiller', 'Generator', 'Transformer', 'Crane',
-    'Hydraulic Press', 'CNC Machine', 'Welding Machine', 'Air Handler', 'Cooling Tower'
+    'CNC', 'Hydraulic', 'Pneumatic', 'Electrical', 'Mechanical',
+    'Robotic', 'Conveyor', 'Pump', 'Compressor', 'Generator', 'Other'
   ],
 
   SKILLS: [

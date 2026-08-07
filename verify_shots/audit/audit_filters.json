@@ -1,0 +1,3983 @@
+[
+  {
+    "name": "division_SPOKE",
+    "f": {
+      "division": "DIV001"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 64,
+      "cf": 64
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "64"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "60"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "64"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "60"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "division_CCD",
+    "f": {
+      "division": "DIV002"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 1,
+      "cf": 1
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "0m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "0m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "section_SPOKE",
+    "f": {
+      "section": "SEC002"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 62,
+      "cf": 62
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "62"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "58"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "62"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "58"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "section_MAINT",
+    "f": {
+      "section": "SEC009"
+    },
+    "noData": {
+      "gas": true,
+      "cf": true
+    },
+    "visEqual": true,
+    "toastEqual": false,
+    "toast": {
+      "gas": "ℹNo data found for selected filters",
+      "cf": "No data found for selected filters"
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 0,
+      "cf": 0
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "62"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "58"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "62"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "58"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "dept_SWAGGING",
+    "f": {
+      "department": "DEPT003"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 19,
+      "cf": 19
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "5d 2h 13m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "6d 5h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "2d 16h 23m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "34.5%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "5d 2h 13m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "6d 5h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "2d 16h 23m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "34.5%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "dept_FACILITY",
+    "f": {
+      "department": "DEPT014"
+    },
+    "noData": {
+      "gas": true,
+      "cf": true
+    },
+    "visEqual": true,
+    "toastEqual": false,
+    "toast": {
+      "gas": "ℹNo data found for selected filters",
+      "cf": "No data found for selected filters"
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 0,
+      "cf": 0
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "5d 2h 13m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "6d 5h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "2d 16h 23m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "34.5%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "5d 2h 13m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "6d 5h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "2d 16h 23m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "34.5%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "machine_SW06",
+    "f": {
+      "machine": "SW # 06"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 19,
+      "cf": 19
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "5d 2h 13m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "6d 5h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "2d 16h 23m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "34.5%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "5d 2h 13m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "6d 5h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "2d 16h 23m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "34.5%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "machine_SP05",
+    "f": {
+      "machine": "SP # 05"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 16,
+      "cf": 16
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "16"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "16"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "8d 18h 34m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "16"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "16"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "8d 18h 34m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "tech_ARIF",
+    "f": {
+      "technician": "ARIF"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 10,
+      "cf": 10
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "10"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "9"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "47d 8h 27m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "13d 0h 17m"
+        },
+        {
+          "label": "Total Working",
+          "value": "35d 14h 8m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "42.91%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "10"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "9"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "47d 8h 27m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "13d 0h 17m"
+        },
+        {
+          "label": "Total Working",
+          "value": "35d 14h 8m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "42.91%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "tech_ARSALAN",
+    "f": {
+      "technician": "ARSALAN"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 25,
+      "cf": 25
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "25"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "21"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "127d 18h 15m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "105d 8h 42m"
+        },
+        {
+          "label": "Total Working",
+          "value": "55d 13h 25m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "30.31%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "25"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "21"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "127d 18h 15m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "105d 8h 42m"
+        },
+        {
+          "label": "Total Working",
+          "value": "55d 13h 25m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "30.31%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "maint_ALL",
+    "f": {
+      "maintType": "All"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 65,
+      "cf": 65
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "65"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "61"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "65"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "61"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "maint_ELEC",
+    "f": {
+      "maintType": "Breakdown Electrical"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 2,
+      "cf": 2
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "2"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "2"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "10d 13h 36m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "10h 27m"
+        },
+        {
+          "label": "Total Working",
+          "value": "10d 3h 9m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "48.95%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "2"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "2"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "10d 13h 36m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "10h 27m"
+        },
+        {
+          "label": "Total Working",
+          "value": "10d 3h 9m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "48.95%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "maint_BREAKDOWN",
+    "f": {
+      "maintType": "Breakdown Maintenance"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 59,
+      "cf": 59
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "59"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "59"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "130d 16h 2m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "104d 11h 30m"
+        },
+        {
+          "label": "Total Working",
+          "value": "61d 18h 21m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "32.1%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "59"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "59"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "130d 16h 2m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "104d 11h 30m"
+        },
+        {
+          "label": "Total Working",
+          "value": "61d 18h 21m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "32.1%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "maint_PREVENTIVE",
+    "f": {
+      "maintType": "Preventive Maintenance"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 4,
+      "cf": 4
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "45d 18h 15m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "23d 18h 7m"
+        },
+        {
+          "label": "Total Working",
+          "value": "22d 0h 5m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "32.47%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "45d 18h 15m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "23d 18h 7m"
+        },
+        {
+          "label": "Total Working",
+          "value": "22d 0h 5m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "32.47%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "priority_HIGH",
+    "f": {
+      "priority": "High"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 2,
+      "cf": 2
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "2"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "2"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "8d 14h 40m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "12d 13h 47m"
+        },
+        {
+          "label": "Total Working",
+          "value": "1d 2h 45m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "11.46%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "2"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "2"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "8d 14h 40m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "12d 13h 47m"
+        },
+        {
+          "label": "Total Working",
+          "value": "1d 2h 45m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "11.46%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "priority_MEDIUM",
+    "f": {
+      "priority": "Medium"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 56,
+      "cf": 56
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "56"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "52"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "156d 15h 22m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "88d 14h 50m"
+        },
+        {
+          "label": "Total Working",
+          "value": "86d 12h 10m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "35.58%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "56"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "52"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "156d 15h 22m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "88d 14h 50m"
+        },
+        {
+          "label": "Total Working",
+          "value": "86d 12h 10m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "35.58%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "status_RUNNING",
+    "f": {
+      "status": "RUNNING"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 13,
+      "cf": 13
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "13"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "13"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "35d 11h 46m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "13"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "13"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "35d 11h 46m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "status_PENDING",
+    "f": {
+      "status": "PENDING"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 4,
+      "cf": 4
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "41d 19h 49m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "19d 6h 44m"
+        },
+        {
+          "label": "Total Working",
+          "value": "22d 13h 5m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "35.02%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "41d 19h 49m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "19d 6h 44m"
+        },
+        {
+          "label": "Total Working",
+          "value": "22d 13h 5m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "35.02%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "status_APPROVED",
+    "f": {
+      "status": "APPROVED"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 17,
+      "cf": 17
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "17"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "13"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "145d 4h 4m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "73d 19h 29m"
+        },
+        {
+          "label": "Total Working",
+          "value": "71d 8h 30m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "32.95%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "17"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "13"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "145d 4h 4m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "73d 19h 29m"
+        },
+        {
+          "label": "Total Working",
+          "value": "71d 8h 30m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "32.95%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "status_OPEN",
+    "f": {
+      "status": "OPEN"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 31,
+      "cf": 31
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "31"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "31"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "2h 5m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "31"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "31"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "2h 5m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "date_JUL2026",
+    "f": {
+      "from": "2026-07-01",
+      "to": "2026-07-31"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 64,
+      "cf": 64
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "64"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "60"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "64"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "60"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "date_SAMEDAY_0806",
+    "f": {
+      "from": "2026-08-06",
+      "to": "2026-08-06"
+    },
+    "noData": {
+      "gas": true,
+      "cf": true
+    },
+    "visEqual": true,
+    "toastEqual": false,
+    "toast": {
+      "gas": "ℹNo data found for selected filters",
+      "cf": "No data found for selected filters"
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 0,
+      "cf": 0
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "64"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "60"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "64"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "60"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "date_FULL2026",
+    "f": {
+      "from": "2026-01-01",
+      "to": "2026-12-31"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 65,
+      "cf": 65
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "65"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "61"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "65"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "61"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "date_ZERO2020",
+    "f": {
+      "from": "2020-01-01",
+      "to": "2020-12-31"
+    },
+    "noData": {
+      "gas": true,
+      "cf": true
+    },
+    "visEqual": true,
+    "toastEqual": false,
+    "toast": {
+      "gas": "ℹNo data found for selected filters",
+      "cf": "No data found for selected filters"
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 0,
+      "cf": 0
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "65"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "61"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "65"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "61"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "combo_DIV_SEC_DEPT",
+    "f": {
+      "division": "DIV001",
+      "section": "SEC002",
+      "department": "DEPT003"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 19,
+      "cf": 19
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "5d 2h 13m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "6d 5h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "2d 16h 23m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "34.5%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "19"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "5d 2h 13m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "6d 5h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "2d 16h 23m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "34.5%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "combo_DEPT_ARIF",
+    "f": {
+      "department": "DEPT003",
+      "technician": "ARIF"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 1,
+      "cf": 1
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "15h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "15h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "combo_SW06_HIGH_OPEN",
+    "f": {
+      "machine": "SW # 06",
+      "priority": "High",
+      "status": "OPEN"
+    },
+    "noData": {
+      "gas": true,
+      "cf": true
+    },
+    "visEqual": true,
+    "toastEqual": false,
+    "toast": {
+      "gas": "ℹNo data found for selected filters",
+      "cf": "No data found for selected filters"
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 0,
+      "cf": 0
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "15h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "1"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "15h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "combo_SP05_ARSALAN",
+    "f": {
+      "machine": "SP # 05",
+      "technician": "ARSALAN"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 3,
+      "cf": 3
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "3"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "3"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "6d 23h 43m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "3"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "3"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "0"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "0m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "6d 23h 43m"
+        },
+        {
+          "label": "Total Working",
+          "value": "0m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "N/A"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "combo_DIV_JUL",
+    "f": {
+      "division": "DIV001",
+      "from": "2026-07-01",
+      "to": "2026-07-31"
+    },
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 63,
+      "cf": 63
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "63"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "59"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "63"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "59"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "combo_PM_SP05",
+    "f": {
+      "maintType": "Preventive Maintenance",
+      "machine": "SP # 05"
+    },
+    "noData": {
+      "gas": true,
+      "cf": true
+    },
+    "visEqual": true,
+    "toastEqual": false,
+    "toast": {
+      "gas": "ℹNo data found for selected filters",
+      "cf": "No data found for selected filters"
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 0,
+      "cf": 0
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "63"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "59"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "63"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "59"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "combo_SAMEDAY_RUNNING",
+    "f": {
+      "from": "2026-08-06",
+      "to": "2026-08-06",
+      "status": "RUNNING"
+    },
+    "noData": {
+      "gas": true,
+      "cf": true
+    },
+    "visEqual": true,
+    "toastEqual": false,
+    "toast": {
+      "gas": "ℹNo data found for selected filters",
+      "cf": "No data found for selected filters"
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 0,
+      "cf": 0
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "63"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "59"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "63"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "59"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  },
+  {
+    "name": "edge_EMPTY_ALL",
+    "f": {},
+    "noData": {
+      "gas": false,
+      "cf": false
+    },
+    "visEqual": true,
+    "toastEqual": true,
+    "toast": {
+      "gas": "",
+      "cf": ""
+    },
+    "rowsEqual": true,
+    "rows": {
+      "gas": 65,
+      "cf": 65
+    },
+    "recordCountEqual": true,
+    "titleEqual": true,
+    "title": {
+      "gas": "Machine History",
+      "cf": "Machine History"
+    },
+    "kpiEqual": true,
+    "tableEqual": true,
+    "chartsEqual": true,
+    "chartCards": {
+      "gas": 8,
+      "cf": 8
+    },
+    "dataEqual": true,
+    "kpi": {
+      "gas": [
+        {
+          "label": "Total Jobs",
+          "value": "65"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "61"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ],
+      "cf": [
+        {
+          "label": "Total Jobs",
+          "value": "65"
+        },
+        {
+          "label": "Breakdown Jobs",
+          "value": "61"
+        },
+        {
+          "label": "Preventive Jobs",
+          "value": "4"
+        },
+        {
+          "label": "Total Downtime",
+          "value": "186d 23h 53m"
+        },
+        {
+          "label": "Total Waiting",
+          "value": "128d 16h 4m"
+        },
+        {
+          "label": "Total Working",
+          "value": "93d 21h 35m"
+        },
+        {
+          "label": "MTTR",
+          "value": "N/A"
+        },
+        {
+          "label": "MTBF",
+          "value": "N/A"
+        },
+        {
+          "label": "Availability",
+          "value": "33.43%"
+        }
+      ]
+    },
+    "gasLoading": true,
+    "cfLoading": true,
+    "cfFetchFailed": false,
+    "consoleErrors": {
+      "gas": [],
+      "cf": []
+    },
+    "pageErrors": {
+      "gas": [],
+      "cf": []
+    }
+  }
+]

@@ -1,0 +1,43 @@
+{
+  "overview_search": {
+    "allRows": 197,
+    "filteredRows": 68,
+    "ok": true
+  },
+  "overview_status_filter": {
+    "activeRows": 133,
+    "ok": true
+  },
+  "machine_search": {
+    "allRows": 57,
+    "filteredRows": 5,
+    "ok": true
+  },
+  "machine_cascade": {
+    "division": 3,
+    "sections": 10,
+    "ok": true
+  },
+  "machine_dept": {
+    "opts": 15,
+    "empties": 14,
+    "ok": true
+  },
+  "print_module_filter": {
+    "all": 197,
+    "jobCards": 64,
+    "ok": true
+  },
+  "history": {
+    "rows": 1,
+    "empty": "No scan history found",
+    "footer": "Page 1 of 1 (0 total)",
+    "prevDisabled": true,
+    "nextDisabled": true,
+    "ok": true
+  },
+  "tabs": {
+    "ok": true
+  },
+  "consoleErrors": 0
+}

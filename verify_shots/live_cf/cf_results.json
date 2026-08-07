@@ -1,0 +1,76 @@
+{
+  "results": [
+    {
+      "id": "CF_maintType_options",
+      "ok": true,
+      "note": "rptMaintType=[\"All\",\"Breakdown Electrical\",\"Breakdown Maintenance\",\"Preventive Maintenance\"] (placeholder \"All\" + 3 real types is correct CF design)"
+    },
+    {
+      "id": "CF_T_machine_history",
+      "ok": true,
+      "note": "rows=65 (expect 65)"
+    },
+    {
+      "id": "CF_T_breakdown_history",
+      "ok": true,
+      "note": "rows=61 (expect 61, was 0 before fix)"
+    },
+    {
+      "id": "CF_T_preventive_maintenance",
+      "ok": true,
+      "note": "rows=4 (expect 4)"
+    },
+    {
+      "id": "CF_F_machine",
+      "ok": true,
+      "note": "machine SW # 06 -> rows=19 (expect 19)"
+    },
+    {
+      "id": "CF_machine_name_rendering",
+      "ok": true,
+      "note": "machine_history table renders name fallback \"Hydraulic Press\" rows=65 nameRendered=true"
+    },
+    {
+      "id": "CF_F_maint",
+      "ok": true,
+      "note": "maintType Breakdown Maintenance -> rows=59 (expect 59)"
+    },
+    {
+      "id": "CF_F_truezero",
+      "ok": true,
+      "note": "2020 range -> toast + hidden table (rows=59)"
+    },
+    {
+      "id": "CF_no_pagination_65rows",
+      "ok": true,
+      "note": "65-row table: no pagination elements inside report table"
+    },
+    {
+      "id": "CF_export_PDF",
+      "ok": true,
+      "note": "PDF (window.print) invoked=1"
+    },
+    {
+      "id": "CF_export_CSV",
+      "ok": true,
+      "note": "CSV download -> 15539 bytes (BOM+header ok)"
+    },
+    {
+      "id": "CF_export_Excel",
+      "ok": true,
+      "note": "Excel download -> 23721 bytes"
+    },
+    {
+      "id": "CF_zero_page_errors",
+      "ok": true,
+      "note": "page errors=[]"
+    },
+    {
+      "id": "CF_zero_console_errors",
+      "ok": true,
+      "note": "console errors=0 sample=[]"
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": []
+}

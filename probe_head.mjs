@@ -1,0 +1,16 @@
+import puppeteer from 'puppeteer-core';
+const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+const GAS = process.env.GAS_URL || 'https://script.google.com/macros/s/AKfycby8VLo8el23tY3viaOmBRK58hHKuEbVYWvgzBzGbOQ/exec';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+const page = await browser.newPage();
+const t0 = Date.now();
+await page.goto(GAS, { waitUntil: 'load', timeout: 60000 }).catch(() => {});
+await sleep(5000);
+console.log('MAIN URL:', page.url());
+console.log('MAIN TITLE:', await page.title());
+const mainText = await page.evaluate(() => document.body.innerText.slice(0, 500)).catch(() => 'ERR');
+console.log('MAIN TEXT:', JSON.stringify(mainText));
+const frames = page.frames().map(f => f.url());
+console.log('FRAMES:', JSON.stringify(frames, null, 2));
+await browser.close();

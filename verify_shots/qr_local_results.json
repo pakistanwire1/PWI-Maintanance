@@ -1,0 +1,750 @@
+{
+  "confirmModal": {
+    "exists": true,
+    "title": "Confirm",
+    "confirmBtn": true,
+    "hasOverlayClass": true
+  },
+  "overview": {
+    "h2": "QR & Barcode Center",
+    "tabs": [
+      "Overview",
+      "Machines",
+      "Assets",
+      "Spare Parts",
+      "Job Cards",
+      "Print Labels",
+      "History"
+    ],
+    "selects": [
+      {
+        "id": "qrOvStatus",
+        "options": [
+          "All Status",
+          "Active",
+          "Inactive"
+        ]
+      },
+      {
+        "id": "qrOvQR",
+        "options": [
+          "QR: All",
+          "Generated",
+          "Pending"
+        ]
+      }
+    ],
+    "rows": 10,
+    "count": "Showing 10 records",
+    "pag": 0,
+    "badges": [
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge"
+    ]
+  },
+  "machines": {
+    "h2": "Machine QR Management",
+    "tabs": [
+      "Overview",
+      "Machines",
+      "Assets",
+      "Spare Parts",
+      "Job Cards",
+      "Print Labels",
+      "History"
+    ],
+    "selects": [
+      {
+        "id": "qrMcDivision",
+        "options": [
+          "All Divisions",
+          "Plant Division",
+          "Utility Division"
+        ]
+      },
+      {
+        "id": "qrMcSection",
+        "options": [
+          "All Sections",
+          "Machining",
+          "Pumping",
+          "Fabrication",
+          "Air"
+        ]
+      },
+      {
+        "id": "qrMcDept",
+        "options": [
+          "All Departments",
+          "Production",
+          "Utility"
+        ]
+      },
+      {
+        "id": "qrMcStatus",
+        "options": [
+          "All Status",
+          "Active",
+          "Inactive",
+          "Under Maintenance"
+        ]
+      }
+    ],
+    "rows": 3,
+    "count": "Showing 3 records",
+    "pag": 0,
+    "badges": [
+      "badge badge-success",
+      "badge badge-primary",
+      "badge badge-danger"
+    ]
+  },
+  "assets": {
+    "h2": "Asset QR Management",
+    "tabs": [
+      "Overview",
+      "Machines",
+      "Assets",
+      "Spare Parts",
+      "Job Cards",
+      "Print Labels",
+      "History"
+    ],
+    "selects": [
+      {
+        "id": "qrAsDivision",
+        "options": [
+          "All Divisions",
+          "Plant Division",
+          "Utility Division"
+        ]
+      },
+      {
+        "id": "qrAsSection",
+        "options": [
+          "All Sections",
+          "Machining",
+          "Pumping",
+          "Fabrication",
+          "Air"
+        ]
+      },
+      {
+        "id": "qrAsDept",
+        "options": [
+          "All Departments",
+          "Production",
+          "Utility"
+        ]
+      },
+      {
+        "id": "qrAsStatus",
+        "options": [
+          "All Status",
+          "Active",
+          "Retired"
+        ]
+      }
+    ],
+    "rows": 2,
+    "count": "Showing 2 records",
+    "pag": 0,
+    "badges": [
+      "badge badge-success",
+      "badge badge-primary"
+    ]
+  },
+  "spareparts": {
+    "h2": "Spare Parts QR Management",
+    "tabs": [
+      "Overview",
+      "Machines",
+      "Assets",
+      "Spare Parts",
+      "Job Cards",
+      "Print Labels",
+      "History"
+    ],
+    "selects": [
+      {
+        "id": "qrSpCategory",
+        "options": [
+          "All Categories",
+          "Fasteners",
+          "Mechanical"
+        ]
+      },
+      {
+        "id": "qrSpStatus",
+        "options": [
+          "All Status",
+          "Active",
+          "Inactive"
+        ]
+      }
+    ],
+    "rows": 2,
+    "count": "Showing 2 records",
+    "pag": 0,
+    "badges": []
+  },
+  "jobcards": {
+    "h2": "Job Card QR Management",
+    "tabs": [
+      "Overview",
+      "Machines",
+      "Assets",
+      "Spare Parts",
+      "Job Cards",
+      "Print Labels",
+      "History"
+    ],
+    "selects": [
+      {
+        "id": "qrJcStatus",
+        "options": [
+          "All Status",
+          "Completed",
+          "In Progress",
+          "Open"
+        ]
+      },
+      {
+        "id": "qrJcPriority",
+        "options": [
+          "All Priority",
+          "Critical",
+          "High",
+          "Medium"
+        ]
+      }
+    ],
+    "rows": 3,
+    "count": "Showing 3 records",
+    "pag": 0,
+    "badges": [
+      "badge badge-warning",
+      "badge badge-danger",
+      "badge badge-success",
+      "badge badge-danger",
+      "badge badge-primary",
+      "badge badge-warning"
+    ]
+  },
+  "jobCardBadges": [
+    {
+      "name": "JC-001",
+      "priorityBadge": "badge badge-danger"
+    },
+    {
+      "name": "JC-002",
+      "priorityBadge": "badge badge-danger"
+    },
+    {
+      "name": "JC-003",
+      "priorityBadge": "badge badge-warning"
+    }
+  ],
+  "printlabels": {
+    "h2": "Print QR Labels",
+    "tabs": [
+      "Overview",
+      "Machines",
+      "Assets",
+      "Spare Parts",
+      "Job Cards",
+      "Print Labels",
+      "History"
+    ],
+    "selects": [
+      {
+        "id": "qrPlModule",
+        "options": [
+          "All Modules",
+          "Machine",
+          "Asset",
+          "Spare Part",
+          "Job Card"
+        ]
+      }
+    ],
+    "rows": 6,
+    "count": "Showing 6 records",
+    "pag": 0,
+    "badges": [
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge"
+    ]
+  },
+  "history": {
+    "h2": "QR Scan History",
+    "tabs": [
+      "Overview",
+      "Machines",
+      "Assets",
+      "Spare Parts",
+      "Job Cards",
+      "Print Labels",
+      "History"
+    ],
+    "selects": [
+      {
+        "id": "qrHsModule",
+        "options": [
+          "All Modules",
+          "Machine",
+          "Asset",
+          "Spare Part",
+          "Job Card"
+        ]
+      }
+    ],
+    "rows": 25,
+    "count": "Page 1 of 3 (60 total)",
+    "pag": 1,
+    "badges": [
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge",
+      "badge"
+    ]
+  },
+  "machineCascade": {
+    "firstDiv": "Plant Division",
+    "before": {
+      "divisions": [
+        "All Divisions",
+        "Plant Division",
+        "Utility Division"
+      ],
+      "sections": [
+        "All Sections",
+        "Machining",
+        "Pumping",
+        "Fabrication",
+        "Air"
+      ],
+      "depts": [
+        "All Departments",
+        "Production",
+        "Utility"
+      ],
+      "status": [
+        "All Status",
+        "Active",
+        "Inactive",
+        "Under Maintenance"
+      ]
+    },
+    "after": {
+      "sections": [
+        "All Sections",
+        "Machining",
+        "Pumping",
+        "Fabrication",
+        "Air"
+      ],
+      "depts": [
+        "All Departments",
+        "Production",
+        "Utility"
+      ]
+    }
+  },
+  "passport": {
+    "tabs": [
+      "Overview",
+      "Machine Info",
+      "Breakdown",
+      "PM History",
+      "Job Cards",
+      "Spare Parts",
+      "Documents",
+      "Analytics",
+      "Timeline"
+    ],
+    "kpiCards": 11,
+    "kpiValues": [
+      "Active",
+      "120h",
+      "2.5h",
+      "96.2%",
+      "800",
+      "9",
+      "5",
+      "1",
+      "10.5h",
+      "20 May 2026",
+      "8 Aug 2026"
+    ],
+    "overviewItems": 16,
+    "headerName": "CNC Machine 1",
+    "headerTags": [
+      "MC-001",
+      "MC-001",
+      "Active",
+      "Critical"
+    ],
+    "infoItems": 20,
+    "bdRows": 5,
+    "bdCount": "5 records",
+    "pmRows": 2,
+    "pmCount": "2 records",
+    "jobCols": 16,
+    "jobRows": 6,
+    "jobCount": "6 records",
+    "sparesRows": 2,
+    "sparesCount": "2 records",
+    "docCards": 6,
+    "timelineItems": 6,
+    "photoHasImg": false,
+    "tabResults": {
+      "jobcards": {
+        "visible": true,
+        "newErrors": 0
+      },
+      "breakdown": {
+        "visible": true,
+        "newErrors": 0
+      },
+      "pm": {
+        "visible": true,
+        "newErrors": 0
+      },
+      "spares": {
+        "visible": true,
+        "newErrors": 0
+      },
+      "documents": {
+        "visible": true,
+        "newErrors": 0
+      },
+      "analytics": {
+        "visible": true,
+        "newErrors": 0
+      },
+      "timeline": {
+        "visible": true,
+        "newErrors": 0
+      },
+      "machineinfo": {
+        "visible": true,
+        "newErrors": 0
+      },
+      "overview": {
+        "visible": true,
+        "newErrors": 0
+      }
+    }
+  },
+  "passportScreenshot": true,
+  "apiCalls": [
+    "getSidebarCounts|{\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getDashboardData|{\"filter\":\"all\",\"department\":\"\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getDashboardNotifications|{\"count\":50,\"email\":\"supervisor@cmms.com\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getAuditLogs|{\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRStatistics|{\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Machine\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Asset\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Spare Part\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Job Card\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Machine\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getMachineCascade|{\"divisionId\":\"\",\"sectionId\":\"\",\"deptId\":\"\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Asset\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Spare Part\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Job Card\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Machine\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Asset\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Spare Part\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Job Card\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRScanStats|{\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRScanHistory|{\"module\":\"\",\"search\":\"\",\"page\":1,\"pageSize\":25,\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Machine\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getMachineCascade|{\"divisionId\":\"DV001\",\"sectionId\":\"\",\"deptId\":\"\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getMachinePassport|{\"machineId\":\"MC001\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getSidebarCounts|{\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Machine\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRStatistics|{\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Machine\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Asset\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Spare Part\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Job Card\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getSidebarCounts|{\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Machine\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Asset\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRModuleRecords|{\"module\":\"Job Card\",\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRScanStats|{\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getQRScanHistory|{\"module\":\"\",\"search\":\"\",\"page\":1,\"pageSize\":25,\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getSidebarCounts|{\"_userEmail\":\"supervisor@cmms.com\"}",
+    "getMachinePassport|{\"machineId\":\"MC001\",\"_userEmail\":\"supervisor@cmms.com\"}"
+  ],
+  "consoleErrors": [
+    "Error: <svg> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <rect> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <rect> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <rect> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <rect> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <rect> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <rect> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <rect> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <rect> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <rect> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <rect> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <rect> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <rect> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <rect> attribute width: A negative value is not valid. (\"-8\")",
+    "Error: <svg> attribute width: A negative value is not valid. (\"-8\")"
+  ],
+  "pageErrors": [],
+  "gasMachines": {
+    "scope": "#qrmachinesPage",
+    "pageHeader": {
+      "y": 144,
+      "h": 28,
+      "w": 1284
+    },
+    "h2": {
+      "y": 144,
+      "h": 28,
+      "font": "21px",
+      "weight": "700",
+      "margin": "0px",
+      "pad": "0px",
+      "color": "rgb(238, 240, 246)"
+    },
+    "headerPad": "0px",
+    "tabBar": {
+      "x": 112,
+      "y": 172,
+      "w": 1284,
+      "h": 32,
+      "display": "flex",
+      "font": "14px/Inter",
+      "color": "rgb(238, 240, 246)",
+      "bg": "rgba(0, 0, 0, 0)",
+      "pad": "0px",
+      "gap": "10px"
+    },
+    "searchBar": {
+      "x": 112,
+      "y": 218,
+      "w": 1284,
+      "h": 34,
+      "display": "flex",
+      "font": "14px/Inter",
+      "color": "rgb(238, 240, 246)",
+      "bg": "rgba(0, 0, 0, 0)",
+      "pad": "0px",
+      "gap": "8px"
+    },
+    "tableWrap": {
+      "x": 112,
+      "y": 264,
+      "w": 1284,
+      "h": 2372,
+      "display": "block",
+      "font": "14px/Inter",
+      "color": "rgb(238, 240, 246)",
+      "bg": "rgb(21, 24, 41)",
+      "pad": "0px",
+      "gap": "normal"
+    },
+    "footer": {
+      "x": 112,
+      "y": 2646,
+      "w": 1284,
+      "h": 16,
+      "display": "flex",
+      "font": "14px/Inter",
+      "color": "rgb(238, 240, 246)",
+      "bg": "rgba(0, 0, 0, 0)",
+      "pad": "0px",
+      "gap": "normal"
+    },
+    "selects": {
+      "division": {
+        "w": 160,
+        "h": 34,
+        "font": "12px/Inter",
+        "bg": "rgb(26, 29, 49)",
+        "color": "rgb(238, 240, 246)",
+        "border": "1px solid rgb(30, 33, 64)"
+      },
+      "section": {
+        "w": 111,
+        "h": 34,
+        "font": "12px/Inter",
+        "bg": "rgb(26, 29, 49)",
+        "color": "rgb(238, 240, 246)",
+        "border": "1px solid rgb(30, 33, 64)"
+      },
+      "dept": {
+        "w": 128,
+        "h": 34,
+        "font": "12px/Inter",
+        "bg": "rgb(26, 29, 49)",
+        "color": "rgb(238, 240, 246)",
+        "border": "1px solid rgb(30, 33, 64)"
+      },
+      "status": {
+        "w": 91,
+        "h": 34,
+        "font": "12px/Inter",
+        "bg": "rgb(26, 29, 49)",
+        "color": "rgb(238, 240, 246)",
+        "border": "1px solid rgb(30, 33, 64)"
+      }
+    },
+    "searchInput": {
+      "w": 762,
+      "h": 34,
+      "font": "12px",
+      "pad": "7px 10px",
+      "border": "1px solid rgb(30, 33, 64)",
+      "bg": "rgb(26, 29, 49)",
+      "ph": "Search machines..."
+    }
+  },
+  "cfMachines": {
+    "scope": "#pageContent",
+    "pageHeader": {
+      "y": 84,
+      "h": 25,
+      "w": 1328
+    },
+    "h2": {
+      "y": 84,
+      "h": 25,
+      "font": "21px",
+      "weight": "700",
+      "margin": "0px",
+      "pad": "0px",
+      "color": "rgb(238, 240, 246)"
+    },
+    "headerPad": "0px",
+    "tabBar": {
+      "x": 90,
+      "y": 109,
+      "w": 1328,
+      "h": 37,
+      "display": "flex",
+      "font": "14px/Inter",
+      "color": "rgb(238, 240, 246)",
+      "bg": "rgba(0, 0, 0, 0)",
+      "pad": "0px",
+      "gap": "14px"
+    },
+    "searchBar": {
+      "x": 90,
+      "y": 164,
+      "w": 1328,
+      "h": 32,
+      "display": "flex",
+      "font": "14px/Inter",
+      "color": "rgb(238, 240, 246)",
+      "bg": "rgba(0, 0, 0, 0)",
+      "pad": "0px",
+      "gap": "10.5px"
+    },
+    "tableWrap": {
+      "x": 90,
+      "y": 213,
+      "w": 1328,
+      "h": 199,
+      "display": "block",
+      "font": "14px/Inter",
+      "color": "rgb(238, 240, 246)",
+      "bg": "rgb(21, 24, 41)",
+      "pad": "0px",
+      "gap": "normal"
+    },
+    "footer": {
+      "x": 91,
+      "y": 377,
+      "w": 1326,
+      "h": 34,
+      "display": "flex",
+      "font": "11.9px/Inter",
+      "color": "rgb(148, 152, 184)",
+      "bg": "rgba(0, 0, 0, 0)",
+      "pad": "9.1px 10.5px",
+      "gap": "normal"
+    },
+    "selects": {
+      "division": {
+        "w": 120,
+        "h": 32,
+        "font": "12.25px/Arial",
+        "bg": "rgb(26, 29, 49)",
+        "color": "rgb(238, 240, 246)",
+        "border": "1px solid rgb(30, 33, 64)"
+      },
+      "section": {
+        "w": 108,
+        "h": 32,
+        "font": "12.25px/Arial",
+        "bg": "rgb(26, 29, 49)",
+        "color": "rgb(238, 240, 246)",
+        "border": "1px solid rgb(30, 33, 64)"
+      },
+      "dept": {
+        "w": 131,
+        "h": 32,
+        "font": "12.25px/Arial",
+        "bg": "rgb(26, 29, 49)",
+        "color": "rgb(238, 240, 246)",
+        "border": "1px solid rgb(30, 33, 64)"
+      },
+      "status": {
+        "w": 150,
+        "h": 32,
+        "font": "12.25px/Arial",
+        "bg": "rgb(26, 29, 49)",
+        "color": "rgb(238, 240, 246)",
+        "border": "1px solid rgb(30, 33, 64)"
+      }
+    },
+    "searchInput": {
+      "w": 777,
+      "h": 30,
+      "font": "12.25px",
+      "pad": "7px 10.5px",
+      "border": "1px solid rgb(30, 33, 64)",
+      "bg": "rgb(26, 29, 49)",
+      "ph": "Search machines..."
+    }
+  }
+}

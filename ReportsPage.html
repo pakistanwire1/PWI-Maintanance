@@ -139,7 +139,7 @@ function loadMachineCascade(divId, secId, deptId) {
       var divisions = (c.divisions || []).map(function(d) { return { value: d.id || d.ID, label: d.name || d.Name }; });
       var sections = (c.sections || []).map(function(s) { return { value: s.id || s.ID, label: s.name || s.Name }; });
       var departments = (c.departments || []).map(function(d) { return { value: d.id || d.ID, label: d.name || d.Name }; });
-      var machines = (c.machines || []).map(function(m) { return { value: m.number || m.Number, label: m.label || m.Label }; });
+      var machines = (c.machines || []).map(function(m) { return { value: m.number || m.Number || m.name || m.Name, label: m.label || m.Label }; });
       populateRptSelect('rptDivision', divisions, 'All Divisions', true);
       populateRptSelect('rptSection', sections, 'All Sections', true);
       populateRptSelect('rptDepartment', departments, 'All Departments', true);
@@ -251,7 +251,7 @@ function generateReport() {
 }
 
 function resetFilters() {
-  loadRptFilterOptions();
+  loadReportsData();
   document.getElementById('rptKpiCards').style.display = 'none';
   document.getElementById('rptTableCard').style.display = 'none';
   document.getElementById('rptChartsCard').style.display = 'none';

@@ -17,9 +17,17 @@ function getReportFilterOptions() {
     if (s && !seenSt[s]) { seenSt[s] = true; statusList.push(s); }
   });
 
+  var mtList = [];
+  var seenMt = {};
+  jcs.forEach(function(j) {
+    var mt = j.BreakdownType || j.MaintenanceType || '';
+    if (mt && !seenMt[mt]) { seenMt[mt] = true; mtList.push(mt); }
+  });
+  mtList.sort();
+
   return {
     technicians: techList,
-    maintenanceTypes: ['All','Breakdown','Preventive','Electrical','Mechanical','Corrective','Emergency','Routine'],
+    maintenanceTypes: ['All'].concat(mtList),
     priorities: priorityList,
     statuses: statusList,
     reportTypes: [
@@ -50,6 +58,7 @@ function getReportData(filters) {
   var jcs = getAllData(CONFIG.SHEET_NAMES.JOBCARDS) || [];
   var machines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
   var depts = getAllData(CONFIG.SHEET_NAMES.DEPARTMENTS) || [];
+  var sections = getAllData(CONFIG.SHEET_NAMES.SECTIONS) || [];
   var assets = getAllData(CONFIG.SHEET_NAMES.ASSETS) || [];
   var parts = getAllData(CONFIG.SHEET_NAMES.SPARE_PARTS) || [];
   var pms = getAllData(CONFIG.SHEET_NAMES.PREVENTIVE_MAINTENANCE) || [];
@@ -58,6 +67,9 @@ function getReportData(filters) {
 
   var deptMap = {};
   depts.forEach(function(d) { deptMap[d.Department || ''] = d; });
+
+  var sectionIdByName = {};
+  sections.forEach(function(s) { if (s.Section) sectionIdByName[s.Section] = s.SectionID || ''; });
 
   var machineMap = {};
   machines.forEach(function(m) {
@@ -85,27 +97,44 @@ function getReportData(filters) {
     var dept = deptMap[deptName] || {};
     var sectionName = jc.Section || m.Section || dept.Section || '';
 
-    if (filters.division && dept.Division !== filters.division) return false;
-    if (filters.section && sectionName !== filters.section) return false;
-    if (filters.department && deptName !== filters.department) return false;
+    if (filters.division) {
+      var divVal = String(filters.division);
+      if (dept.DivisionID !== divVal && dept.Division !== divVal) return false;
+    }
+    if (filters.section) {
+      var secVal = String(filters.section);
+      var secId = sectionIdByName[sectionName] || dept.SectionID || m.SectionID || '';
+      if (secId !== secVal && sectionName !== secVal) return false;
+    }
+    if (filters.department) {
+      var depVal = String(filters.department);
+      var depId = dept.DepartmentID || m.DeptID || '';
+      if (depId !== depVal && deptName !== depVal) return false;
+    }
     if (filters.machine && machineName !== filters.machine) return false;
-    if (filters.machineNumber && m.MachineNumber !== filters.machineNumber && m.MachineCode !== filters.machineNumber) return false;
-    if (filters.technician && jc.AssignedTechnician !== filters.technician) return false;
-    if (filters.maintenanceType && filters.maintenanceType !== 'All') {
-      var mt = (jc.BreakdownType || jc.MaintenanceType || '').toLowerCase();
-      var ft = filters.maintenanceType.toLowerCase();
-      if (ft === 'breakdown' && mt !== 'breakdown') return false;
-      else if (ft === 'preventive' && mt !== 'preventive') return false;
-      else if (ft === 'electrical' && mt !== 'electrical') return false;
-      else if (ft === 'mechanical' && mt !== 'mechanical') return false;
-      else if (ft === 'corrective' && mt !== 'corrective') return false;
-      else if (ft === 'emergency' && mt !== 'emergency') return false;
-      else if (ft === 'routine' && mt !== 'routine') return false;
+    if (filters.machineNumber && m.MachineNumber !== filters.machineNumber && m.MachineCode !== filters.machineNumber && m.MachineName !== filters.machineNumber && machineName !== filters.machineNumber) return false;
+    if (filters.technician) {
+      var techVal = String(filters.technician).trim().toLowerCase();
+      var assigned = String(jc.AssignedTechnician || '');
+      var techOk = assigned.toLowerCase() === techVal;
+      if (!techOk) {
+        var techParts = assigned.split(',');
+        for (var ti = 0; ti < techParts.length; ti++) {
+          if (String(techParts[ti]).trim().toLowerCase() === techVal) { techOk = true; break; }
+        }
+      }
+      if (!techOk) return false;
+    }
+    if (filters.maintenanceType && filters.maintenanceType !== 'All' && filters.maintenanceType !== 'All Types') {
+      var bt = String(jc.BreakdownType || '').toLowerCase();
+      var mtCol = String(jc.MaintenanceType || '').toLowerCase();
+      var ft = String(filters.maintenanceType).toLowerCase();
+      if (bt !== ft && mtCol !== ft) return false;
     }
     if (filters.priority && jc.Priority !== filters.priority) return false;
     if (filters.status) {
       var st = jc.CurrentStatus || jc.Status || '';
-      if (st.toLowerCase() !== filters.status.toLowerCase()) return false;
+      if (String(st).toLowerCase() !== String(filters.status).toLowerCase()) return false;
     }
     return true;
   });
@@ -215,6 +244,21 @@ function getReportColumns(type) {
   return keys.filter(function(k) { return colIndex[k] !== undefined; }).map(function(k) { return allCols[colIndex[k]]; });
 }
 
+function isBreakdownMaint(mt) {
+  var s = String(mt || '').trim().toLowerCase();
+  if (!s) return false;
+  if (s.indexOf('preventive') > -1 || s.indexOf('routine') > -1) return false;
+  return s === 'breakdown' || s === 'electrical' || s === 'mechanical' || s === 'emergency' || s === 'corrective'
+    || s.indexOf('breakdown') > -1 || s.indexOf('electrical') > -1 || s.indexOf('mechanical') > -1
+    || s.indexOf('emergency') > -1 || s.indexOf('corrective') > -1;
+}
+
+function isPreventiveMaint(mt) {
+  var s = String(mt || '').trim().toLowerCase();
+  if (!s) return false;
+  return s.indexOf('preventive') > -1 || s === 'routine' || s.indexOf('routine') > -1;
+}
+
 function getTableRows(rows, type) {
   if (type === 'technician_performance') return aggregateBy(rows, 'Technician', ['JobCardNo','WorkingTime','Downtime']);
   if (type === 'department_performance') return aggregateBy(rows, 'Department', ['JobCardNo','WorkingTime','Downtime']);
@@ -227,8 +271,8 @@ function getTableRows(rows, type) {
   if (type === 'maintenance_cost') return rows;
   if (type === 'pending_jobs') return rows.filter(function(r) { var s = r.CurrentStatus.toLowerCase(); return s === 'pending' || s === 'pending approval'; });
   if (type === 'closed_jobs') return rows.filter(function(r) { var s = r.CurrentStatus.toLowerCase(); return s === 'closed' || s === 'completed'; });
-  if (type === 'breakdown_history') return rows.filter(function(r) { var mt = r.BreakdownType.toLowerCase(); return mt === 'breakdown' || mt === 'electrical' || mt === 'mechanical' || mt === 'emergency' || mt === 'corrective'; });
-  if (type === 'preventive_maintenance') return rows.filter(function(r) { var mt = r.BreakdownType.toLowerCase(); return mt === 'preventive' || mt === 'routine'; });
+  if (type === 'breakdown_history') return rows.filter(function(r) { return isBreakdownMaint(r.BreakdownType); });
+  if (type === 'preventive_maintenance') return rows.filter(function(r) { return isPreventiveMaint(r.BreakdownType); });
   return rows;
 }
 
@@ -270,13 +314,13 @@ function computeKPI(rows, filtered) {
     totalWaiting += r.WaitingTime || 0;
     totalWorking += r.WorkingTime || 0;
     totalRepair += r.RepairTime || 0;
-    var mt = (r.BreakdownType || r.MaintenanceType || '').toLowerCase();
-    if (mt === 'breakdown' || mt === 'electrical' || mt === 'mechanical' || mt === 'emergency' || mt === 'corrective') {
+    var mt = (r.BreakdownType || r.MaintenanceType || '');
+    if (isBreakdownMaint(mt)) {
       breakdownJobs++;
-      var cs = r.CurrentStatus.toLowerCase();
+      var cs = String(r.CurrentStatus).toLowerCase();
       if (cs === 'closed' || cs === 'completed') closedBreakdown++;
     }
-    if (mt === 'preventive' || mt === 'routine') preventiveJobs++;
+    if (isPreventiveMaint(mt)) preventiveJobs++;
     var cs = r.CurrentStatus.toLowerCase();
     if (cs === 'closed' || cs === 'completed') closedCount++;
   });
@@ -334,8 +378,7 @@ function computeChartData(rows, filtered, allJcs) {
     if (!downtimeTrend[mk]) downtimeTrend[mk] = 0;
     if (!availabilityTrend[mk]) availabilityTrend[mk] = { working: 0, downtime: 0 };
 
-    var mt = (jc.BreakdownType || jc.MaintenanceType || '').toLowerCase();
-    var isBd = mt === 'breakdown' || mt === 'electrical' || mt === 'mechanical' || mt === 'emergency' || mt === 'corrective';
+    var isBd = isBreakdownMaint(jc.BreakdownType || jc.MaintenanceType);
     if (isBd) breakdownTrend[mk]++;
 
     var dMins = normalizeDuration(jc.Downtime || 0) || 0;

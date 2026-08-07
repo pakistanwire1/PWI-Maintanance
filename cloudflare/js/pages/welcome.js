@@ -1,10 +1,14 @@
 (function() {
   (function() {
-    var saved = localStorage.getItem('cmms_theme');
-    if (saved) {
-      document.documentElement.setAttribute('data-theme', saved);
-    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-      document.documentElement.setAttribute('data-theme', 'light');
+    if (typeof Theme !== 'undefined' && Theme.apply) {
+      Theme.apply();
+    } else {
+      var saved = localStorage.getItem('cmms_theme');
+      if (saved) {
+        document.documentElement.setAttribute('data-theme', saved);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
     }
   })();
 
@@ -37,10 +41,14 @@
   }
 
   function toggleTheme() {
-    var current = document.documentElement.getAttribute('data-theme') || 'dark';
-    var next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('cmms_theme', next);
+    if (typeof Theme !== 'undefined' && Theme.toggle) {
+      Theme.toggle();
+    } else {
+      var current = document.documentElement.getAttribute('data-theme') || 'dark';
+      var next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('cmms_theme', next);
+    }
     updateThemeIcon();
   }
 

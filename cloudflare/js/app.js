@@ -146,6 +146,10 @@
       QRCodes.showQRHistory(el);
     });
 
+    Router.register('machinepassport', function(el) {
+      MachinePassport.show(el);
+    });
+
     Router.register('settings', function(el) {
       Settings.show(el);
     });

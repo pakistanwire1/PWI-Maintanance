@@ -1,0 +1,50 @@
+{
+  "gasOpts": {
+    "maintTypes": [
+      "All",
+      "Breakdown Electrical",
+      "Breakdown Maintenance",
+      "Preventive Maintenance"
+    ],
+    "divisions": [
+      "DIV001",
+      "DIV002"
+    ],
+    "machines": [
+      "APS-01",
+      "APS-01",
+      "BL # 01",
+      "BL # 02",
+      "BL # 03",
+      "BL # 04",
+      "BL # 05",
+      "BL # 06",
+      "BL # 07",
+      "BL # 08"
+    ]
+  },
+  "cfOpts": {
+    "maintTypes": [
+      "All",
+      "Breakdown Electrical",
+      "Breakdown Maintenance",
+      "Preventive Maintenance"
+    ],
+    "machines": [
+      "APS-01",
+      "APS-01",
+      "BL # 01",
+      "BL # 02",
+      "BL # 03",
+      "BL # 04",
+      "BL # 05",
+      "BL # 06",
+      "BL # 07",
+      "BL # 08"
+    ]
+  },
+  "gasErrors": [],
+  "gasPageErrors": [],
+  "cfErrors": [],
+  "cfPageErrors": []
+}

@@ -1,6 +1,7 @@
 var QRCodes = (function() {
   var STYLE_ID = 'qr-module-styles';
   var PAGE_SIZE = 15;
+  var HISTORY_PAGE_SIZE = 25;
   var _injected = false;
 
   var _ov = { data: [], stats: {}, filters: { search: '', status: '', qr: '' }, page: 1, el: null };
@@ -11,6 +12,8 @@ var QRCodes = (function() {
   var _pl = { data: [], filters: { module: '', search: '' }, page: 1, el: null };
   var _hs = { data: [], total: 0, totalPages: 0, page: 1, filters: { module: '', search: '' }, stats: {}, el: null };
   var _lbl = { mod: '', id: '', name: '', size: '75x50mm', data: null };
+  var _mcCascade = null;
+  var _asCascade = null;
 
   function injectStyles() {
     if (_injected) return;
@@ -75,7 +78,7 @@ var QRCodes = (function() {
       '.qr-detail-item .label{font-size:.7rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem}' +
       '.qr-detail-item .value{font-size:.875rem;color:var(--text)}' +
       '.qr-detail-full{grid-column:1/-1}' +
-      '.btn-xs{padding:.25rem .5rem;font-size:.75rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:.25rem}' +
+      '.btn-xs{padding:.25rem .5rem;font-size:.75rem;border-radius:var(--radius-sm);border:none;background:var(--bg-card);color:var(--text);cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:.25rem}' +
       '.btn-xs:hover{background:var(--bg-card-hover)}' +
       '.btn-xs.btn-primary-xs{background:var(--primary);color:#fff;border-color:var(--primary)}' +
       '.btn-xs.btn-success-xs{background:var(--success,#10b981);color:#fff;border-color:var(--success,#10b981)}' +
@@ -83,6 +86,12 @@ var QRCodes = (function() {
       '.btn-xs.btn-warning-xs{background:var(--warning,#f59e0b);color:#fff;border-color:var(--warning,#f59e0b)}' +
       '.btn-xs.btn-danger-xs{background:var(--danger,#ef4444);color:#fff;border-color:var(--danger,#ef4444)}' +
       '.btn-xs:disabled{opacity:.5;cursor:not-allowed}' +
+      '.btn-xs.btn-primary{background:var(--primary);color:var(--bg-primary)}' +
+      '.btn-xs.btn-primary:hover{background:var(--primary-dark)}' +
+      '.btn-xs.btn-info{background:var(--primary-light);color:var(--primary)}' +
+      '.btn-xs.btn-info:hover{background:var(--primary);color:var(--bg-primary)}' +
+      '.btn-xs.btn-secondary{background:var(--bg-input);color:var(--text-secondary);border:1px solid var(--border)}' +
+      '.btn-xs.btn-secondary:hover{background:var(--bg-card-hover);color:var(--text)}' +
       '.badge{display:inline-block;padding:.2rem .5rem;border-radius:999px;font-size:.75rem;font-weight:600;line-height:1}' +
       '.badge-success{background:var(--success-bg,#d1fae5);color:var(--success,#10b981)}' +
       '.badge-danger{background:#fee2e2;color:var(--danger,#ef4444)}' +
@@ -146,13 +155,14 @@ var QRCodes = (function() {
 
   function moduleTag(m) {
     var colors = { 'Machine': '#6366f1', 'Asset': '#06b6d4', 'Spare Part': '#22c55e', 'Job Card': '#f59e0b' };
-    var c = colors[m] || '#6b7280';
-    return '<span class="badge" style="background:' + c + ';color:#fff">' + esc(m) + '</span>';
+    var c = colors[m] || 'var(--text-muted)';
+    return '<span style="background:' + c + '22;color:' + c + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + esc(m) + '</span>';
   }
 
   function priorityBadge(p) {
     if (!p) return '<span class="badge badge-secondary">-</span>';
-    var cls = (p || '').toLowerCase() === 'high' ? 'danger' : (p || '').toLowerCase() === 'medium' ? 'warning' : 'success';
+    var pl = (p || '').toLowerCase();
+    var cls = (pl === 'critical' || pl === 'high') ? 'danger' : pl === 'medium' ? 'warning' : 'success';
     return '<span class="badge badge-' + cls + '">' + esc(p) + '</span>';
   }
 
@@ -202,8 +212,9 @@ var QRCodes = (function() {
     return html;
   }
 
-  function paginationHtml(page, total, onPageFn) {
-    var tp = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  function paginationHtml(page, total, onPageFn, pageSize) {
+    var ps = pageSize || PAGE_SIZE;
+    var tp = Math.max(1, Math.ceil(total / ps));
     if (tp <= 1) return '';
     return '<div class="qr-pagination">' +
       '<button class="btn btn-xs" onclick="' + onPageFn + '(' + (page - 1) + ')"' + (page <= 1 ? ' disabled' : '') + '>Previous</button>' +
@@ -291,7 +302,8 @@ var QRCodes = (function() {
         });
         html += '</div>';
       }
-      html += '<div style="margin-top:1rem;text-align:center">' +
+      html += '<div style="margin-top:1rem;text-align:center;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">' +
+        (mod === 'Machine' ? '<button class="btn btn-xs btn-success" onclick="closeQROverlay(\'qrDetailOverlay\');QRCodes.openPassport(\'' + esc(rec.MachineID || rec.id || '') + '\')">Open Machine Passport</button>' : '') +
         '<button class="btn btn-xs btn-info-xs" onclick="closeQROverlay(\'qrDetailOverlay\');navigateTo(\'' + moduleRoute(mod) + '\')">Open ' + esc(mod) + ' Record</button></div>';
       body.innerHTML = html;
     }).catch(function() {
@@ -474,6 +486,7 @@ var QRCodes = (function() {
       '<div style="display:flex;flex-direction:column;gap:8px">' + rows + '</div>' +
       '<div style="display:flex;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">' +
         '<button class="btn btn-primary" style="flex:1" onclick="QRCodes.closeDetail();navigateTo(\'' + (routeMap[mod] || 'dashboard') + '\')">View ' + esc(mod) + '</button>' +
+        (mod === 'Machine' ? '<button class="btn btn-success" style="flex:1" onclick="QRCodes.closeDetail();QRCodes.openPassport(\'' + esc(id) + '\')">Passport</button>' : '') +
         (mod === 'Machine' ? '<button class="btn btn-success" style="flex:1" onclick="QRCodes.closeDetail();navigateTo(\'openjobcard\')">Create Job Card</button>' : '') +
         '<button class="btn btn-secondary" style="flex:1" onclick="QRCodes.closeDetail()">Close</button>' +
       '</div>' +
@@ -509,8 +522,10 @@ var QRCodes = (function() {
         '<div style="margin-bottom:.25rem"><span class="muted">Code:</span> <span class="mono-sm">' + esc(code) + '</span></div>' +
         '<div style="margin-bottom:.25rem"><span class="muted">Module:</span> ' + moduleTag(mod) + '</div>' +
         '<div style="margin-bottom:.75rem"><span class="muted">Status:</span> ' + qrStatusBadge(status) + '</div>' +
+        '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">' +
+        (mod === 'Machine' ? '<button class="btn btn-xs btn-success" onclick="closeQROverlay(\'qrScanOverlay\');QRCodes.openPassport(\'' + esc(recId) + '\')">Open Machine Passport</button>' : '') +
         '<button class="btn btn-xs btn-info-xs" onclick="closeQROverlay(\'qrScanOverlay\');navigateTo(\'' + moduleRoute(mod) + '\')">Open ' + esc(mod) + ' Record</button>' +
-        '</div>';
+        '</div>' +
       API.post('logQRScan', { module: mod, recordId: recId, recordName: name, scanResult: 'Success', action: 'Scan' }).catch(function() {});
     }).catch(function() {
       result.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--danger)">Error looking up code</div>';
@@ -648,10 +663,10 @@ var QRCodes = (function() {
     var status = filters.status || '';
     var qr = filters.qr || '';
     return records.filter(function(r) {
-      if (q && (r.name || '').toLowerCase().indexOf(q) === -1 && (r.code || '').toLowerCase().indexOf(q) === -1 && (r.MachineCode || '').toLowerCase().indexOf(q) === -1 && (r.AssetCode || '').toLowerCase().indexOf(q) === -1 && (r.PartCode || '').toLowerCase().indexOf(q) === -1 && (r.JobCardNo || '').toLowerCase().indexOf(q) === -1) return false;
+      if (q && (r.name || '').toLowerCase().indexOf(q) === -1 && (r.id || '').toLowerCase().indexOf(q) === -1 && (r.code || '').toLowerCase().indexOf(q) === -1 && (r.MachineCode || '').toLowerCase().indexOf(q) === -1 && (r.AssetCode || '').toLowerCase().indexOf(q) === -1 && (r.PartCode || '').toLowerCase().indexOf(q) === -1 && (r.JobCardNo || '').toLowerCase().indexOf(q) === -1) return false;
       if (status) { var rs = (r.status || r.Status || '').toLowerCase(); if (rs !== status.toLowerCase()) return false; }
-      if (qr === 'Generated' && !r.qrCode) return false;
-      if (qr === 'Pending' && r.qrCode) return false;
+      if (qr === 'generated' && !r.qrCode) return false;
+      if (qr === 'pending' && r.qrCode) return false;
       return true;
     });
   }
@@ -670,32 +685,29 @@ var QRCodes = (function() {
       '<td>' + moduleTag(mod) + '</td>' +
       '<td class="qr-cell">' + (hasQR ? '<span class="qr-check">&#10003;</span>' : '<button class="btn-xs btn-primary-xs" onclick="QRCodes.generateQR(\'' + esc(mod) + '\',\'' + esc(String(id)) + '\')">Generate</button>') + '</td>' +
       '<td class="qr-cell">' + (hasBC ? '<span class="mono-sm">' + esc(r.barcode) + '</span>' : '<button class="btn-xs btn-primary-xs" onclick="QRCodes.generateBarcode(\'' + esc(mod) + '\',\'' + esc(String(id)) + '\')">Generate</button>') + '</td>' +
-      '<td class="muted">' + (hasQR ? formatDur(r.qrGeneratedDate) : '') + '</td>' +
+      '<td class="muted">' + esc(r.qrGeneratedDate || '-') + '</td>' +
       '<td class="qr-actions-cell">' +
-      (hasQR ? '<button class="btn-xs btn-info-xs" onclick="QRCodes.printLabel(\'' + esc(mod) + '\',\'' + esc(String(id)) + '\',\'' + esc(name).replace(/'/g, "\\'") + '\')">Print Label</button><button class="btn-xs btn-warning-xs" onclick="QRCodes.viewQR(\'' + esc(r.qrCode).replace(/'/g, "\\'") + '\',\'' + esc(name).replace(/'/g, "\\'") + '\')">View QR</button>' : '') +
+      (hasQR ? '<button class="btn-xs btn-info" onclick="QRCodes.printLabel(\'' + esc(mod) + '\',\'' + esc(String(id)) + '\',\'' + esc(name).replace(/'/g, "\\'") + '\')" title="Print Label">&#128424;</button> ' +
+        '<button class="btn-xs btn-secondary" onclick="QRCodes.viewQR(\'' + esc(r.qrCode).replace(/'/g, "\\'") + '\',\'' + esc(name).replace(/'/g, "\\'") + '\')" title="View QR">&#128065;</button>' : '') +
       '</td></tr>';
   }
 
   function renderOverviewTable() {
     var filtered = filterOverview(_ov.data, _ov.filters);
     var total = filtered.length;
-    var tp = Math.max(1, Math.ceil(total / PAGE_SIZE));
-    if (_ov.page > tp) _ov.page = tp;
-    var start = (_ov.page - 1) * PAGE_SIZE;
-    var pageData = filtered.slice(start, start + PAGE_SIZE);
     var tbody = document.getElementById('qrOvBody');
     if (!tbody) return;
-    if (!pageData.length) {
+    if (!filtered.length) {
       tbody.innerHTML = '<tr><td colspan="8" class="qr-empty">No records found</td></tr>';
     } else {
       var html = '';
-      pageData.forEach(function(r, i) { html += overviewRow(r, start + i + 1); });
+      filtered.forEach(function(r, i) { html += overviewRow(r, i + 1); });
       tbody.innerHTML = html;
     }
     var countEl = document.getElementById('qrOvCount');
-    if (countEl) countEl.textContent = total + ' record' + (total !== 1 ? 's' : '');
+    if (countEl) countEl.textContent = 'Showing ' + total + ' records';
     var pgEl = document.getElementById('qrOvPag');
-    if (pgEl) pgEl.innerHTML = paginationHtml(_ov.page, total, 'QRCodes.ovPage');
+    if (pgEl) pgEl.innerHTML = '';
   }
 
   function renderModuleTable(cfg) {
@@ -715,23 +727,19 @@ var QRCodes = (function() {
       return true;
     });
     var total = filtered.length;
-    var tp = Math.max(1, Math.ceil(total / PAGE_SIZE));
-    if (st.page > tp) st.page = tp;
-    var start = (st.page - 1) * PAGE_SIZE;
-    var pageData = filtered.slice(start, start + PAGE_SIZE);
     var tbody = document.getElementById(cfg.tbodyId);
     if (!tbody) return;
-    if (!pageData.length) {
+    if (!filtered.length) {
       tbody.innerHTML = '<tr><td colspan="' + cfg.colCount + '" class="qr-empty">No records found</td></tr>';
     } else {
       var html = '';
-      pageData.forEach(function(r, i) { html += cfg.rowFn(r, start + i + 1); });
+      filtered.forEach(function(r, i) { html += cfg.rowFn(r, i + 1); });
       tbody.innerHTML = html;
     }
     var countEl = document.getElementById(cfg.countId);
-    if (countEl) countEl.textContent = total + ' record' + (total !== 1 ? 's' : '');
+    if (countEl) countEl.textContent = 'Showing ' + total + ' records';
     var pgEl = document.getElementById(cfg.pagId);
-    if (pgEl) pgEl.innerHTML = paginationHtml(st.page, total, cfg.pageFn);
+    if (pgEl) pgEl.innerHTML = '';
   }
 
   function machineRow(r, idx) {
@@ -749,8 +757,9 @@ var QRCodes = (function() {
       '<td class="qr-cell">' + (hasQR ? '<span class="qr-check">&#10003;</span>' : '<button class="btn-xs btn-primary-xs" onclick="QRCodes.generateQR(\'Machine\',\'' + esc(String(id)) + '\')">Generate</button>') + '</td>' +
       '<td class="qr-cell">' + (hasBC ? '<span class="mono-sm">' + esc(r.barcode) + '</span>' : '<button class="btn-xs btn-primary-xs" onclick="QRCodes.generateBarcode(\'Machine\',\'' + esc(String(id)) + '\')">Generate</button>') + '</td>' +
       '<td class="qr-actions-cell">' +
-      '<button class="btn-xs" onclick="QRCodes.showDetail(\'Machine\',\'' + esc(String(id)) + '\')">Details</button>' +
-      (hasQR ? '<button class="btn-xs btn-info-xs" onclick="QRCodes.printLabel(\'Machine\',\'' + esc(String(id)) + '\',\'' + esc(r.MachineName || r.name || '').replace(/'/g, "\\'") + '\')">Print</button><button class="btn-xs btn-warning-xs" onclick="QRCodes.viewQR(\'' + esc(r.qrCode).replace(/'/g, "\\'") + '\',\'' + esc(r.MachineName || r.name || '').replace(/'/g, "\\'") + '\')">QR</button>' : '') +
+      '<button class="btn-xs btn-primary" onclick="QRCodes.showDetail(\'Machine\',\'' + esc(String(id)) + '\')" title="View Details">&#128196;</button> ' +
+      (hasQR ? '<button class="btn-xs btn-info" onclick="QRCodes.printLabel(\'Machine\',\'' + esc(String(id)) + '\',\'' + esc(r.MachineName || r.name || '').replace(/'/g, "\\'") + '\')" title="Print Label">&#128424;</button> ' +
+        '<button class="btn-xs btn-secondary" onclick="QRCodes.viewQR(\'' + esc(r.qrCode).replace(/'/g, "\\'") + '\',\'' + esc(r.MachineName || r.name || '').replace(/'/g, "\\'") + '\')" title="View QR">&#128065;</button>' : '') +
       '</td></tr>';
   }
 
@@ -769,8 +778,9 @@ var QRCodes = (function() {
       '<td class="qr-cell">' + (hasQR ? '<span class="qr-check">&#10003;</span>' : '<button class="btn-xs btn-primary-xs" onclick="QRCodes.generateQR(\'Asset\',\'' + esc(String(id)) + '\')">Generate</button>') + '</td>' +
       '<td class="qr-cell">' + (hasBC ? '<span class="mono-sm">' + esc(r.barcode) + '</span>' : '<button class="btn-xs btn-primary-xs" onclick="QRCodes.generateBarcode(\'Asset\',\'' + esc(String(id)) + '\')">Generate</button>') + '</td>' +
       '<td class="qr-actions-cell">' +
-      '<button class="btn-xs" onclick="QRCodes.showDetail(\'Asset\',\'' + esc(String(id)) + '\')">Details</button>' +
-      (hasQR ? '<button class="btn-xs btn-info-xs" onclick="QRCodes.printLabel(\'Asset\',\'' + esc(String(id)) + '\',\'' + esc(r.AssetName || r.name || '').replace(/'/g, "\\'") + '\')">Print</button><button class="btn-xs btn-warning-xs" onclick="QRCodes.viewQR(\'' + esc(r.qrCode).replace(/'/g, "\\'") + '\',\'' + esc(r.AssetName || r.name || '').replace(/'/g, "\\'") + '\')">QR</button>' : '') +
+      '<button class="btn-xs btn-primary" onclick="QRCodes.showDetail(\'Asset\',\'' + esc(String(id)) + '\')" title="View Details">&#128196;</button> ' +
+      (hasQR ? '<button class="btn-xs btn-info" onclick="QRCodes.printLabel(\'Asset\',\'' + esc(String(id)) + '\',\'' + esc(r.AssetName || r.name || '').replace(/'/g, "\\'") + '\')" title="Print Label">&#128424;</button> ' +
+        '<button class="btn-xs btn-secondary" onclick="QRCodes.viewQR(\'' + esc(r.qrCode).replace(/'/g, "\\'") + '\',\'' + esc(r.AssetName || r.name || '').replace(/'/g, "\\'") + '\')" title="View QR">&#128065;</button>' : '') +
       '</td></tr>';
   }
 
@@ -779,20 +789,21 @@ var QRCodes = (function() {
     var hasQR = !!r.qrCode;
     var hasBC = !!r.barcode;
     var status = r.Status || r.status || '';
-    var stock = r.CurrentStock != null ? r.CurrentStock : (r.currentStock != null ? r.currentStock : '-');
-    var minStock = r.MinimumStock != null ? r.MinimumStock : (r.minimumStock != null ? r.minimumStock : '-');
+    var stock = r.CurrentStock != null ? r.CurrentStock : (r.currentStock != null ? r.currentStock : '0');
+    var minStock = r.MinimumStock != null ? r.MinimumStock : (r.minimumStock != null ? r.minimumStock : '0');
     return '<tr>' +
       '<td>' + idx + '</td>' +
       '<td class="mono-sm">' + esc(r.PartCode || r.code || '') + '</td>' +
       '<td>' + esc(r.PartName || r.name || '') + '</td>' +
-      '<td>' + esc(r.Category || r.category || '') + '</td>' +
-      '<td class="mono-sm">' + esc(String(stock)) + ' / ' + esc(String(minStock)) + '</td>' +
-      '<td>' + esc(r.Location || r.location || '') + '</td>' +
+      '<td>' + esc(r.category || '-') + '</td>' +
+      '<td class="mono-sm">' + esc(String(stock || '0')) + ' / ' + esc(String(minStock || '0')) + '</td>' +
+      '<td>' + esc(r.location || r.binNumber || '-') + '</td>' +
       '<td class="qr-cell">' + (hasQR ? '<span class="qr-check">&#10003;</span>' : '<button class="btn-xs btn-primary-xs" onclick="QRCodes.generateQR(\'Spare Part\',\'' + esc(String(id)) + '\')">Generate</button>') + '</td>' +
       '<td class="qr-cell">' + (hasBC ? '<span class="mono-sm">' + esc(r.barcode) + '</span>' : '<button class="btn-xs btn-primary-xs" onclick="QRCodes.generateBarcode(\'Spare Part\',\'' + esc(String(id)) + '\')">Generate</button>') + '</td>' +
       '<td class="qr-actions-cell">' +
-      '<button class="btn-xs" onclick="QRCodes.showDetail(\'Spare Part\',\'' + esc(String(id)) + '\')">Details</button>' +
-      (hasQR ? '<button class="btn-xs btn-info-xs" onclick="QRCodes.printLabel(\'Spare Part\',\'' + esc(String(id)) + '\',\'' + esc(r.PartName || r.name || '').replace(/'/g, "\\'") + '\')">Print</button><button class="btn-xs btn-warning-xs" onclick="QRCodes.viewQR(\'' + esc(r.qrCode).replace(/'/g, "\\'") + '\',\'' + esc(r.PartName || r.name || '').replace(/'/g, "\\'") + '\')">QR</button>' : '') +
+      '<button class="btn-xs btn-primary" onclick="QRCodes.showDetail(\'Spare Part\',\'' + esc(String(id)) + '\')" title="View Details">&#128196;</button> ' +
+      (hasQR ? '<button class="btn-xs btn-info" onclick="QRCodes.printLabel(\'Spare Part\',\'' + esc(String(id)) + '\',\'' + esc(r.PartName || r.name || '').replace(/'/g, "\\'") + '\')" title="Print Label">&#128424;</button> ' +
+        '<button class="btn-xs btn-secondary" onclick="QRCodes.viewQR(\'' + esc(r.qrCode).replace(/'/g, "\\'") + '\',\'' + esc(r.PartName || r.name || '').replace(/'/g, "\\'") + '\')" title="View QR">&#128065;</button>' : '') +
       '</td></tr>';
   }
 
@@ -812,8 +823,9 @@ var QRCodes = (function() {
       '<td class="qr-cell">' + (hasQR ? '<span class="qr-check">&#10003;</span>' : '<button class="btn-xs btn-primary-xs" onclick="QRCodes.generateQR(\'Job Card\',\'' + esc(String(id)) + '\')">Generate</button>') + '</td>' +
       '<td class="qr-cell">' + (hasBC ? '<span class="mono-sm">' + esc(r.barcode) + '</span>' : '<button class="btn-xs btn-primary-xs" onclick="QRCodes.generateBarcode(\'Job Card\',\'' + esc(String(id)) + '\')">Generate</button>') + '</td>' +
       '<td class="qr-actions-cell">' +
-      '<button class="btn-xs" onclick="QRCodes.showDetail(\'Job Card\',\'' + esc(String(id)) + '\')">Details</button>' +
-      (hasQR ? '<button class="btn-xs btn-info-xs" onclick="QRCodes.printLabel(\'Job Card\',\'' + esc(String(id)) + '\',\'' + esc(r.JobCardNo || r.code || '').replace(/'/g, "\\'") + '\')">Print</button><button class="btn-xs btn-warning-xs" onclick="QRCodes.viewQR(\'' + esc(r.qrCode).replace(/'/g, "\\'") + '\',\'' + esc(r.JobCardNo || r.code || '').replace(/'/g, "\\'") + '\')">QR</button>' : '') +
+      '<button class="btn-xs btn-primary" onclick="QRCodes.showDetail(\'Job Card\',\'' + esc(String(id)) + '\')" title="View Details">&#128196;</button> ' +
+      (hasQR ? '<button class="btn-xs btn-info" onclick="QRCodes.printLabel(\'Job Card\',\'' + esc(String(id)) + '\',\'' + esc(r.JobCardNo || r.code || '').replace(/'/g, "\\'") + '\')" title="Print Label">&#128424;</button> ' +
+        '<button class="btn-xs btn-secondary" onclick="QRCodes.viewQR(\'' + esc(r.qrCode).replace(/'/g, "\\'") + '\',\'' + esc(r.JobCardNo || r.code || '').replace(/'/g, "\\'") + '\')" title="View QR">&#128065;</button>' : '') +
       '</td></tr>';
   }
 
@@ -822,21 +834,24 @@ var QRCodes = (function() {
     _ov.data = [];
     _ov.page = 1;
     _ov.filters = { search: '', status: '', qr: '' };
-    el.innerHTML = '<div class="qr-summary">' +
-      '<div class="qr-stat-card"><div class="stat-value" id="qrStatGenerated">-</div><div class="stat-label">QR Generated</div></div>' +
-      '<div class="qr-stat-card"><div class="stat-value" id="qrStatPending">-</div><div class="stat-label">Pending</div></div>' +
-      '<div class="qr-stat-card"><div class="stat-value" id="qrStatScanned">-</div><div class="stat-label">Times Scanned</div></div>' +
+    el.innerHTML = '<div class="page-header">' +
+      '<h2><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg> QR &amp; Barcode Center</h2>' +
+      '</div>' +
+      '<div class="qr-summary" id="qrSummaryCards">' +
+      '<div class="stat-card stat-primary"><div class="stat-inner"><div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg></div><div class="stat-info"><h3 id="qrStatGenerated">0</h3><p>QR Generated</p></div></div></div>' +
+      '<div class="stat-card stat-warning"><div class="stat-inner"><div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="stat-info"><h3 id="qrStatPending">0</h3><p>Pending</p></div></div></div>' +
+      '<div class="stat-card stat-success"><div class="stat-inner"><div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-info"><h3 id="qrStatScanned">0</h3><p>Times Scanned</p></div></div></div>' +
       '</div>' +
       tabBar('qr', '<button class="btn btn-primary" onclick="QRCodes.bulkAllQR()">Bulk Generate QR</button>' +
         '<button class="btn btn-success" onclick="QRCodes.bulkAllBarcode()">Bulk Barcode</button>' +
         '<button class="btn btn-info" onclick="QRCodes.openScan()">Scan</button>') +
       '<div class="qr-search-bar">' +
-      '<input type="text" id="qrOvSearch" placeholder="Search records..." oninput="QRCodes.ovSearch(this.value)" style="flex:1;min-width:200px" />' +
-      '<select id="qrOvStatus" onchange="QRCodes.ovFilterStatus(this.value)"><option value="">All Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>' +
-      '<select id="qrOvQR" onchange="QRCodes.ovFilterQR(this.value)"><option value="">All QR Status</option><option value="Generated">Generated</option><option value="Pending">Pending</option></select>' +
+      '<input type="text" id="qrSearchInput" placeholder="Search by name, code or ID..." oninput="QRCodes.ovSearch(this.value)" style="flex:1;min-width:200px" />' +
+      '<select id="qrStatusFilter" onchange="QRCodes.ovFilterStatus(this.value)"><option value="">All Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>' +
+      '<select id="qrQRFilter" onchange="QRCodes.ovFilterQR(this.value)"><option value="">QR: All</option><option value="generated">Generated</option><option value="pending">Pending</option></select>' +
       '</div>' +
       '<div class="qr-table-wrap"><table><thead><tr>' +
-      '<th>#</th><th>ID/Code</th><th>Name</th><th>Module</th><th>QR Code</th><th>Barcode</th><th>Generated</th><th>Actions</th>' +
+      '<th>#</th><th>ID / Code</th><th>Name</th><th>Module</th><th>QR Code</th><th>Barcode</th><th>Generated</th><th>Actions</th>' +
       '</tr></thead><tbody id="qrOvBody"><tr><td colspan="8" class="qr-empty">Loading...</td></tr></tbody></table>' +
       '<div class="qr-page-footer"><span id="qrOvCount">0 records</span><div id="qrOvPag"></div></div></div>';
 
@@ -868,13 +883,14 @@ var QRCodes = (function() {
     cfg.filterFields.forEach(function(f) { st.filters[f] = ''; });
 
     var filterHtml = '<div class="qr-search-bar">' +
-      '<input type="text" id="' + cfg.searchId + '" placeholder="Search..." oninput="QRCodes.' + cfg.searchFn + '(this.value)" style="flex:1;min-width:180px" />';
+      '<input type="text" id="' + cfg.searchId + '" placeholder="' + esc(cfg.searchPlaceholder || 'Search...') + '" oninput="QRCodes.' + cfg.searchFn + '(this.value)" style="flex:1;min-width:180px" />';
     cfg.filterSelects.forEach(function(fs) {
       filterHtml += '<select id="' + fs.id + '" onchange="QRCodes.' + fs.fn + '(this.value)">' + fs.options + '</select>';
     });
     filterHtml += '</div>';
 
     cfg.el.innerHTML =
+      '<div class="page-header"><h2>' + esc(cfg.headerTitle) + '</h2></div>' +
       tabBar(cfg.tabKey, '<button class="btn btn-primary" onclick="QRCodes.bulkModuleQR(\'' + esc(cfg.module) + '\')">Bulk Generate QR</button>' +
         '<button class="btn btn-success" onclick="QRCodes.bulkModuleBarcode(\'' + esc(cfg.module) + '\')">Bulk Barcode</button>') +
       filterHtml +
@@ -891,12 +907,22 @@ var QRCodes = (function() {
     });
   }
 
-  function populateSelectFromData(id, data, field) {
-    var vals = getUnique(data, field);
+  function populateSelectFromData(id, data, field, defaultText) {
+    var fields = (field || '').split(',');
+    var vals = [];
+    var seen = {};
+    (data || []).forEach(function(r) {
+      fields.forEach(function(f) {
+        var v = r[f];
+        if (v === undefined && f.charAt(0) === f.charAt(0).toUpperCase()) v = r[f.charAt(0).toLowerCase() + f.slice(1)];
+        if (v && !seen[v]) { seen[v] = true; vals.push(v); }
+      });
+    });
+    vals.sort();
     var sel = document.getElementById(id);
     if (!sel) return;
     var current = sel.value;
-    sel.innerHTML = '<option value="">All</option>';
+    sel.innerHTML = '<option value="">' + (defaultText || 'All') + '</option>';
     vals.forEach(function(v) {
       var opt = document.createElement('option');
       opt.value = v;
@@ -904,6 +930,49 @@ var QRCodes = (function() {
       if (v === current) opt.selected = true;
       sel.appendChild(opt);
     });
+  }
+
+  function populateSelectOptions(id, items, labelField, placeholder) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var current = sel.value;
+    sel.innerHTML = '<option value="">' + (placeholder || 'All') + '</option>';
+    (items || []).forEach(function(it) {
+      var v = it[labelField] || it.name || '';
+      var opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      if (v === current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  function resetSelect(id, placeholder) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">' + (placeholder || 'All') + '</option>';
+  }
+
+  function findId(items, name) {
+    var result = '';
+    (items || []).forEach(function(it) { if (it.name === name) result = it.id || it.name; });
+    return result;
+  }
+
+  function loadQrCascade(cfg, divName, secName) {
+    var divId = findId(cfg.divisions, divName);
+    var secId = findId(cfg.sections, secName);
+    API.post('getMachineCascade', { divisionId: divId || '', sectionId: secId || '', deptId: '' }).then(function(c) {
+      c = c || {};
+      if (!cfg.divisions || !cfg.divisions.length) {
+        cfg.divisions = c.divisions || [];
+        populateSelectOptions(cfg.divisionSelectId, cfg.divisions, 'name', 'All Divisions');
+      }
+      cfg.sections = c.sections || [];
+      cfg.departments = c.departments || [];
+      populateSelectOptions(cfg.sectionSelectId, cfg.sections, 'name', 'All Sections');
+      populateSelectOptions(cfg.deptSelectId, cfg.departments, 'name', 'All Departments');
+    }).catch(function() {});
   }
 
   function mcRenderTable() {
@@ -941,19 +1010,23 @@ var QRCodes = (function() {
   function showMachines(el) {
     showModulePage({
       state: _mc, el: el, module: 'Machine', tabKey: 'qrmachines',
-      searchId: 'qrMcSearch', searchFn: 'mcSearch', tbodyId: 'qrMcBody',
+      headerTitle: 'Machine QR Management',
+      searchId: 'qrMachineSearch', searchPlaceholder: 'Search machines...', searchFn: 'mcSearch', tbodyId: 'qrMcBody',
       countId: 'qrMcCount', pagId: 'qrMcPag', colCount: 9,
-      filterFields: ['search', 'dept', 'section', 'status'],
+      cascade: { divisionSelectId: 'qrMachineDivision', sectionSelectId: 'qrMachineSectionFilter', deptSelectId: 'qrMachineDeptFilter', divisions: [], sections: [], departments: [] },
+      filterFields: ['search', 'division', 'dept', 'section', 'status'],
       filterSelects: [
-        { id: 'qrMcDept', fn: 'mcFilterDept', options: '<option value="">All Departments</option>' },
-        { id: 'qrMcSection', fn: 'mcFilterSection', options: '<option value="">All Sections</option>' },
-        { id: 'qrMcStatus', fn: 'mcFilterStatus', options: '<option value="">All Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Under Maintenance">Under Maintenance</option><option value="Retired">Retired</option>' }
+        { id: 'qrMachineDivision', fn: 'mcFilterDivision', options: '<option value="">All Divisions</option>' },
+        { id: 'qrMachineSectionFilter', fn: 'mcFilterSection', options: '<option value="">All Sections</option>' },
+        { id: 'qrMachineDeptFilter', fn: 'mcFilterDept', options: '<option value="">All Departments</option>' },
+        { id: 'qrMachineStatusFilter', fn: 'mcFilterStatus', options: '<option value="">All Status</option>' }
       ],
       headers: '<th>#</th><th>Machine Code</th><th>Machine Name</th><th>Department</th><th>Section</th><th>Status</th><th>QR Code</th><th>Barcode</th><th>Actions</th>',
       renderTable: mcRenderTable,
       populateFilters: function(data) {
-        populateSelectFromData('qrMcDept', data, 'Department');
-        populateSelectFromData('qrMcSection', data, 'Section');
+        _mcCascade = this.cascade;
+        populateSelectFromData('qrMachineStatusFilter', data, 'Status', 'All Status');
+        loadQrCascade(this.cascade, '', '');
       }
     });
   }
@@ -961,19 +1034,23 @@ var QRCodes = (function() {
   function showAssets(el) {
     showModulePage({
       state: _as, el: el, module: 'Asset', tabKey: 'qrassets',
-      searchId: 'qrAsSearch', searchFn: 'asSearch', tbodyId: 'qrAsBody',
+      headerTitle: 'Asset QR Management',
+      searchId: 'qrAssetSearch', searchPlaceholder: 'Search assets...', searchFn: 'asSearch', tbodyId: 'qrAsBody',
       countId: 'qrAsCount', pagId: 'qrAsPag', colCount: 9,
-      filterFields: ['search', 'dept', 'section', 'status'],
+      cascade: { divisionSelectId: 'qrAssetDivision', sectionSelectId: 'qrAssetSectionFilter', deptSelectId: 'qrAssetDeptFilter', divisions: [], sections: [], departments: [] },
+      filterFields: ['search', 'division', 'dept', 'section', 'status'],
       filterSelects: [
-        { id: 'qrAsDept', fn: 'asFilterDept', options: '<option value="">All Departments</option>' },
-        { id: 'qrAsSection', fn: 'asFilterSection', options: '<option value="">All Sections</option>' },
-        { id: 'qrAsStatus', fn: 'asFilterStatus', options: '<option value="">All Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Retired">Retired</option>' }
+        { id: 'qrAssetDivision', fn: 'asFilterDivision', options: '<option value="">All Divisions</option>' },
+        { id: 'qrAssetSectionFilter', fn: 'asFilterSection', options: '<option value="">All Sections</option>' },
+        { id: 'qrAssetDeptFilter', fn: 'asFilterDept', options: '<option value="">All Departments</option>' },
+        { id: 'qrAssetStatusFilter', fn: 'asFilterStatus', options: '<option value="">All Status</option>' }
       ],
       headers: '<th>#</th><th>Asset Code</th><th>Asset Name</th><th>Department</th><th>Section</th><th>Status</th><th>QR Code</th><th>Barcode</th><th>Actions</th>',
       renderTable: asRenderTable,
       populateFilters: function(data) {
-        populateSelectFromData('qrAsDept', data, 'Department');
-        populateSelectFromData('qrAsSection', data, 'Section');
+        _asCascade = this.cascade;
+        populateSelectFromData('qrAssetStatusFilter', data, 'Status', 'All Status');
+        loadQrCascade(this.cascade, '', '');
       }
     });
   }
@@ -981,17 +1058,19 @@ var QRCodes = (function() {
   function showSpareParts(el) {
     showModulePage({
       state: _sp, el: el, module: 'Spare Part', tabKey: 'qrspareparts',
-      searchId: 'qrSpSearch', searchFn: 'spSearch', tbodyId: 'qrSpBody',
+      headerTitle: 'Spare Parts QR Management',
+      searchId: 'qrSpareSearch', searchPlaceholder: 'Search spare parts...', searchFn: 'spSearch', tbodyId: 'qrSpBody',
       countId: 'qrSpCount', pagId: 'qrSpPag', colCount: 9,
       filterFields: ['search', 'category', 'status'],
       filterSelects: [
-        { id: 'qrSpCategory', fn: 'spFilterCategory', options: '<option value="">All Categories</option>' },
-        { id: 'qrSpStatus', fn: 'spFilterStatus', options: '<option value="">All Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option>' }
+        { id: 'qrSpareDeptFilter', fn: 'spFilterCategory', options: '<option value="">All Categories</option>' },
+        { id: 'qrSpareStatusFilter', fn: 'spFilterStatus', options: '<option value="">All Status</option>' }
       ],
-      headers: '<th>#</th><th>Part Code</th><th>Part Name</th><th>Category</th><th>Stock (Cur/Min)</th><th>Location</th><th>QR Code</th><th>Barcode</th><th>Actions</th>',
+      headers: '<th>#</th><th>Part Code</th><th>Part Name</th><th>Category</th><th>Stock</th><th>Location</th><th>QR Code</th><th>Barcode</th><th>Actions</th>',
       renderTable: spRenderTable,
       populateFilters: function(data) {
-        populateSelectFromData('qrSpCategory', data, 'Category');
+        populateSelectFromData('qrSpareDeptFilter', data, 'Category', 'All Categories');
+        populateSelectFromData('qrSpareStatusFilter', data, 'Status', 'All Status');
       }
     });
   }
@@ -999,16 +1078,20 @@ var QRCodes = (function() {
   function showJobCards(el) {
     showModulePage({
       state: _jc, el: el, module: 'Job Card', tabKey: 'qrjobcards',
-      searchId: 'qrJcSearch', searchFn: 'jcSearch', tbodyId: 'qrJcBody',
+      headerTitle: 'Job Card QR Management',
+      searchId: 'qrJCSearch', searchPlaceholder: 'Search job cards...', searchFn: 'jcSearch', tbodyId: 'qrJcBody',
       countId: 'qrJcCount', pagId: 'qrJcPag', colCount: 9,
       filterFields: ['search', 'status', 'priority'],
       filterSelects: [
-        { id: 'qrJcStatus', fn: 'jcFilterStatus', options: '<option value="">All Status</option><option value="Open">Open</option><option value="In Progress">In Progress</option><option value="Waiting">Waiting</option><option value="Closed">Closed</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option>' },
-        { id: 'qrJcPriority', fn: 'jcFilterPriority', options: '<option value="">All Priority</option><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option>' }
+        { id: 'qrJCStatusFilter', fn: 'jcFilterStatus', options: '<option value="">All Status</option>' },
+        { id: 'qrJCPriorityFilter', fn: 'jcFilterPriority', options: '<option value="">All Priority</option>' }
       ],
       headers: '<th>#</th><th>Job Card No</th><th>Machine</th><th>Status</th><th>Open Date</th><th>Priority</th><th>QR Code</th><th>Barcode</th><th>Actions</th>',
       renderTable: jcRenderTable,
-      populateFilters: function() {}
+      populateFilters: function(data) {
+        populateSelectFromData('qrJCStatusFilter', data, 'CurrentStatus,currentStatus,Status,status', 'All Status');
+        populateSelectFromData('qrJCPriorityFilter', data, 'Priority,priority', 'All Priority');
+      }
     });
   }
 
@@ -1017,10 +1100,11 @@ var QRCodes = (function() {
     _pl.data = [];
     _pl.page = 1;
     _pl.filters = { module: '', search: '' };
-    el.innerHTML = tabBar('qrprint', '') +
+    el.innerHTML = '<div class="page-header"><h2>Print QR Labels</h2></div>' +
+      tabBar('qrprint', '') +
       '<div class="qr-search-bar">' +
-      '<select id="qrPlModule" onchange="QRCodes.plFilterModule(this.value)"><option value="">All Modules</option><option value="Machine">Machine</option><option value="Asset">Asset</option><option value="Spare Part">Spare Part</option><option value="Job Card">Job Card</option></select>' +
-      '<input type="text" id="qrPlSearch" placeholder="Search records..." oninput="QRCodes.plSearch(this.value)" style="flex:1;min-width:200px" />' +
+      '<select id="qrPrintModule" onchange="QRCodes.plFilterModule(this.value)"><option value="">All Modules</option><option value="Machine">Machine</option><option value="Asset">Asset</option><option value="Spare Part">Spare Part</option><option value="Job Card">Job Card</option></select>' +
+      '<input type="text" id="qrPrintSearch" placeholder="Search..." oninput="QRCodes.plSearch(this.value)" style="flex:1;min-width:200px" />' +
       '</div>' +
       '<div class="qr-table-wrap"><table><thead><tr>' +
       '<th>#</th><th>ID</th><th>Name</th><th>Module</th><th>QR</th><th>Barcode</th><th>Action</th>' +
@@ -1049,36 +1133,32 @@ var QRCodes = (function() {
       return true;
     });
     var total = filtered.length;
-    var tp = Math.max(1, Math.ceil(total / PAGE_SIZE));
-    if (_pl.page > tp) _pl.page = tp;
-    var start = (_pl.page - 1) * PAGE_SIZE;
-    var pageData = filtered.slice(start, start + PAGE_SIZE);
     var tbody = document.getElementById('qrPlBody');
     if (!tbody) return;
-    if (!pageData.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="qr-empty">No records with QR codes</td></tr>';
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="qr-empty">No printable records found</td></tr>';
     } else {
       var html = '';
-      pageData.forEach(function(r, i) {
-        var idx = start + i + 1;
+      filtered.forEach(function(r, i) {
+        var idx = i + 1;
         var id = r.id || r.MachineID || r.AssetID || r.PartID || r.JobCardID || '';
         var name = r.name || r.MachineName || r.AssetName || r.PartName || r.JobCardNo || '';
         var code = r.code || r.MachineCode || r.AssetCode || r.PartCode || '';
         var mod = r._module || '';
         html += '<tr><td>' + idx + '</td>' +
-          '<td class="mono-sm">' + esc(code) + '</td>' +
-          '<td>' + esc(name) + '</td>' +
+          '<td><span class="mono">' + esc(id) + '</span></td>' +
+          '<td><strong>' + esc(name) + '</strong></td>' +
           '<td>' + moduleTag(mod) + '</td>' +
           '<td class="qr-cell"><span class="qr-check">&#10003;</span></td>' +
-          '<td class="qr-cell">' + (r.barcode ? '<span class="mono-sm">' + esc(r.barcode) + '</span>' : '<span class="muted">-</span>') + '</td>' +
-          '<td class="qr-actions-cell"><button class="btn-xs btn-info-xs" onclick="QRCodes.printLabel(\'' + esc(mod) + '\',\'' + esc(String(id)) + '\',\'' + esc(name).replace(/'/g, "\\'") + '\')">Print Label</button></td></tr>';
+          '<td class="mono-sm">' + esc(r.barcode || '') + '</td>' +
+          '<td><button class="btn-xs btn-info" onclick="QRCodes.printLabel(\'' + esc(mod) + '\',\'' + esc(String(id)) + '\',\'' + esc(name).replace(/'/g, "\\'") + '\')">Print Label</button></td></tr>';
       });
       tbody.innerHTML = html;
     }
     var countEl = document.getElementById('qrPlCount');
-    if (countEl) countEl.textContent = total + ' record' + (total !== 1 ? 's' : '');
+    if (countEl) countEl.textContent = 'Showing ' + total + ' records';
     var pgEl = document.getElementById('qrPlPag');
-    if (pgEl) pgEl.innerHTML = paginationHtml(_pl.page, total, 'QRCodes.plPage');
+    if (pgEl) pgEl.innerHTML = '';
   }
 
   function showHistory(el) {
@@ -1089,20 +1169,24 @@ var QRCodes = (function() {
     _hs.totalPages = 0;
     _hs.filters = { module: '', search: '' };
     _hs.stats = {};
-    el.innerHTML = '<div class="qr-summary">' +
-      '<div class="qr-stat-card"><div class="stat-value" id="qrHsTotal">-</div><div class="stat-label">Total Scans</div></div>' +
-      '<div class="qr-stat-card"><div class="stat-value" id="qrHsToday">-</div><div class="stat-label">Today</div></div>' +
-      '<div class="qr-stat-card"><div class="stat-value" id="qrHsUsers">-</div><div class="stat-label">Unique Users</div></div>' +
+    el.innerHTML = '<div class="page-header"><h2>QR Scan History</h2></div>' +
+      '<div class="qr-summary" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">' +
+      '<div class="stat-card stat-primary"><div class="stat-inner"><div class="stat-info"><h3 id="qrHistTotal">0</h3><p>Total Scans</p></div></div></div>' +
+      '<div class="stat-card stat-success"><div class="stat-inner"><div class="stat-info"><h3 id="qrHistToday">0</h3><p>Today</p></div></div></div>' +
+      '<div class="stat-card stat-warning"><div class="stat-inner"><div class="stat-info"><h3 id="qrHistUsers">0</h3><p>Unique Users</p></div></div></div>' +
       '</div>' +
       tabBar('qrhistory', '') +
       '<div class="qr-search-bar">' +
-      '<select id="qrHsModule" onchange="QRCodes.hsFilterModule(this.value)"><option value="">All Modules</option><option value="Machine">Machine</option><option value="Asset">Asset</option><option value="Spare Part">Spare Part</option><option value="Job Card">Job Card</option></select>' +
-      '<input type="text" id="qrHsSearch" placeholder="Search history..." oninput="QRCodes.hsSearch(this.value)" style="flex:1;min-width:200px" />' +
+      '<select id="qrHistModule" onchange="QRCodes.hsFilterModule(this.value)"><option value="">All Modules</option><option value="Machine">Machine</option><option value="Asset">Asset</option><option value="Spare Part">Spare Part</option><option value="Job Card">Job Card</option></select>' +
+      '<input type="text" id="qrHistSearch" placeholder="Search history..." oninput="QRCodes.hsSearch(this.value)" style="flex:1;min-width:200px" />' +
       '</div>' +
       '<div class="qr-table-wrap"><table><thead><tr>' +
       '<th>#</th><th>Date/Time</th><th>User</th><th>Module</th><th>Record</th><th>Action</th><th>Device</th>' +
       '</tr></thead><tbody id="qrHsBody"><tr><td colspan="7" class="qr-empty">Loading...</td></tr></tbody></table>' +
-      '<div class="qr-page-footer"><span id="qrHsCount">0 records</span><div id="qrHsPag"></div></div></div>';
+      '<div class="qr-page-footer"><span id="qrHsCount">0 records</span> ' +
+      '<div style="display:flex;gap:4px"><button class="btn-xs btn-secondary" id="qrHistPrevBtn" onclick="QRCodes.hsPage(-1)" disabled>Previous</button> ' +
+      '<button class="btn-xs btn-secondary" id="qrHistNextBtn" onclick="QRCodes.hsPage(1)">Next</button></div>' +
+      '</div></div>';
 
     loadHistoryStats();
     loadHistoryPage();
@@ -1111,12 +1195,12 @@ var QRCodes = (function() {
   function loadHistoryStats() {
     API.post('getQRScanStats').then(function(stats) {
       _hs.stats = stats || {};
-      var el = document.getElementById('qrHsTotal');
+      var el = document.getElementById('qrHistTotal');
       if (el) el.textContent = _hs.stats.totalScans != null ? _hs.stats.totalScans : 0;
-      el = document.getElementById('qrHsToday');
+      el = document.getElementById('qrHistToday');
       if (el) el.textContent = _hs.stats.todayScans != null ? _hs.stats.todayScans : 0;
-      el = document.getElementById('qrHsUsers');
-      if (el) el.textContent = _hs.stats.uniqueUsers != null ? _hs.stats.uniqueUsers : '-';
+      el = document.getElementById('qrHistUsers');
+      if (el) el.textContent = _hs.stats.uniqueUsers != null ? _hs.stats.uniqueUsers : 0;
     }).catch(function() {});
   }
 
@@ -1128,43 +1212,45 @@ var QRCodes = (function() {
       module: _hs.filters.module || '',
       search: _hs.filters.search || '',
       page: _hs.page,
-      pageSize: PAGE_SIZE
+      pageSize: HISTORY_PAGE_SIZE
     }).then(function(result) {
-      if (!result) result = { records: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 };
+      if (!result) result = { records: [], total: 0, page: 1, pageSize: HISTORY_PAGE_SIZE, totalPages: 0 };
       _hs.data = result.records || [];
       _hs.total = result.total || 0;
-      _hs.totalPages = result.totalPages || Math.max(1, Math.ceil(_hs.total / PAGE_SIZE));
+      _hs.totalPages = result.totalPages || Math.max(1, Math.ceil(_hs.total / HISTORY_PAGE_SIZE));
       _hs.page = result.page || 1;
 
       if (!_hs.data.length) {
         if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="qr-empty">No scan history found</td></tr>';
       } else {
         var html = '';
-        var start = (_hs.page - 1) * PAGE_SIZE;
+        var start = (_hs.page - 1) * HISTORY_PAGE_SIZE;
         _hs.data.forEach(function(r, i) {
           html += '<tr>' +
             '<td>' + (start + i + 1) + '</td>' +
-            '<td>' + esc(Utils.formatDateTime ? Utils.formatDateTime(r.DateTime || r.date || r.timestamp) : (r.DateTime || r.date || r.timestamp || '')) + '</td>' +
-            '<td>' + esc(r.User || r.user || r.email || '') + '</td>' +
-            '<td>' + moduleTag(r.Module || r.module || '') + '</td>' +
-            '<td>' + esc(r.RecordName || r.recordName || r.Record || r.record || '') + '</td>' +
+            '<td class="muted">' + esc(r.ScanDateTime || r.DateTime || r.date || r.timestamp || '') + '</td>' +
+            '<td>' + esc(r.UserName || r.UserEmail || r.User || r.user || r.email || '') + '</td>' +
+            '<td>' + moduleTag(r.QRModule || r.Module || r.module || '') + '</td>' +
+            '<td><strong>' + esc(r.RecordID || '') + '</strong> <span class="muted">' + esc(r.RecordName || '') + '</span></td>' +
             '<td>' + esc(r.Action || r.action || '') + '</td>' +
-            '<td class="mono-sm">' + esc(r.Device || r.device || '') + '</td>' +
+            '<td class="muted">' + esc(r.DeviceType || r.Device || r.device || '') + '</td>' +
             '</tr>';
         });
         if (tbody) tbody.innerHTML = html;
       }
 
       var countEl = document.getElementById('qrHsCount');
-      if (countEl) countEl.textContent = _hs.total + ' record' + (_hs.total !== 1 ? 's' : '');
-      var pgEl = document.getElementById('qrHsPag');
-      if (pgEl) pgEl.innerHTML = paginationHtml(_hs.page, _hs.total, 'QRCodes.hsPage');
+      if (countEl) countEl.textContent = 'Page ' + _hs.page + ' of ' + _hs.totalPages + ' (' + _hs.total + ' total)';
+      var prevBtn = document.getElementById('qrHistPrevBtn');
+      if (prevBtn) prevBtn.disabled = _hs.page <= 1;
+      var nextBtn = document.getElementById('qrHistNextBtn');
+      if (nextBtn) nextBtn.disabled = _hs.page >= _hs.totalPages;
 
       if (_hs.total > 0 && !_hs.stats.uniqueUsers) {
         var users = {};
         _hs.data.forEach(function(r) { var u = r.User || r.user || r.email; if (u) users[u] = true; });
         var el2 = document.getElementById('qrHsUsers');
-        if (el2) el2.textContent = Object.keys(users).length || '-';
+        if (el2) el2.textContent = Object.keys(users).length || 0;
       }
     }).catch(function() {
       if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="qr-empty">Failed to load scan history</div></tr>';
@@ -1179,13 +1265,13 @@ var QRCodes = (function() {
       showOverview(el);
     },
 
-    showQR: function(el) { showOverview(el); },
-    showQRMachines: function(el) { showMachines(el); },
-    showQRAssets: function(el) { showAssets(el); },
-    showQRSpareParts: function(el) { showSpareParts(el); },
-    showQRJobCards: function(el) { showJobCards(el); },
-    showQRPrint: function(el) { showPrintLabels(el); },
-    showQRHistory: function(el) { showHistory(el); },
+    showQR: function(el) { injectStyles(); showOverview(el); },
+    showQRMachines: function(el) { injectStyles(); showMachines(el); },
+    showQRAssets: function(el) { injectStyles(); showAssets(el); },
+    showQRSpareParts: function(el) { injectStyles(); showSpareParts(el); },
+    showQRJobCards: function(el) { injectStyles(); showJobCards(el); },
+    showQRPrint: function(el) { injectStyles(); showPrintLabels(el); },
+    showQRHistory: function(el) { injectStyles(); showHistory(el); },
 
     ovSearch: function(v) { _ov.filters.search = v; _ov.page = 1; renderOverviewTable(); },
     ovFilterStatus: function(v) { _ov.filters.status = v; _ov.page = 1; renderOverviewTable(); },
@@ -1193,14 +1279,48 @@ var QRCodes = (function() {
     ovPage: function(p) { _ov.page = p; renderOverviewTable(); },
 
     mcSearch: function(v) { _mc.filters.search = v; _mc.page = 1; mcRenderTable(); },
+    mcFilterDivision: function(v) {
+      _mc.filters.division = v;
+      _mc.filters.section = '';
+      _mc.filters.dept = '';
+      _mc.page = 1;
+      resetSelect('qrMachineSectionFilter', 'All Sections');
+      resetSelect('qrMachineDeptFilter', 'All Departments');
+      loadQrCascade(_mcCascade, v, '');
+      mcRenderTable();
+    },
+    mcFilterSection: function(v) {
+      _mc.filters.section = v;
+      _mc.filters.dept = '';
+      _mc.page = 1;
+      resetSelect('qrMachineDeptFilter', 'All Departments');
+      loadQrCascade(_mcCascade, _mc.filters.division, v);
+      mcRenderTable();
+    },
     mcFilterDept: function(v) { _mc.filters.dept = v; _mc.page = 1; mcRenderTable(); },
-    mcFilterSection: function(v) { _mc.filters.section = v; _mc.page = 1; mcRenderTable(); },
     mcFilterStatus: function(v) { _mc.filters.status = v; _mc.page = 1; mcRenderTable(); },
     mcPage: function(p) { _mc.page = p; mcRenderTable(); },
 
     asSearch: function(v) { _as.filters.search = v; _as.page = 1; asRenderTable(); },
+    asFilterDivision: function(v) {
+      _as.filters.division = v;
+      _as.filters.section = '';
+      _as.filters.dept = '';
+      _as.page = 1;
+      resetSelect('qrAssetSectionFilter', 'All Sections');
+      resetSelect('qrAssetDeptFilter', 'All Departments');
+      loadQrCascade(_asCascade, v, '');
+      asRenderTable();
+    },
+    asFilterSection: function(v) {
+      _as.filters.section = v;
+      _as.filters.dept = '';
+      _as.page = 1;
+      resetSelect('qrAssetDeptFilter', 'All Departments');
+      loadQrCascade(_asCascade, _as.filters.division, v);
+      asRenderTable();
+    },
     asFilterDept: function(v) { _as.filters.dept = v; _as.page = 1; asRenderTable(); },
-    asFilterSection: function(v) { _as.filters.section = v; _as.page = 1; asRenderTable(); },
     asFilterStatus: function(v) { _as.filters.status = v; _as.page = 1; asRenderTable(); },
     asPage: function(p) { _as.page = p; asRenderTable(); },
 
@@ -1300,6 +1420,13 @@ var QRCodes = (function() {
     printLabel: function(mod, id, name) { showLabelModal(mod, id, name); },
 
     showDetail: function(mod, id) { showDetailModal(mod, id); },
+
+    openPassport: function(machineId) {
+      if (!machineId) { Notify.warning('No machine id available'); return; }
+      sessionStorage.setItem('passportMachineId', machineId);
+      sessionStorage.setItem('passportPrevPage', (typeof Nav !== 'undefined' && Nav.currentPage) || 'qr');
+      navigateTo('machinepassport');
+    },
 
     _refresh: function() {
       var pageContent = document.getElementById('pageContent');

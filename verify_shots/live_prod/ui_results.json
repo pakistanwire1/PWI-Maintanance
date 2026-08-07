@@ -1,0 +1,220 @@
+{
+  "results": [
+    {
+      "id": "UI_maintType_options",
+      "ok": true,
+      "detail": "rptMaintType=[\"Breakdown Electrical\",\"Breakdown Maintenance\",\"Preventive Maintenance\"]"
+    },
+    {
+      "id": "UI_division_options",
+      "ok": true,
+      "detail": "divisions=[\"DIV001\",\"DIV002\"]"
+    },
+    {
+      "id": "UI_section_options",
+      "ok": true,
+      "detail": "sections=9 sample=[\"SEC001\",\"SEC002\",\"SEC003\",\"SEC004\"]"
+    },
+    {
+      "id": "UI_dept_options",
+      "ok": true,
+      "detail": "depts=14"
+    },
+    {
+      "id": "UI_machine_options",
+      "ok": true,
+      "detail": "machines=57 sample=[\"APS-01\",\"APS-01\",\"BL # 01\"]"
+    },
+    {
+      "id": "UI_report_types_count",
+      "ok": true,
+      "detail": "reportTypes in UI dropdown=19"
+    },
+    {
+      "id": "UI_T_machine_history",
+      "ok": true,
+      "detail": "rows=65 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_breakdown_history",
+      "ok": true,
+      "detail": "rows=61 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_preventive_maintenance",
+      "ok": true,
+      "detail": "rows=4 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_technician_performance",
+      "ok": true,
+      "detail": "rows=16 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_department_performance",
+      "ok": true,
+      "detail": "rows=6 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_machine_performance",
+      "ok": true,
+      "detail": "rows=8 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_machine_utilization",
+      "ok": true,
+      "detail": "rows=65 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_mttr",
+      "ok": true,
+      "detail": "rows=65 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_mtbf",
+      "ok": true,
+      "detail": "rows=65 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_availability",
+      "ok": true,
+      "detail": "rows=65 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_pending_jobs",
+      "ok": true,
+      "detail": "rows=4 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_closed_jobs",
+      "ok": true,
+      "detail": "rows=4 kpi=9 charts=8/0 pag=0 prevnext=false (true-zero: toast=\"ℹNo data found for selected filters\" tableHidden=true)"
+    },
+    {
+      "id": "UI_T_approval_history",
+      "ok": true,
+      "detail": "rows=65 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_downtime_analysis",
+      "ok": true,
+      "detail": "rows=65 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_complaint_analysis",
+      "ok": true,
+      "detail": "rows=65 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_root_cause_analysis",
+      "ok": true,
+      "detail": "rows=21 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_spare_parts_consumption",
+      "ok": true,
+      "detail": "rows=21 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_maintenance_cost",
+      "ok": true,
+      "detail": "rows=65 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_T_asset_history",
+      "ok": true,
+      "detail": "rows=65 kpi=9 charts=8/0 pag=0 prevnext=false"
+    },
+    {
+      "id": "UI_F_division",
+      "ok": true,
+      "detail": "Division DIV001 -> rows=64 tableHidden=false (expect 64)"
+    },
+    {
+      "id": "UI_F_div_sec",
+      "ok": true,
+      "detail": "DIV001 + SEC002 -> rows=62 tableHidden=false (expect 62)"
+    },
+    {
+      "id": "UI_F_div_sec_dept",
+      "ok": true,
+      "detail": "DIV001+SEC002+DEPT003 -> rows=19 tableHidden=false (expect 19)"
+    },
+    {
+      "id": "UI_F_machine",
+      "ok": true,
+      "detail": "Machine SW # 06 -> rows=19 tableHidden=false (expect 19)"
+    },
+    {
+      "id": "UI_F_technician",
+      "ok": true,
+      "detail": "Technician ARIF -> rows=10 tableHidden=false (expect 10)"
+    },
+    {
+      "id": "UI_F_maint",
+      "ok": true,
+      "detail": "Maintenance Type Breakdown Maintenance -> rows=59 tableHidden=false (expect 59)"
+    },
+    {
+      "id": "UI_F_priority",
+      "ok": true,
+      "detail": "Priority High -> rows=2 tableHidden=false (expect 2)"
+    },
+    {
+      "id": "UI_F_status",
+      "ok": true,
+      "detail": "Status RUNNING -> rows=13 tableHidden=false (expect 13)"
+    },
+    {
+      "id": "UI_F_daterange",
+      "ok": true,
+      "detail": "Date range Jul 2026 -> rows=64 (expect 64)"
+    },
+    {
+      "id": "UI_F_truezero",
+      "ok": true,
+      "detail": "2020 date range -> rows=64 tableHidden=true toast=ℹNo data found for selected filters (expect No data toast + hidden table; stale DOM rows are ignored)"
+    },
+    {
+      "id": "UI_reset",
+      "ok": true,
+      "detail": "reset executed, kpi=none table=none (no JS error)"
+    },
+    {
+      "id": "UI_export_CSV",
+      "ok": true,
+      "detail": "CSV export -> {\"mime\":\"text/csv;charset=utf-8\",\"len\":15539}"
+    },
+    {
+      "id": "UI_export_Excel",
+      "ok": true,
+      "detail": "Excel export -> {\"mime\":\"application/vnd.ms-excel\",\"len\":23719}"
+    },
+    {
+      "id": "UI_export_PDF",
+      "ok": true,
+      "detail": "PDF export (window.print) invoked=1"
+    },
+    {
+      "id": "UI_export_no_errors",
+      "ok": true,
+      "detail": "export errors=[]"
+    },
+    {
+      "id": "UI_no_pagination_65rows",
+      "ok": true,
+      "detail": "65-row table: paginationEl=0 hasPrevNext=false"
+    },
+    {
+      "id": "UI_zero_page_errors",
+      "ok": true,
+      "detail": "page errors=[]"
+    },
+    {
+      "id": "UI_zero_console_errors",
+      "ok": true,
+      "detail": "console errors=[]"
+    }
+  ],
+  "failures": []
+}

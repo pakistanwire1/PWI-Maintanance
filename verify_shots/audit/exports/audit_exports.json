@@ -1,0 +1,47 @@
+{
+  "gas": {
+    "csv": {
+      "handler": true,
+      "found": true,
+      "mime": "text/csv;charset=utf-8",
+      "size": 15539,
+      "bomUCode": true,
+      "lines": 0,
+      "header": ""
+    },
+    "xls": {
+      "handler": true,
+      "found": true,
+      "mime": "application/vnd.ms-excel",
+      "size": 23719
+    },
+    "print": {
+      "pdfHandler": true,
+      "totalCalls": 2
+    },
+    "errs": []
+  },
+  "cf": {
+    "csv": {
+      "handler": true,
+      "found": true,
+      "mime": "text/csv;charset=utf-8",
+      "size": 15539,
+      "bomUCode": true,
+      "lines": 0,
+      "header": ""
+    },
+    "xls": {
+      "handler": true,
+      "found": true,
+      "mime": "application/vnd.ms-excel",
+      "size": 23719
+    },
+    "print": {
+      "pdfHandler": true,
+      "totalCalls": 2
+    },
+    "errs": []
+  },
+  "allOk": true
+}

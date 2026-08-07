@@ -50,28 +50,29 @@ function onOpen() {
 
 function initializeSystem() {
   var results = [];
-  results.push(initDivisionSheet());
-  results.push(initSectionSheet());
-  results.push(initDepartmentSheet());
-  results.push(initMachineSheet());
-  results.push(initAssetSheet());
-  results.push(initTechnicianSheet());
-  results.push(initializeUserMaster());
-  results.push(initMaintenanceTeamsSheet());
-  results.push(initBreakdownTypesSheet());
-  initJobCardsSheet();
-  initChecklistSheets();
-  initPMSheet();
-  initSparePartsSheet();
-  initInventorySheet();
-  initNotificationsSheet();
-  initSettingsSheet();
-  initAuditTrailSheet();
-  initQRBarcodeData();
-  initQRHistorySheet();
-  emailInitLogsSheet();
-  logActivity('System Init', 'All sheets initialized successfully');
-  createAuditLog(CONFIG.AUDIT_MODULES.SETTINGS, CONFIG.AUDIT_ACTIONS.CREATE, '', 'System Initialized', '', 'All sheets initialized', 'Success', 'System initialization completed');
+  __diagMark('init:Division'); results.push(initDivisionSheet());
+  __diagMark('init:Section'); results.push(initSectionSheet());
+  __diagMark('init:Department'); results.push(initDepartmentSheet());
+  __diagMark('init:Machine'); results.push(initMachineSheet());
+  __diagMark('init:Asset'); results.push(initAssetSheet());
+  __diagMark('init:Technician'); results.push(initTechnicianSheet());
+  __diagMark('init:UserMaster'); results.push(initializeUserMaster());
+  __diagMark('init:MaintenanceTeams'); results.push(initMaintenanceTeamsSheet());
+  __diagMark('init:BreakdownTypes'); results.push(initBreakdownTypesSheet());
+  __diagMark('init:JobCards'); initJobCardsSheet();
+  __diagMark('init:Checklists'); initChecklistSheets();
+  __diagMark('init:PM'); initPMSheet();
+  __diagMark('init:SpareParts'); initSparePartsSheet();
+  __diagMark('init:Inventory'); initInventorySheet();
+  __diagMark('init:Notifications'); initNotificationsSheet();
+  __diagMark('init:Settings'); initSettingsSheet();
+  __diagMark('init:Audit'); initAuditTrailSheet();
+  __diagMark('init:QR'); initQRBarcodeData();
+  __diagMark('init:QRHistory'); initQRHistorySheet();
+  __diagMark('init:EmailLogs'); emailInitLogsSheet();
+  __diagMark('init:logActivity'); logActivity('System Init', 'All sheets initialized successfully');
+  __diagMark('init:createAuditLog'); createAuditLog(CONFIG.AUDIT_MODULES.SETTINGS, CONFIG.AUDIT_ACTIONS.CREATE, '', 'System Initialized', '', 'All sheets initialized', 'Success', 'System initialization completed');
+  __diagMark('init:done');
   return results;
 }
 

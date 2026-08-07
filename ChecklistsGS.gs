@@ -1,8 +1,9 @@
 function initChecklistSheets() {
-  var templates = getSheet(CONFIG.SHEET_NAMES.CHECKLIST_TEMPLATES);
-  ensureHeaders(templates, ['TemplateID', 'TemplateName', 'Category', 'Items', 'CreatedAt']);
-  var checklists = getSheet(CONFIG.SHEET_NAMES.CHECKLISTS);
-  ensureHeaders(checklists, ['ChecklistID', 'TemplateID', 'TemplateName', 'Machine', 'Date', 'AssignedTo', 'Status', 'Results', 'Remarks', 'CreatedAt']);
+  __diagMark('ck:getTemplates'); var templates = getSheet(CONFIG.SHEET_NAMES.CHECKLIST_TEMPLATES);
+  __diagMark('ck:ensureTemplateHeaders'); ensureHeaders(templates, ['TemplateID', 'TemplateName', 'Category', 'Items', 'CreatedAt']);
+  __diagMark('ck:getChecklists'); var checklists = getSheet(CONFIG.SHEET_NAMES.CHECKLISTS);
+  __diagMark('ck:ensureChecklistHeaders'); ensureHeaders(checklists, ['ChecklistID', 'TemplateID', 'TemplateName', 'Machine', 'Date', 'AssignedTo', 'Status', 'Results', 'Remarks', 'CreatedAt']);
+  __diagMark('ck:done');
 }
 
 function getChecklistTemplates() {

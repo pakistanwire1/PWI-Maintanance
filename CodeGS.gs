@@ -77,20 +77,24 @@ function serveServiceWorker() {
 
 function getAppHtml() {
   Logger.log('getAppHtml() called');
+  __diagReset();
+  __diagMark('getAppHtml start');
   initializeSystem();
+  __diagMark('initializeSystem done');
   var template = HtmlService.createTemplateFromFile('Index');
   var html = template.evaluate()
     .setTitle(CONFIG.APP_NAME)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  __diagMark('template.evaluate done');
   Logger.log('getAppHtml() completed, HTML length: ' + html.getContent().length);
   return html.getContent();
 }
 
 function include(filename) {
-  Logger.log('include() called: ' + filename);
+  var start = Date.now();
   var content = HtmlService.createHtmlOutputFromFile(filename).getContent();
-  Logger.log('include() completed: ' + filename + ', length: ' + content.length);
+  __diagInclude(filename, Date.now() - start);
   return content;
 }
 

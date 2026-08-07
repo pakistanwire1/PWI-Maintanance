@@ -4,7 +4,9 @@ var Settings = (function() {
     settings: [],
     users: [],
     usersPage: 1,
-    editingEmail: ''
+    editingEmail: '',
+    themeDraft: null,
+    themeSaved: null
   };
   var PAGE_SIZE = 25;
   var PERM_FIELDS = [
@@ -40,21 +42,46 @@ var Settings = (function() {
     return Utils.escapeHtml(String(s || ''));
   }
 
-  function loadThemePrefs() {
-    try { return JSON.parse(localStorage.getItem('cmms_theme_settings') || '{}'); } catch(e) { return {}; }
+  function themeDefaultPrefs() {
+    if (typeof Theme !== 'undefined' && Theme.DEFAULT_PREFS) return JSON.parse(JSON.stringify(Theme.DEFAULT_PREFS));
+    return { mode: 'dark', palette: 'indigo', accentColor: '#6366f1', sidebarColor: '', cardColor: '', buttonColor: '', cardStyle: 'glass', sidebarStyle: 'default', fontSize: 'medium' };
   }
 
-  function saveThemePrefs(prefs) {
-    localStorage.setItem('cmms_theme_settings', JSON.stringify(prefs));
-    if (typeof Theme !== 'undefined' && Theme.apply) {
-      var mode = prefs.mode || 'dark';
-      if (mode === 'auto') {
-        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        Theme.apply(prefersDark ? 'dark' : 'light');
-      } else {
-        Theme.apply(mode);
-      }
+  function initThemeState() {
+    if (typeof Theme !== 'undefined' && Theme.getPrefs) {
+      state.themeSaved = Theme.getPrefs();
+    } else {
+      state.themeSaved = themeDefaultPrefs();
     }
+    state.themeDraft = JSON.parse(JSON.stringify(state.themeSaved));
+  }
+
+  function themeIsDirty() {
+    return JSON.stringify(state.themeDraft) !== JSON.stringify(state.themeSaved);
+  }
+
+  function themePreviewCurrent() {
+    if (typeof Theme !== 'undefined' && Theme.preview) Theme.preview(state.themeDraft);
+    renderThemePrefsUI();
+  }
+
+  function themePersistCurrent() {
+    if (typeof Theme !== 'undefined' && Theme.savePrefs) Theme.savePrefs(JSON.parse(JSON.stringify(state.themeDraft)));
+    state.themeSaved = JSON.parse(JSON.stringify(state.themeDraft));
+    renderThemePrefsUI();
+  }
+
+  function setActiveOption(containerId, value) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    var btns = el.querySelectorAll('.theme-option');
+    btns.forEach(function(btn) {
+      if (btn.getAttribute('data-value') === value) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
   }
 
   function getSettingValue(key) {
@@ -115,36 +142,55 @@ var Settings = (function() {
   }
 
   function renderThemePrefsUI() {
-    var prefs = loadThemePrefs();
-    var sections = {
-      themeModeOptions: prefs.mode || 'dark',
-      cardStyleOptions: prefs.cardStyle || 'glass',
-      sidebarStyleOptions: prefs.sidebarStyle || 'default',
-      fontSizeOptions: prefs.fontSize || 'medium'
-    };
-    Object.keys(sections).forEach(function(containerId) {
-      var el = document.getElementById(containerId);
-      if (!el) return;
-      var btns = el.querySelectorAll('.theme-option');
-      btns.forEach(function(btn) {
-        if (btn.getAttribute('data-value') === sections[containerId]) {
-          btn.classList.add('active');
+    var draft = state.themeDraft;
+    if (!draft) return;
+
+    setActiveOption('themeModeOptions', draft.mode || 'dark');
+    setActiveOption('cardStyleOptions', draft.cardStyle || 'glass');
+    setActiveOption('sidebarStyleOptions', draft.sidebarStyle || 'default');
+    setActiveOption('fontSizeOptions', draft.fontSize || 'medium');
+
+    var palContainer = document.getElementById('paletteOptions');
+    if (palContainer) {
+      palContainer.querySelectorAll('.palette-card').forEach(function(c) {
+        if (c.getAttribute('data-palette') === (draft.palette || '')) {
+          c.classList.add('active');
         } else {
-          btn.classList.remove('active');
+          c.classList.remove('active');
         }
       });
-    });
-    var colorContainer = document.getElementById('accentColorOptions');
-    if (colorContainer) {
-      var swatches = colorContainer.querySelectorAll('.color-swatch');
-      swatches.forEach(function(s) {
-        if (s.getAttribute('data-value') === (prefs.accentColor || '#6366f1')) {
+    }
+
+    var accentContainer = document.getElementById('accentColorOptions');
+    if (accentContainer) {
+      accentContainer.querySelectorAll('.color-swatch').forEach(function(s) {
+        if (s.getAttribute('data-value') === (draft.accentColor || '')) {
           s.classList.add('active');
         } else {
           s.classList.remove('active');
         }
       });
     }
+
+    var eff = (typeof Theme !== 'undefined' && Theme.effectiveColors) ? Theme.effectiveColors(draft) : null;
+    var fields = [
+      { key: 'sidebarColor', inputId: 'themeColorSidebar', hexId: 'themeHexSidebar', resetId: 'themeResetSidebar', effKey: 'sidebar' },
+      { key: 'accentColor', inputId: 'themeColorPrimary', hexId: 'themeHexPrimary', resetId: 'themeResetPrimary', effKey: 'primary' },
+      { key: 'cardColor', inputId: 'themeColorCard', hexId: 'themeHexCard', resetId: 'themeResetCard', effKey: 'card' },
+      { key: 'buttonColor', inputId: 'themeColorButton', hexId: 'themeHexButton', resetId: 'themeResetButton', effKey: 'button' }
+    ];
+    fields.forEach(function(f) {
+      var effColor = eff ? eff[f.effKey] : '#6366f1';
+      var colorIn = document.getElementById(f.inputId);
+      if (colorIn) colorIn.value = effColor;
+      var hexIn = document.getElementById(f.hexId);
+      if (hexIn) hexIn.value = effColor;
+      var resetBtn = document.getElementById(f.resetId);
+      if (resetBtn) resetBtn.disabled = !draft[f.key];
+    });
+
+    var banner = document.getElementById('themeDirtyBanner');
+    if (banner) banner.style.display = themeIsDirty() ? 'inline-flex' : 'none';
   }
 
   function renderUsersTable() {
@@ -238,7 +284,24 @@ var Settings = (function() {
       '.settings-icon-btn:hover{background:rgba(99,102,241,0.1)}' +
       '.settings-icon-btn svg{width:16px;height:16px}' +
       '.settings-icon-btn-danger{color:var(--danger,#ef4444)}' +
-      '.settings-icon-btn-danger:hover{background:rgba(239,68,68,0.1)}';
+      '.settings-icon-btn-danger:hover{background:rgba(239,68,68,0.1)}' +
+      '.theme-dirty-banner{background:var(--warning-bg,rgba(245,158,11,0.11));color:var(--warning,#f59e0b);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;align-items:center}' +
+      '.palette-grid{gap:10px}' +
+      '.palette-card{display:inline-flex;flex-direction:column;align-items:center;gap:6px;padding:10px 12px;border:1px solid var(--border);background:var(--bg-input,rgba(255,255,255,0.05));border-radius:var(--radius-sm,6px);cursor:pointer;transition:var(--transition,all 0.2s);min-width:76px}' +
+      '.palette-card:hover{border-color:var(--primary);transform:translateY(-1px)}' +
+      '.palette-card.active{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}' +
+      '.palette-dots{display:inline-flex;gap:3px}' +
+      '.palette-dots i{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.25)}' +
+      '.palette-name{font-size:11px;color:var(--text-secondary);font-weight:600}' +
+      '.palette-card.active .palette-name{color:var(--primary)}' +
+      '.theme-color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}' +
+      '.theme-color-field{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm,6px);background:var(--bg-input,rgba(255,255,255,0.05))}' +
+      '.theme-color-label{flex-shrink:0;font-size:12px;font-weight:600;color:var(--text-secondary);min-width:54px}' +
+      '.theme-color-field input[type="color"]{width:36px;height:28px;padding:0;border:1px solid var(--border);border-radius:4px;background:none;cursor:pointer;flex-shrink:0}' +
+      '.theme-hex-input{flex:1;min-width:0;padding:4px 8px !important;font-size:12px !important;height:auto !important}' +
+      '.theme-color-reset{flex-shrink:0}' +
+      '.theme-color-reset:disabled{opacity:0.4;cursor:default}' +
+      '.theme-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px;padding-top:14px;border-top:1px solid var(--border)}';
     document.head.appendChild(style);
   }
 
@@ -263,10 +326,30 @@ var Settings = (function() {
       { value: 'large', label: 'Large' }
     ];
 
-    function themeBtns(arr, containerId, prefKey) {
+    function themeBtns(arr, containerId, key, handler) {
       var html = '<div class="theme-options" id="' + containerId + '">';
       arr.forEach(function(b) {
-        html += '<button class="theme-option" data-value="' + b.value + '" onclick="Settings.setThemePref(\'' + prefKey + '\',\'' + b.value + '\')">' + b.label + '</button>';
+        html += '<button class="theme-option" data-value="' + b.value + '" onclick="Settings.' + handler + '(\'' + key + '\',\'' + b.value + '\')">' + b.label + '</button>';
+      });
+      html += '</div>';
+      return html;
+    }
+
+    function paletteCards() {
+      var palettes = (typeof Theme !== 'undefined' && Theme.PALETTES) ? Theme.PALETTES : THEME_COLORS.map(function(c) {
+        return { id: c.name.toLowerCase(), name: c.name, primary: c.color, button: c.color, sidebar: '#07080f', card: '#151829' };
+      });
+      var html = '<div class="theme-options palette-grid" id="paletteOptions">';
+      palettes.forEach(function(p) {
+        html += '<button class="palette-card" data-palette="' + p.id + '" onclick="Settings.themeSelectPalette(\'' + p.id + '\')" title="' + p.name + ' palette">' +
+          '<span class="palette-dots">' +
+            '<i style="background:' + p.primary + '"></i>' +
+            '<i style="background:' + p.sidebar + '"></i>' +
+            '<i style="background:' + p.card + '"></i>' +
+            '<i style="background:' + p.button + '"></i>' +
+          '</span>' +
+          '<span class="palette-name">' + p.name + '</span>' +
+        '</button>';
       });
       html += '</div>';
       return html;
@@ -275,10 +358,19 @@ var Settings = (function() {
     function colorSwatches() {
       var html = '<div class="theme-options" id="accentColorOptions">';
       THEME_COLORS.forEach(function(c) {
-        html += '<button class="color-swatch" data-value="' + c.color + '" style="background:' + c.color + '" onclick="Settings.setThemePref(\'accentColor\',\'' + c.color + '\')" title="' + c.name + '"></button>';
+        html += '<button class="color-swatch" data-value="' + c.color + '" style="background:' + c.color + '" onclick="Settings.themeSetAccent(\'' + c.color + '\')" title="' + c.name + '"></button>';
       });
       html += '</div>';
       return html;
+    }
+
+    function colorField(label, field, inputId, hexId, resetId) {
+      return '<div class="theme-color-field">' +
+        '<span class="theme-color-label">' + label + '</span>' +
+        '<input type="color" id="' + inputId + '" value="#6366f1" oninput="Settings.themeSetColor(\'' + field + '\', this.value)" title="Pick ' + label.toLowerCase() + ' color">' +
+        '<input type="text" class="form-control theme-hex-input" id="' + hexId + '" value="#6366f1" onchange="Settings.themeSetColorHex(\'' + field + '\', this.value)" spellcheck="false">' +
+        '<button class="btn-sm theme-color-reset" id="' + resetId + '" onclick="Settings.themeResetColor(\'' + field + '\')">Default</button>' +
+      '</div>';
     }
 
     function simpleListSection(label, settingKey, inputId, placeholder) {
@@ -328,26 +420,48 @@ var Settings = (function() {
         '</div>' +
 
         '<div class="card" id="themeSettingsCard">' +
-          '<div class="card-header"><div class="card-title">Theme & Display</div></div>' +
+          '<div class="card-header">' +
+            '<div class="card-title">Theme & Display</div>' +
+            '<div class="card-actions"><span class="theme-dirty-banner" id="themeDirtyBanner" style="display:none">Unsaved changes</span></div>' +
+          '</div>' +
           '<div class="theme-section">' +
             '<label>Theme Mode</label>' +
-            themeBtns(themeModeBtns, 'themeModeOptions', 'mode') +
+            themeBtns(themeModeBtns, 'themeModeOptions', 'mode', 'themeSetMode') +
+          '</div>' +
+          '<div class="theme-section">' +
+            '<label>Color Palettes</label>' +
+            paletteCards() +
           '</div>' +
           '<div class="theme-section">' +
             '<label>Accent Color</label>' +
             colorSwatches() +
           '</div>' +
           '<div class="theme-section">' +
+            '<label>Custom Colors</label>' +
+            '<div class="theme-color-grid">' +
+              colorField('Sidebar', 'sidebarColor', 'themeColorSidebar', 'themeHexSidebar', 'themeResetSidebar') +
+              colorField('Primary', 'accentColor', 'themeColorPrimary', 'themeHexPrimary', 'themeResetPrimary') +
+              colorField('Card', 'cardColor', 'themeColorCard', 'themeHexCard', 'themeResetCard') +
+              colorField('Button', 'buttonColor', 'themeColorButton', 'themeHexButton', 'themeResetButton') +
+            '</div>' +
+            '<small style="color:var(--text-muted);font-size:11px;display:block;margin-top:6px">Custom colors override the selected palette. Leave a field on Default to use the palette.</small>' +
+          '</div>' +
+          '<div class="theme-section">' +
             '<label>Card Style</label>' +
-            themeBtns(cardStyleBtns, 'cardStyleOptions', 'cardStyle') +
+            themeBtns(cardStyleBtns, 'cardStyleOptions', 'cardStyle', 'themeSetStyle') +
           '</div>' +
           '<div class="theme-section">' +
             '<label>Sidebar Style</label>' +
-            themeBtns(sidebarStyleBtns, 'sidebarStyleOptions', 'sidebarStyle') +
+            themeBtns(sidebarStyleBtns, 'sidebarStyleOptions', 'sidebarStyle', 'themeSetStyle') +
           '</div>' +
           '<div class="theme-section">' +
             '<label>Font Size</label>' +
-            themeBtns(fontSizeBtns, 'fontSizeOptions', 'fontSize') +
+            themeBtns(fontSizeBtns, 'fontSizeOptions', 'fontSize', 'themeSetStyle') +
+          '</div>' +
+          '<div class="theme-actions">' +
+            '<button class="btn btn-secondary" onclick="Settings.themeReset()">Reset</button>' +
+            '<button class="btn btn-secondary" onclick="Settings.themeSave()">Save</button>' +
+            '<button class="btn btn-primary" onclick="Settings.themeApply()">Apply</button>' +
           '</div>' +
         '</div>' +
 
@@ -566,19 +680,86 @@ var Settings = (function() {
       if (!el) el = document.getElementById('pageContent');
       if (!el) return;
       injectStyles();
+      initThemeState();
       el.innerHTML = buildPageHtml();
       loadAllData();
     },
 
-    setThemePref: function(key, value) {
-      var prefs = loadThemePrefs();
-      prefs[key] = value;
-      saveThemePrefs(prefs);
-      renderThemePrefsUI();
-      if (key === 'accentColor') {
-        Theme.applyAccent(value);
+    themeSetMode: function(key, value) {
+      if (!state.themeDraft) initThemeState();
+      state.themeDraft.mode = value;
+      themePreviewCurrent();
+    },
+
+    themeSelectPalette: function(id) {
+      if (!state.themeDraft) initThemeState();
+      state.themeDraft.palette = id;
+      state.themeDraft.accentColor = '';
+      state.themeDraft.sidebarColor = '';
+      state.themeDraft.cardColor = '';
+      state.themeDraft.buttonColor = '';
+      themePreviewCurrent();
+    },
+
+    themeSetAccent: function(value) {
+      if (!state.themeDraft) initThemeState();
+      state.themeDraft.accentColor = value;
+      state.themeDraft.palette = '';
+      themePreviewCurrent();
+    },
+
+    themeSetStyle: function(key, value) {
+      if (!state.themeDraft) initThemeState();
+      state.themeDraft[key] = value;
+      themePreviewCurrent();
+    },
+
+    themeSetColor: function(field, value) {
+      if (!/^#[0-9a-fA-F]{6}$/.test(String(value || ''))) return;
+      if (!state.themeDraft) initThemeState();
+      state.themeDraft[field] = value;
+      if (field === 'accentColor') state.themeDraft.palette = '';
+      themePreviewCurrent();
+    },
+
+    themeSetColorHex: function(field, value) {
+      value = String(value || '').trim();
+      if (!/^#[0-9a-fA-F]{6}$/.test(value)) {
+        Notify.warning('Enter a valid hex color like #6366f1');
+        themePreviewCurrent();
+        return;
       }
-      Notify.success(key === 'accentColor' ? 'Accent color updated' : 'Theme preference saved');
+      if (!state.themeDraft) initThemeState();
+      state.themeDraft[field] = value;
+      if (field === 'accentColor') state.themeDraft.palette = '';
+      themePreviewCurrent();
+    },
+
+    themeResetColor: function(field) {
+      if (!state.themeDraft) initThemeState();
+      state.themeDraft[field] = '';
+      if (field === 'accentColor') state.themeDraft.palette = '';
+      themePreviewCurrent();
+    },
+
+    themeApply: function() {
+      themePersistCurrent();
+      Notify.success('Theme applied');
+    },
+
+    themeSave: function() {
+      themePersistCurrent();
+      Notify.success('Theme saved');
+    },
+
+    themeReset: function() {
+      Modal.confirm('Reset Theme', 'Restore the default theme? Your custom colors will be cleared.', function() {
+        state.themeDraft = themeDefaultPrefs();
+        if (typeof Theme !== 'undefined' && Theme.reset) Theme.reset();
+        state.themeSaved = JSON.parse(JSON.stringify(state.themeDraft));
+        renderThemePrefsUI();
+        Notify.success('Theme reset to defaults');
+      });
     },
 
     addDept: function() {

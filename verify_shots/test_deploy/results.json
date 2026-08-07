@@ -1,0 +1,200 @@
+[
+  {
+    "nav": "audit",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x1200",
+    "rows": 20,
+    "cards": 5,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "sections",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x730",
+    "rows": 0,
+    "cards": 1,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "departments",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x730",
+    "rows": 0,
+    "cards": 1,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "machines",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x730",
+    "rows": 0,
+    "cards": 1,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "technicians",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x730",
+    "rows": 0,
+    "cards": 1,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "users",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x730",
+    "rows": 5,
+    "cards": 1,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "openjobcard",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x947",
+    "rows": 0,
+    "cards": 1,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "startjobcard",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x767",
+    "rows": 0,
+    "cards": 1,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "closejobcard",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x767",
+    "rows": 0,
+    "cards": 1,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "pendingjobcard",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x730",
+    "rows": 0,
+    "cards": 1,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "approvejobcard",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x767",
+    "rows": 0,
+    "cards": 1,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "jobcards",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x834",
+    "rows": 0,
+    "cards": 1,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "pm",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x730",
+    "rows": 0,
+    "cards": 12,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "checklists",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x730",
+    "rows": 0,
+    "cards": 2,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "spareparts",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x788",
+    "rows": 0,
+    "cards": 2,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "inventory",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x847",
+    "rows": 0,
+    "cards": 5,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "notifications",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x888",
+    "rows": 0,
+    "cards": 5,
+    "active": true,
+    "ok": true
+  },
+  {
+    "nav": "qr",
+    "parent": "page-content",
+    "op": "1",
+    "anim": "fadeIn",
+    "rect": "1328x8385",
+    "rows": 0,
+    "cards": 3,
+    "active": true,
+    "ok": true
+  }
+]

@@ -80,9 +80,10 @@ var Nav = {
         inventorytransactions: 'Inventory Transactions', stockhistory: 'Stock History',
         goodsreceipt: 'Goods Receipt', breakdown: 'Breakdown History', reports: 'Reports',
         notifications: 'Notifications', email: 'Email Notifications', whatsapp: 'WhatsApp',
-        qr: 'QR Overview', qrmachines: 'Machine QR', qrassets: 'Asset QR',
-        qrspareparts: 'Spare Parts QR', qrjobcards: 'Job Card QR', qrprint: 'Print QR Labels',
-        qrhistory: 'QR History', settings: 'Settings', audit: 'Audit Trail',
+        qr: 'QR & Barcode Center', qrmachines: 'Machine QR Management', qrassets: 'Asset QR Management',
+        qrspareparts: 'Spare Parts QR Management', qrjobcards: 'Job Card QR Management', qrprint: 'Print QR Labels',
+        qrhistory: 'QR Scan History', machinepassport: 'Machine Digital Passport',
+        settings: 'Settings', audit: 'Audit Trail',
         backuprestore: 'Backup & Restore'
       };
       title.textContent = labels[page] || Utils.capitalize(page);

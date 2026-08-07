@@ -2,6 +2,10 @@ var Reports = (function() {
   var rptData = null;
   var rptChartsLoaded = false;
   var stylesInjected = false;
+  var rptMaster = null;
+  var rptRefreshTimer = null;
+  var rptCascadeSeq = 0;
+  var rptGenSeq = 0;
 
   var SVG_FILE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;margin-right:8px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>';
   var SVG_ZAP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
@@ -107,35 +111,35 @@ var Reports = (function() {
               '<div class="rpt-filter-row">' +
                 '<div class="rpt-filter-group">' +
                   '<label>Technician</label>' +
-                  '<select class="form-control" id="rptTechnician">' +
+                  '<select class="form-control" id="rptTechnician" onchange="Reports.onRptFilterChange()">' +
                     '<option value="">All Technicians</option>' +
                   '</select>' +
                 '</div>' +
                 '<div class="rpt-filter-group">' +
                   '<label>Maintenance Type</label>' +
-                  '<select class="form-control" id="rptMaintType">' +
+                  '<select class="form-control" id="rptMaintType" onchange="Reports.onRptFilterChange()">' +
                     '<option value="All">All Types</option>' +
                   '</select>' +
                 '</div>' +
                 '<div class="rpt-filter-group">' +
                   '<label>Priority</label>' +
-                  '<select class="form-control" id="rptPriority">' +
+                  '<select class="form-control" id="rptPriority" onchange="Reports.onRptFilterChange()">' +
                     '<option value="">All Priorities</option>' +
                   '</select>' +
                 '</div>' +
                 '<div class="rpt-filter-group">' +
                   '<label>Status</label>' +
-                  '<select class="form-control" id="rptStatus">' +
+                  '<select class="form-control" id="rptStatus" onchange="Reports.onRptFilterChange()">' +
                     '<option value="">All Statuses</option>' +
                   '</select>' +
                 '</div>' +
                 '<div class="rpt-filter-group">' +
                   '<label>From Date</label>' +
-                  '<input type="date" class="form-control" id="rptFromDate">' +
+                  '<input type="date" class="form-control" id="rptFromDate" onchange="Reports.onRptFilterChange()">' +
                 '</div>' +
                 '<div class="rpt-filter-group">' +
                   '<label>To Date</label>' +
-                  '<input type="date" class="form-control" id="rptToDate">' +
+                  '<input type="date" class="form-control" id="rptToDate" onchange="Reports.onRptFilterChange()">' +
                 '</div>' +
               '</div>' +
               '<div class="rpt-filter-actions">' +
@@ -197,22 +201,30 @@ var Reports = (function() {
       var sections = results[2] || [];
       var departments = results[3] || [];
       var machines = results[4] || [];
-      return {
+      var m = {
         reportTypes: (opts.reportTypes || []).map(function(r) { return { value: r.value, label: r.label }; }),
         technicians: (opts.technicians || []).map(function(t) { return { value: t, label: t }; }),
-        maintenanceTypes: (opts.maintenanceTypes || []).map(function(m) { return { value: m, label: m }; }),
+        maintenanceTypes: (opts.maintenanceTypes || []).map(function(mt) { return { value: mt, label: mt }; }),
         priorities: (opts.priorities || []).map(function(p) { return { value: p, label: p }; }),
         statuses: (opts.statuses || []).map(function(s) { return { value: s, label: s }; }),
         divisions: (casc.divisions || []).map(function(d) { return { value: d.id, label: d.name }; }),
         sections: sections.map(function(s) { return { value: s.SectionID, label: s.Section, divisionId: s.DivisionID }; }),
         departments: departments.map(function(d) { return { value: d.DepartmentID, label: d.Department, divisionId: d.DivisionID, sectionId: d.SectionID }; }),
-        machines: machines.map(function(m) {
-          var n = m.MachineNumber || m.MachineCode || '';
+        machines: machines.map(function(mc) {
+          var n = mc.MachineNumber || mc.MachineCode || mc.MachineName || '';
           var label = n;
-          if (m.MachineName && m.MachineName !== label) label += ' \u2014 ' + m.MachineName;
-          return { value: n, label: label, divisionId: m.DivisionID, sectionId: m.SectionID, deptId: m.DeptID };
+          if (mc.MachineName && mc.MachineName !== label) label += ' \u2014 ' + mc.MachineName;
+          return { value: n, label: label, divisionId: mc.DivisionID, sectionId: mc.SectionID, deptId: mc.DeptID };
         }).sort(function(a, b) { return a.value.localeCompare(b.value); })
       };
+      m.divisionNameById = {};
+      (casc.divisions || []).forEach(function(d) { if (d.id) m.divisionNameById[d.id] = d.name || d.id; });
+      m.sectionNameById = {};
+      sections.forEach(function(s) { if (s.SectionID) m.sectionNameById[s.SectionID] = s.Section || s.SectionID; });
+      m.deptNameById = {};
+      departments.forEach(function(d) { if (d.DepartmentID) m.deptNameById[d.DepartmentID] = d.Department || d.DepartmentID; });
+      rptMaster = m;
+      return m;
     });
     return masterDataPromise;
   }
@@ -263,25 +275,44 @@ var Reports = (function() {
     }
   }
 
-  function onRptTypeChange() {}
+  function onRptTypeChange() {
+    scheduleRptRefresh();
+  }
 
   function onRptDivChange() {
-    applyCascade();
+    applyCascade().then(scheduleRptRefresh);
   }
 
   function onRptSecChange() {
-    applyCascade();
+    applyCascade().then(scheduleRptRefresh);
   }
 
   function onRptDeptChange() {
-    applyCascade();
+    applyCascade().then(scheduleRptRefresh);
   }
 
-  function onRptMachChange() {}
+  function onRptMachChange() {
+    scheduleRptRefresh();
+  }
+
+  function onRptFilterChange() {
+    scheduleRptRefresh();
+  }
+
+  function scheduleRptRefresh() {
+    if (rptRefreshTimer) clearTimeout(rptRefreshTimer);
+    rptRefreshTimer = setTimeout(function() {
+      rptRefreshTimer = null;
+      var typeEl = document.getElementById('rptType');
+      if (typeEl && typeEl.value) generateReport();
+    }, 350);
+  }
 
   function applyCascade() {
-    loadMasterData()
+    var seq = ++rptCascadeSeq;
+    return loadMasterData()
       .then(function(m) {
+        if (seq !== rptCascadeSeq) return;
         var div = document.getElementById('rptDivision').value;
         var sec = document.getElementById('rptSection').value;
         var dept = document.getElementById('rptDepartment').value;
@@ -335,28 +366,38 @@ var Reports = (function() {
   }
 
   function getFilters() {
+    var divId = document.getElementById('rptDivision').value;
+    var secId = document.getElementById('rptSection').value;
+    var deptId = document.getElementById('rptDepartment').value;
+    var fromEl = document.getElementById('rptFromDate');
+    var toEl = document.getElementById('rptToDate');
+    var division = (rptMaster && rptMaster.divisionNameById[divId]) || divId || '';
+    var section = (rptMaster && rptMaster.sectionNameById[secId]) || secId || '';
+    var department = (rptMaster && rptMaster.deptNameById[deptId]) || deptId || '';
     return {
       reportType: document.getElementById('rptType').value,
-      division: document.getElementById('rptDivision').value,
-      section: document.getElementById('rptSection').value,
-      department: document.getElementById('rptDepartment').value,
+      division: division,
+      section: section,
+      department: department,
       machineNumber: document.getElementById('rptMachineNumber').value,
       technician: document.getElementById('rptTechnician').value,
       maintenanceType: document.getElementById('rptMaintType').value,
       priority: document.getElementById('rptPriority').value,
       status: document.getElementById('rptStatus').value,
-      fromDate: document.getElementById('rptFromDate').value,
-      toDate: document.getElementById('rptToDate').value
+      fromDate: fromEl && fromEl.value ? fromEl.value + 'T00:00:00' : '',
+      toDate: toEl && toEl.value ? toEl.value + 'T23:59:59' : ''
     };
   }
 
   function generateReport() {
     var filters = getFilters();
     if (!filters.reportType) { Notify.warning('Please select a report type'); return; }
+    var seq = ++rptGenSeq;
     Loader.show('Generating report...');
     initRptCharts();
     API.post('getReportData', filters)
       .then(function(data) {
+        if (seq !== rptGenSeq) return;
         rptData = data;
         Loader.hide();
         if (!data || !data.rows || data.rows.length === 0) {
@@ -368,12 +409,16 @@ var Reports = (function() {
         }
         renderRptKpi(data.kpi);
         renderRptTable(data.columns, data.rows);
-        renderRptCharts(data.charts);
         document.getElementById('rptKpiCards').style.display = 'flex';
         document.getElementById('rptTableCard').style.display = 'block';
         document.getElementById('rptChartsCard').style.display = 'block';
+        setTimeout(function() { renderRptCharts(data.charts); }, 50);
       })
-      .catch(function(err) { Loader.hide(); Notify.error('Error generating report: ' + ((err && err.message) || err)); });
+      .catch(function(err) {
+        if (seq !== rptGenSeq) return;
+        Loader.hide();
+        Notify.error('Error generating report: ' + ((err && err.message) || err));
+      });
   }
 
   function resetFilters() {
@@ -655,6 +700,7 @@ var Reports = (function() {
     onRptSecChange: onRptSecChange,
     onRptDeptChange: onRptDeptChange,
     onRptMachChange: onRptMachChange,
+    onRptFilterChange: onRptFilterChange,
     generateReport: generateReport,
     resetFilters: resetFilters,
     exportPDF: exportPDF,
