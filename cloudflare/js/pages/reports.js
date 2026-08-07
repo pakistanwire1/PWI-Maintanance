@@ -3,7 +3,6 @@ var Reports = (function() {
   var rptChartsLoaded = false;
   var stylesInjected = false;
   var rptMaster = null;
-  var rptRefreshTimer = null;
   var rptCascadeSeq = 0;
   var rptGenSeq = 0;
 
@@ -275,38 +274,23 @@ var Reports = (function() {
     }
   }
 
-  function onRptTypeChange() {
-    scheduleRptRefresh();
-  }
+  function onRptTypeChange() {}
 
   function onRptDivChange() {
-    applyCascade().then(scheduleRptRefresh);
+    applyCascade();
   }
 
   function onRptSecChange() {
-    applyCascade().then(scheduleRptRefresh);
+    applyCascade();
   }
 
   function onRptDeptChange() {
-    applyCascade().then(scheduleRptRefresh);
+    applyCascade();
   }
 
-  function onRptMachChange() {
-    scheduleRptRefresh();
-  }
+  function onRptMachChange() {}
 
-  function onRptFilterChange() {
-    scheduleRptRefresh();
-  }
-
-  function scheduleRptRefresh() {
-    if (rptRefreshTimer) clearTimeout(rptRefreshTimer);
-    rptRefreshTimer = setTimeout(function() {
-      rptRefreshTimer = null;
-      var typeEl = document.getElementById('rptType');
-      if (typeEl && typeEl.value) generateReport();
-    }, 350);
-  }
+  function onRptFilterChange() {}
 
   function applyCascade() {
     var seq = ++rptCascadeSeq;

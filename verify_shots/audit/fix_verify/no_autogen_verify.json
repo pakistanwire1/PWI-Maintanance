@@ -1,0 +1,85 @@
+{
+  "rptType=breakdown": {
+    "gas": {
+      "auto": 0,
+      "rows": 0,
+      "visible": "none"
+    },
+    "cf": {
+      "auto": 0,
+      "rows": 0,
+      "visible": "none"
+    }
+  },
+  "rptDivision=DIV001": {
+    "gas": {
+      "auto": 0,
+      "rows": 0,
+      "visible": "none"
+    },
+    "cf": {
+      "auto": 0,
+      "rows": 0,
+      "visible": "none"
+    }
+  },
+  "rptMachineNumber=SW # 06": {
+    "gas": {
+      "auto": 0,
+      "rows": 0,
+      "visible": "none"
+    },
+    "cf": {
+      "auto": 0,
+      "rows": 0,
+      "visible": "none"
+    }
+  },
+  "rptPriority=High": {
+    "gas": {
+      "auto": 0,
+      "rows": 0,
+      "visible": "none"
+    },
+    "cf": {
+      "auto": 0,
+      "rows": 0,
+      "visible": "none"
+    }
+  },
+  "rptStatus=RUNNING": {
+    "gas": {
+      "auto": 0,
+      "rows": 0,
+      "visible": "none"
+    },
+    "cf": {
+      "auto": 0,
+      "rows": 0,
+      "visible": "none"
+    }
+  },
+  "rptMaintType=Preventive Maintenance": {
+    "gas": {
+      "auto": 0,
+      "rows": 0,
+      "visible": "none"
+    },
+    "cf": {
+      "auto": 0,
+      "rows": 0,
+      "visible": "none"
+    }
+  },
+  "manualGenerate": {
+    "gas": {
+      "calls": 0,
+      "rows": 0
+    },
+    "cf": {
+      "calls": 1,
+      "rows": 0
+    },
+    "identicalRows": true
+  }
+}

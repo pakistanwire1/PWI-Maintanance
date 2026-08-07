@@ -1,0 +1,19 @@
+{
+  "gas": {
+    "rows": 65,
+    "title": "Machine History",
+    "recordCount": "65 records",
+    "kpiVisible": "flex"
+  },
+  "cf": {
+    "rows": 65,
+    "title": "Machine History",
+    "recordCount": "65 records",
+    "kpiVisible": "flex"
+  },
+  "dataIdentical": true,
+  "gasDataHash": "56e2b94eee824bfb11137e60c5bbf8cb25b4b076c4c49fd73c15672eff0b90b1",
+  "cfDataHash": "14451ae74c00f7b51260485a923f906eaf270d122247d82d8933e0a5bf5dd04f",
+  "diffCount": 0,
+  "sampleDiffs": []
+}

@@ -1356,7 +1356,16 @@
     "cfFetchFailed": false,
     "consoleErrors": {
       "gas": [],
-      "cf": []
+      "cf": [
+        {
+          "at": 1786099513816,
+          "text": "Failed to load resource: net::ERR_CONNECTION_CLOSED"
+        },
+        {
+          "at": 1786099513816,
+          "text": "[API] FAILED: action=getReportData, error=Failed to fetch"
+        }
+      ]
     },
     "pageErrors": {
       "gas": [],
