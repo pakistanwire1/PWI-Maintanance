@@ -377,14 +377,61 @@ function getDashboardData(filter, userDepartment, userEmail) {
     var parts = getAllData(CONFIG.SHEET_NAMES.SPARE_PARTS) || [];
 
     var totalMachines = machines.length;
-    var runningMachines = 0, breakdownMachines = 0;
+
+    // P11.xx — Under Maintenance = unique Machine IDs that have an active/open job card.
+    // Job cards reference machines by Machine (name/code/number/id). Every machine row sharing
+    // a referenced name counts, deduped by MachineID. Job cards whose machine reference matches
+    // no row in the Machines sheet are excluded from the KPI and flagged for data cleanup.
+    var activeStatuses = ['open', 'running', 'in progress', 'in-progress'];
+    var machineKeys = {};
     machines.forEach(function(m) {
-      var s = (m.Status || '').toLowerCase();
-      if (s === 'running' || s === 'active') runningMachines++;
-      if (s === 'maintenance' || s === 'under maintenance' || s === 'breakdown') breakdownMachines++;
+      var mid = m.MachineID || m.MachineNumber || m.MachineCode || '';
+      var keys = [m.MachineID, m.MachineNumber, m.MachineCode, m.MachineName];
+      for (var ki = 0; ki < keys.length; ki++) {
+        var k = keys[ki];
+        if (k === undefined || k === null) continue;
+        var norm = String(k).trim().toLowerCase();
+        if (!norm) continue;
+        if (!machineKeys[norm]) machineKeys[norm] = [];
+        if (machineKeys[norm].indexOf(mid) === -1) machineKeys[norm].push(mid);
+      }
     });
+
+    var breakdownMachines = 0, runningMachines = 0;
+    var underMaintenanceIds = [];
+    var seenUnderMaintenance = {};
+    var underMaintenanceUnmatched = [];
+    for (var ai = 0; ai < rawJobCards.length; ai++) {
+      var ajc = rawJobCards[ai];
+      var aStatus = String(ajc.CurrentStatus || ajc.Status || '').trim().toLowerCase();
+      if (activeStatuses.indexOf(aStatus) === -1) continue;
+      var machineRef = String(ajc.Machine || '').trim();
+      if (!machineRef) continue;
+      var aNorm = machineRef.toLowerCase();
+      var matchedIds = machineKeys[aNorm] || [];
+      if (matchedIds.length === 0) {
+        underMaintenanceUnmatched.push({ JobCardNo: ajc.JobCardNo || 'N/A', Machine: machineRef, CurrentStatus: ajc.CurrentStatus || ajc.Status || '' });
+        continue;
+      }
+      for (var ami = 0; ami < matchedIds.length; ami++) {
+        var amid = matchedIds[ami];
+        if (!amid) continue;
+        if (!seenUnderMaintenance[amid]) {
+          seenUnderMaintenance[amid] = true;
+          underMaintenanceIds.push(amid);
+        }
+      }
+    }
+
+    breakdownMachines = underMaintenanceIds.length;
+    runningMachines = Math.max(0, totalMachines - breakdownMachines);
+
+    if (underMaintenanceUnmatched.length > 0) {
+      console.warn('[DASHBOARD] ' + underMaintenanceUnmatched.length + ' active job card(s) reference machine(s) with no matching row in the Machines sheet — excluded from Under Maintenance KPI. Flagged for data cleanup: ' + JSON.stringify(underMaintenanceUnmatched));
+    }
+
     var totalAssets = assets.length;
-    var idleMachines = totalMachines - runningMachines - breakdownMachines;
+    var idleMachines = Math.max(0, totalMachines - runningMachines - breakdownMachines);
 
     var totalWaitingMinutes = 0, totalWorkingMinutes = 0, totalRepairMinutes = 0, totalDowntimeMinutes = 0;
 
@@ -765,6 +812,10 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
     console.log('===== RETURN VALUES =====');
     console.log('totalWaitingTimeMinutes=' + totalWaitingMinutes + ' totalWorkingTimeMinutes=' + totalWorkingMinutes + ' totalRepairTimeMinutes=' + totalRepairMinutes + ' totalDowntimeMinutes=' + totalDowntimeMinutes);
+    console.log('UnderMaintenance (unique machine IDs w/ active job)=' + breakdownMachines + ' Running=' + runningMachines + ' Idle=' + idleMachines + ' Total=' + totalMachines);
+    if (underMaintenanceUnmatched.length > 0) {
+      console.log('Unmatched active job cards (not counted): ' + underMaintenanceUnmatched.length + ' -> ' + JSON.stringify(underMaintenanceUnmatched));
+    }
 
     console.log('');
     console.log('===== P11.32 PENDING APPROVAL DEBUG =====');
@@ -888,6 +939,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
       runningMachines: runningMachines,
       breakdownMachines: breakdownMachines,
       idleMachines: Math.max(0, idleMachines),
+      underMaintenanceUnmatched: underMaintenanceUnmatched,
       totalAssets: totalAssets,
       totalJobCards: filteredJobCount,
       openJobs: openJobs,
@@ -958,6 +1010,8 @@ function getDashboardData(filter, userDepartment, userEmail) {
         filteredJobCards: filteredJobCount,
         filter: filter || 'all',
         sheetHeaders: rawJobCards.length > 0 ? Object.keys(rawJobCards[0]) : [],
+        underMaintenanceMachineIds: underMaintenanceIds,
+        underMaintenanceUnmatched: underMaintenanceUnmatched,
         SUM: {
           WaitingTime_minutes: totalWaitingMinutes,
           WorkingTime_minutes: totalWorkingMinutes,

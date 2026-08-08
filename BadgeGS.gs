@@ -13,9 +13,13 @@ function getSidebarCounts(email) {
     var as = (jc.ApprovalStatus || '').toLowerCase();
     if (as === 'approved' || s === 'approved') { approvedCount++; }
     else if (s === 'pending') { pendingCount++; }
-    else if (s === 'open') { openCount++; }
-    else if (s === 'running' || s === 'in progress') { startedCount++; }
-    else if (s === 'closed' || s === 'completed') { closedCount++; }
+    // Sidebar badges mirror the workflow page filters (not DB status names):
+    //   Open Job Cards badge    -> OPEN           (Open Job Card page)
+    //   Started Job Cards badge -> OPEN + WAITING (Start Job Card page)
+    //   Closed Job Cards badge  -> RUNNING        (Close Job Card page)
+    else if (s === 'open') { openCount++; startedCount++; }
+    else if (s === 'waiting') { startedCount++; }
+    else if (s === 'running') { closedCount++; }
   }
 
   var unreadNotifications = 0;
