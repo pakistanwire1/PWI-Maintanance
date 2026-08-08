@@ -101,7 +101,7 @@ var ClosedJobCard = (function() {
                   '<label>Root Cause *</label>' +
                   '<input type="text" name="RootCause" id="closeJcRootCause" class="form-control" placeholder="Root cause of failure" required>' +
                   '<div class="flex-row-sm">' +
-                    '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="ClosedJobCard.addVoiceButton(\'closeJcRootCause\')">' +
+                    '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="Voice.toggle(\'closeJcRootCause\', this)">' +
                       ICON_MIC + ' Voice Input' +
                     '</button>' +
                   '</div>' +
@@ -117,7 +117,7 @@ var ClosedJobCard = (function() {
                 '<label>Corrective Action *</label>' +
                 '<textarea name="CorrectiveAction" id="closeJcCorrectiveAction" class="form-control" rows="3" placeholder="Actions performed to resolve the issue..." required></textarea>' +
                 '<div class="flex-row-sm">' +
-                  '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="ClosedJobCard.addVoiceButton(\'closeJcCorrectiveAction\')">' +
+                  '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="Voice.toggle(\'closeJcCorrectiveAction\', this)">' +
                     ICON_MIC + ' Voice Input' +
                   '</button>' +
                 '</div>' +
@@ -126,7 +126,7 @@ var ClosedJobCard = (function() {
                 '<label>Final Remarks</label>' +
                 '<textarea name="FinalRemarks" id="closeJcFinalRemarks" class="form-control" rows="2" placeholder="Additional notes..."></textarea>' +
                 '<div class="flex-row-sm">' +
-                  '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="ClosedJobCard.addVoiceButton(\'closeJcFinalRemarks\')">' +
+                  '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="Voice.toggle(\'closeJcFinalRemarks\', this)">' +
                     ICON_MIC + ' Voice Input' +
                   '</button>' +
                 '</div>' +
@@ -351,11 +351,6 @@ var ClosedJobCard = (function() {
     el = document.getElementById('closeJcRef'); if (el) el.textContent = id;
     updateTimeSummary();
     document.getElementById('closeJcModal').style.display = 'flex';
-    setTimeout(function() {
-      ClosedJobCard.addVoiceButton('closeJcCorrectiveAction');
-      ClosedJobCard.addVoiceButton('closeJcFinalRemarks');
-      ClosedJobCard.addVoiceButton('closeJcRootCause');
-    }, 100);
   }
 
   function updateTimeSummary() {
@@ -457,32 +452,6 @@ var ClosedJobCard = (function() {
     hideModal: function() { document.getElementById('closeJcModal').style.display = 'none'; },
     goPage: function(p) { state.page = p; renderTable(); },
     handleRepairImageSelect: function(evt) { handleRepairImageSelect(evt); },
-    removeRepairImage: function() { removeRepairImage(); },
-    addVoiceButton: function(textareaId) {
-      var ta = document.getElementById(textareaId);
-      if (!ta) return;
-      var parent = ta.parentNode;
-      if (parent.querySelector('.voice-input-added')) return;
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'btn btn-sm btn-secondary voice-input-added';
-      btn.className += ' btn-voice-sm';
-      btn.title = 'Add voice input button';
-      btn.innerHTML = ICON_MIC + ' Voice Input';
-      btn.onclick = function() {
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-          var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-          var recognition = new SpeechRecognition();
-          recognition.lang = 'en-US';
-          recognition.onresult = function(event) {
-            ta.value += (ta.value ? ' ' : '') + event.results[0][0].transcript;
-          };
-          recognition.start();
-        } else {
-          Notify.info('Speech recognition not supported in this browser');
-        }
-      };
-      parent.appendChild(btn);
-    }
+    removeRepairImage: function() { removeRepairImage(); }
   };
 })();

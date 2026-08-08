@@ -377,21 +377,34 @@ var OpenJobCard = (function() {
 
     filtered.forEach(function(m) {
       var opt = document.createElement('option');
-      opt.value = m.MachineName || '';
-      opt.textContent = (m.MachineName || '') + (m.MachineCode ? ' (' + m.MachineCode + ')' : '');
+      var num = m.MachineNumber || m.MachineCode || '';
+      var label = num;
+      if (m.MachineName && m.MachineName !== num) label += ' \u2014 ' + m.MachineName;
+      opt.value = num;
+      opt.textContent = label;
       machineSel.appendChild(opt);
     });
   }
 
   function onMachineChange() {
-    var machineName = document.getElementById('jcMachine').value;
+    var machineVal = document.getElementById('jcMachine').value;
     var assetSel = document.getElementById('jcAsset');
     if (assetSel) assetSel.innerHTML = '<option value="">Select Asset</option>';
 
-    if (!machineName) return;
+    if (!machineVal) return;
+
+    var machineId = '';
+    for (var i = 0; i < state.machines.length; i++) {
+      var m = state.machines[i];
+      var mNum = m.MachineNumber || m.MachineCode || '';
+      if (m.MachineID === machineVal || mNum === machineVal) {
+        machineId = m.MachineID || '';
+        break;
+      }
+    }
 
     var filtered = state.assets.filter(function(a) {
-      return a.MachineName === machineName;
+      return (machineId && a.MachineID === machineId) || a.MachineName === machineVal || a.MachineNumber === machineVal || a.MachineCode === machineVal;
     });
 
     filtered.forEach(function(a) {
@@ -416,9 +429,17 @@ var OpenJobCard = (function() {
 
     if (asset && asset.MachineName) {
       var machineSel = document.getElementById('jcMachine');
-      for (var i = 0; i < machineSel.options.length; i++) {
-        if (machineSel.options[i].value === asset.MachineName) {
-          machineSel.value = asset.MachineName;
+      var targetNum = '';
+      for (var j = 0; j < state.machines.length; j++) {
+        if (state.machines[j].MachineID === asset.MachineID || state.machines[j].MachineName === asset.MachineName) {
+          targetNum = state.machines[j].MachineNumber || state.machines[j].MachineCode || '';
+          break;
+        }
+      }
+      if (!targetNum) targetNum = asset.MachineNumber || asset.MachineCode || '';
+      for (var k = 0; k < machineSel.options.length; k++) {
+        if (machineSel.options[k].value === targetNum) {
+          machineSel.value = targetNum;
           break;
         }
       }
@@ -518,66 +539,7 @@ var OpenJobCard = (function() {
     resetForm: function() { resetForm(); },
     cancel: function() { resetForm(); },
     startVoice: function(btn) {
-      var ta = document.getElementById('jcComplaintDesc');
-      if (!ta) return;
-      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-        Notify.info('Speech recognition not supported in this browser');
-        return;
-      }
-      if (btn && btn.classList.contains('listening')) {
-        if (window.__jcRecognition) {
-          try { window.__jcRecognition.stop(); } catch (e) {}
-        }
-        return;
-      }
-
-      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      var recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.interimResults = true;
-      recognition.continuous = true;
-      window.__jcRecognition = recognition;
-
-      var origHtml = btn ? btn.innerHTML : '';
-      function setListening(on) {
-        if (!btn) return;
-        if (on) {
-          btn.classList.add('listening');
-          btn.innerHTML = ICON_MIC + ' Listening...';
-        } else {
-          btn.classList.remove('listening');
-          btn.innerHTML = origHtml;
-        }
-      }
-
-      recognition.onresult = function(event) {
-        var transcript = '';
-        for (var i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) transcript += event.results[i][0].transcript;
-        }
-        if (transcript) ta.value += (ta.value ? ' ' : '') + transcript;
-      };
-      recognition.onerror = function(event) {
-        setListening(false);
-        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-          Notify.error('Microphone access denied. Please allow microphone permission.');
-        } else if (event.error === 'no-speech') {
-          Notify.info('No speech detected. Please try again.');
-        } else if (event.error !== 'aborted') {
-          Notify.error('Voice input error: ' + event.error);
-        }
-      };
-      recognition.onend = function() {
-        setListening(false);
-      };
-
-      setListening(true);
-      try {
-        recognition.start();
-      } catch (e) {
-        setListening(false);
-        Notify.error('Could not start voice input');
-      }
+      return Voice.toggle('jcComplaintDesc', btn);
     }
   };
 })();

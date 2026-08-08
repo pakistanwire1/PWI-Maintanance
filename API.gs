@@ -128,6 +128,9 @@ var API_ROUTES = {
   'updateMachine':         { auth: true,  handler: function(d) { return updateMachine(d.id, d); } },
   'deleteMachine':         { auth: true,  handler: function(d) { return deleteMachine(d.id); } },
   'searchMachines':        { auth: true,  handler: function(d) { return searchMachines(d.query); } },
+  'getMachinePassport':    { auth: true,  handler: function(d) { return getMachinePassport(d.machineId); } },
+  'updateMachineDocument': { auth: true,  handler: function(d) { return updateMachineDocument(d.machineId, d.fieldKey, d.url); } },
+  'saveMachinePhoto':      { auth: true,  handler: function(d) { return saveMachinePhoto(d.machineId, d.dataUrl || d.url); } },
 
   /* ---- Assets ---- */
   'getAssets':             { auth: true,  handler: function(d) { return getAssets(); } },

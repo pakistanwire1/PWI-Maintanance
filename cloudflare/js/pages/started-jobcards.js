@@ -100,7 +100,7 @@ var StartedJobCard = (function() {
                 '<label>Initial Remarks</label>' +
                 '<textarea name="InitialRemarks" id="startJcInitialRemarks" class="form-control" rows="3" placeholder="Initial assessment and observations..."></textarea>' +
                 '<div class="flex-row-sm">' +
-                  '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="StartedJobCard.addVoiceButton(\'startJcInitialRemarks\')">' +
+                  '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="Voice.toggle(\'startJcInitialRemarks\', this)">' +
                     ICON_MIC + ' Voice Input' +
                   '</button>' +
                 '</div>' +
@@ -405,7 +405,6 @@ var StartedJobCard = (function() {
     el = document.getElementById('startJcOpenedDisplay'); if (el) el.textContent = Utils.formatDateTime(item.OpenDateTime);
     updateWaiting();
     document.getElementById('startJcModal').style.display = 'flex';
-    setTimeout(function() { StartedJobCard.addVoiceButton('startJcInitialRemarks'); }, 100);
   }
 
   function updateWaiting() {
@@ -460,31 +459,8 @@ var StartedJobCard = (function() {
     save: function(e) { return saveStartJc(e); },
     hideModal: function() { document.getElementById('startJcModal').style.display = 'none'; },
     goPage: function(p) { state.page = p; renderTable(); },
-    addVoiceButton: function(textareaId) {
-      var ta = document.getElementById(textareaId);
-      if (!ta) return;
-      var parent = ta.parentNode;
-      if (parent.querySelector('.voice-input-added')) return;
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'btn btn-sm btn-secondary voice-input-added';
-      btn.style.cssText = 'font-size:11px;padding:3px 8px;margin-top:4px';
-      btn.title = 'Add voice input button';
-      btn.innerHTML = ICON_MIC + ' Voice Input';
-      btn.onclick = function() {
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-          var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-          var recognition = new SpeechRecognition();
-          recognition.lang = 'en-US';
-          recognition.onresult = function(event) {
-            ta.value += (ta.value ? ' ' : '') + event.results[0][0].transcript;
-          };
-          recognition.start();
-        } else {
-          Notify.info('Speech recognition not supported in this browser');
-        }
-      };
-      parent.appendChild(btn);
-    }
+    onTechSearch: function(evt) { onTechSearch(evt); },
+    onTechSelect: function(empId, opt) { onTechSelect(empId, opt); },
+    removeTech: function(empId) { removeTech(empId); }
   };
 })();

@@ -25,13 +25,14 @@ function getSidebarCounts(email) {
   }
 
   var unreadNotifications = 0;
-  for (var ni = 0; ni < notifData.length; ni++) {
-    var n = notifData[ni];
-    var rs = (n.ReadStatus || '').toLowerCase();
-    if (rs !== 'read') {
-      var assigned = n.AssignedTo || '';
-      if (!assigned || assigned === email) unreadNotifications++;
-    }
+  var userNotifs = [];
+  try {
+    userNotifs = email ? getUserNotifications(email) : notifData;
+  } catch (e) {
+    userNotifs = notifData;
+  }
+  for (var ni = 0; ni < userNotifs.length; ni++) {
+    if ((userNotifs[ni].ReadStatus || '').toLowerCase() !== 'read') unreadNotifications++;
   }
 
   var pendingEmails = 0;
