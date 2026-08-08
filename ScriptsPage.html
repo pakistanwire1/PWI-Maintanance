@@ -1865,12 +1865,25 @@ var moduleIcons = {
 var defaultNotifIcon = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>';
 var priorityBadgeMap = { 'Critical': 'danger', 'High': 'warning', 'Medium': 'info', 'Low': 'success' };
 
+function dedupeNotifications(list) {
+  var seen = {};
+  var out = [];
+  for (var i = 0; i < list.length; i++) {
+    var id = String(list[i].NotificationID || '_');
+    if (!seen[id]) {
+      seen[id] = true;
+      out.push(list[i]);
+    }
+  }
+  return out;
+}
+
 function loadNotifications() {
   __notifPage = 1;
   var email = (currentUser && currentUser.email) || '';
   google.script.run
     .withSuccessHandler(function(data) {
-      notifications = data || [];
+      notifications = dedupeNotifications(data || []);
       unreadCount = notifications.filter(function(n) { return (n.ReadStatus || '').toLowerCase() !== 'read'; }).length;
       updateNotificationBadge();
       renderNotifications();
@@ -2277,10 +2290,6 @@ function updateSidebarCounters(data) {
     if (!el) continue;
     var item = map[key];
     var count = item.count || 0;
-    if (key === 'openjobcard') {
-      el.style.display = 'none';
-      continue;
-    }
     el.textContent = count > 99 ? '99+' : count;
     el.style.display = '';
     if (count === 0) {

@@ -537,10 +537,21 @@ function apiGetNotifications(d) {
   var page = parseInt(d.page) || 1;
   var pageSize = parseInt(d.pageSize) || 50;
   var start = (page - 1) * pageSize;
+  var unreadCount = 0;
+  var seenUnread = {};
+  for (var i = 0; i < all.length; i++) {
+    if ((all[i].ReadStatus || '').toLowerCase() !== 'read') {
+      var nid = String(all[i].NotificationID || '_');
+      if (!seenUnread[nid]) {
+        seenUnread[nid] = true;
+        unreadCount++;
+      }
+    }
+  }
   return {
     records: all.slice(start, start + pageSize),
     total: all.length,
-    unreadCount: all.filter(function(n) { return (n.ReadStatus || '').toLowerCase() !== 'read'; }).length
+    unreadCount: unreadCount
   };
 }
 

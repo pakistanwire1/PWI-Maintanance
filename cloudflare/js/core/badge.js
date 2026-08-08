@@ -51,10 +51,6 @@ var Badge = {
       if (!el) continue;
       var item = map[key];
       var count = item.count || 0;
-      if (key === 'openjobcard') {
-        el.style.display = 'none';
-        continue;
-      }
       el.textContent = count > 99 ? '99+' : count;
       el.style.display = '';
       if (count === 0) {

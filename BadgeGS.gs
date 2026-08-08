@@ -6,22 +6,16 @@ function getSidebarCounts(email) {
   var spData = getAllData(CONFIG.SHEET_NAMES.SPARE_PARTS) || [];
   var grData = getAllData(CONFIG.SHEET_NAMES.GOODS_RECEIPT) || [];
 
-  var openCount = 0, runningCount = 0, closedCount = 0, pendingCount = 0, approvedCount = 0;
+  var openCount = 0, startedCount = 0, closedCount = 0, pendingCount = 0, approvedCount = 0;
   for (var i = 0; i < jcData.length; i++) {
     var jc = jcData[i];
     var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
-    var isClosed = (s === 'closed' || s === 'approved');
-    var isOpen = (s === 'open');
-    var isRunning = (s === 'running' || s === 'in progress');
-    var isPending = (s === 'pending');
     var as = (jc.ApprovalStatus || '').toLowerCase();
-    var isApproved = (as === 'approved');
-
-    if (isApproved) { approvedCount++; }
-    else if (isPending || (isClosed && !isApproved)) { pendingCount++; }
-    else if (isOpen) { openCount++; }
-    else if (isRunning) { runningCount++; }
-    else if (isClosed) { closedCount++; }
+    if (as === 'approved' || s === 'approved') { approvedCount++; }
+    else if (s === 'pending') { pendingCount++; }
+    else if (s === 'open') { openCount++; }
+    else if (s === 'running' || s === 'in progress') { startedCount++; }
+    else if (s === 'closed' || s === 'completed') { closedCount++; }
   }
 
   var unreadNotifications = 0;
@@ -31,9 +25,13 @@ function getSidebarCounts(email) {
   } catch (e) {
     userNotifs = notifData;
   }
+  var unreadIds = {};
   for (var ni = 0; ni < userNotifs.length; ni++) {
-    if ((userNotifs[ni].ReadStatus || '').toLowerCase() !== 'read') unreadNotifications++;
+    if ((userNotifs[ni].ReadStatus || '').toLowerCase() !== 'read') {
+      unreadIds[String(userNotifs[ni].NotificationID || '_')] = true;
+    }
   }
+  unreadNotifications = Object.keys(unreadIds).length;
 
   var pendingEmails = 0;
   for (var ei = 0; ei < emailData.length; ei++) {
@@ -80,9 +78,9 @@ function getSidebarCounts(email) {
   } catch(e) {}
 
   return {
-    openJobCards: 0,
-    startedJobCards: openCount,
-    closedJobCards: runningCount,
+    openJobCards: openCount,
+    startedJobCards: startedCount,
+    closedJobCards: closedCount,
     pendingJobCards: pendingCount,
     approvedJobCards: approvedCount,
     totalJobCards: jcData.length,

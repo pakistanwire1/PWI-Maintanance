@@ -147,12 +147,25 @@ var notifPage = 1;
 var notifFilter = { search: '', type: '', notifType: '', status: '', priority: '' };
 var notifSearchDebounce = null;
 
+function dedupeNotifications(list) {
+  var seen = {};
+  var out = [];
+  for (var i = 0; i < list.length; i++) {
+    var id = String(list[i].NotificationID || '_');
+    if (!seen[id]) {
+      seen[id] = true;
+      out.push(list[i]);
+    }
+  }
+  return out;
+}
+
 function loadNotificationsData() {
   showLoading(true);
   var email = (currentUser && currentUser.email) || '';
   google.script.run
     .withSuccessHandler(function(data) {
-      notifData = data || [];
+      notifData = dedupeNotifications(data || []);
       showLoading(false);
       updateNotifSummary();
       renderNotifTable();

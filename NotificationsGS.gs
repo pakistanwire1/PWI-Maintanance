@@ -75,9 +75,16 @@ function getUnreadNotifications(email) {
 function getUnreadCount(email) {
   try {
     var data = email ? getUserNotifications(email) : getNotifications();
+    var seen = {};
     var count = 0;
     for (var i = 0; i < data.length; i++) {
-      if ((data[i].ReadStatus || '').toLowerCase() !== 'read') count++;
+      if ((data[i].ReadStatus || '').toLowerCase() !== 'read') {
+        var nid = String(data[i].NotificationID || '_');
+        if (!seen[nid]) {
+          seen[nid] = true;
+          count++;
+        }
+      }
     }
     return count;
   } catch (e) {
@@ -92,11 +99,18 @@ function getNotificationStats(email) {
     var unreadCount = 0;
     var criticalCount = 0;
     var approvalCount = 0;
+    var seenUnread = {};
     for (var i = 0; i < data.length; i++) {
       var mod = data[i].Module || 'Unknown';
       if (!moduleCounts[mod]) moduleCounts[mod] = 0;
       moduleCounts[mod]++;
-      if ((data[i].ReadStatus || '').toLowerCase() !== 'read') unreadCount++;
+      if ((data[i].ReadStatus || '').toLowerCase() !== 'read') {
+        var nid = String(data[i].NotificationID || '_');
+        if (!seenUnread[nid]) {
+          seenUnread[nid] = true;
+          unreadCount++;
+        }
+      }
       if (data[i].Priority === 'Critical') criticalCount++;
       if (data[i].NotificationType === 'Approval' || (data[i].Title && data[i].Title.toLowerCase().indexOf('approval') > -1)) approvalCount++;
     }

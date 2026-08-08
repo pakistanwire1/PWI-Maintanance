@@ -1,0 +1,15 @@
+const fs = require('fs');
+const s = fs.readFileSync('cloudflare/index.html', 'utf8');
+const routes = [];
+const re = /data-page="([A-Za-z0-9_]+)"/g;
+let m;
+while ((m = re.exec(s))) routes.push(m[1]);
+console.log('sidebar data-page routes:', JSON.stringify(routes));
+const labels = [];
+const re2 = /data-page="([A-Za-z0-9_]+)"[^>]*>\s*<[^>]*>\s*<span class="sidebar-item-label">([^<]+)<\/span>/g;
+let m2;
+while ((m2 = re2.exec(s))) labels.push(m2[1] + ':' + m2[2]);
+console.log('sidebar items:', JSON.stringify(labels, null, 1));
+console.log('alljobcard occurrences:', (s.match(/alljobcard/g) || []).length);
+const j = s.indexOf('waBadge');
+if (j >= 0) console.log('waBadge context:', s.slice(j - 250, j + 150).replace(/\n/g, ' '));

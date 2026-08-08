@@ -6,6 +6,19 @@
   var PAGE_SIZE = 10;
   var __pageStates = {};
 
+  function dedupeNotifications(list) {
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      var id = String(list[i].NotificationID || '_');
+      if (!seen[id]) {
+        seen[id] = true;
+        out.push(list[i]);
+      }
+    }
+    return out;
+  }
+
   var ICONS = {
     view: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M1 10s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7z"/><circle cx="10" cy="10" r="2.5"/></svg>',
     start: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="10" cy="10" r="9"/><path d="M8 6l6 4-6 4V6z"/></svg>',
@@ -177,8 +190,8 @@
     Loader.show();
     API.post('getNotifications', { pageSize: 100000 })
       .then(function(data) {
-        notifData = (data && data.records) || data || [];
-        if (!Array.isArray(notifData)) notifData = [];
+        var raw = (data && data.records) || data || [];
+        notifData = dedupeNotifications(Array.isArray(raw) ? raw : []);
         Loader.hide();
         updateSummary();
         renderTable();
