@@ -1,0 +1,237 @@
+{
+  "chains": [
+    {
+      "division": "DIV001",
+      "section": "Spoke",
+      "dept": "Straightener",
+      "machine": "Straightener",
+      "asset": "AST001"
+    },
+    {
+      "division": "DIV001",
+      "section": "Spoke",
+      "dept": "Swagging",
+      "machine": "Swagging",
+      "asset": "AST006"
+    },
+    {
+      "division": "DIV001",
+      "section": "Spoke",
+      "dept": "Spoke",
+      "machine": "Spoke",
+      "asset": "AST012"
+    },
+    {
+      "division": "DIV001",
+      "section": "Auto Plating",
+      "dept": "Spoke Plating",
+      "machine": "Barrel",
+      "asset": "AST019"
+    },
+    {
+      "division": "DIV001",
+      "section": "Auto Plating",
+      "dept": "Nipple Plating",
+      "machine": "Barrel",
+      "asset": "AST019"
+    },
+    {
+      "division": "DIV002",
+      "section": "Spiral",
+      "dept": "Flattening",
+      "machine": "Flattening",
+      "asset": "AST033"
+    },
+    {
+      "division": "DIV002",
+      "section": "Spiral",
+      "dept": "Spiral",
+      "machine": "Spiral",
+      "asset": "AST038"
+    },
+    {
+      "division": "DIV002",
+      "section": "PVC",
+      "dept": "PVC",
+      "machine": "PVC",
+      "asset": "AST052"
+    }
+  ],
+  "perDivision": [
+    {
+      "division": "DIV001",
+      "sectionCount": 6,
+      "sections": [
+        {
+          "section": "Admin",
+          "deptCount": 1,
+          "depts": [
+            {
+              "dept": "Admin",
+              "machineCount": 0,
+              "maxChainDepth": 2
+            }
+          ],
+          "maxChainDepth": 2
+        },
+        {
+          "section": "Spoke",
+          "deptCount": 3,
+          "depts": [
+            {
+              "dept": "Straightener",
+              "machineCount": 5,
+              "maxChainDepth": 4,
+              "assetCount": 5,
+              "sampleAsset": "AST001"
+            },
+            {
+              "dept": "Swagging",
+              "machineCount": 6,
+              "maxChainDepth": 4,
+              "assetCount": 6,
+              "sampleAsset": "AST006"
+            },
+            {
+              "dept": "Spoke",
+              "machineCount": 7,
+              "maxChainDepth": 4,
+              "assetCount": 7,
+              "sampleAsset": "AST012"
+            }
+          ],
+          "maxChainDepth": 4
+        },
+        {
+          "section": "Nipple",
+          "deptCount": 2,
+          "depts": [
+            {
+              "dept": "Header",
+              "machineCount": 0,
+              "maxChainDepth": 2
+            },
+            {
+              "dept": "Nipple",
+              "machineCount": 0,
+              "maxChainDepth": 2
+            }
+          ],
+          "maxChainDepth": 2
+        },
+        {
+          "section": "Auto Plating",
+          "deptCount": 2,
+          "depts": [
+            {
+              "dept": "Spoke Plating",
+              "machineCount": 10,
+              "maxChainDepth": 4,
+              "assetCount": 12,
+              "sampleAsset": "AST019"
+            },
+            {
+              "dept": "Nipple Plating",
+              "machineCount": 4,
+              "maxChainDepth": 4,
+              "assetCount": 12,
+              "sampleAsset": "AST019"
+            }
+          ],
+          "maxChainDepth": 4
+        },
+        {
+          "section": "SPD Packing",
+          "deptCount": 1,
+          "depts": [
+            {
+              "dept": "Spoke Packing",
+              "machineCount": 2,
+              "maxChainDepth": 3,
+              "assetCount": 0,
+              "sampleAsset": null
+            }
+          ],
+          "maxChainDepth": 3
+        },
+        {
+          "section": "Maintenance",
+          "deptCount": 1,
+          "depts": [
+            {
+              "dept": "Facility Maintenance",
+              "machineCount": 0,
+              "maxChainDepth": 2
+            }
+          ],
+          "maxChainDepth": 2
+        }
+      ],
+      "maxChainDepth": 4
+    },
+    {
+      "division": "DIV002",
+      "sectionCount": 3,
+      "sections": [
+        {
+          "section": "Spiral",
+          "deptCount": 2,
+          "depts": [
+            {
+              "dept": "Flattening",
+              "machineCount": 5,
+              "maxChainDepth": 4,
+              "assetCount": 5,
+              "sampleAsset": "AST033"
+            },
+            {
+              "dept": "Spiral",
+              "machineCount": 14,
+              "maxChainDepth": 4,
+              "assetCount": 14,
+              "sampleAsset": "AST038"
+            }
+          ],
+          "maxChainDepth": 4
+        },
+        {
+          "section": "PVC",
+          "deptCount": 2,
+          "depts": [
+            {
+              "dept": "PVC",
+              "machineCount": 2,
+              "maxChainDepth": 4,
+              "assetCount": 2,
+              "sampleAsset": "AST052"
+            },
+            {
+              "dept": "CCD Packing",
+              "machineCount": 2,
+              "maxChainDepth": 3,
+              "assetCount": 0,
+              "sampleAsset": null
+            }
+          ],
+          "maxChainDepth": 4
+        },
+        {
+          "section": "CCD Packing",
+          "deptCount": 1,
+          "depts": [
+            {
+              "dept": "CCD Packing",
+              "machineCount": 2,
+              "maxChainDepth": 3,
+              "assetCount": 0,
+              "sampleAsset": null
+            }
+          ],
+          "maxChainDepth": 3
+        }
+      ],
+      "maxChainDepth": 4
+    }
+  ],
+  "divCount": 2
+}

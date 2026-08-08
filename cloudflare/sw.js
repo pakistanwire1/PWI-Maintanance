@@ -1,14 +1,22 @@
-const CACHE_NAME = 'cmms-v47';
+const CACHE_NAME = 'cmms-v49';
 const STATIC_ASSETS = [
   '/', '/index.html', '/css/styles.css', '/css/welcome.css', '/css/login.css', '/css/dashboard.css',
   '/js/app.js',
-  '/js/core/utils.js', '/js/core/icons.js', '/js/core/api.js', '/js/core/session.js',
+  '/js/core/utils.js', '/js/core/duration.js', '/js/core/icons.js', '/js/core/api.js', '/js/core/session.js',
   '/js/core/router.js', '/js/core/nav.js', '/js/core/loader.js', '/js/core/theme.js',
   '/js/core/notify.js', '/js/core/constants.js', '/js/core/table.js', '/js/core/modal.js', '/js/core/forms.js',
   '/js/core/badge.js',
   '/js/pages/welcome.js', '/js/pages/login.js', '/js/pages/dashboard.js',
   '/js/pages/sections.js', '/js/pages/departments.js', '/js/pages/machines.js',
   '/js/pages/assets.js', '/js/pages/technicians.js', '/js/pages/users.js',
+  '/js/pages/open-jobcards.js', '/js/pages/started-jobcards.js', '/js/pages/closed-jobcards.js',
+  '/js/pages/pending-jobcards.js', '/js/pages/approved-jobcards.js', '/js/pages/pm-schedule.js',
+  '/js/pages/pm-history.js', '/js/pages/breakdown-history.js', '/js/pages/checklists.js',
+  '/js/pages/spare-parts.js', '/js/pages/inventory.js', '/js/pages/all-jobcards.js',
+  '/js/pages/audit-trail.js', '/js/pages/stockhistory.js', '/js/pages/inventorytransactions.js',
+  '/js/pages/goodsreceipt.js', '/js/pages/reports.js', '/js/pages/notifications.js',
+  '/js/pages/email.js', '/js/pages/whatsapp.js', '/js/pages/qrcodes.js',
+  '/js/pages/machinepassport.js', '/js/pages/settings.js', '/js/pages/backuprestore.js',
   '/logo.svg', '/favicon.svg', '/assets/pwianimated.gif'
 ];
 

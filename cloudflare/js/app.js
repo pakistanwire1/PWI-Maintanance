@@ -223,6 +223,10 @@
     console.log('[TRACE] startApp: calling Router.init');
     Router.init();
     console.log('[TRACE] startApp: Router.init returned');
+    if (typeof Badge !== 'undefined' && Badge.refresh) {
+      console.log('[TRACE] startApp: Badge.refresh');
+      Badge.refresh();
+    }
   };
 
   window.handleSessionExpired = function() {

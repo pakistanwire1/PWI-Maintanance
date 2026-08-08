@@ -1,5 +1,5 @@
 var OpenJobCard = (function() {
-  var state = { sections: [], departments: [], machines: [], assets: [], breakdownTypes: [] };
+  var state = { divisions: [], sections: [], departments: [], machines: [], assets: [], breakdownTypes: [] };
 
   var COMPLAINT_CATEGORIES = [
     'Mechanical Failure', 'Electrical Failure', 'Hydraulic Failure',
@@ -38,31 +38,40 @@ var OpenJobCard = (function() {
         '<form id="createJobCardForm" onsubmit="return OpenJobCard.save(event)">' +
           '<div class="form-row">' +
             '<div class="form-group">' +
+              '<label>' + ICON_GRID + ' Division</label>' +
+              '<select class="form-control" id="jcDivision" onchange="OpenJobCard.onDivisionChange()">' +
+                '<option value="">Select Division</option>' +
+              '</select>' +
+            '</div>' +
+            '<div class="form-group">' +
               '<label>' + ICON_USER + ' Section *</label>' +
               '<select name="Section" class="form-control" id="jcSection" required onchange="OpenJobCard.onSectionChange()">' +
                 '<option value="">Select Section</option>' +
               '</select>' +
             '</div>' +
+          '</div>' +
+          '<div class="form-row">' +
             '<div class="form-group">' +
               '<label>' + ICON_BRIEFCASE + ' Department *</label>' +
               '<select name="Department" class="form-control" id="jcDepartment" required onchange="OpenJobCard.onDeptChange()">' +
                 '<option value="">Select Department</option>' +
               '</select>' +
             '</div>' +
-          '</div>' +
-          '<div class="form-row">' +
             '<div class="form-group">' +
               '<label>' + ICON_GRID + ' Machine *</label>' +
               '<select name="Machine" class="form-control" id="jcMachine" required onchange="OpenJobCard.onMachineChange()">' +
                 '<option value="">Select Machine</option>' +
               '</select>' +
             '</div>' +
+          '</div>' +
+          '<div class="form-row">' +
             '<div class="form-group">' +
               '<label>' + ICON_USER + ' Asset *</label>' +
               '<select name="AssetID" class="form-control" id="jcAsset" required onchange="OpenJobCard.onAssetChange()">' +
                 '<option value="">Select Asset</option>' +
               '</select>' +
             '</div>' +
+            '<div class="form-group"></div>' +
           '</div>' +
           '<div class="form-row">' +
             '<div class="form-group">' +
@@ -95,7 +104,7 @@ var OpenJobCard = (function() {
             '<label>' + ICON_CHAT + ' Complaint Description *</label>' +
             '<textarea name="ComplaintDescription" id="jcComplaintDesc" class="form-control" rows="4" placeholder="Describe the issue in detail..." required></textarea>' +
             '<div class="flex-row-sm">' +
-              '<button type="button" class="btn btn-sm btn-secondary btn-voice" onclick="OpenJobCard.addVoiceButton(\'jcComplaintDesc\')" title="Add voice input button">' +
+              '<button type="button" class="btn btn-sm btn-secondary btn-voice" id="jcVoiceBtn" onclick="OpenJobCard.startVoice(this)" title="Click and speak to fill the description">' +
                 ICON_MIC + ' Voice Input' +
               '</button>' +
             '</div>' +
@@ -156,14 +165,24 @@ var OpenJobCard = (function() {
 
   function loadData() {
     Loader.show();
-    var loaded = { sections: false, departments: false, machines: false, assets: false, breakdownTypes: false };
+    var loaded = { divisions: false, sections: false, departments: false, machines: false, assets: false, breakdownTypes: false };
 
     function checkDone() {
-      if (loaded.sections && loaded.departments && loaded.machines && loaded.assets && loaded.breakdownTypes) {
+      if (loaded.divisions && loaded.sections && loaded.departments && loaded.machines && loaded.assets && loaded.breakdownTypes) {
         Loader.hide();
         populateForm();
       }
     }
+
+    API.post('getMachineCascade', { divisionId: '', sectionId: '', deptId: '' }).then(function(data) {
+      state.divisions = Array.isArray(data && data.divisions) ? data.divisions : [];
+      loaded.divisions = true;
+      checkDone();
+    }).catch(function() {
+      loaded.divisions = true;
+      checkDone();
+      Notify.error('Failed to load divisions');
+    });
 
     API.post('getSectionList', {}).then(function(data) {
       state.sections = Array.isArray(data) ? data : [];
@@ -217,6 +236,17 @@ var OpenJobCard = (function() {
   }
 
   function populateForm() {
+    var divSel = document.getElementById('jcDivision');
+    if (divSel) {
+      divSel.innerHTML = '<option value="">Select Division</option>';
+      state.divisions.forEach(function(d) {
+        var opt = document.createElement('option');
+        opt.value = d.id || d.DivisionID || '';
+        opt.textContent = d.name || d.DivisionName || d.id || '';
+        divSel.appendChild(opt);
+      });
+    }
+
     var secSel = document.getElementById('jcSection');
     if (secSel) {
       secSel.innerHTML = '<option value="">Select Section</option>';
@@ -262,8 +292,44 @@ var OpenJobCard = (function() {
     }
   }
 
+  function onDivisionChange() {
+    var divSel = document.getElementById('jcDivision');
+    var divisionId = divSel ? divSel.value : '';
+    var secSel = document.getElementById('jcSection');
+    var deptSel = document.getElementById('jcDepartment');
+    var machineSel = document.getElementById('jcMachine');
+    var assetSel = document.getElementById('jcAsset');
+
+    if (secSel) secSel.innerHTML = '<option value="">Select Section</option>';
+    if (deptSel) deptSel.innerHTML = '<option value="">Select Department</option>';
+    if (machineSel) machineSel.innerHTML = '<option value="">Select Machine</option>';
+    if (assetSel) assetSel.innerHTML = '<option value="">Select Asset</option>';
+
+    if (!divisionId) return;
+
+    var filtered = state.sections.filter(function(s) {
+      return s.DivisionID === divisionId;
+    });
+
+    filtered.forEach(function(s) {
+      var opt = document.createElement('option');
+      opt.value = s.Section || '';
+      opt.textContent = s.Section || '';
+      secSel.appendChild(opt);
+    });
+  }
+
   function onSectionChange() {
-    var sectionName = document.getElementById('jcSection').value;
+    var secSel = document.getElementById('jcSection');
+    var sectionName = secSel ? secSel.value : '';
+    var sectionId = '';
+    for (var i = 0; i < state.sections.length; i++) {
+      if (state.sections[i].Section === sectionName || state.sections[i].SectionID === sectionName) {
+        sectionId = state.sections[i].SectionID || '';
+        break;
+      }
+    }
+
     var deptSel = document.getElementById('jcDepartment');
     var machineSel = document.getElementById('jcMachine');
     var assetSel = document.getElementById('jcAsset');
@@ -275,7 +341,7 @@ var OpenJobCard = (function() {
     if (!sectionName) return;
 
     var filtered = state.departments.filter(function(d) {
-      return d.Section === sectionName || d.SectionID === sectionName;
+      return sectionId ? (d.SectionID === sectionId || d.Section === sectionName) : (d.Section === sectionName || d.SectionID === sectionName);
     });
 
     filtered.forEach(function(d) {
@@ -287,7 +353,16 @@ var OpenJobCard = (function() {
   }
 
   function onDeptChange() {
-    var deptName = document.getElementById('jcDepartment').value;
+    var deptSel = document.getElementById('jcDepartment');
+    var deptName = deptSel ? deptSel.value : '';
+    var deptId = '';
+    for (var i = 0; i < state.departments.length; i++) {
+      if (state.departments[i].Department === deptName || state.departments[i].DepartmentID === deptName || state.departments[i].DeptID === deptName) {
+        deptId = state.departments[i].DeptID || state.departments[i].DepartmentID || '';
+        break;
+      }
+    }
+
     var machineSel = document.getElementById('jcMachine');
     var assetSel = document.getElementById('jcAsset');
 
@@ -297,7 +372,7 @@ var OpenJobCard = (function() {
     if (!deptName) return;
 
     var filtered = state.machines.filter(function(m) {
-      return m.Department === deptName;
+      return deptId ? (m.DeptID === deptId || m.Department === deptName) : (m.Department === deptName);
     });
 
     filtered.forEach(function(m) {
@@ -427,11 +502,12 @@ var OpenJobCard = (function() {
 
   return {
     show: function() {
-      state = { sections: [], departments: [], machines: [], assets: [] };
+      state = { divisions: [], sections: [], departments: [], machines: [], assets: [], breakdownTypes: [] };
       renderPage();
       loadData();
     },
 
+    onDivisionChange: function() { onDivisionChange(); },
     onSectionChange: function() { onSectionChange(); },
     onDeptChange: function() { onDeptChange(); },
     onMachineChange: function() { onMachineChange(); },
@@ -441,31 +517,67 @@ var OpenJobCard = (function() {
     save: function(e) { return save(e); },
     resetForm: function() { resetForm(); },
     cancel: function() { resetForm(); },
-    addVoiceButton: function(textareaId) {
-      var ta = document.getElementById(textareaId);
+    startVoice: function(btn) {
+      var ta = document.getElementById('jcComplaintDesc');
       if (!ta) return;
-      var parent = ta.parentNode;
-      if (parent.querySelector('.voice-input-added')) return;
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'btn btn-sm btn-secondary voice-input-added';
-      btn.className += ' btn-voice-sm';
-      btn.title = 'Add voice input button';
-      btn.innerHTML = ICON_MIC + ' Voice Input';
-      btn.onclick = function() {
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-          var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-          var recognition = new SpeechRecognition();
-          recognition.lang = 'en-US';
-          recognition.onresult = function(event) {
-            ta.value += (ta.value ? ' ' : '') + event.results[0][0].transcript;
-          };
-          recognition.start();
+      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        Notify.info('Speech recognition not supported in this browser');
+        return;
+      }
+      if (btn && btn.classList.contains('listening')) {
+        if (window.__jcRecognition) {
+          try { window.__jcRecognition.stop(); } catch (e) {}
+        }
+        return;
+      }
+
+      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      var recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = true;
+      recognition.continuous = true;
+      window.__jcRecognition = recognition;
+
+      var origHtml = btn ? btn.innerHTML : '';
+      function setListening(on) {
+        if (!btn) return;
+        if (on) {
+          btn.classList.add('listening');
+          btn.innerHTML = ICON_MIC + ' Listening...';
         } else {
-          Notify.info('Speech recognition not supported in this browser');
+          btn.classList.remove('listening');
+          btn.innerHTML = origHtml;
+        }
+      }
+
+      recognition.onresult = function(event) {
+        var transcript = '';
+        for (var i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) transcript += event.results[i][0].transcript;
+        }
+        if (transcript) ta.value += (ta.value ? ' ' : '') + transcript;
+      };
+      recognition.onerror = function(event) {
+        setListening(false);
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          Notify.error('Microphone access denied. Please allow microphone permission.');
+        } else if (event.error === 'no-speech') {
+          Notify.info('No speech detected. Please try again.');
+        } else if (event.error !== 'aborted') {
+          Notify.error('Voice input error: ' + event.error);
         }
       };
-      parent.appendChild(btn);
+      recognition.onend = function() {
+        setListening(false);
+      };
+
+      setListening(true);
+      try {
+        recognition.start();
+      } catch (e) {
+        setListening(false);
+        Notify.error('Could not start voice input');
+      }
     }
   };
 })();

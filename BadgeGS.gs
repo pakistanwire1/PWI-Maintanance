@@ -28,7 +28,7 @@ function getSidebarCounts(email) {
   for (var ni = 0; ni < notifData.length; ni++) {
     var n = notifData[ni];
     var rs = (n.ReadStatus || '').toLowerCase();
-    if (rs === 'unread') {
+    if (rs !== 'read') {
       var assigned = n.AssignedTo || '';
       if (!assigned || assigned === email) unreadNotifications++;
     }
@@ -37,7 +37,7 @@ function getSidebarCounts(email) {
   var pendingEmails = 0;
   for (var ei = 0; ei < emailData.length; ei++) {
     var es = (emailData[ei].Status || '').toLowerCase();
-    if (es === 'pending' || es === 'failed') pendingEmails++;
+    if (es === 'pending') pendingEmails++;
   }
 
   var today = new Date();

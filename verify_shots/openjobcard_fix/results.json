@@ -1,0 +1,195 @@
+{
+  "loggedIn": true,
+  "formState": {
+    "jcDivision": {
+      "count": 3,
+      "opts": [
+        "|Select Division",
+        "DIV001|Spoke Division",
+        "DIV002|Control Cable Division"
+      ],
+      "sel": ""
+    },
+    "jcSection": {
+      "count": 10,
+      "opts": [
+        "|Select Section",
+        "Admin|Admin",
+        "Spoke|Spoke",
+        "Nipple|Nipple",
+        "Auto Plating|Auto Plating",
+        "SPD Packing|SPD Packing",
+        "Spiral|Spiral",
+        "PVC|PVC",
+        "CCD Packing|CCD Packing",
+        "Maintenance|Maintenance"
+      ],
+      "sel": ""
+    },
+    "jcDepartment": {
+      "count": 1,
+      "opts": [
+        "|Select Department"
+      ],
+      "sel": ""
+    },
+    "jcMachine": {
+      "count": 1,
+      "opts": [
+        "|Select Machine"
+      ],
+      "sel": ""
+    },
+    "jcAsset": {
+      "count": 1,
+      "opts": [
+        "|Select Asset"
+      ],
+      "sel": ""
+    },
+    "jcComplaintCategory": {
+      "count": 9,
+      "opts": [
+        "|Select Category",
+        "Mechanical Failure|Mechanical Failure",
+        "Electrical Failure|Electrical Failure",
+        "Hydraulic Failure|Hydraulic Failure",
+        "Pneumatic Failure|Pneumatic Failure",
+        "Software Issue|Software Issue",
+        "Safety Issue|Safety Issue",
+        "Routine Maintenance|Routine Maintenance",
+        "Other|Other"
+      ],
+      "sel": ""
+    },
+    "jcBreakdownType": {
+      "count": 12,
+      "opts": [
+        "|Select Breakdown Type",
+        "Breakdown Maintenance|Breakdown Maintenance",
+        "Breakdown Electrical|Breakdown Electrical",
+        "Preventive Maintenance|Preventive Maintenance",
+        "Instrumentation|Instrumentation",
+        "Hydraulic|Hydraulic",
+        "Pneumatic|Pneumatic",
+        "Utility|Utility",
+        "Civil|Civil",
+        "Automation|Automation",
+        "Process|Process",
+        "Other|Other"
+      ],
+      "sel": ""
+    },
+    "jcVoiceBtn": {
+      "html": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s",
+      "listening": false
+    },
+    "speechSupported": true,
+    "taValue": ""
+  },
+  "cascade": {
+    "steps": [
+      "division->sections:6",
+      "section->departments:1",
+      "dept->machines:0"
+    ],
+    "divCount": 2,
+    "divOptions": [
+      "Select Division",
+      "Spoke Division",
+      "Control Cable Division"
+    ],
+    "afterDivision": {
+      "selectedDivision": "DIV001",
+      "sectionCount": 6,
+      "sectionOptions": [
+        "Select Section",
+        "Admin",
+        "Spoke",
+        "Nipple",
+        "Auto Plating",
+        "SPD Packing",
+        "Maintenance"
+      ]
+    },
+    "afterSection": {
+      "selectedSection": "Admin",
+      "deptCount": 1,
+      "deptOptions": [
+        "Select Department",
+        "Admin"
+      ]
+    },
+    "afterDept": {
+      "selectedDept": "Admin",
+      "machineCount": 0,
+      "machineOptions": [
+        "Select Machine"
+      ]
+    }
+  },
+  "voiceTest": {
+    "btnExists": true,
+    "onclick": "OpenJobCard.startVoice(this)",
+    "speechSupported": true,
+    "startCalled": true,
+    "listeningAfterStart": true,
+    "btnText": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" s",
+    "taAfterResult": "motor overheating test phrase",
+    "listeningAfterEnd": false
+  },
+  "resetTest": {
+    "jcDivision": {
+      "count": 3,
+      "sel": ""
+    },
+    "jcSection": {
+      "count": 10,
+      "sel": ""
+    },
+    "jcDepartment": {
+      "count": 1,
+      "sel": ""
+    },
+    "jcMachine": {
+      "count": 1,
+      "sel": ""
+    },
+    "jcAsset": {
+      "count": 1,
+      "sel": ""
+    }
+  },
+  "badgeAfterLogin": {
+    "email": {
+      "text": "0",
+      "disp": "none",
+      "html": "0"
+    },
+    "notif": {
+      "text": "99+",
+      "disp": "flex",
+      "html": "99+"
+    },
+    "wa": {
+      "text": "0",
+      "disp": "none",
+      "html": "0"
+    }
+  },
+  "badgeAfterNav": {
+    "email": {
+      "text": "0",
+      "disp": "none"
+    },
+    "notif": {
+      "text": "99+",
+      "disp": "flex"
+    },
+    "wa": {
+      "text": "0",
+      "disp": "none"
+    }
+  },
+  "consoleErrors": []
+}
