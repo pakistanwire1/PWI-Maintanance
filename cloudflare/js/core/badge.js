@@ -37,8 +37,8 @@ var Badge = {
 
   _updateSidebar: function(data) {
     var map = {
-      'openjobcard':     { count: data.openJobCards || 0,     status: 'open' },
       'startjobcard':    { count: data.startedJobCards || 0,  status: 'running' },
+      'jobcards':        { count: data.totalJobCards || 0,    status: 'all' },
       'closejobcard':    { count: data.closedJobCards || 0,   status: 'closed' },
       'pendingjobcard':  { count: data.pendingJobCards || 0,  status: 'pending' },
       'approvejobcard':  { count: data.approvedJobCards || 0, status: 'approved' },

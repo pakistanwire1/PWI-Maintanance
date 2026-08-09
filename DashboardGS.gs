@@ -378,56 +378,129 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
     var totalMachines = machines.length;
 
-    // P11.xx — Under Maintenance = unique Machine IDs that have an active/open job card.
-    // Job cards reference machines by Machine (name/code/number/id). Every machine row sharing
-    // a referenced name counts, deduped by MachineID. Job cards whose machine reference matches
-    // no row in the Machines sheet are excluded from the KPI and flagged for data cleanup.
+    // Under Maintenance = UNIQUE machines that currently have at least one ACTIVE job card
+    // (OPEN / RUNNING / IN PROGRESS). A machine counts ONLY ONCE regardless of how many active
+    // job cards belong to it (deduped by canonical identity).
+    //
+    // Canonical unique-machine identity resolution per active job card (preferred first):
+    //   1. MachineID          — canonical when present on the card and found in the Machines master
+    //   2. MachineNumber      — when unique across the master
+    //   3. MachineCode        — when unique across the master
+    //   4. normalized MachineName — LAST RESORT, only when the name maps to exactly ONE master row
+    //
+    // A reference that cannot be resolved to exactly one master machine is NOT invented/counted:
+    // it is flagged in underMaintenanceUnmatched and excluded from the KPI.
+    // Matching names shared by several machines never inflates the count.
     var activeStatuses = ['open', 'running', 'in progress', 'in-progress'];
-    var machineKeys = {};
+    var normKey = function(v) { return String(v === undefined || v === null ? '' : v).trim().toLowerCase(); };
+
+    var machineById = {};
+    var machineByNumber = {};
+    var machineByCode = {};
+    var machineByName = {};
     machines.forEach(function(m) {
-      var mid = m.MachineID || m.MachineNumber || m.MachineCode || '';
-      var keys = [m.MachineID, m.MachineNumber, m.MachineCode, m.MachineName];
-      for (var ki = 0; ki < keys.length; ki++) {
-        var k = keys[ki];
-        if (k === undefined || k === null) continue;
-        var norm = String(k).trim().toLowerCase();
-        if (!norm) continue;
-        if (!machineKeys[norm]) machineKeys[norm] = [];
-        if (machineKeys[norm].indexOf(mid) === -1) machineKeys[norm].push(mid);
-      }
+      var mid = normKey(m.MachineID);
+      var mnum = normKey(m.MachineNumber);
+      var mcode = normKey(m.MachineCode);
+      var mname = normKey(m.MachineName);
+      if (mid && !machineById[mid]) machineById[mid] = m;
+      if (mnum) { if (!machineByNumber[mnum]) machineByNumber[mnum] = []; machineByNumber[mnum].push(m); }
+      if (mcode) { if (!machineByCode[mcode]) machineByCode[mcode] = []; machineByCode[mcode].push(m); }
+      if (mname) { if (!machineByName[mname]) machineByName[mname] = []; machineByName[mname].push(m); }
     });
 
     var breakdownMachines = 0, runningMachines = 0;
     var underMaintenanceIds = [];
+    var underMaintenanceNumbers = [];
     var seenUnderMaintenance = {};
     var underMaintenanceUnmatched = [];
+    var underMaintenanceByMachine = {};
+    var underMaintenanceKeyToMaster = {};
     for (var ai = 0; ai < rawJobCards.length; ai++) {
       var ajc = rawJobCards[ai];
       var aStatus = String(ajc.CurrentStatus || ajc.Status || '').trim().toLowerCase();
       if (activeStatuses.indexOf(aStatus) === -1) continue;
+
+      var jcNo = ajc.JobCardNo || 'N/A';
       var machineRef = String(ajc.Machine || '').trim();
-      if (!machineRef) continue;
-      var aNorm = machineRef.toLowerCase();
-      var matchedIds = machineKeys[aNorm] || [];
-      if (matchedIds.length === 0) {
-        underMaintenanceUnmatched.push({ JobCardNo: ajc.JobCardNo || 'N/A', Machine: machineRef, CurrentStatus: ajc.CurrentStatus || ajc.Status || '' });
+      var refMID = normKey(ajc.MachineID);
+      var refMNum = normKey(ajc.MachineNumber);
+      var refMCode = normKey(ajc.MachineCode);
+      var refMName = machineRef.toLowerCase();
+      var cardRef = { JobCardNo: jcNo, Machine: machineRef, MachineNumber: ajc.MachineNumber || '', MachineID: ajc.MachineID || '', CurrentStatus: ajc.CurrentStatus || ajc.Status || '' };
+
+      var key = null, master = null, reason = '';
+      if (refMID) {
+        master = machineById[refMID];
+        if (master) { key = refMID; }
+        else { reason = 'MachineID "' + ajc.MachineID + '" has no matching row in the Machines master'; }
+      }
+      if (!key && !reason && refMNum) {
+        if (machineByNumber[refMNum] && machineByNumber[refMNum].length === 1) {
+          key = refMNum; master = machineByNumber[refMNum][0];
+        } else if (machineByNumber[refMNum] && machineByNumber[refMNum].length > 1) {
+          reason = 'MachineNumber "' + ajc.MachineNumber + '" is shared by ' + machineByNumber[refMNum].length + ' machine rows; cannot identify a unique machine';
+        } else {
+          reason = 'MachineNumber "' + ajc.MachineNumber + '" has no matching row in the Machines master';
+        }
+      }
+      if (!key && !reason && refMCode) {
+        if (machineByCode[refMCode] && machineByCode[refMCode].length === 1) {
+          key = refMCode; master = machineByCode[refMCode][0];
+        } else if (machineByCode[refMCode] && machineByCode[refMCode].length > 1) {
+          reason = 'MachineCode "' + ajc.MachineCode + '" is shared by ' + machineByCode[refMCode].length + ' machine rows; cannot identify a unique machine';
+        } else {
+          reason = 'MachineCode "' + ajc.MachineCode + '" has no matching row in the Machines master';
+        }
+      }
+      if (!key && !reason && refMName) {
+        if (machineByName[refMName] && machineByName[refMName].length === 1) {
+          key = refMName; master = machineByName[refMName][0];
+        } else if (machineByName[refMName] && machineByName[refMName].length > 1) {
+          reason = 'MachineName "' + machineRef + '" is shared by ' + machineByName[refMName].length + ' machines and the card has no MachineID/MachineNumber/MachineCode; cannot identify a unique machine';
+        } else {
+          reason = 'MachineName "' + machineRef + '" has no matching row in the Machines master';
+        }
+      }
+
+      if (!key || !master) {
+        cardRef.Reason = reason || 'No machine reference on the job card';
+        underMaintenanceUnmatched.push(cardRef);
         continue;
       }
-      for (var ami = 0; ami < matchedIds.length; ami++) {
-        var amid = matchedIds[ami];
-        if (!amid) continue;
-        if (!seenUnderMaintenance[amid]) {
-          seenUnderMaintenance[amid] = true;
-          underMaintenanceIds.push(amid);
-        }
+
+      // canonical identity: prefer the master MachineID; fall back to machine number/code/name.
+      var canonical = normKey(master.MachineID) || key;
+      if (!underMaintenanceByMachine[canonical]) underMaintenanceByMachine[canonical] = [];
+      if (underMaintenanceByMachine[canonical].indexOf(jcNo) === -1) {
+        underMaintenanceByMachine[canonical].push(jcNo);
+      }
+      if (!underMaintenanceKeyToMaster[canonical]) underMaintenanceKeyToMaster[canonical] = master;
+      if (!seenUnderMaintenance[canonical]) {
+        seenUnderMaintenance[canonical] = true;
+        underMaintenanceIds.push(canonical);
+        underMaintenanceNumbers.push(String(master.MachineNumber || master.MachineCode || ''));
       }
     }
 
     breakdownMachines = underMaintenanceIds.length;
     runningMachines = Math.max(0, totalMachines - breakdownMachines);
 
+    var underMaintenanceMachineDetail = {};
+    Object.keys(underMaintenanceByMachine).forEach(function(umKey) {
+      var m = underMaintenanceKeyToMaster[umKey];
+      underMaintenanceMachineDetail[umKey] = {
+        machineId: String(m.MachineID || ''),
+        machineNumber: String(m.MachineNumber || ''),
+        machineCode: String(m.MachineCode || ''),
+        machineName: String(m.MachineName || ''),
+        activeCardCount: underMaintenanceByMachine[umKey].length,
+        activeJobCards: underMaintenanceByMachine[umKey]
+      };
+    });
+
     if (underMaintenanceUnmatched.length > 0) {
-      console.warn('[DASHBOARD] ' + underMaintenanceUnmatched.length + ' active job card(s) reference machine(s) with no matching row in the Machines sheet — excluded from Under Maintenance KPI. Flagged for data cleanup: ' + JSON.stringify(underMaintenanceUnmatched));
+      console.warn('[DASHBOARD] ' + underMaintenanceUnmatched.length + ' active job card(s) could not be resolved to a unique machine — excluded from Under Maintenance KPI. Flagged for data cleanup: ' + JSON.stringify(underMaintenanceUnmatched));
     }
 
     var totalAssets = assets.length;
@@ -939,6 +1012,10 @@ function getDashboardData(filter, userDepartment, userEmail) {
       runningMachines: runningMachines,
       breakdownMachines: breakdownMachines,
       idleMachines: Math.max(0, idleMachines),
+      underMaintenance: breakdownMachines,
+      underMaintenanceMachineIds: underMaintenanceIds,
+      underMaintenanceMachineNumbers: underMaintenanceNumbers,
+      underMaintenanceActiveCards: underMaintenanceMachineDetail,
       underMaintenanceUnmatched: underMaintenanceUnmatched,
       totalAssets: totalAssets,
       totalJobCards: filteredJobCount,
