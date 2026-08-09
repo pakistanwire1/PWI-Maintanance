@@ -65,6 +65,13 @@ var QRCodes = (function() {
       '@keyframes qrScanLine{0%{top:0}50%{top:calc(100% - 3px)}100%{top:0}}' +
       '.qr-scanner-close{margin-top:16px;padding:10px 24px;border-radius:8px;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:var(--transition)}' +
       '.qr-scanner-close:hover{background:rgba(255,255,255,.25)}' +
+      '.qr-scanner-hint{color:rgba(255,255,255,.6);font-size:12px;margin-top:12px;text-align:center}' +
+      '.qr-scanner-status{background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:22px 20px;max-width:340px;width:92%;text-align:center;color:#fff;font-size:14px;line-height:1.55;margin:14px 0}' +
+      '.qr-scanner-status-msg{margin-bottom:16px}' +
+      '.qr-scanner-btn{padding:10px 22px;border-radius:8px;background:var(--primary,#4f46e5);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:var(--transition)}' +
+      '.qr-scanner-btn:hover{background:var(--primary-dark,#4338ca)}' +
+      '.qr-scanner-btn-ghost{background:rgba(255,255,255,.15)}' +
+      '.qr-scanner-btn-ghost:hover{background:rgba(255,255,255,.28)}' +
       '.qr-label-sizes{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}' +
       '.qr-label-size-btn{padding:.5rem 1rem;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-card);color:var(--text);cursor:pointer;font-size:.85rem;transition:var(--transition)}' +
       '.qr-label-size-btn.active,.qr-label-size-btn:hover{border-color:var(--primary);background:var(--primary-light);color:var(--primary-dark)}' +
@@ -371,63 +378,264 @@ var QRCodes = (function() {
     }, 50);
   }
 
+  // ---- QR camera scanner lifecycle ----
+  // A camera stream must never leak: every open must first release any previous
+  // stream, and every close must stop the Html5Qrcode instance and its tracks.
   var _scannerActive = false;
+  var _scannerStarting = false;
+  var _scanner = null;
+  var _scannerGen = 0;
+
+  function _stopVideoTracks() {
+    var els = document.querySelectorAll('#qrReader video, .qr-scanner-overlay video, video[srcObject]');
+    for (var i = 0; i < els.length; i++) {
+      var v = els[i];
+      if (!v) continue;
+      try { v.onabort = null; v.onerror = null; } catch(e) {}
+      if (!v.srcObject) continue;
+      var tracks = v.srcObject.getTracks ? v.srcObject.getTracks() : [];
+      for (var j = 0; j < tracks.length; j++) {
+        try { tracks[j].stop(); } catch(e) {}
+      }
+      try { v.srcObject = null; } catch(e) {}
+    }
+  }
+
+  function _destroyCurrentScanner() {
+    var sc = _scanner;
+    _scanner = null;
+    var gen = _scannerGen;
+    function stopIfCurrent() {
+      if (gen === _scannerGen) _stopVideoTracks();
+    }
+    if (sc && typeof sc.stop === 'function') {
+      try {
+        Promise.resolve(sc.stop()).then(stopIfCurrent).catch(stopIfCurrent);
+      } catch(e) {
+        stopIfCurrent();
+      }
+    }
+    stopIfCurrent();
+    var reader = document.getElementById('qrReader');
+    if (reader) reader.innerHTML = '';
+  }
+
+  function stopCameraScanner() {
+    _scannerStarting = false;
+    _scannerActive = false;
+    _destroyCurrentScanner();
+    var el = document.getElementById('qrScannerOverlay');
+    if (el) el.remove();
+  }
+
+  function closeCameraScanner() { stopCameraScanner(); }
+
+  function _errorText(err) {
+    return String((err && err.name) || '') + ' ' + String((err && err.message) || '') + ' ' + String(err || '');
+  }
+
+  function cameraErrorMessage(err) {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      return 'Camera is not supported in this browser. Use a recent version of Chrome, Edge, Firefox or Safari over HTTPS.';
+    }
+    var raw = err && err.message ? String(err.message) : String(err || '');
+    var combined = _errorText(err).toLowerCase();
+    if (combined.indexOf('notallowed') > -1 || combined.indexOf('permission denied') > -1 || combined.indexOf('denied') > -1) {
+      return 'Camera permission denied. Click the camera icon in the address bar (or Site Settings > Camera) to allow access for this site, then reopen the scanner.';
+    }
+    if (combined.indexOf('notreadable') > -1 || combined.indexOf('could not start video source') > -1 || combined.indexOf('track start error') > -1 || combined.indexOf('in use') > -1 || combined.indexOf('busy') > -1) {
+      return 'Camera is in use by another tab or app. Close the other camera use (or refresh this page), then tap Scan QR to retry.';
+    }
+    if (combined.indexOf('overconstrained') > -1 || combined.indexOf('constraint') > -1) {
+      return 'The camera could not match the requested settings. Try another camera or refresh the page and try again.';
+    }
+    if (combined.indexOf('notfound') > -1 || combined.indexOf('requested device not found') > -1 || combined.indexOf('no camera') > -1) {
+      return 'No camera was detected. Connect a camera and try again.';
+    }
+    if (combined.indexOf('securityerror') > -1) {
+      return 'Camera access was blocked by the browser. Enable camera permission for this site and reload the page, then try again.';
+    }
+    return 'Could not access camera: ' + raw;
+  }
 
   function openCameraScanner() {
-    if (_scannerActive) return;
+    if (_scannerActive || _scannerStarting) return;
+    stopCameraScanner();
     _scannerActive = true;
+    _scannerStarting = true;
     var overlay = document.createElement('div');
     overlay.className = 'qr-scanner-overlay';
     overlay.id = 'qrScannerOverlay';
     overlay.innerHTML =
       '<div class="qr-scanner-header">Scan Machine / Asset / Job Card QR</div>' +
       '<div class="qr-scanner-viewfinder" id="qrReader"></div>' +
-      '<div style="color:rgba(255,255,255,.6);font-size:12px;margin-top:12px;text-align:center">Position QR code within the frame</div>' +
+      '<div class="qr-scanner-hint">Opening camera...</div>' +
       '<button class="qr-scanner-close" onclick="QRCodes.closeCameraScanner()">Close Scanner</button>';
     document.body.appendChild(overlay);
     if (typeof Html5Qrcode === 'undefined') {
       var script = document.createElement('script');
       script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
       script.onload = function() { startCameraScanning(); };
-      script.onerror = function() { closeCameraScanner(); Notify.error('Failed to load QR scanner library'); };
+      script.onerror = function() { _scannerStarting = false; _showScannerError('generic', new Error('Failed to load QR scanner library')); };
       document.head.appendChild(script);
     } else {
       startCameraScanning();
     }
   }
 
+  function _cameraPermissionSupported() {
+    return typeof navigator !== 'undefined' && navigator.permissions && typeof navigator.permissions.query === 'function';
+  }
+
+  function getCameraPermissionState() {
+    return new Promise(function(resolve) {
+      if (!_cameraPermissionSupported()) { resolve('unknown'); return; }
+      var req;
+      try { req = navigator.permissions.query({ name: 'camera' }); } catch(e) { resolve('unknown'); return; }
+      if (req && typeof req.then === 'function') {
+        req.then(function(status) {
+          resolve(status && status.state ? String(status.state) : 'unknown');
+        }).catch(function() { resolve('unknown'); });
+      } else {
+        resolve('unknown');
+      }
+    });
+  }
+
+  function _isPermissionDeniedError(err) {
+    var combined = _errorText(err).toLowerCase();
+    return combined.indexOf('notallowed') > -1 || combined.indexOf('permission denied') > -1 || combined.indexOf('denied') > -1;
+  }
+
+  function _scannerOverlayEl() { return document.getElementById('qrScannerOverlay'); }
+
+  function _showScannerViewfinder() {
+    var ov = _scannerOverlayEl();
+    if (!ov) return;
+    var vf = ov.querySelector('.qr-scanner-viewfinder');
+    var hint = ov.querySelector('.qr-scanner-hint');
+    var st = ov.querySelector('.qr-scanner-status');
+    if (vf) vf.style.display = '';
+    if (hint) { hint.style.display = ''; hint.textContent = 'Opening camera...'; }
+    if (st) st.remove();
+  }
+
+  function _showScannerError(kind, err) {
+    var ov = _scannerOverlayEl();
+    if (!ov) return;
+    var vf = ov.querySelector('.qr-scanner-viewfinder');
+    var hint = ov.querySelector('.qr-scanner-hint');
+    if (vf) vf.style.display = 'none';
+    if (hint) hint.style.display = 'none';
+    var st = ov.querySelector('.qr-scanner-status');
+    if (!st) {
+      st = document.createElement('div');
+      st.className = 'qr-scanner-status';
+      ov.insertBefore(st, ov.querySelector('.qr-scanner-close'));
+    }
+    var msg = '';
+    var btn = '';
+    if (kind === 'denied') {
+      msg = 'Camera permission is blocked for this site.<br><br>' +
+        'Tap the camera / lock icon in the address bar (or open <b>Site Settings &gt; Camera</b>) and set Camera to <b>Allow</b>, then tap <b>Try Again</b>.';
+      btn = '<button class="qr-scanner-btn" onclick="QRCodes.retryCameraScanner()">Try Again</button>' +
+        '<button class="qr-scanner-btn qr-scanner-btn-ghost" onclick="QRCodes.closeCameraScanner()">Close</button>';
+    } else if (kind === 'unsupported') {
+      msg = 'Camera is not supported in this browser. Use the latest Chrome, Edge, Firefox or Safari over HTTPS.';
+      btn = '<button class="qr-scanner-btn qr-scanner-btn-ghost" onclick="QRCodes.closeCameraScanner()">Close</button>';
+    } else {
+      msg = cameraErrorMessage(err) + '<br><br>If the camera is open in another app or tab, close it, then tap Try Again.';
+      btn = '<button class="qr-scanner-btn" onclick="QRCodes.retryCameraScanner()">Try Again</button>' +
+        '<button class="qr-scanner-btn qr-scanner-btn-ghost" onclick="QRCodes.closeCameraScanner()">Close</button>';
+    }
+    st.innerHTML = '<div class="qr-scanner-status-msg">' + msg + '</div>' +
+      '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">' + btn + '</div>';
+  }
+
   function startCameraScanning() {
-    try {
-      var html5QrCode = new Html5Qrcode('qrReader');
+    if (!_scannerActive) return;
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      _scannerStarting = false;
+      _showScannerError('unsupported');
+      return;
+    }
+    getCameraPermissionState().then(function(state) {
+      if (!_scannerActive) return;
+      if (state === 'denied') {
+        _scannerStarting = false;
+        _showScannerError('denied');
+        return;
+      }
+      startCameraAttempt();
+    });
+  }
+
+  function retryCameraScanner() {
+    if (!_scannerActive || _scannerStarting) return;
+    _scannerStarting = true;
+    startCameraAttempt();
+  }
+
+  function startCameraAttempt() {
+    if (!_scannerActive) return;
+    var retriedBusy = false;
+    function attempt() {
+      if (!_scannerActive) return;
+      _showScannerViewfinder();
+      _destroyCurrentScanner();
+      var html5QrCode;
+      try {
+        html5QrCode = new Html5Qrcode('qrReader');
+      } catch(e) {
+        _scannerStarting = false;
+        _showScannerError('generic', e);
+        return;
+      }
+      _scannerGen++;
+      _scanner = html5QrCode;
       html5QrCode.start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
         function onScanSuccess(decodedText) {
+          _scannerStarting = false;
           html5QrCode.stop().then(function() {
-            closeCameraScanner();
+            stopCameraScanner();
             processCameraScanResult(decodedText);
-          }).catch(function() {});
+          }).catch(function() {
+            stopCameraScanner();
+            processCameraScanResult(decodedText);
+          });
         },
         function onScanFailure() {}
-      ).catch(function(err) {
-        closeCameraScanner();
-        if (err && err.toString().indexOf('NotAllowedError') !== -1) {
-          Notify.error('Camera permission denied. Please allow camera access.');
-        } else {
-          Notify.error('Could not access camera: ' + (err.message || err));
+      ).then(function() {
+        _scannerStarting = false;
+      }).catch(function(err) {
+        _scannerStarting = false;
+        if (_isPermissionDeniedError(err)) {
+          _showScannerError('denied');
+          return;
         }
+        if (!retriedBusy && _scannerActive && isCameraBusyError(err)) {
+          retriedBusy = true;
+          Notify.info('Camera was busy - retrying...');
+          setTimeout(attempt, 800);
+          return;
+        }
+        _showScannerError('generic', err);
       });
-    } catch(e) {
-      closeCameraScanner();
-      Notify.error('QR scanner error: ' + e.message);
     }
+    attempt();
   }
 
-  function closeCameraScanner() {
-    _scannerActive = false;
-    var el = document.getElementById('qrScannerOverlay');
-    if (el) el.remove();
+  function isCameraBusyError(err) {
+    var combined = _errorText(err).toLowerCase();
+    return combined.indexOf('notreadable') > -1 || combined.indexOf('in use') > -1 ||
+           combined.indexOf('busy') > -1 || combined.indexOf('track start error') > -1 ||
+           combined.indexOf('could not start video source') > -1;
   }
+
+  window.addEventListener('pagehide', function() { stopCameraScanner(); });
+  window.addEventListener('beforeunload', function() { stopCameraScanner(); });
 
   function processCameraScanResult(decodedText) {
     Notify.info('QR scanned: processing...');
@@ -1345,6 +1553,9 @@ var QRCodes = (function() {
     openScan: function() { showScanModal(); },
     openCameraScanner: function() { openCameraScanner(); },
     closeCameraScanner: function() { closeCameraScanner(); },
+    retryCameraScanner: function() { retryCameraScanner(); },
+    stopCameraScanner: function() { stopCameraScanner(); },
+    destroy: function() { stopCameraScanner(); },
     closeDetail: function() { var el = document.getElementById('qrDetailOverlay'); if (el) el.remove(); },
 
     generateQR: function(mod, id) {
