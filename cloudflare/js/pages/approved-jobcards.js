@@ -166,6 +166,7 @@ var ApproveJobCards = (function() {
       { key: 'JobCardNo', label: 'Job Card No' },
       { key: 'OpenDateTime', label: 'Closed', datetime: true },
       { key: 'Machine', label: 'Machine' },
+      { key: 'MachineNumber', label: 'Machine No' },
       { key: 'Department', label: 'Dept' },
       { key: 'AssignedTechnician', label: 'Technician' },
       { key: 'WaitingTime', label: 'Waiting', format: function(val) { return Duration.cell(val); } },

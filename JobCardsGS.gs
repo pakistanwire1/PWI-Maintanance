@@ -13,6 +13,8 @@ function normalizeJobCard(jc) {
   jc.Section = jc.Section || '';
   jc.Department = jc.Department || '';
   jc.Machine = jc.Machine || '';
+  jc.MachineNumber = jc.MachineNumber || '';
+  jc.MachineID = jc.MachineID || '';
   jc.AssetID = jc.AssetID || '';
   jc.ComplaintCategory = jc.ComplaintCategory || '';
   jc.ComplaintBy = jc.ComplaintBy || '';
@@ -229,6 +231,82 @@ function getJobCardsByStatus(status) {
   }).map(function(jc) { return normalizeJobCard(jc); });
 }
 
+function backfillJobCardMachineInfo() {
+  var sheet = getSheet(CONFIG.SHEET_NAMES.JOBCARDS);
+  ensureHeaders(sheet, CONFIG.JOBCARD_FIELDS);
+  var hadMachineNumberCol = false;
+  var headersBefore = [];
+  if (sheet.getLastRow() > 0) {
+    headersBefore = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+    hadMachineNumberCol = headersBefore.indexOf('MachineNumber') !== -1;
+  }
+  ensureSheetColumns(sheet, CONFIG.JOBCARD_FIELDS);
+  invalidateCache(CONFIG.SHEET_NAMES.JOBCARDS);
+  var rows = getAllData(CONFIG.SHEET_NAMES.JOBCARDS) || [];
+  var allAssets = getAllData(CONFIG.SHEET_NAMES.ASSETS) || [];
+  var allMachines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
+  var assetById = {};
+  allAssets.forEach(function(a) { if (a.AssetID) assetById[String(a.AssetID)] = a; });
+  var machineById = {};
+  allMachines.forEach(function(m) { if (m.MachineID) machineById[String(m.MachineID)] = m; });
+
+  var updated = 0;
+  var unchanged = 0;
+  var unmatched = [];
+  rows.forEach(function(jc) {
+    if (!jc.JobCardNo) return;
+    if (jc.MachineNumber && jc.MachineID) { unchanged++; return; }
+    var patch = {};
+    if (jc.AssetID) {
+      var asset = assetById[String(jc.AssetID)];
+      if (asset && asset.MachineID) {
+        patch.MachineID = asset.MachineID;
+        var mach = machineById[String(asset.MachineID)];
+        if (mach) {
+          patch.MachineNumber = mach.MachineNumber || mach.MachineCode || '';
+        }
+      }
+    }
+    if (!patch.MachineID && jc.MachineID) {
+      var machById = machineById[String(jc.MachineID)];
+      if (machById) {
+        patch.MachineID = jc.MachineID;
+        patch.MachineNumber = machById.MachineNumber || machById.MachineCode || '';
+      }
+    }
+    if ((!patch.MachineID || !patch.MachineNumber) && jc.Machine) {
+      var byNumber = allMachines.find(function(m) { return String(m.MachineNumber || '') === String(jc.Machine); });
+      var byCode = byNumber || allMachines.find(function(m) { return String(m.MachineCode || '') === String(jc.Machine); });
+      var byName = byCode || allMachines.find(function(m) { return String(m.MachineName || '') === String(jc.Machine); });
+      if (byName) {
+        patch.MachineID = byName.MachineID;
+        patch.MachineNumber = byName.MachineNumber || byName.MachineCode || '';
+      }
+    }
+    if (patch.MachineID || patch.MachineNumber) {
+      updateRow(CONFIG.SHEET_NAMES.JOBCARDS, 'JobCardNo', jc.JobCardNo, patch);
+      updated++;
+    } else {
+      unmatched.push({
+        JobCardNo: jc.JobCardNo || '',
+        Machine: jc.Machine || '',
+        AssetID: jc.AssetID || '',
+        MachineID: jc.MachineID || '',
+        Reason: 'No master match (no AssetID/MachineID/Machine link to a Machines row)'
+      });
+    }
+  });
+  return {
+    success: true,
+    column: { name: 'MachineNumber', added: !hadMachineNumberCol },
+    updated: updated,
+    unchanged: unchanged,
+    unmatched: unmatched,
+    unmatchedCount: unmatched.length,
+    total: rows.length
+  };
+}
+
 function addJobCard(data) {
   var errors = validateJobCardData(data);
   if (errors.length > 0) throw new Error(errors.join('\n'));
@@ -258,6 +336,15 @@ function addJobCard(data) {
       if (selectedAsset.MachineName) data.Machine = selectedAsset.MachineName;
       if (!data.Department && selectedAsset.Department) data.Department = selectedAsset.Department;
       if (!data.Section && selectedAsset.Section) data.Section = selectedAsset.Section;
+      // Resolve MachineID → MachineNumber from Machines sheet
+      if (selectedAsset.MachineID) {
+        data.MachineID = selectedAsset.MachineID;
+        var allMachines = getAllData(CONFIG.SHEET_NAMES.MACHINES) || [];
+        var resolvedMachine = allMachines.find(function(m) { return m.MachineID === selectedAsset.MachineID; });
+        if (resolvedMachine) {
+          data.MachineNumber = resolvedMachine.MachineNumber || resolvedMachine.MachineCode || '';
+        }
+      }
     }
   }
 
@@ -709,7 +796,8 @@ function formatJobCardsSheet() {
     { start: 31, end: 33, bg: '#f9a825', font: '#000000' },  // GROUP 4 - JOB PENDING (Amber)
     { start: 34, end: 43, bg: '#4a148c', font: '#ffffff' },  // GROUP 5 - JOB APPROVAL (Purple)
     { start: 44, end: 46, bg: '#37474f', font: '#ffffff' },  // SUPPLEMENTARY (Dark Grey)
-    { start: 47, end: 49, bg: '#006064', font: '#ffffff' }   // QR/BARCODE (Teal)
+    { start: 47, end: 49, bg: '#006064', font: '#ffffff' },  // QR/BARCODE (Teal)
+    { start: 50, end: 51, bg: '#00695c', font: '#ffffff' }   // MACHINE RESOLUTION (Teal Green)
   ];
 
   for (var g = 0; g < groups.length; g++) {
@@ -799,7 +887,8 @@ function formatJobCardsSheet() {
     38: 130, 39: 165, 40: 220,
     41: 130, 42: 165, 43: 110,
     44: 120, 45: 200, 46: 160,
-    47: 300, 48: 300, 49: 160
+    47: 300, 48: 300, 49: 160,
+    50: 130, 51: 130
   };
   for (var c = 1; c <= lastCol; c++) {
     if (minWidths[c]) {

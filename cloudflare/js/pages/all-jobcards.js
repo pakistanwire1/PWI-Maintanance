@@ -193,6 +193,7 @@ var AllJobCards = (function() {
       { key: 'JobCardNo', label: 'Job Card No' },
       { key: 'OpenDateTime', label: 'Opened', datetime: true },
       { key: 'Machine', label: 'Machine' },
+      { key: 'MachineNumber', label: 'Machine No' },
       { key: 'Department', label: 'Dept' },
       { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Low': 'success', 'Medium': 'warning', 'High': 'danger', 'Critical': 'danger' } }
     ];

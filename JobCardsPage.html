@@ -233,6 +233,7 @@ function renderJcTable() {
     { key: 'JobCardNo', label: 'Job Card No' },
     { key: 'DateTime', label: 'Opened', datetime: true },
     { key: 'Machine', label: 'Machine' },
+    { key: 'MachineNumber', label: 'Machine No' },
     { key: 'Department', label: 'Dept' },
     { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Low': 'success', 'Medium': 'warning', 'High': 'danger', 'Critical': 'danger' } }
   ];
@@ -304,6 +305,7 @@ function viewJcDetail(id) {
         '<div class="view-row"><span>Job Card No</span><strong>' + escapeHtml(item.JobCardNo) + '</strong></div>' +
         '<div class="view-row"><span>Opened</span><strong>' + formatDateTime(item.DateTime || item.OpenTime || item.OpenDateTime) + '</strong></div>' +
         '<div class="view-row"><span>Machine</span><strong>' + escapeHtml(item.Machine || '-') + '</strong></div>' +
+        '<div class="view-row"><span>Machine No</span><strong>' + escapeHtml(item.MachineNumber || '-') + '</strong></div>' +
         '<div class="view-row"><span>Asset</span><strong>' + escapeHtml(item.Asset || item.AssetID || '-') + '</strong></div>' +
         '<div class="view-row"><span>Department</span><strong>' + escapeHtml(item.Department || '-') + '</strong></div>' +
         '<div class="view-row"><span>Priority</span><strong><span class="badge badge-' + priorityBadge + '">' + escapeHtml(item.Priority) + '</span></strong></div>' +

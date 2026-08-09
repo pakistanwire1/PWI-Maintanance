@@ -237,6 +237,7 @@ var PendingJobCards = (function() {
       { key: 'Department', label: 'Dept' },
       { key: 'Section', label: 'Section' },
       { key: 'Machine', label: 'Machine' },
+      { key: 'MachineNumber', label: 'Machine No' },
       { key: 'AssetID', label: 'Asset' },
       { key: 'ComplaintDescription', label: 'Complaint' },
       { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Low': 'success', 'Medium': 'warning', 'High': 'danger', 'Critical': 'danger' } },

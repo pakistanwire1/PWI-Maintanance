@@ -118,6 +118,7 @@ var API_ROUTES = {
   'unlockJobCard':         { auth: true,  handler: function(d) { return unlockJobCard(d.id); } },
   'searchJobCards':        { auth: true,  handler: function(d) { return searchJobCards(d.query); } },
   'canApproveJobCard':     { auth: true,  handler: function(d) { return canApproveJobCard(); } },
+  'backfillJobCardMachineInfo': { auth: true, handler: function(d) { return backfillJobCardMachineInfo(); } },
 
   /* ---- Machines ---- */
   'getMachines':           { auth: true,  handler: function(d) { return getMachines(); } },

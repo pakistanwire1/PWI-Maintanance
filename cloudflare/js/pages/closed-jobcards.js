@@ -275,6 +275,7 @@ var ClosedJobCard = (function() {
       { key: 'JobCardNo', label: 'Job Card No' },
       { key: 'OpenDateTime', label: 'Opened', datetime: true },
       { key: 'Machine', label: 'Machine' },
+      { key: 'MachineNumber', label: 'Machine No' },
       { key: 'Department', label: 'Dept' },
       { key: 'AssignedTechnician', label: 'Technician' },
       { key: '_working', label: 'Working', format: function(val, row) {

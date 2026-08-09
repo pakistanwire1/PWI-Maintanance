@@ -167,7 +167,9 @@ var CONFIG = {
     // INTERNAL FIELDS
     'AssignedTechnicianIDs',
     // QR/BARCODE FIELDS (3)
-    'QRCode', 'Barcode', 'QRGeneratedDate'
+    'QRCode', 'Barcode', 'QRGeneratedDate',
+    // MACHINE RESOLUTION FIELDS (2) - appended at END so existing columns are never shifted
+    'MachineNumber', 'MachineID'
   ],
 
   PERMISSION_FIELDS: [
