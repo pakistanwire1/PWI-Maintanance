@@ -75,7 +75,7 @@ var Inventory = (function() {
 
   function openModalFormLocal(formId, title) {
     setText(formId + 'Title', title);
-    showModalLocal(formId + 'Modal');
+    showModalLocal(formId.replace(/Form$/, '') + 'Modal');
   }
 
   function registerPageState(containerId, renderFn) {

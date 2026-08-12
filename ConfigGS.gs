@@ -282,7 +282,7 @@ var CONFIG = {
     'TransactionID', 'TransactionType', 'PartCode', 'PartName', 'Quantity',
     'ReferenceNo', 'ReferenceType', 'FromLocation', 'ToLocation',
     'UnitCost', 'TotalCost', 'Remarks', 'ProcessedBy', 'ProcessedAt',
-    'CreatedBy', 'CreatedAt'
+    'CreatedBy', 'CreatedAt', 'Supplier', 'InvoiceNo'
   ],
 
   GOODS_RECEIPT_FIELDS: [

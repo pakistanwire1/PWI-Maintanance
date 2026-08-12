@@ -13,16 +13,16 @@
   "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
-      "src": "./assets/icons/icon-192.svg",
+      "src": "./logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "./assets/icons/icon-512.svg",
+      "src": "./logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ],
   "prefer_related_applications": false

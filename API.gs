@@ -268,6 +268,7 @@ var API_ROUTES = {
   /* ---- Breakdown Types ---- */
   'getBreakdownTypes':     { auth: true,  handler: function(d) { return getBreakdownTypes(); } },
   'getBreakdownHistory':   { auth: true,  handler: function(d) { return getBreakdownHistory(); } },
+  'getBreakdownHistoryFiltered': { auth: true, handler: function(d) { return getBreakdownHistoryFiltered(d.filters || d); } },
 
   /* ---- Audit Trail ---- */
   'getAuditLogs':          { auth: true,  handler: function(d) { return getAuditLogs(); } },

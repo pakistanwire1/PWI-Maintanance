@@ -1,5 +1,8 @@
 var BreakdownHistory = (function() {
   var state = { data: [], page: 1 };
+  var masterDataPromise = null;
+  var masterDataVersion = -1;
+  var bdCascadeSeq = 0;
 
   var PAGE_SIZE = 10;
 
@@ -20,15 +23,27 @@ var BreakdownHistory = (function() {
         '</div>' +
         '<div class="filter-bar">' +
           '<div class="form-group">' +
-            '<label>Machine</label>' +
-            '<select class="form-control" id="bdMachine" onchange="BreakdownHistory.filterBreakdowns()">' +
-              '<option value="">All Machines</option>' +
+            '<label>Division</label>' +
+            '<select class="form-control" id="bdDivision" onchange="BreakdownHistory.onDivisionChange()">' +
+              '<option value="">All Divisions</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>Section</label>' +
+            '<select class="form-control" id="bdSection" onchange="BreakdownHistory.onSectionChange()">' +
+              '<option value="">All Sections</option>' +
             '</select>' +
           '</div>' +
           '<div class="form-group">' +
             '<label>Department</label>' +
-            '<select class="form-control" id="bdDepartment" onchange="BreakdownHistory.filterBreakdowns()">' +
+            '<select class="form-control" id="bdDepartment" onchange="BreakdownHistory.onDepartmentChange()">' +
               '<option value="">All Departments</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>Machine Number</label>' +
+            '<select class="form-control" id="bdMachineNumber" onchange="BreakdownHistory.filterBreakdowns()">' +
+              '<option value="">All Machines</option>' +
             '</select>' +
           '</div>' +
           '<div class="form-group">' +
@@ -58,59 +73,126 @@ var BreakdownHistory = (function() {
       '</div></div>';
   }
 
+  function loadMasterData() {
+    var version = API.masterCacheVersion();
+    if (masterDataPromise && masterDataVersion === version) return masterDataPromise;
+    masterDataVersion = version;
+    masterDataPromise = Promise.all([
+      API.post('getMachineCascade', { divisionId: '', sectionId: '', deptId: '' }),
+      API.post('getSectionList', {}),
+      API.post('getDepartmentList', {}),
+      API.post('getMachines', {})
+    ]).then(function(results) {
+      var casc = results[0] || {};
+      var sections = results[1] || [];
+      var departments = results[2] || [];
+      var machines = results[3] || [];
+      var m = {
+        divisions: (casc.divisions || []).map(function(d) { return { value: d.id, label: d.name }; }),
+        sections: sections.map(function(s) { return { value: s.SectionID, label: s.Section, divisionId: s.DivisionID }; }),
+        departments: departments.map(function(d) { return { value: d.DepartmentID, label: d.Department, divisionId: d.DivisionID, sectionId: d.SectionID }; }),
+        machines: machines.map(function(mc) {
+          var n = mc.MachineNumber || mc.MachineCode || mc.MachineName || '';
+          var label = n;
+          if (mc.MachineName && mc.MachineName !== label) label += ' \u2014 ' + mc.MachineName;
+          return { value: n, label: label, divisionId: mc.DivisionID, sectionId: mc.SectionID, deptId: mc.DeptID };
+        }).sort(function(a, b) { return a.value.localeCompare(b.value); })
+      };
+      return m;
+    });
+    return masterDataPromise;
+  }
+
+  function populateBdSelect(id, items, placeholder) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '<option value="">' + placeholder + '</option>';
+    items.forEach(function(item) {
+      var opt = document.createElement('option');
+      opt.value = item.value;
+      opt.textContent = item.label || item.value;
+      el.appendChild(opt);
+    });
+  }
+
+  function repopulateBdSelect(id, items, placeholder, preserveValue) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var prev = el.value;
+    populateBdSelect(id, items, placeholder);
+    if (preserveValue && prev) {
+      for (var i = 0; i < el.options.length; i++) {
+        if (el.options[i].value === prev) { el.value = prev; break; }
+      }
+    }
+  }
+
+  function applyCascade() {
+    var seq = ++bdCascadeSeq;
+    return loadMasterData()
+      .then(function(m) {
+        if (seq !== bdCascadeSeq) return;
+        repopulateBdSelect('bdDivision', m.divisions, 'All Divisions', true);
+        var div = document.getElementById('bdDivision').value;
+        var sec = document.getElementById('bdSection').value;
+        var dept = document.getElementById('bdDepartment').value;
+
+        var sections = m.sections;
+        if (div) sections = sections.filter(function(s) { return s.divisionId === div; });
+        repopulateBdSelect('bdSection', sections, 'All Sections', true);
+        sec = document.getElementById('bdSection').value;
+
+        var departments = m.departments;
+        if (div) departments = departments.filter(function(d) { return d.divisionId === div; });
+        if (sec) departments = departments.filter(function(d) { return d.sectionId === sec; });
+        repopulateBdSelect('bdDepartment', departments, 'All Departments', true);
+        dept = document.getElementById('bdDepartment').value;
+
+        var machines = m.machines;
+        if (div) machines = machines.filter(function(x) { return x.divisionId === div; });
+        if (sec) machines = machines.filter(function(x) { return x.sectionId === sec; });
+        if (dept) machines = machines.filter(function(x) { return x.deptId === dept; });
+        repopulateBdSelect('bdMachineNumber', machines, 'All Machines', true);
+
+        state.page = 1;
+        renderBreakdownTable();
+      })
+      .catch(function() { Notify.error('Failed to load machine filters'); });
+  }
+
   function loadBreakdownData() {
     Loader.show();
-    API.post('getBreakdownHistory', {}).then(function(result) {
+    Promise.all([
+      API.post('getBreakdownHistory', {}),
+      loadMasterData()
+    ]).then(function(results) {
+      var result = results[0];
       state.data = result.records || result || [];
       Loader.hide();
-      populateBreakdownFilters();
-      renderBreakdownTable();
+      applyCascade();
     }).catch(function() {
       Loader.hide();
       Notify.error('Failed to load breakdown history');
     });
   }
 
-  function populateBreakdownFilters() {
-    var machineFilter = document.getElementById('bdMachine');
-    var deptFilter = document.getElementById('bdDepartment');
-
-    if (machineFilter) {
-      machineFilter.innerHTML = '<option value="">All Machines</option>';
-      var machines = [];
-      state.data.forEach(function(item) {
-        if (item.Machine && machines.indexOf(item.Machine) === -1) machines.push(item.Machine);
-      });
-      machines.sort().forEach(function(m) {
-        machineFilter.innerHTML += '<option value="' + Utils.escapeHtml(m) + '">' + Utils.escapeHtml(m) + '</option>';
-      });
-    }
-
-    if (deptFilter) {
-      deptFilter.innerHTML = '<option value="">All Departments</option>';
-      var depts = [];
-      state.data.forEach(function(item) {
-        if (item.Department && depts.indexOf(item.Department) === -1) depts.push(item.Department);
-      });
-      depts.sort().forEach(function(d) {
-        deptFilter.innerHTML += '<option value="' + Utils.escapeHtml(d) + '">' + Utils.escapeHtml(d) + '</option>';
-      });
-    }
-  }
-
   function getFilteredBreakdownData() {
-    var machine = document.getElementById('bdMachine').value;
+    var division = document.getElementById('bdDivision').value;
+    var section = document.getElementById('bdSection').value;
     var dept = document.getElementById('bdDepartment').value;
+    var machine = document.getElementById('bdMachineNumber').value;
     var from = document.getElementById('bdFrom').value;
     var to = document.getElementById('bdTo').value;
     var priority = document.getElementById('bdPriority').value;
     return state.data.filter(function(row) {
-      if (machine && row.Machine !== machine) return false;
-      if (dept && row.Department !== dept) return false;
+      if (division && row.DivisionID !== division && row.Division !== division) return false;
+      if (section && row.SectionID !== section && row.Section !== section) return false;
+      if (dept && row.DepartmentID !== dept && row.Department !== dept) return false;
+      if (machine && row.MachineNumber !== machine && row.MachineCode !== machine && row.MachineID !== machine && row.Machine !== machine) return false;
       if (priority && row.Priority !== priority) return false;
       var dateStr = row.OpenDateTime || row.DateCreated || row.Date;
-      if (from && dateStr) { var d = new Date(dateStr); if (d < new Date(from)) return false; }
-      if (to && dateStr) { var d = new Date(dateStr); if (d > new Date(to + 'T23:59:59')) return false; }
+      if (from && dateStr) { var d = new Date(dateStr); if (!isNaN(d.getTime()) && d < new Date(from)) return false; }
+      if (to && dateStr) { var d = new Date(dateStr); if (!isNaN(d.getTime()) && d > new Date(to + 'T23:59:59')) return false; }
       return true;
     });
   }
@@ -120,6 +202,7 @@ var BreakdownHistory = (function() {
     var totalDowntime = 0;
     filtered.forEach(function(item) {
       var val = item.TotalDuration || item.Downtime || 0;
+      if (typeof val === 'string') val = parseFloat(val) || 0;
       if (typeof val === 'number') totalDowntime += val;
     });
 
@@ -157,8 +240,11 @@ var BreakdownHistory = (function() {
     var columns = [
       { key: 'JobCardNo', label: 'Job Card' },
       { key: 'OpenDateTime', label: 'Date', datetime: true },
-      { key: 'Machine', label: 'Machine' },
+      { key: 'Division', label: 'Division' },
+      { key: 'Section', label: 'Section' },
       { key: 'Department', label: 'Department' },
+      { key: 'MachineNumber', label: 'Machine No' },
+      { key: 'Machine', label: 'Machine' },
       { key: 'ComplaintDescription', label: 'Description' },
       { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Low': 'success', 'Medium': 'warning', 'High': 'danger', 'Critical': 'danger' } },
       { key: 'AssignedTechnician', label: 'Technician' },
@@ -212,6 +298,9 @@ var BreakdownHistory = (function() {
       renderPage();
       loadBreakdownData();
     },
+    onDivisionChange: applyCascade,
+    onSectionChange: applyCascade,
+    onDepartmentChange: applyCascade,
     filterBreakdowns: function() {
       state.page = 1;
       renderBreakdownTable();

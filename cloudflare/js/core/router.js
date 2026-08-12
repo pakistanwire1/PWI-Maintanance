@@ -32,6 +32,10 @@ var Router = {
       return;
     }
 
+    if (typeof QRCodes !== 'undefined' && typeof QRCodes.stopCameraScanner === 'function') {
+      QRCodes.stopCameraScanner();
+    }
+
     Nav.setActivePage(page);
     Router.current = page;
 

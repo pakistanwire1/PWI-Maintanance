@@ -12333,31 +12333,36 @@ function openGRNForm() {
   var grnNoEl = document.getElementById('grnNo'); if (grnNoEl) grnNoEl.value = 'Auto-generated';
   if (invPartsCache.length === 0) { loadPartsForSelect('grnPartCode'); } else { populateSelect('grnPartCode', invPartsCache, 'PartCode', 'PartName', 'Select Part'); }
   autoFillDateTime('grnReceivedDate');
-  openModalForm('grnForm', 'New Goods Receipt (GRN)');
+  setText('grnFormTitle', 'New Goods Receipt (GRN)');
+  showModal('grnModal');
 }
 
 function openIssueForm() {
   resetForm('issueForm');
   if (invPartsCache.length === 0) { loadPartsForSelect('issuePartCode'); } else { populateSelect('issuePartCode', invPartsCache, 'PartCode', 'PartName', 'Select Part'); }
-  openModalForm('issueForm', 'New Issue');
+  setText('issueFormTitle', 'New Issue');
+  showModal('issueModal');
 }
 
 function openReturnForm() {
   resetForm('returnForm');
   if (invPartsCache.length === 0) { loadPartsForSelect('returnPartCode'); } else { populateSelect('returnPartCode', invPartsCache, 'PartCode', 'PartName', 'Select Part'); }
-  openModalForm('returnForm', 'New Return');
+  setText('returnFormTitle', 'New Return');
+  showModal('returnModal');
 }
 
 function openTransferForm() {
   resetForm('transferForm');
   if (invPartsCache.length === 0) { loadPartsForSelect('transferPartCode'); } else { populateSelect('transferPartCode', invPartsCache, 'PartCode', 'PartName', 'Select Part'); }
-  openModalForm('transferForm', 'New Transfer');
+  setText('transferFormTitle', 'New Transfer');
+  showModal('transferModal');
 }
 
 function openAdjustmentForm() {
   resetForm('adjustmentForm');
   if (invPartsCache.length === 0) { loadPartsForSelect('adjustmentPartCode'); } else { populateSelect('adjustmentPartCode', invPartsCache, 'PartCode', 'PartName', 'Select Part'); }
-  openModalForm('adjustmentForm', 'New Stock Adjustment');
+  setText('adjustmentFormTitle', 'New Stock Adjustment');
+  showModal('adjustmentModal');
 }
 
 function saveGRN(e) {
@@ -16790,13 +16795,29 @@ function loadBreakdownData() {
     .getBreakdownHistory();
 }
 
+function restoreBdSelect(id, val) {
+  if (!val) return;
+  var el = document.getElementById(id);
+  if (!el) return;
+  for (var i = 0; i < el.options.length; i++) {
+    if (el.options[i].value === val) { el.value = val; return; }
+  }
+}
+
 function loadBDCascade(divId, secId, deptId) {
+  var prevDiv = document.getElementById('bdDivision').value;
+  var prevSec = document.getElementById('bdSection').value;
+  var prevDept = document.getElementById('bdDepartment').value;
   google.script.run
     .withSuccessHandler(function(c) {
       populateSelect('bdDivision', c.divisions, 'id', 'name', 'All Divisions');
       populateSelect('bdSection', c.sections, 'id', 'name', 'All Sections');
-      populateSelect('bdDepartment', c.departments, 'id', 'name', 'All Departments');
+      populateSelect('bdDepartment', c.departments, 'ID', 'Name', 'All Departments');
       populateSelect('bdMachineNumber', c.machines, 'number', 'label', 'All Machines');
+      restoreBdSelect('bdDivision', prevDiv);
+      restoreBdSelect('bdSection', prevSec);
+      restoreBdSelect('bdDepartment', prevDept);
+      filterBreakdowns();
     })
     .withFailureHandler(function() {})
     .getMachineCascade(divId || '', secId || '', deptId || '');
@@ -16832,12 +16853,15 @@ function renderBreakdownTable() {
   renderTable(filterData, [
     { key: 'JobCardNo', label: 'Job Card' },
     { key: 'OpenDateTime', label: 'Date', datetime: true },
-    { key: 'Machine', label: 'Machine' },
+    { key: 'Division', label: 'Division' },
+    { key: 'Section', label: 'Section' },
     { key: 'Department', label: 'Department' },
+    { key: 'MachineNumber', label: 'Machine No' },
+    { key: 'Machine', label: 'Machine' },
     { key: 'ComplaintDescription', label: 'Description' },
     { key: 'Priority', label: 'Priority', badge: true, badgeMap: { 'Low': 'success', 'Medium': 'warning', 'High': 'danger', 'Critical': 'danger' } },
     { key: 'AssignedTechnician', label: 'Technician' },
-      { key: 'Downtime', label: 'Duration', format: function(val) { return displayDuration(val); } },
+    { key: 'Downtime', label: 'Duration', format: function(val) { return displayDuration(val); } },
     { key: 'Remarks', label: 'Remarks' }
   ], null, breakdownPage, PAGE_SIZE, 'breakdownTableContainer');
   registerPageState('breakdownTableContainer', function(p) { breakdownPage = p; renderBreakdownTable(); });
@@ -16846,18 +16870,22 @@ function renderBreakdownTable() {
 function breakdownTablePage(p) { breakdownPage = p; renderBreakdownTable(); }
 
 function getFilteredBreakdownData() {
-  var machine = document.getElementById('bdMachineNumber').value;
+  var division = document.getElementById('bdDivision').value;
+  var section = document.getElementById('bdSection').value;
   var dept = document.getElementById('bdDepartment').value;
+  var machine = document.getElementById('bdMachineNumber').value;
   var from = document.getElementById('bdFrom').value;
   var to = document.getElementById('bdTo').value;
   var priority = document.getElementById('bdPriority').value;
   return breakdownData.filter(function(row) {
-    if (machine && row.MachineNumber !== machine && row.MachineCode !== machine && row.Machine !== machine) return false;
-    if (dept && row.Department !== dept) return false;
+    if (division && row.DivisionID !== division && row.Division !== division) return false;
+    if (section && row.SectionID !== section && row.Section !== section) return false;
+    if (dept && row.DepartmentID !== dept && row.Department !== dept) return false;
+    if (machine && row.MachineNumber !== machine && row.MachineCode !== machine && row.MachineID !== machine && row.Machine !== machine) return false;
     if (priority && row.Priority !== priority) return false;
     var dateStr = row.OpenDateTime || row.DateCreated || row.Date;
-    if (from && dateStr) { var d = new Date(dateStr); if (d < new Date(from)) return false; }
-    if (to && dateStr) { var d = new Date(dateStr); if (d > new Date(to + 'T23:59:59')) return false; }
+    if (from && dateStr) { var d = new Date(dateStr); if (!isNaN(d.getTime()) && d < new Date(from)) return false; }
+    if (to && dateStr) { var d = new Date(dateStr); if (!isNaN(d.getTime()) && d > new Date(to + 'T23:59:59')) return false; }
     return true;
   });
 }
@@ -16866,10 +16894,14 @@ function filterBreakdowns() { breakdownPage = 1; renderBreakdownTable(); }
 
 function updateBreakdownStats(filtered) {
   var total = filtered.length;
-    var downtime = filtered.reduce(function(sum, r) { return sum + (r.TotalDuration || r.Downtime || 0); }, 0);
+  var downtime = filtered.reduce(function(sum, r) {
+    var v = r.TotalDuration || r.Downtime || 0;
+    if (typeof v === 'string') v = parseFloat(v) || 0;
+    return sum + v;
+  }, 0);
   var el;
   el = document.getElementById('bdTotalCount'); if (el) el.textContent = total;
-    el = document.getElementById('bdTotalDowntime'); if (el) el.textContent = displayDuration(downtime);
+  el = document.getElementById('bdTotalDowntime'); if (el) el.textContent = displayDuration(downtime);
 }
 </script>
 

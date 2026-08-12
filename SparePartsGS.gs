@@ -253,8 +253,14 @@ function addStockMovement(partCode, transactionType, quantity, referenceNo, rema
     try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.LOW_STOCK, { partCode: partCode, partName: part.PartName || '', currentStock: String(balanceAfter), minStock: String(part.MinimumStock || '0'), reorderLevel: String(part.ReorderLevel || '0'), unit: part.Unit || '', storeLocation: part.StoreLocation || '', supplier: part.Supplier || '' }); } catch(e) {}
   }
   try {
-    var auditAction = transactionType.toLowerCase().indexOf('in') !== -1 ? CONFIG.AUDIT_ACTIONS.STOCK_IN : (transactionType.toLowerCase().indexOf('out') !== -1 ? CONFIG.AUDIT_ACTIONS.STOCK_OUT : CONFIG.AUDIT_ACTIONS.GOODS_RECEIPT);
-    var auditModule = transactionType.toLowerCase().indexOf('goods') !== -1 ? CONFIG.AUDIT_MODULES.GOODS_RECEIPT : CONFIG.AUDIT_MODULES.SPARE_PART;
+    var auditType = (transactionType || '').toLowerCase();
+    var auditAction = CONFIG.AUDIT_ACTIONS.GOODS_RECEIPT;
+    if (auditType === 'goods receipt') auditAction = CONFIG.AUDIT_ACTIONS.STOCK_IN;
+    else if (auditType === 'return') auditAction = CONFIG.AUDIT_ACTIONS.STOCK_IN;
+    else if (auditType === 'issue') auditAction = CONFIG.AUDIT_ACTIONS.STOCK_OUT;
+    else if (auditType === 'adjustment') auditAction = qty >= 0 ? CONFIG.AUDIT_ACTIONS.STOCK_IN : CONFIG.AUDIT_ACTIONS.STOCK_OUT;
+    else if (auditType === 'transfer') auditAction = CONFIG.AUDIT_ACTIONS.STOCK_OUT;
+    var auditModule = auditType.indexOf('goods') !== -1 ? CONFIG.AUDIT_MODULES.GOODS_RECEIPT : CONFIG.AUDIT_MODULES.SPARE_PART;
     createAuditLog(auditModule, auditAction, partCode, part.PartName || '', String(balanceBefore), String(balanceAfter), balanceAfter <= (parseFloat(part.MinimumStock) || 0) ? 'Warning' : 'Success', transactionType + ': ' + qty + ' units, Ref: ' + (referenceNo || ''));
   } catch(e) {}
   Logger.log('addStockMovement() SUCCESS: ' + partCode + ' balance=' + balanceAfter);

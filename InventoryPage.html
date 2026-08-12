@@ -549,31 +549,36 @@ function openGRNForm() {
   var grnNoEl = document.getElementById('grnNo'); if (grnNoEl) grnNoEl.value = 'Auto-generated';
   if (invPartsCache.length === 0) { loadPartsForSelect('grnPartCode'); } else { populateSelect('grnPartCode', invPartsCache, 'PartCode', 'PartName', 'Select Part'); }
   autoFillDateTime('grnReceivedDate');
-  openModalForm('grnForm', 'New Goods Receipt (GRN)');
+  setText('grnFormTitle', 'New Goods Receipt (GRN)');
+  showModal('grnModal');
 }
 
 function openIssueForm() {
   resetForm('issueForm');
   if (invPartsCache.length === 0) { loadPartsForSelect('issuePartCode'); } else { populateSelect('issuePartCode', invPartsCache, 'PartCode', 'PartName', 'Select Part'); }
-  openModalForm('issueForm', 'New Issue');
+  setText('issueFormTitle', 'New Issue');
+  showModal('issueModal');
 }
 
 function openReturnForm() {
   resetForm('returnForm');
   if (invPartsCache.length === 0) { loadPartsForSelect('returnPartCode'); } else { populateSelect('returnPartCode', invPartsCache, 'PartCode', 'PartName', 'Select Part'); }
-  openModalForm('returnForm', 'New Return');
+  setText('returnFormTitle', 'New Return');
+  showModal('returnModal');
 }
 
 function openTransferForm() {
   resetForm('transferForm');
   if (invPartsCache.length === 0) { loadPartsForSelect('transferPartCode'); } else { populateSelect('transferPartCode', invPartsCache, 'PartCode', 'PartName', 'Select Part'); }
-  openModalForm('transferForm', 'New Transfer');
+  setText('transferFormTitle', 'New Transfer');
+  showModal('transferModal');
 }
 
 function openAdjustmentForm() {
   resetForm('adjustmentForm');
   if (invPartsCache.length === 0) { loadPartsForSelect('adjustmentPartCode'); } else { populateSelect('adjustmentPartCode', invPartsCache, 'PartCode', 'PartName', 'Select Part'); }
-  openModalForm('adjustmentForm', 'New Stock Adjustment');
+  setText('adjustmentFormTitle', 'New Stock Adjustment');
+  showModal('adjustmentModal');
 }
 
 function saveGRN(e) {

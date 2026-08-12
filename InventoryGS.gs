@@ -25,6 +25,7 @@ function initInventorySheet() {
     var grSheet = getSheet(CONFIG.SHEET_NAMES.GOODS_RECEIPT);
     ensureHeaders(grSheet, CONFIG.GOODS_RECEIPT_FIELDS);
     ensureSheetColumns(grSheet, CONFIG.GOODS_RECEIPT_FIELDS);
+    backfillInventorySupplierData();
     Logger.log('initInventorySheet() SUCCESS');
     console.log('initInventorySheet() SUCCESS');
     return true;
@@ -32,6 +33,41 @@ function initInventorySheet() {
     Logger.log('initInventorySheet() ERROR: ' + e.message);
     console.log('initInventorySheet() ERROR: ' + e.message);
     return false;
+  }
+}
+
+function backfillInventorySupplierData() {
+  Logger.log('backfillInventorySupplierData() called');
+  console.log('backfillInventorySupplierData() called');
+  try {
+    var grs = getAllData(CONFIG.SHEET_NAMES.GOODS_RECEIPT) || [];
+    var grByNo = {};
+    grs.forEach(function(g) {
+      if (g.GRNNo && !grByNo[g.GRNNo]) grByNo[g.GRNNo] = g;
+    });
+    var txns = getAllData(CONFIG.SHEET_NAMES.INVENTORY_TRANSACTIONS) || [];
+    var updated = 0;
+    var skipped = 0;
+    txns.forEach(function(t) {
+      if ((t.TransactionType || '') !== CONFIG.TRANSACTION_TYPES.GOODS_RECEIPT || !t.ReferenceNo) return;
+      var gr = grByNo[t.ReferenceNo];
+      if (!gr) { skipped++; return; }
+      var needsSupplier = (t.Supplier === undefined || t.Supplier === null || String(t.Supplier) === '');
+      var needsInvoiceNo = (t.InvoiceNo === undefined || t.InvoiceNo === null || String(t.InvoiceNo) === '');
+      if (!needsSupplier && !needsInvoiceNo) return;
+      var updateData = {};
+      if (needsSupplier) updateData.Supplier = gr.Supplier || '';
+      if (needsInvoiceNo) updateData.InvoiceNo = gr.InvoiceNo || '';
+      updateRow(CONFIG.SHEET_NAMES.INVENTORY_TRANSACTIONS, 'TransactionID', t.TransactionID, updateData);
+      updated++;
+    });
+    Logger.log('backfillInventorySupplierData() updated=' + updated + ' skipped=' + skipped);
+    console.log('backfillInventorySupplierData() updated=' + updated + ' skipped=' + skipped);
+    return { success: true, updated: updated, skipped: skipped };
+  } catch (e) {
+    Logger.log('backfillInventorySupplierData() ERROR: ' + e.message);
+    console.log('backfillInventorySupplierData() ERROR: ' + e.message);
+    return { success: false, message: e.message };
   }
 }
 
@@ -172,7 +208,9 @@ function processGoodsReceipt(data) {
       ProcessedBy: currentUser,
       ProcessedAt: formatDateTimeISO(now),
       CreatedBy: currentUser,
-      CreatedAt: getCurrentTimestamp()
+      CreatedAt: getCurrentTimestamp(),
+      Supplier: data.Supplier || part.Supplier || '',
+      InvoiceNo: data.InvoiceNo || ''
     };
     addRow(CONFIG.SHEET_NAMES.INVENTORY_TRANSACTIONS, txnData);
     var result = addStockMovement(data.PartCode, CONFIG.TRANSACTION_TYPES.GOODS_RECEIPT, qty, grnNo, data.Remarks || '');
