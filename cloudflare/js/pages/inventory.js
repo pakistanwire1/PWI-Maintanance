@@ -568,8 +568,8 @@ var Inventory = (function() {
       .catch(function(err) { Loader.hide(); Notify.error('Failed to load inventory data'); });
   }
 
-  function renderPage() {
-    var el = document.getElementById('pageContent');
+  function renderPage(el) {
+    var el = el || document.getElementById('pageContent');
     if (!el) return;
 
     el.innerHTML =

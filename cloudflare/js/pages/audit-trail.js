@@ -490,9 +490,9 @@ var AuditTrail = (function() {
   }
 
   return {
-    show: function() {
+    show: function(el) {
       state = { data: [], filtered: [], page: 1 };
-      var el = document.getElementById('pageContent');
+      var el = el || document.getElementById('pageContent');
       if (!el) return;
       el.innerHTML = buildPageHtml();
       loadAuditLogsData();

@@ -32,8 +32,8 @@
   var ICON_PRINTER = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M6 14H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 12h8v5H6v-5z"/><path d="M6 5V3a1 1 0 011-1h6a1 1 0 011 1v2"/></svg>';
   var ICON_REFRESH = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M17 10a7 7 0 01-13.5 2"/><path d="M3 10a7 7 0 0113.5-2"/><path d="M17 4v4h-4"/></svg>';
 
-  function renderPage() {
-    var el = document.getElementById('pageContent');
+  function renderPage(el) {
+    var el = el || document.getElementById('pageContent');
     if (!el) return;
     notifFilter = { search: '', type: '', notifType: '', status: '', priority: '' };
     notifPage = 1;
@@ -605,7 +605,7 @@
   }
 
   return {
-    show: renderPage,
+    show: function(el) { renderPage(el); },
     load: load,
     view: view,
     markRead: markRead,

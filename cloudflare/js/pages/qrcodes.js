@@ -1640,18 +1640,18 @@ var QRCodes = (function() {
     },
 
     _refresh: function() {
-      var pageContent = document.getElementById('pageContent');
-      if (!pageContent) return;
+      var target = (_ov.el && _ov.el.isConnected) ? _ov.el : document.getElementById('pageContent');
+      if (!target) return;
       var activeTab = document.querySelector('.qr-tab.active');
       if (!activeTab) return;
       var text = (activeTab.textContent || '').trim();
-      if (text === 'Overview') showOverview(pageContent);
-      else if (text === 'Machines') showMachines(pageContent);
-      else if (text === 'Assets') showAssets(pageContent);
-      else if (text === 'Spare Parts') showSpareParts(pageContent);
-      else if (text === 'Job Cards') showJobCards(pageContent);
-      else if (text === 'Print Labels') showPrintLabels(pageContent);
-      else if (text === 'History') showHistory(pageContent);
+      if (text === 'Overview') showOverview(target);
+      else if (text === 'Machines') showMachines(target);
+      else if (text === 'Assets') showAssets(target);
+      else if (text === 'Spare Parts') showSpareParts(target);
+      else if (text === 'Job Cards') showJobCards(target);
+      else if (text === 'Print Labels') showPrintLabels(target);
+      else if (text === 'History') showHistory(target);
     }
   };
 })();

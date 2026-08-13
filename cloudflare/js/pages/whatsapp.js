@@ -5,8 +5,8 @@ var WhatsApp = (function() {
   var waStats = {};
   var waDirtyTemplates = {};
 
-  function renderPage() {
-    var el = document.getElementById('pageContent');
+  function renderPage(el) {
+    var el = el || document.getElementById('pageContent');
     if (!el) return;
 
     el.innerHTML =
@@ -436,7 +436,7 @@ var WhatsApp = (function() {
   }
 
   return {
-    show: renderPage,
+    show: function(el) { renderPage(el); },
     toggleEnabled: toggleEnabled,
     saveSettings: saveSettings,
     sendTest: sendTest,

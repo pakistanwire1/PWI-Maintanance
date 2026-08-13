@@ -1,8 +1,8 @@
 var EmailSettings = (function() {
   var logsData = [];
 
-  function renderPage() {
-    var el = document.getElementById('pageContent');
+  function renderPage(el) {
+    var el = el || document.getElementById('pageContent');
     if (!el) return;
 
     el.innerHTML =
@@ -313,7 +313,7 @@ var EmailSettings = (function() {
   }
 
   return {
-    show: renderPage,
+    show: function(el) { renderPage(el); },
     saveSetting: saveSetting,
     testEmail: testEmail,
     retryFailed: retryFailed,
