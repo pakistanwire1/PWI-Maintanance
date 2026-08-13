@@ -97,6 +97,16 @@ var Nav = {
     }
   },
 
+  applyPermissions: function() {
+    if (!Session.isLoggedIn()) return;
+    var isAdmin = Session.isAdmin();
+    document.querySelectorAll('.sidebar-item[data-page]').forEach(function(el) {
+      el.style.display = Session.canAccessPage(el.getAttribute('data-page')) ? '' : 'none';
+    });
+    var settingsBtn = document.getElementById('topbarSettingsBtn');
+    if (settingsBtn) settingsBtn.style.display = (isAdmin || Session.getPermission('manageUsers')) ? '' : 'none';
+  },
+
   updateUserInfo: function() {
     var user = Session.getUser();
     if (!user) return;
@@ -123,6 +133,7 @@ var Nav = {
     }
     setAvatar('userAvatar', '34px');
     setAvatar('topbarAvatar', '28px');
+    Nav.applyPermissions();
   },
 
   setupClock: function() {

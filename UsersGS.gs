@@ -1,18 +1,4 @@
-var USER_COLS = [
-  'UserID','EmployeeID','Name','Email','Password','Mobile',
-  'Department','Section','Designation','Role','Status','JoiningDate',
-  'PhotoDriveID','PhotoURL',
-  'CanOpenJobCard','CanStartJobCard','CanCloseJobCard','CanApproveJobCard',
-  'CanReviewPendingJobCard','CanViewAllJobCards',
-  'CanManageSections','CanManageDepartments','CanManageMachines','CanManageAssets','CanManageTechnicians','CanManageSpareParts',
-  'CanManagePM','CanManageBreakdown','CanManageInventory',
-  'CanViewDashboard','CanViewReports','CanExportReports',
-  'CanManageUsers','CanManageSettings','CanViewAudit','CanManageQR','CanManageEmail','CanManageWhatsApp','CanBackupRestore','CanSystemConfig',
-  'IsAdmin',
-  'ForcePasswordChange',
-  'LastLogin','LastLoginDate','LastLoginTime','LastLoginIP',
-  'CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'
-];
+var USER_COLS = CONFIG.USER_FIELDS;
 
 function ensureUserCols() {
   var sheet = getSheet(CONFIG.SHEET_NAMES.USERS);
@@ -64,11 +50,11 @@ function normalizeUser(u) {
   if (!u) return u;
   var out = {};
   USER_COLS.forEach(function(c) { out[c] = u[c] || ''; });
+  delete out.Password;
   out.UserID = out.UserID || '';
   out.EmployeeID = out.EmployeeID || '';
   out.Name = out.Name || '';
   out.Email = out.Email || '';
-  out.Password = out.Password || '';
   out.Mobile = out.Mobile || '';
   out.Department = out.Department || '';
   out.Section = out.Section || '';
@@ -85,13 +71,7 @@ function normalizeUser(u) {
   if (m && out.PhotoURL.indexOf('lh3.googleusercontent.com') === -1) {
     out.PhotoURL = drivePhotoUrl(m[1]);
   }
-  ['CanOpenJobCard','CanStartJobCard','CanCloseJobCard','CanApproveJobCard',
-   'CanReviewPendingJobCard','CanViewAllJobCards',
-   'CanManageSections','CanManageDepartments','CanManageMachines','CanManageAssets','CanManageTechnicians','CanManageSpareParts',
-   'CanManagePM','CanManageBreakdown','CanManageInventory',
-   'CanViewDashboard','CanViewReports','CanExportReports',
-   'CanManageUsers','CanManageSettings','CanViewAudit','CanManageQR','CanManageEmail','CanManageWhatsApp','CanBackupRestore','CanSystemConfig',
-   'IsAdmin'].forEach(function(p) {
+  CONFIG.PERMISSION_FIELDS.forEach(function(p) {
     out[p] = out[p] || 'FALSE';
   });
   out.ForcePasswordChange = out.ForcePasswordChange || 'FALSE';
@@ -106,9 +86,10 @@ function normalizeUser(u) {
   return out;
 }
 
-function getUsers() {
-  var data = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
-  return data.map(normalizeUser);
+function getUsers(data) {
+  requireUserPermission('CanManageUsers', data);
+  var dataAll = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
+  return dataAll.map(normalizeUser);
 }
 
 function getUser(id) {
@@ -117,6 +98,7 @@ function getUser(id) {
 }
 
 function addUser(data) {
+  var caller = requireUserPermission('CanManageUsers', data);
   var errors = [];
   if (!data.EmployeeID) errors.push('Employee ID is required');
   if (!data.Name) errors.push('Name is required');
@@ -136,16 +118,11 @@ function addUser(data) {
   data.Status = data.Status || CONFIG.STATUS.ACTIVE;
   data.Role = data.Role || 'Viewer';
   var now = getCurrentTimestamp();
-  data.CreatedBy = Session.getActiveUser().getEmail();
+  data.CreatedBy = caller && caller.Email ? caller.Email : (data._userEmail || '');
   data.CreatedAt = now;
   data.UpdatedBy = data.CreatedBy;
   data.UpdatedAt = now;
-  ['CanOpenJobCard','CanStartJobCard','CanCloseJobCard','CanApproveJobCard',
-   'CanManageSections','CanManageDepartments','CanManageMachines','CanManageAssets','CanManageTechnicians','CanManageSpareParts',
-   'CanManagePM','CanManageBreakdown','CanManageInventory',
-   'CanViewDashboard','CanViewReports','CanExportReports',
-   'CanManageUsers','CanManageSettings','CanViewAudit','CanManageQR','CanManageEmail','CanManageWhatsApp','CanBackupRestore','CanSystemConfig',
-   'IsAdmin'].forEach(function(p) {
+  CONFIG.PERMISSION_FIELDS.forEach(function(p) {
     if (data[p] === undefined || data[p] === null) data[p] = 'FALSE';
   });
   if (data.ForcePasswordChange === undefined) data.ForcePasswordChange = 'FALSE';
@@ -160,6 +137,7 @@ function addUser(data) {
 }
 
 function updateUser(id, data) {
+  var caller = requireUserPermission('CanManageUsers', data);
   Logger.log('updateUser called: id=' + id);
   var incomingId = String(id || '').trim();
   var incomingEmail = String(data && data.Email || '').trim().toLowerCase();
@@ -208,22 +186,22 @@ function updateUser(id, data) {
       }
     }
   }
-  data.UpdatedBy = Session.getActiveUser().getEmail();
+  data.UpdatedBy = caller && caller.Email ? caller.Email : (data._userEmail || Session.getActiveUser().getEmail());
   data.UpdatedAt = getCurrentTimestamp();
   var permissionChanged = false;
-  ['CanOpenJobCard','CanStartJobCard','CanCloseJobCard','CanApproveJobCard',
-   'CanReviewPendingJobCard','CanViewAllJobCards',
-   'CanManageSections','CanManageDepartments','CanManageMachines','CanManageAssets','CanManageTechnicians','CanManageSpareParts',
-   'CanManagePM','CanManageBreakdown','CanManageInventory',
-   'CanViewDashboard','CanViewReports','CanExportReports',
-   'CanManageUsers','CanManageSettings','CanViewAudit','CanManageQR','CanManageEmail','CanManageWhatsApp','CanBackupRestore','CanSystemConfig'].forEach(function(p) {
+  CONFIG.PERMISSION_FIELDS.forEach(function(p) {
     if (data[p] !== undefined && data[p] !== current[p]) permissionChanged = true;
   });
   ensureUserCols();
   var result = updateRow(CONFIG.SHEET_NAMES.USERS, 'UserID', resolvedId, data);
   try {
+    var auditData = {};
+    for (var ak in data) {
+      if (ak === 'Password' || ak === 'ConfirmPassword' || ak === '_userEmail' || ak === '_userRole' || ak === '_userName' || ak === '_token') continue;
+      auditData[ak] = data[ak];
+    }
     createAuditLog(CONFIG.AUDIT_MODULES.USER, CONFIG.AUDIT_ACTIONS.UPDATE, resolvedId, data.Name || current.Name, '',
-      JSON.stringify(data).substring(0, 200), 'Success', 'User updated');
+      JSON.stringify(auditData).substring(0, 200), 'Success', 'User updated');
   } catch(e) {}
   if (permissionChanged) {
     try {
@@ -234,7 +212,8 @@ function updateUser(id, data) {
   return result.map(normalizeUser);
 }
 
-function deleteUser(id, email) {
+function deleteUser(id, email, data) {
+  var caller = requireUserPermission('CanManageUsers', data);
   Logger.log('deleteUser called: id=' + id + ', email=' + email);
   console.log('deleteUser called:', { id: id, email: email });
 
@@ -281,8 +260,8 @@ function deleteUser(id, email) {
 
   Logger.log('deleteUser matched: UserID=' + matchedUser.UserID + ', Name=' + matchedUser.Name + ', Email=' + matchedUser.Email + ', Status=' + matchedUser.Status);
 
-  if (matchedUser.IsAdmin === 'TRUE') {
-    Logger.log('deleteUser BLOCKED: user is admin (IsAdmin=TRUE)');
+  if (isUserAdmin(matchedUser)) {
+    Logger.log('deleteUser BLOCKED: user is admin (IsAdmin/role)');
     throw new Error('Cannot delete an administrator account');
   }
 
@@ -302,7 +281,8 @@ function deleteUser(id, email) {
   return result.map(normalizeUser);
 }
 
-function permanentlyDeleteUser(id, email) {
+function permanentlyDeleteUser(id, email, data) {
+  var caller = requireUserPermission('CanManageUsers', data);
   Logger.log('permanentlyDeleteUser called: id=' + id + ', email=' + email);
 
   var incomingId = String(id || '').trim();
@@ -334,7 +314,7 @@ function permanentlyDeleteUser(id, email) {
     throw new Error('User not found.');
   }
 
-  if (matchedUser.IsAdmin === 'TRUE') throw new Error('Cannot delete an administrator account');
+  if (isUserAdmin(matchedUser)) throw new Error('Cannot delete an administrator account');
 
   var resolvedId = matchedUser.UserID;
   ensureUserCols();
@@ -348,12 +328,14 @@ function permanentlyDeleteUser(id, email) {
   return result.map(normalizeUser);
 }
 
-function searchUsers(query) {
+function searchUsers(query, data) {
+  requireUserPermission('CanManageUsers', data);
   var result = searchData(CONFIG.SHEET_NAMES.USERS, query);
   return result.map(normalizeUser);
 }
 
-function resetUserPassword(id, tempPassword, forceChange) {
+function resetUserPassword(id, tempPassword, forceChange, reqData) {
+  requireUserPermission('CanManageUsers', reqData);
   var incomingId = String(id || '').trim();
   Logger.log('resetUserPassword called: id=' + incomingId);
 
@@ -378,7 +360,7 @@ function resetUserPassword(id, tempPassword, forceChange) {
   var data = {
     Password: tempPassword,
     ForcePasswordChange: forceChange ? 'TRUE' : 'FALSE',
-    UpdatedBy: Session.getActiveUser().getEmail(),
+    UpdatedBy: reqData && reqData._userEmail ? reqData._userEmail : Session.getActiveUser().getEmail(),
     UpdatedAt: now
   };
   ensureUserCols();
@@ -519,7 +501,8 @@ function drivePhotoUrl(fileId) {
   return 'https://lh3.googleusercontent.com/d/' + fileId;
 }
 
-function uploadUserPhoto(base64Data, employeeId) {
+function uploadUserPhoto(base64Data, employeeId, data) {
+  requireUserPermission('CanManageUsers', data);
   if (!base64Data) return '';
   var folderName = 'CMMS';
   var subFolderName = 'UserPhotos';
@@ -562,7 +545,8 @@ function uploadUserPhoto(base64Data, employeeId) {
   return JSON.stringify({ driveId: fileId, url: directUrl });
 }
 
-function deleteUserPhoto(driveId) {
+function deleteUserPhoto(driveId, data) {
+  requireUserPermission('CanManageUsers', data);
   if (!driveId) return;
   try {
     var file = DriveApp.getFileById(driveId);
@@ -572,15 +556,16 @@ function deleteUserPhoto(driveId) {
   }
 }
 
-function exportUsersToExcel() {
-  var data = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
+function exportUsersToExcel(data) {
+  requireUserPermission('CanManageUsers', data);
+  var dataAll = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
   var ss = SpreadsheetApp.create('Users_Export_' + getTodayDateString());
   var sheet = ss.getActiveSheet();
-  var headers = USER_COLS;
+  var headers = USER_COLS.filter(function(h) { return h !== 'Password'; });
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-  if (data.length > 0) {
+  if (dataAll.length > 0) {
     var rows = [];
-    data.forEach(function(u) {
+    dataAll.forEach(function(u) {
       var row = [];
       headers.forEach(function(h) { row.push(u[h] || ''); });
       rows.push(row);

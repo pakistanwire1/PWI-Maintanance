@@ -27,6 +27,12 @@ var Router = {
       page = 'dashboard';
       handler = Router.pages['dashboard'];
     }
+
+    if (typeof Session !== 'undefined' && typeof Session.canAccessPage === 'function' && !Session.canAccessPage(page)) {
+      console.log('[TRACE] Router.navigate: page blocked by permissions, redirecting to dashboard');
+      page = 'dashboard';
+      handler = Router.pages['dashboard'];
+    }
     if (!handler) {
       console.log('[TRACE] Router.navigate: no handler for dashboard either, aborting');
       return;

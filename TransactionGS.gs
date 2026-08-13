@@ -37,6 +37,7 @@ function getGoodsReceipt() {
   Logger.log('getGoodsReceipt() called');
   console.log('getGoodsReceipt() called');
   try {
+    requireUserPermission('CanManageGoodsReceipt', {});
     var data = getAllData(CONFIG.SHEET_NAMES.GOODS_RECEIPT) || [];
     Logger.log('getGoodsReceipt() returning ' + data.length + ' records');
     console.log('getGoodsReceipt() returning ' + data.length + ' records');

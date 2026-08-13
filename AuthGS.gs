@@ -1,5 +1,41 @@
 function getPermValue(val) {
-  return val === true || val === 'Yes' || val === 'true' || val === 'TRUE' || val === 'yes';
+  if (val === true) return true;
+  if (val === false || val === null || val === undefined) return false;
+  var s = String(val).trim().toLowerCase();
+  return s === 'true' || s === '1' || s === 'yes' || s === 'y';
+}
+
+function normalizePerm(val) {
+  return getPermValue(val) ? 'TRUE' : 'FALSE';
+}
+
+function isUserAdmin(user) {
+  if (!user) return false;
+  var role = String(user.Role || '').trim().toLowerCase();
+  return role === 'admin' || role === 'administrator' || getPermValue(user.IsAdmin);
+}
+
+function userHasPermission(user, permKey) {
+  if (!user) return false;
+  if (isUserAdmin(user)) return true;
+  return getPermValue(user[permKey]);
+}
+
+function apiCallerUser(data) {
+  var email = data && data._userEmail;
+  if (!email) {
+    try { email = Session.getActiveUser().getEmail(); } catch(e) { email = ''; }
+  }
+  if (!email) return null;
+  return getUserByEmail(email);
+}
+
+function requireUserPermission(permKey, data) {
+  var user = apiCallerUser(data);
+  if (!user || !userHasPermission(user, permKey)) {
+    throw new Error('You do not have permission to perform this action.');
+  }
+  return user;
 }
 
 function initializeUserMaster() {
@@ -165,6 +201,7 @@ function loginUser(email, password) {
               canManagePM: getPermValue(user.CanManagePM),
               canManageBreakdown: getPermValue(user.CanManageBreakdown),
               canManageInventory: getPermValue(user.CanManageInventory),
+              canManageGoodsReceipt: getPermValue(user.CanManageGoodsReceipt),
               canViewDashboard: getPermValue(user.CanViewDashboard),
               canViewReports: getPermValue(user.CanViewReports),
               canExportReports: getPermValue(user.CanExportReports),

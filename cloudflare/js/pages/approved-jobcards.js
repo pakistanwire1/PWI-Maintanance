@@ -11,10 +11,7 @@ var ApproveJobCards = (function() {
   }
 
   function hasPermission(perm) {
-    var user = Session.getUser();
-    if (!user) return false;
-    if (user.role === 'Admin' || user.isSystemAdmin) return true;
-    return !!user['can' + perm.charAt(0).toUpperCase() + perm.slice(1)];
+    return Session.getPermission(perm);
   }
 
   function getUserDept() {

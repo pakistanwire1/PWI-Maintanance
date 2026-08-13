@@ -32,11 +32,75 @@ var Session = {
     } catch(e) {}
   },
 
-  getPermission: function(perm) {
+  isAdmin: function() {
     var user = Session.getUser();
     if (!user) return false;
     if (user.isSystemAdmin) return true;
-    return !!user[perm];
+    var role = String(user.role || '').toLowerCase();
+    return role === 'admin' || role === 'administrator';
+  },
+
+  getPermission: function(perm) {
+    var user = Session.getUser();
+    if (!user) return false;
+    if (Session.isAdmin()) return true;
+    if (!perm) return true;
+    var key = (perm.charAt(0) === 'c' && perm.charAt(1) === 'a' && perm.charAt(2) === 'n')
+      ? perm
+      : 'can' + perm.charAt(0).toUpperCase() + perm.slice(1);
+    return !!user[key];
+  },
+
+  PageAccess: {
+    dashboard: null,
+    sections: 'manageMachines',
+    departments: 'manageMachines',
+    machines: 'manageMachines',
+    technicians: 'manageMachines',
+    assets: 'manageAssets',
+    users: 'manageUsers',
+    openjobcard: 'openJobCard',
+    startjobcard: 'startJobCard',
+    closejobcard: 'closeJobCard',
+    pendingjobcard: 'reviewPendingJobCard',
+    approvejobcard: 'approveJobCard',
+    jobcards: 'viewAllJobCards',
+    pm: 'managePM',
+    pmhistory: 'managePM',
+    checklists: null,
+    spareparts: 'manageSpareParts',
+    inventory: 'manageInventory',
+    inventorytransactions: 'manageInventory',
+    stockhistory: 'manageInventory',
+    goodsreceipt: 'manageGoodsReceipt',
+    breakdown: 'viewReports',
+    reports: 'viewReports',
+    notifications: null,
+    email: 'manageEmail',
+    whatsapp: 'manageWhatsApp',
+    qr: null,
+    qrmachines: null,
+    qrassets: null,
+    qrspareparts: null,
+    qrjobcards: null,
+    qrprint: null,
+    qrhistory: null,
+    settings: ['manageSettings', 'manageUsers'],
+    audit: 'viewAudit',
+    backuprestore: 'backupRestore'
+  },
+
+  canAccessPage: function(page) {
+    var user = Session.getUser();
+    if (!user) return false;
+    if (Session.isAdmin()) return true;
+    var required = Session.PageAccess[page];
+    if (required === undefined || required === null) return true;
+    var perms = Array.isArray(required) ? required : [required];
+    for (var i = 0; i < perms.length; i++) {
+      if (Session.getPermission(perms[i])) return true;
+    }
+    return false;
   },
 
   getUserName: function() {

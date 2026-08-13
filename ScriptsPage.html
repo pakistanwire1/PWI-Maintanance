@@ -149,7 +149,7 @@ function updateUserInfo() {
     else if (page === 'inventory') { show = isAdmin || hasPermission('manageInventory'); }
     else if (page === 'inventorytransactions') { show = isAdmin || hasPermission('manageInventory'); }
     else if (page === 'stockhistory') { show = isAdmin || hasPermission('manageInventory'); }
-    else if (page === 'goodsreceipt') { show = isAdmin || hasPermission('manageInventory'); }
+    else if (page === 'goodsreceipt') { show = isAdmin || hasPermission('manageGoodsReceipt'); }
     else if (page === 'pmhistory') { show = isAdmin || hasPermission('managePM'); }
     else if (page === 'notifications') { show = true; }
     else if (page === 'breakdown') { show = isAdmin || hasPermission('viewReports'); }
@@ -766,7 +766,7 @@ function escHtml(str) {
 
 function hasPermission(perm) {
   if (!currentUser) return false;
-  if (currentUser.role === 'Admin' || currentUser.isSystemAdmin) return true;
+  if (currentUser.role === 'Admin' || currentUser.role === 'Administrator' || currentUser.isSystemAdmin) return true;
   return currentUser['can' + perm.charAt(0).toUpperCase() + perm.slice(1)] === true;
 }
 

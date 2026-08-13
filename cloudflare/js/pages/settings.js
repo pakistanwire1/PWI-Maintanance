@@ -13,7 +13,7 @@ var Settings = (function() {
     'CanOpenJobCard','CanStartJobCard','CanCloseJobCard','CanApproveJobCard',
     'CanManageMachines','CanManageAssets','CanManageSpareParts','CanManagePM',
     'CanManageTechnicians','CanManageDepartments','CanManageSections','CanManageUsers',
-    'CanViewDashboard','CanViewReports','IsAdmin'
+    'CanViewDashboard','CanViewReports','CanManageGoodsReceipt','IsAdmin'
   ];
   var ROLE_BADGES = {
     'Admin': 'danger',
@@ -526,6 +526,7 @@ var Settings = (function() {
                   permCheckbox('CanManageDepartments', 'Manage Departments') +
                   permCheckbox('CanManageSections', 'Manage Sections') +
                   permCheckbox('CanManageUsers', 'Manage Users') +
+                  permCheckbox('CanManageGoodsReceipt', 'Manage Goods Receipt') +
                 '</div>' +
               '</div>' +
               '<div class="form-group">' +

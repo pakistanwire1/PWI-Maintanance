@@ -164,6 +164,7 @@ function processGoodsReceipt(data) {
   Logger.log('processGoodsReceipt() called');
   console.log('processGoodsReceipt() called');
   try {
+    requireUserPermission('CanManageGoodsReceipt', data);
     var grnNo = generateInventoryId(CONFIG.SHEET_NAMES.GOODS_RECEIPT, 'GRN-');
     var part = getRecordById(CONFIG.SHEET_NAMES.SPARE_PARTS, 'PartCode', data.PartCode);
     if (!part) throw new Error('Spare part not found: ' + data.PartCode);

@@ -6708,7 +6708,7 @@ function searchSectionsTable(query) {
               <label class="perm-checkbox"><input type="checkbox" name="CanManagePM" value="TRUE"> Manage PM</label>
               <label class="perm-checkbox"><input type="checkbox" name="CanManageBreakdown" value="TRUE"> Breakdown Entry</label>
               <label class="perm-checkbox"><input type="checkbox" name="CanManageInventory" value="TRUE"> Inventory</label>
-              <label class="perm-checkbox"><input type="checkbox" name="CanManageInventory" value="TRUE"> Goods Receipt</label>
+              <label class="perm-checkbox"><input type="checkbox" name="CanManageGoodsReceipt" value="TRUE"> Goods Receipt</label>
             </div>
             <div>
               <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Dashboard</div>
@@ -6794,7 +6794,7 @@ var selectedUserId = '';
 var USER_PERM_FIELDS = [
   'CanOpenJobCard','CanStartJobCard','CanCloseJobCard','CanReviewPendingJobCard','CanViewAllJobCards','CanApproveJobCard',
   'CanManageSections','CanManageDepartments','CanManageMachines','CanManageAssets','CanManageTechnicians','CanManageSpareParts',
-  'CanManagePM','CanManageBreakdown','CanManageInventory',
+  'CanManagePM','CanManageBreakdown','CanManageInventory','CanManageGoodsReceipt',
   'CanViewDashboard','CanViewReports','CanExportReports',
   'CanManageUsers','CanManageSettings','CanViewAudit','CanManageQR','CanManageEmail','CanManageWhatsApp','CanBackupRestore','CanSystemConfig',
   'IsAdmin'
@@ -7049,10 +7049,15 @@ function resetUserPermissions() {
   });
 }
 
+function permVal(v) {
+  if (v === true) return true;
+  return v === 'TRUE' || v === 'true' || v === '1' || v === 'Yes' || v === 'yes';
+}
+
 function setUserPermissionCheckboxes(item) {
   document.querySelectorAll('#userForm input[type="checkbox"]').forEach(function(cb) {
     if (cb.name) {
-      cb.checked = item[cb.name] === 'TRUE';
+      cb.checked = permVal(item[cb.name]);
     }
   });
   onAdminCheckChange();
@@ -7201,7 +7206,7 @@ function buildProfileCardHtml(item) {
     CanManageMachines: 'Machines', CanManageAssets: 'Assets',
     CanManageTechnicians: 'Technicians', CanManageSpareParts: 'Spare Parts',
     CanManagePM: 'PM', CanManageBreakdown: 'Breakdown',
-    CanManageInventory: 'Inventory',
+    CanManageInventory: 'Inventory', CanManageGoodsReceipt: 'Goods Receipt',
     CanViewDashboard: 'Dashboard', CanViewReports: 'Reports',
     CanExportReports: 'Export',
     CanManageUsers: 'Users', CanManageSettings: 'Settings',
@@ -19629,7 +19634,7 @@ function updateUserInfo() {
     else if (page === 'inventory') { show = isAdmin || hasPermission('manageInventory'); }
     else if (page === 'inventorytransactions') { show = isAdmin || hasPermission('manageInventory'); }
     else if (page === 'stockhistory') { show = isAdmin || hasPermission('manageInventory'); }
-    else if (page === 'goodsreceipt') { show = isAdmin || hasPermission('manageInventory'); }
+    else if (page === 'goodsreceipt') { show = isAdmin || hasPermission('manageGoodsReceipt'); }
     else if (page === 'pmhistory') { show = isAdmin || hasPermission('managePM'); }
     else if (page === 'notifications') { show = true; }
     else if (page === 'breakdown') { show = isAdmin || hasPermission('viewReports'); }
@@ -20246,7 +20251,7 @@ function escHtml(str) {
 
 function hasPermission(perm) {
   if (!currentUser) return false;
-  if (currentUser.role === 'Admin' || currentUser.isSystemAdmin) return true;
+  if (currentUser.role === 'Admin' || currentUser.role === 'Administrator' || currentUser.isSystemAdmin) return true;
   return currentUser['can' + perm.charAt(0).toUpperCase() + perm.slice(1)] === true;
 }
 

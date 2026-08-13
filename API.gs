@@ -20,6 +20,16 @@ function apiError(message, code, e) {
   return apiJson({ success: false, error: message || 'Unknown error', code: code || 400 }, e);
 }
 
+function apiRouteAllowed(perms, user) {
+  if (Array.isArray(perms)) {
+    for (var i = 0; i < perms.length; i++) {
+      if (userHasPermission(user, perms[i])) return true;
+    }
+    return false;
+  }
+  return userHasPermission(user, perms);
+}
+
 /* ---- Preflight handled by Cloudflare Functions proxy ---- */
 
 /* ---- POST Handler (main API entry) ---- */
@@ -54,6 +64,12 @@ function doPost(e) {
       data._userRole = user.role;
       data._userName = user.name || '';
       data._token = token;
+      if (route.perm) {
+        var permUser = apiCallerUser(data);
+        if (!permUser || !apiRouteAllowed(route.perm, permUser)) {
+          return apiError('Forbidden. You do not have permission to perform this action.', 403, e);
+        }
+      }
     }
 
     try {
@@ -90,18 +106,18 @@ var API_ROUTES = {
   'checkEmailExists':      { auth: false, handler: function(d) { return checkEmailExists(d.email); } },
 
   /* ---- Users ---- */
-  'getUsers':              { auth: true,  handler: function(d) { return apiGetUsers(d); } },
-  'addUser':               { auth: true,  handler: function(d) { return addUser(d); } },
-  'updateUser':            { auth: true,  handler: function(d) { return updateUser(d.id || d.email, d); } },
-  'deleteUser':            { auth: true,  handler: function(d) { return deleteUser(d.id, d.email); } },
-  'permanentlyDeleteUser': { auth: true,  handler: function(d) { return permanentlyDeleteUser(d.id, d.email); } },
-  'searchUsers':           { auth: true,  handler: function(d) { return searchUsers(d.query); } },
-  'resetUserPassword':     { auth: true,  handler: function(d) { return resetUserPassword(d.id, d.tempPassword, d.forceChange); } },
-  'uploadUserPhoto':       { auth: true,  handler: function(d) { return uploadUserPhoto(d.photo || d.base64Data, d.employeeId); } },
-  'deleteUserPhoto':       { auth: true,  handler: function(d) { deleteUserPhoto(d.driveId); return { success: true }; } },
+  'getUsers':              { auth: true, perm: 'CanManageUsers', handler: function(d) { return apiGetUsers(d); } },
+  'addUser':               { auth: true, perm: 'CanManageUsers', handler: function(d) { return addUser(d); } },
+  'updateUser':            { auth: true, perm: 'CanManageUsers', handler: function(d) { return updateUser(d.id || d.email, d); } },
+  'deleteUser':            { auth: true, perm: 'CanManageUsers', handler: function(d) { return deleteUser(d.id, d.email, d); } },
+  'permanentlyDeleteUser': { auth: true, perm: 'CanManageUsers', handler: function(d) { return permanentlyDeleteUser(d.id, d.email, d); } },
+  'searchUsers':           { auth: true, perm: 'CanManageUsers', handler: function(d) { return searchUsers(d.query, d); } },
+  'resetUserPassword':     { auth: true, perm: 'CanManageUsers', handler: function(d) { return resetUserPassword(d.id, d.tempPassword, d.forceChange, d); } },
+  'uploadUserPhoto':       { auth: true, perm: 'CanManageUsers', handler: function(d) { return uploadUserPhoto(d.photo || d.base64Data, d.employeeId, d); } },
+  'deleteUserPhoto':       { auth: true, perm: 'CanManageUsers', handler: function(d) { deleteUserPhoto(d.driveId, d); return { success: true }; } },
   'getUserDepartments':    { auth: true,  handler: function(d) { return getUserDepartments(); } },
   'getUserSections':       { auth: true,  handler: function(d) { return getUserSections(d.department); } },
-  'exportUsersToExcel':    { auth: true,  handler: function(d) { return exportUsersToExcel(); } },
+  'exportUsersToExcel':    { auth: true, perm: 'CanManageUsers', handler: function(d) { return exportUsersToExcel(d); } },
 
   /* ---- Job Cards ---- */
   'getJobCards':           { auth: true,  handler: function(d) { return apiGetJobCards(d); } },
@@ -160,8 +176,8 @@ var API_ROUTES = {
   /* ---- Inventory ---- */
   'getAllTransactions':     { auth: true,  handler: function(d) { return getAllTransactions(); } },
   'getInventoryTransactions': { auth: true, handler: function(d) { return getInventoryTransactions(); } },
-  'getGoodsReceipt':       { auth: true,  handler: function(d) { return getGoodsReceipt(); } },
-  'processGoodsReceipt':   { auth: true,  handler: function(d) { return processGoodsReceipt(d); } },
+  'getGoodsReceipt':       { auth: true, perm: 'CanManageGoodsReceipt', handler: function(d) { return getGoodsReceipt(); } },
+  'processGoodsReceipt':   { auth: true, perm: 'CanManageGoodsReceipt', handler: function(d) { return processGoodsReceipt(d); } },
   'processIssue':          { auth: true,  handler: function(d) { return processIssue(d); } },
   'processReturn':         { auth: true,  handler: function(d) { return processReturn(d); } },
   'processTransfer':       { auth: true,  handler: function(d) { return processTransfer(d); } },
@@ -251,12 +267,12 @@ var API_ROUTES = {
   'getMachineCascade':     { auth: true,  handler: function(d) { return getMachineCascade(d.divisionId || '', d.sectionId || '', d.deptId || ''); } },
 
   /* ---- Settings ---- */
-  'getSettings':           { auth: true,  handler: function(d) { return getSettings(); } },
-  'saveSetting':           { auth: true,  handler: function(d) { return saveSetting(d.key, d.value); } },
-  'getSettingsData':       { auth: true,  handler: function(d) { return getSettingsData(); } },
-  'saveSettingValue':      { auth: true,  handler: function(d) { return saveSettingValue(d.key, d.value); } },
-  'addDepartment':         { auth: true,  handler: function(d) { return addDepartment(d.name); } },
-  'deleteDepartment':      { auth: true,  handler: function(d) { return deleteDepartment(d.id); } },
+  'getSettings':           { auth: true, perm: ['CanManageSettings', 'CanManageUsers'], handler: function(d) { return getSettings(); } },
+  'saveSetting':           { auth: true, perm: ['CanManageSettings', 'CanManageUsers'], handler: function(d) { return saveSetting(d.key, d.value); } },
+  'getSettingsData':       { auth: true, perm: ['CanManageSettings', 'CanManageUsers'], handler: function(d) { return getSettingsData(); } },
+  'saveSettingValue':      { auth: true, perm: ['CanManageSettings', 'CanManageUsers'], handler: function(d) { return saveSettingValue(d.key, d.value); } },
+  'addDepartment':         { auth: true, perm: ['CanManageDepartments', 'CanManageUsers'], handler: function(d) { return addDepartment(d.name); } },
+  'deleteDepartment':      { auth: true, perm: ['CanManageDepartments', 'CanManageUsers'], handler: function(d) { return deleteDepartment(d.id); } },
 
   /* ---- Checklists ---- */
   'getChecklistTemplates': { auth: true,  handler: function(d) { return getChecklistTemplates(); } },
@@ -271,13 +287,13 @@ var API_ROUTES = {
   'getBreakdownHistoryFiltered': { auth: true, handler: function(d) { return getBreakdownHistoryFiltered(d.filters || d); } },
 
   /* ---- Audit Trail ---- */
-  'getAuditLogs':          { auth: true,  handler: function(d) { return getAuditLogs(); } },
-  'getRecentAuditLogs':    { auth: true,  handler: function(d) { return getRecentAuditLogs(parseInt(d.count) || 50); } },
-  'getAuditLogStats':      { auth: true,  handler: function(d) { return getAuditLogStats(d._userEmail); } },
+  'getAuditLogs':          { auth: true, perm: 'CanViewAudit', handler: function(d) { return getAuditLogs(); } },
+  'getRecentAuditLogs':    { auth: true, perm: 'CanViewAudit', handler: function(d) { return getRecentAuditLogs(parseInt(d.count) || 50); } },
+  'getAuditLogStats':      { auth: true, perm: 'CanViewAudit', handler: function(d) { return getAuditLogStats(d._userEmail); } },
 
   /* ---- QR & Barcode ---- */
-  'generateQRCode':        { auth: true,  handler: function(d) { return generateQRCodeForRecord(d.module, d.recordId); } },
-  'generateBarcode':       { auth: true,  handler: function(d) { return generateBarcodeForRecord(d.module, d.recordId); } },
+  'generateQRCode':        { auth: true, perm: 'CanManageQR', handler: function(d) { return generateQRCodeForRecord(d.module, d.recordId); } },
+  'generateBarcode':       { auth: true, perm: 'CanManageQR', handler: function(d) { return generateBarcodeForRecord(d.module, d.recordId); } },
   'scanQRCode':            { auth: true,  handler: function(d) { return scanQRCode(d.qrContent); } },
   'scanBarcode':           { auth: true,  handler: function(d) { return scanBarcode(d.barcode); } },
   'getQRDetail':           { auth: true,  handler: function(d) { return getQRDetail(d.qrContent); } },
@@ -288,37 +304,37 @@ var API_ROUTES = {
   'getModuleRecordDetail': { auth: true,  handler: function(d) { return getModuleRecordDetail(d.module, d.recordId); } },
   'getPrintLabelData':     { auth: true,  handler: function(d) { return getPrintLabelData(d.module, d.recordId, d.labelSize); } },
   'searchQRRecords':       { auth: true,  handler: function(d) { return apiSearchQRRecords(d.query); } },
-  'bulkGenerateQRCode':    { auth: true,  handler: function(d) { return bulkGenerateQRCode(d.module); } },
-  'bulkGenerateBarcode':   { auth: true,  handler: function(d) { return bulkGenerateBarcode(d.module); } },
+  'bulkGenerateQRCode':    { auth: true, perm: 'CanManageQR', handler: function(d) { return bulkGenerateQRCode(d.module); } },
+  'bulkGenerateBarcode':   { auth: true, perm: 'CanManageQR', handler: function(d) { return bulkGenerateBarcode(d.module); } },
   'getQRModuleRecords':    { auth: true,  handler: function(d) { return getQRModuleRecords(d.module); } },
 
   /* ---- Email ---- */
-  'emailGetSettings':      { auth: true,  handler: function(d) { return emailGetSettings(); } },
-  'emailSaveSettings':     { auth: true,  handler: function(d) { return emailSaveSettings(d); } },
-  'emailGetLogs':          { auth: true,  handler: function(d) { return emailGetLogs(d.filters); } },
+  'emailGetSettings':      { auth: true, perm: 'CanManageEmail', handler: function(d) { return emailGetSettings(); } },
+  'emailSaveSettings':     { auth: true, perm: 'CanManageEmail', handler: function(d) { return emailSaveSettings(d); } },
+  'emailGetLogs':          { auth: true, perm: 'CanManageEmail', handler: function(d) { return emailGetLogs(d.filters); } },
   'emailGetPanelData':     { auth: true,  handler: function(d) { return emailGetPanelData(); } },
-  'emailSendRaw':          { auth: true,  handler: function(d) { return emailSendRaw(d.recipient, d.subject, d.body, d.senderName || '', d.replyTo || ''); } },
-  'emailRetryFailed':      { auth: true,  handler: function(d) { return emailRetryFailed(); } },
-  'emailSendDailySummary': { auth: true,  handler: function(d) { return emailSendDailySummary(); } },
+  'emailSendRaw':          { auth: true, perm: 'CanManageEmail', handler: function(d) { return emailSendRaw(d.recipient, d.subject, d.body, d.senderName || '', d.replyTo || ''); } },
+  'emailRetryFailed':      { auth: true, perm: 'CanManageEmail', handler: function(d) { return emailRetryFailed(); } },
+  'emailSendDailySummary': { auth: true, perm: 'CanManageEmail', handler: function(d) { return emailSendDailySummary(); } },
 
   /* ---- WhatsApp ---- */
-  'whatsappGetSettings':   { auth: true,  handler: function(d) { return whatsappGetSettings(); } },
-  'whatsappSaveSettings':  { auth: true,  handler: function(d) { return whatsappSaveSettings(d); } },
-  'whatsappGetTemplates':  { auth: true,  handler: function(d) { return whatsappGetTemplates(); } },
-  'whatsappSaveTemplate':  { auth: true,  handler: function(d) { return whatsappSaveTemplate(d); } },
-  'whatsappGetLogs':       { auth: true,  handler: function(d) { return whatsappGetLogs(d.filters); } },
+  'whatsappGetSettings':   { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappGetSettings(); } },
+  'whatsappSaveSettings':  { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappSaveSettings(d); } },
+  'whatsappGetTemplates':  { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappGetTemplates(); } },
+  'whatsappSaveTemplate':  { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappSaveTemplate(d); } },
+  'whatsappGetLogs':       { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappGetLogs(d.filters); } },
   'whatsappGetPanelData':  { auth: true,  handler: function(d) { return whatsappGetPanelData(); } },
-  'whatsappTestSend':      { auth: true,  handler: function(d) { return whatsappTestSend(); } },
+  'whatsappTestSend':      { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappTestSend(); } },
 
   /* ---- Backup ---- */
-  'getBackupHistory':      { auth: true,  handler: function(d) { return getBackupHistory(); } },
-  'getBackupStatus':       { auth: true,  handler: function(d) { return getBackupStatus(); } },
-  'createBackup':          { auth: true,  handler: function(d) { return createBackup(d.label); } },
-  'restoreBackup':         { auth: true,  handler: function(d) { return restoreBackup(d.backupId); } },
-  'deleteBackup':          { auth: true,  handler: function(d) { return deleteBackup(d.backupId); } },
-  'getBackupSheetsList':   { auth: true,  handler: function(d) { return getBackupSheetsList(); } },
-  'exportBackup':          { auth: true,  handler: function(d) { return exportBackup(d.backupId); } },
-  'importBackup':          { auth: true,  handler: function(d) { return importBackup(d.data); } },
+  'getBackupHistory':      { auth: true, perm: 'CanBackupRestore', handler: function(d) { return getBackupHistory(); } },
+  'getBackupStatus':       { auth: true, perm: 'CanBackupRestore', handler: function(d) { return getBackupStatus(); } },
+  'createBackup':          { auth: true, perm: 'CanBackupRestore', handler: function(d) { return createBackup(d.label); } },
+  'restoreBackup':         { auth: true, perm: 'CanBackupRestore', handler: function(d) { return restoreBackup(d.backupId); } },
+  'deleteBackup':          { auth: true, perm: 'CanBackupRestore', handler: function(d) { return deleteBackup(d.backupId); } },
+  'getBackupSheetsList':   { auth: true, perm: 'CanBackupRestore', handler: function(d) { return getBackupSheetsList(); } },
+  'exportBackup':          { auth: true, perm: 'CanBackupRestore', handler: function(d) { return exportBackup(d.backupId); } },
+  'importBackup':          { auth: true, perm: 'CanBackupRestore', handler: function(d) { return importBackup(d.data); } },
 
   /* ---- Badges ---- */
   'getSidebarCounts':      { auth: true,  handler: function(d) { return getSidebarCounts(d._userEmail); } },
@@ -327,7 +343,7 @@ var API_ROUTES = {
   'getServerTimestamp':    { auth: false, handler: function(d) { return getServerTimestamp(); } },
 
   /* ---- Debug ---- */
-  'tokenDiag':             { auth: false, handler: function(d) {
+  'tokenDiag':             { auth: true, perm: 'CanManageUsers', handler: function(d) {
     var props = PropertiesService.getScriptProperties();
     var allProps = props.getProperties();
     var tokenKeys = [];
@@ -372,7 +388,7 @@ var API_ROUTES = {
    ============================================================ */
 
 function apiGetUsers(d) {
-  var users = getUsers();
+  var users = getUsers(d);
   return users.map(function(u) {
     var normalized = normalizeUser(u);
     delete normalized.Password;

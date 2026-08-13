@@ -13,7 +13,7 @@ var User = (function() {
   var USER_PERM_FIELDS = [
     'CanOpenJobCard','CanStartJobCard','CanCloseJobCard','CanReviewPendingJobCard','CanViewAllJobCards','CanApproveJobCard',
     'CanManageSections','CanManageDepartments','CanManageMachines','CanManageAssets','CanManageTechnicians','CanManageSpareParts',
-    'CanManagePM','CanManageBreakdown','CanManageInventory',
+    'CanManagePM','CanManageBreakdown','CanManageInventory','CanManageGoodsReceipt',
     'CanViewDashboard','CanViewReports','CanExportReports',
     'CanManageUsers','CanManageSettings','CanViewAudit','CanManageQR','CanManageEmail','CanManageWhatsApp','CanBackupRestore','CanSystemConfig',
     'IsAdmin'
@@ -229,9 +229,14 @@ var User = (function() {
     });
   }
 
+  function permVal(v) {
+    if (v === true) return true;
+    return v === 'TRUE' || v === 'true' || v === '1' || v === 'Yes' || v === 'yes';
+  }
+
   function setPermissions(item) {
     document.querySelectorAll('#userForm input[type="checkbox"]').forEach(function(cb) {
-      if (cb.name) cb.checked = item[cb.name] === 'TRUE';
+      if (cb.name) cb.checked = permVal(item[cb.name]);
     });
     onAdminCheckChange();
   }
@@ -410,7 +415,7 @@ var User = (function() {
                     '<label class="perm-checkbox"><input type="checkbox" name="CanManagePM" value="TRUE"> Manage PM</label>' +
                     '<label class="perm-checkbox"><input type="checkbox" name="CanManageBreakdown" value="TRUE"> Breakdown Entry</label>' +
                     '<label class="perm-checkbox"><input type="checkbox" name="CanManageInventory" value="TRUE"> Inventory</label>' +
-                    '<label class="perm-checkbox"><input type="checkbox" name="CanManageInventory" value="TRUE"> Goods Receipt</label>' +
+                    '<label class="perm-checkbox"><input type="checkbox" name="CanManageGoodsReceipt" value="TRUE"> Goods Receipt</label>' +
                   '</div>' +
                   '<div>' +
                     '<div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px">Dashboard</div>' +
@@ -510,7 +515,7 @@ var User = (function() {
       CanManageMachines: 'Machines', CanManageAssets: 'Assets',
       CanManageTechnicians: 'Technicians', CanManageSpareParts: 'Spare Parts',
       CanManagePM: 'PM', CanManageBreakdown: 'Breakdown',
-      CanManageInventory: 'Inventory',
+      CanManageInventory: 'Inventory', CanManageGoodsReceipt: 'Goods Receipt',
       CanViewDashboard: 'Dashboard', CanViewReports: 'Reports',
       CanExportReports: 'Export',
       CanManageUsers: 'Users', CanManageSettings: 'Settings',
