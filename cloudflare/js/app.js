@@ -3,6 +3,11 @@
 
   function initApp() {
     console.log('[TRACE] initApp entered');
+    var welcomeEl = document.getElementById('welcomePage');
+    var welcomeVisible = !!(welcomeEl && getComputedStyle(welcomeEl).display !== 'none');
+    if (!welcomeVisible) {
+      Loader.global('Initializing application');
+    }
     Theme.apply();
     console.log('[TRACE] initApp: Theme.apply done');
     Nav.initSidebar();
@@ -158,8 +163,8 @@
       BackupRestore.show(el);
     });
 
-    console.log('[TRACE] initApp: Loader.hide');
-    Loader.hide();
+    console.log('[TRACE] initApp: Loader.finish');
+    Loader.finish();
     console.log('[TRACE] initApp: Badge.startAutoRefresh');
     Badge.startAutoRefresh();
 
@@ -170,6 +175,8 @@
     var wasWelcomed = false;
     try { wasWelcomed = !!localStorage.getItem('cmms_welcomed'); } catch(e) {}
     console.log('[TRACE] initApp: wasWelcomed=' + wasWelcomed + ', Session.isLoggedIn=' + Session.isLoggedIn());
+
+    if (!welcomeVisible) Loader.setStage('Loading session');
 
     if (wasWelcomed) {
       console.log('[TRACE] initApp: wasWelcomed path');
@@ -239,6 +246,7 @@
     try { window.location.hash = ''; history.replaceState(null, '', window.location.pathname); } catch(e) {}
     Badge.stopAutoRefresh();
     Router.current = null;
+    if (typeof Loader !== 'undefined' && Loader.finish) Loader.finish();
   };
 
   window.handleLogout = function() {

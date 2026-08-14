@@ -104,6 +104,12 @@ async function run() {
 
       mockCount = cnt;
 
+      // API responses are now cached per dataset (user-scoped). Clear the
+      // application caches so the changed mock payload is actually fetched.
+      await page.evaluate(function() {
+        if (window.API && API.clearAllCaches) API.clearAllCaches();
+      });
+
       await page.evaluate(function(r) { Router.navigate(r); }, route);
       try {
         await page.waitForFunction(function(cid) {

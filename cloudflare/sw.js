@@ -1,8 +1,8 @@
-const CACHE_NAME = 'cmms-v53';
+const CACHE_NAME = 'cmms-v54';
 const STATIC_ASSETS = [
   '/', '/index.html', '/css/styles.css', '/css/welcome.css', '/css/login.css', '/css/dashboard.css',
   '/js/app.js',
-  '/js/core/utils.js', '/js/core/duration.js', '/js/core/icons.js', '/js/core/api.js', '/js/core/session.js',
+  '/js/core/utils.js', '/js/core/duration.js', '/js/core/icons.js', '/js/core/cache.js', '/js/core/api.js', '/js/core/session.js',
   '/js/core/router.js', '/js/core/nav.js', '/js/core/loader.js', '/js/core/theme.js',
   '/js/core/notify.js', '/js/core/constants.js', '/js/core/table.js', '/js/core/modal.js', '/js/core/forms.js',
   '/js/core/voice.js',

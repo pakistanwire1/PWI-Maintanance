@@ -122,7 +122,7 @@
         </div>
         <div class="ws-company">Maintenance &amp; Engineering Excellence</div>
         <div class="ws-sep"></div>
-        <div class="ws-loading-text" id="wsLoadingText">Initializing system...</div>
+        <div class="ws-loading-text" id="wsLoadingText">Preparing your workspace</div>
         <div class="ws-progress">
           <div class="ws-progress-bar" id="wsProgressBar"></div>
         </div>
@@ -801,9 +801,35 @@
   </div>
 
   <div id="loadingOverlay" class="loading-overlay">
-    <img src="assets/pwianimated.gif" alt="Loading" class="loading-gif" />
-    <div class="loading-text" id="loadingText">Loading...</div>
+    <div class="splash-inner">
+      <div class="splash-logo">
+        <img src="logo.svg" alt="Pakistan Wires Industries" onload="this.style.display='block'" onerror="this.style.display='none'" style="display:none">
+        <div class="splash-logo-fallback">PWI</div>
+      </div>
+      <div class="splash-title">Pakistan Wires Industries</div>
+      <div class="splash-title-sub">(Private) Limited</div>
+      <div class="splash-subtitle">CMMS Maintenance Management System</div>
+      <div class="splash-progress">
+        <div class="splash-progress-track">
+          <div class="splash-progress-bar" id="loadingProgress"></div>
+        </div>
+      </div>
+      <div class="loading-text" id="loadingStage">Initializing application</div>
+    </div>
   </div>
+
+  <script>
+    // Show the professional boot splash immediately for returning users while
+    // application scripts load. First-time visitors use the welcome page instead.
+    (function() {
+      try {
+        if (localStorage.getItem('cmms_welcomed')) {
+          var o = document.getElementById('loadingOverlay');
+          if (o) o.classList.add('show');
+        }
+      } catch (e) {}
+    })();
+  </script>
 
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal" id="modalContainer">
@@ -851,6 +877,7 @@
   <script src="js/core/utils.js"></script>
   <script src="js/core/duration.js"></script>
   <script src="js/core/icons.js"></script>
+  <script src="js/core/cache.js"></script>
   <script src="js/core/api.js"></script>
   <script src="js/core/session.js"></script>
   <script src="js/core/loader.js"></script>

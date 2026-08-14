@@ -28,8 +28,6 @@
   var slideshowComplete = false;
   var pendingTransition = false;
   var progressTimer = null;
-  var loadingTexts = ['Initializing system...', 'Loading modules...', 'Preparing interface...', 'Almost ready...'];
-  var textIndex = 0;
 
   function updateThemeIcon() {
     var icon = document.getElementById('wsThemeIcon');
@@ -176,6 +174,7 @@
 
     var bar = document.getElementById('wsProgressBar');
     var loadingText = document.getElementById('wsLoadingText');
+    if (loadingText) loadingText.textContent = 'Preparing your workspace';
 
     if (bar) {
       var start = Date.now();
@@ -183,11 +182,6 @@
         var elapsed = Date.now() - start;
         var pct = Math.min(99, (elapsed / totalMs) * 100);
         bar.style.width = pct + '%';
-        var newIndex = Math.min(3, Math.floor(pct / 25));
-        if (newIndex !== textIndex && loadingText) {
-          textIndex = newIndex;
-          loadingText.textContent = loadingTexts[textIndex];
-        }
         if (pct < 99) progressTimer = setTimeout(tick, 50);
       }
       progressTimer = setTimeout(tick, 50);

@@ -64,8 +64,9 @@ var Router = {
     try { history.pushState({ page: page }, '', '#' + page); } catch(e) {}
     try { localStorage.setItem('cmms_last_page', page); } catch(e) {}
 
-    console.log('[TRACE] Router.navigate: setting loading HTML');
-    content.innerHTML = '<div class="empty-state"><div class="spinner" style="width:36px;height:36px;margin:0 auto 14px"></div><p>Loading...</p></div>';
+    // Render the target page immediately. The page module decides whether it can
+    // paint from cached state (instant, no loader) or needs a local progress bar
+    // while fetching genuinely required data. No forced full-screen/global loader.
     console.log('[TRACE] Router.navigate: about to call handler');
 
     try {
