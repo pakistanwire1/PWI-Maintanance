@@ -42,6 +42,12 @@ const check = (name, pass, detail) => {
 
   check('A10. User form exposes CanManageWhatsApp checkbox', users.indexOf('CanManageWhatsApp') !== -1 && users.indexOf('name="CanManageWhatsApp"') !== -1);
   check('A11. requireUserPermission honors per-column perm flag', auth.indexOf('getPermValue(user[permKey])') !== -1);
+
+  const toggleBody = waJs.split('function toggleEnabled()')[1].split('function saveSettings()')[0];
+  check('A12. toggleEnabled posts ONLY { enabled } (no full-form save)', toggleBody.indexOf("API.post('whatsappSaveSettings', { enabled: enabled })") !== -1 && toggleBody.indexOf('collectSettings') === -1);
+  check('A13. renderPage contains disabled banner element', waJs.indexOf('whatsappDisabledBanner') !== -1);
+  check('A14. sendTest renders logId on success', sendTestBody.indexOf('sendRes.logId') !== -1);
+  check('A15. saveSettings refreshes banner on save', /Notify\.success\('WhatsApp settings saved'\);\s*setDisabledBanner\(\);/.test(waJs));
 })();
 
 /* =====================================================================
@@ -233,6 +239,39 @@ var leak19 = false;
 for (var i = 0; i < __activityLog.length; i++) { if (__activityLog[i].detail && __activityLog[i].detail.indexOf('tok_abc') > -1) leak19 = true; }
 for (var j = 0; j < __logRows.length; j++) { if (__logRows[j].ErrorMessage && __logRows[j].ErrorMessage.indexOf('tok_abc') > -1) leak19 = true; }
 __ok('B19. apiToken never persisted into activity/log trails', leak19 === false);
+
+/* B20 config-before-phone precedence */
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: '', phoneNumberId: '', _userEmail: 'admin@cmms.com' });
+var r20 = whatsappTestSend({ testPhone: '123', testMessage: 'x', _userEmail: 'wa@cmms.com' });
+__ok('B20. Incomplete config reported before phone validation', r20.success === false && r20.message.indexOf('Meta API token is not configured') > -1, r20.message);
+
+/* B21 whatsappGetSettingsData permission gate */
+var d21a = whatsappGetSettingsData({ _userEmail: 'tech@cmms.com' });
+var d21b = whatsappGetSettingsData({ _userEmail: 'wa@cmms.com' });
+__ok('B21. whatsappGetSettingsData gated by CanManageWhatsApp', d21a.success === false && d21a.message.indexOf('permission') > -1 && d21b.success === true && d21b.settings && d21b.templates && d21b.stats && Array.isArray(d21b.logs), JSON.stringify({ denied: d21a, granted: !!(d21b.settings && d21b.templates) }));
+
+/* B22 job status hook end-to-end */
+__sheets[WHATSAPP.TEMPLATES_SHEET] = [];
+whatsappInitTemplatesSheet();
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: 'pid_1', defaultCountryCode: '92', _userEmail: 'admin@cmms.com' });
+__providerCalls = [];
+var j22 = whatsappSendJobStatusNotification(WHATSAPP.TEMPLATES.JC_STARTED, { jobCardNo: 'JC-1001', machine: 'Lathe-1', priority: 'High', complaint: 'Overheating', assignedTechEmail: 'wa@cmms.com', startedBy: 'Tech A', startTime: '10:30' });
+var pc22 = __providerCalls[__providerCalls.length - 1];
+var l22 = __logRows[__logRows.length - 1];
+__ok('B22. Job started hook sends WhatsApp + logs module/template', j22.success === true && pc22 && pc22.phoneNumber === '+923001234567' && l22 && l22.Template === 'JobStarted' && l22.Module === 'Jobs', JSON.stringify({ r: j22, pc: pc22 && pc22.phoneNumber, log: l22 && { t: l22.Template, m: l22.Module } }));
+
+/* B23 low-stock hook to store phones */
+addRow(CONFIG.SHEET_NAMES.USERS, { Email: 'store@cmms.com', Name: 'Store User', Role: 'Store', Mobile: '3005556666' });
+__providerCalls = [];
+var s23 = whatsappSendStockAlertNotification(WHATSAPP.TEMPLATES.LOW_STOCK, { partCode: 'SP-001', partName: 'Bearing', currentStock: 2, minStock: 5 });
+var pc23 = __providerCalls[__providerCalls.length - 1];
+__ok('B23. Low-stock hook sends to store phone + logs', s23.success === true && pc23 && pc23.phoneNumber === '+923005556666' && pc23.messageBody.indexOf('SP-001') > -1, JSON.stringify({ r: s23, pc: pc23 && pc23.phoneNumber }));
+
+/* B24 disabled hook is graceful (no throw) */
+whatsappSaveSettings({ enabled: false, _userEmail: 'admin@cmms.com' });
+var r24a = whatsappSendJobStatusNotification(WHATSAPP.TEMPLATES.JC_CLOSED, { jobCardNo: 'JC-1002' });
+var r24b = whatsappSendStockAlertNotification(WHATSAPP.TEMPLATES.LOW_STOCK, { partCode: 'SP-002' });
+__ok('B24. Hooks return graceful result when disabled', r24a.success === false && String(r24a.message).indexOf('disabled') > -1 && r24b.success === false, JSON.stringify({ a: r24a, b: r24b }));
 `;
 
   const sandbox = {};
@@ -413,6 +452,13 @@ try {
     return !!c && c.textContent.indexOf('Job Opened') > -1 && !!l && l.textContent.indexOf('WA Manager') > -1;
   });
   check('C3. Templates and message logs render from backend', tplOk);
+  await page.waitForFunction(() => { const el = document.getElementById('waStatSent'); return el && el.textContent === '1'; }, { timeout: 30000 });
+  const statsText = await page.evaluate(() => ({
+    s: (document.getElementById('waStatSent') || {}).textContent,
+    f: (document.getElementById('waStatFailed') || {}).textContent,
+    p: (document.getElementById('waStatPending') || {}).textContent
+  }));
+  check('C3b. Stats render today counters into waStat ids', statsText.s === '1' && statsText.f === '0', JSON.stringify(statsText));
 
   /* C4: toggle enabled -> whatsappSaveSettings with enabled:false */
   await page.evaluate(() => {
@@ -422,6 +468,10 @@ try {
   await new Promise((r) => setTimeout(r, 800));
   const togglePayload = serverState.actions.filter((a) => a.action === 'whatsappSaveSettings').slice(-1)[0];
   check('C4. Toggle posts whatsappSaveSettings enabled=false', !!togglePayload && togglePayload.data.enabled === false && serverState.settings.enabled === false, JSON.stringify(togglePayload && togglePayload.data));
+  const toggleKeys = Object.keys((togglePayload && togglePayload.data) || {});
+  check('C4b. Toggle payload contains ONLY enabled (+ _userEmail auto-injected)', toggleKeys.length <= 2 && toggleKeys.indexOf('enabled') !== -1 && toggleKeys.indexOf('apiToken') === -1 && toggleKeys.indexOf('companyName') === -1 && toggleKeys.indexOf('testPhone') === -1, JSON.stringify(togglePayload && togglePayload.data));
+  const bannerOff = await page.evaluate(() => { const b = document.getElementById('whatsappDisabledBanner'); return b ? b.style.display : 'missing'; });
+  check('C4c. Disabled banner visible after toggle off', bannerOff === 'block', bannerOff);
 
   /* C5: save settings button */
   await page.evaluate(() => {
@@ -445,6 +495,8 @@ try {
   check('C6. Test Send succeeds end-to-end (button result)', true);
   check('C7. Test Send payload carries testPhone + testMessage', !!ts && ts.data.testPhone === '0300 1234567' && ts.data.testMessage === 'Hello from UI harness', JSON.stringify(ts && ts.data));
   check('C8. Test Send payload contains no credentials', !!ts && !('apiToken' in ts.data) && !('phoneNumberId' in ts.data) && !('businessAccountId' in ts.data) && !('apiEndpoint' in ts.data), JSON.stringify(ts && ts.data));
+  const resultText = await page.evaluate(() => (document.getElementById('whatsappTestResult') || {}).textContent || '');
+  check('C6b. Test result renders logId + sent message', resultText.indexOf('WA00002') > -1 && resultText.indexOf('successfully') > -1, resultText);
 
   /* C10: provider switch */
   const endpoint = await page.evaluate(() => {

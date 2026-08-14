@@ -14,6 +14,7 @@
       </div>
     </div>
     <div class="card-body">
+      <div id="whatsappDisabledBanner" style="display:none;background:#fff3cd;color:#856404;border:1px solid #ffeeba;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:13px">WhatsApp is currently disabled. Toggle "Enable WhatsApp" to activate message delivery.</div>
       <div class="whatsapp-grid">
         <div class="form-group">
           <label>Company Name</label>
@@ -44,9 +45,12 @@
           <input type="text" id="whatsappPhoneNumberId" class="form-input" placeholder="Phone number ID">
         </div>
         <div class="form-group">
-          <label>Business Account ID</label>
+          <label id="whatsappBusinessAccountLabel">Business Account ID (Meta)</label>
           <input type="text" id="whatsappBusinessAccountId" class="form-input" placeholder="Business account ID">
         </div>
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn btn-primary" onclick="saveWhatsAppSettings()">Save Settings</button>
       </div>
     </div>
   </div>
@@ -187,12 +191,23 @@
 function loadWhatsAppData() {
   google.script.run
     .withSuccessHandler(function(data) {
+      if (data && data.success === false) {
+        renderWhatsAppPermissionDenied(data.message);
+        return;
+      }
       renderWhatsAppSettings(data);
       renderWhatsAppTemplates(data.templates);
       renderWhatsAppLogs(data.logs, data.stats);
     })
-    .withFailureHandler(function(err) { })
-    .whatsappGetSettingsData();
+    .withFailureHandler(function(err) { renderWhatsAppPermissionDenied(err && err.message); })
+    .whatsappGetSettingsData({ _userEmail: currentUser && currentUser.email || '' });
+}
+
+function renderWhatsAppPermissionDenied(message) {
+  var el = document.getElementById('whatsappTestResult');
+  if (el) el.innerHTML = '<span style="color:var(--warning)">Access denied: ' + escapeHtml(message || 'You do not have permission to view WhatsApp settings.') + '</span>';
+  var c = document.getElementById('whatsappTemplatesContainer');
+  if (c) c.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Permission required to view WhatsApp templates.</div>';
 }
 
 function renderWhatsAppSettings(data) {
@@ -209,6 +224,15 @@ function renderWhatsAppSettings(data) {
   el = document.getElementById('whatsappTestPhone'); if (el) el.value = s.testPhone || '';
   el = document.getElementById('whatsappTestMessage'); if (el) el.value = s.testMessage || '';
   el = document.getElementById('whatsappTestResult'); if (el) el.textContent = '';
+  setWhatsAppDisabledBanner();
+  onWhatsAppProviderChange();
+}
+
+function setWhatsAppDisabledBanner() {
+  var banner = document.getElementById('whatsappDisabledBanner');
+  if (!banner) return;
+  var enabled = document.getElementById('whatsappEnabled');
+  banner.style.display = (enabled && enabled.checked) ? 'none' : 'block';
 }
 
 function renderWhatsAppTemplates(templates) {
@@ -297,13 +321,11 @@ function renderWhatsAppLogs(logs, stats) {
 
 function toggleWhatsApp() {
   var enabled = document.getElementById('whatsappEnabled').checked;
-  var data = { enabled: enabled };
-  data.email = currentUser && currentUser.email || '';
-  collectWhatsAppSettings(data);
+  var data = { enabled: enabled, _userEmail: currentUser && currentUser.email || '' };
   google.script.run
     .withSuccessHandler(function(res) {
       if (!res.success) showToast(res.message || 'Failed to save', 'error');
-      else showToast('WhatsApp ' + (enabled ? 'enabled' : 'disabled'), 'success');
+      else { showToast('WhatsApp ' + (enabled ? 'enabled' : 'disabled'), 'success'); setWhatsAppDisabledBanner(); }
     })
     .withFailureHandler(function() { showToast('Failed to save settings', 'error'); })
     .whatsappSaveSettings(data);
@@ -323,13 +345,14 @@ function collectWhatsAppSettings(data) {
 
 function saveWhatsAppSettings() {
   var data = {};
-  data.email = currentUser && currentUser.email || '';
+  data._userEmail = currentUser && currentUser.email || '';
   collectWhatsAppSettings(data);
   data.enabled = document.getElementById('whatsappEnabled').checked;
   google.script.run
     .withSuccessHandler(function(res) {
       if (!res.success) { showToast(res.message || 'Failed to save', 'error'); return; }
       showToast('WhatsApp settings saved', 'success');
+      setWhatsAppDisabledBanner();
     })
     .withFailureHandler(function() { showToast('Failed to save settings', 'error'); })
     .whatsappSaveSettings(data);
@@ -337,6 +360,7 @@ function saveWhatsAppSettings() {
 
 function whatsappSendTest() {
   var phone = document.getElementById('whatsappTestPhone').value.trim();
+  var message = document.getElementById('whatsappTestMessage').value.trim();
   var resultEl = document.getElementById('whatsappTestResult');
   var btn = document.getElementById('whatsappTestBtn');
   if (!resultEl || !btn) return;
@@ -348,53 +372,44 @@ function whatsappSendTest() {
     resultEl.innerHTML = '<span style="color:var(--danger)">✗ Please enter a valid phone number (at least 10 digits). Include country code if using international format.</span>';
     return;
   }
+  if (!message) {
+    resultEl.innerHTML = '<span style="color:var(--danger)">✗ Please enter a test message.</span>';
+    return;
+  }
   btn.disabled = true;
-  btn.innerHTML = 'Saving settings...';
+  btn.innerHTML = 'Sending...';
   resultEl.textContent = '';
-  var data = {};
-  data.email = currentUser && currentUser.email || '';
-  collectWhatsAppSettings(data);
-  data.enabled = document.getElementById('whatsappEnabled').checked;
   google.script.run
-    .withSuccessHandler(function(res) {
-      if (!res.success) {
-        btn.disabled = false;
-        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
-        resultEl.innerHTML = '<span style="color:var(--danger)">✗ Failed to save settings: ' + escapeHtml(res.message || 'Unknown error') + '</span>';
-        return;
+    .withSuccessHandler(function(sendRes) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
+      if (sendRes.success) {
+        resultEl.innerHTML = '<span style="color:var(--success)">✓ Test message sent successfully!' +
+          (sendRes.logId ? ' Log ID: ' + escapeHtml(sendRes.logId) : '') +
+          (sendRes.status ? ' Status: ' + escapeHtml(sendRes.status) : '') +
+          '</span>';
+      } else {
+        resultEl.innerHTML = '<span style="color:var(--danger)">✗ Failed: ' + escapeHtml(sendRes.message || 'Unknown error') + '</span>';
       }
-      btn.innerHTML = 'Sending...';
-      google.script.run
-        .withSuccessHandler(function(sendRes) {
-          btn.disabled = false;
-          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
-          if (sendRes.success) {
-            resultEl.innerHTML = '<span style="color:var(--success)">✓ Test message sent successfully!</span>';
-          } else {
-            resultEl.innerHTML = '<span style="color:var(--danger)">✗ Failed: ' + escapeHtml(sendRes.message || 'Unknown error') + '</span>';
-          }
-        })
-        .withFailureHandler(function(err) {
-          btn.disabled = false;
-          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
-          resultEl.innerHTML = '<span style="color:var(--danger)">✗ Error: ' + escapeHtml(err.message) + '</span>';
-        })
-        .whatsappTestSend();
     })
     .withFailureHandler(function(err) {
       btn.disabled = false;
       btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
-      resultEl.innerHTML = '<span style="color:var(--danger)">✗ Error: ' + escapeHtml(err.message) + '</span>';
+      resultEl.innerHTML = '<span style="color:var(--danger)">✗ Error: ' + escapeHtml((err && err.message) || 'Unknown error') + '</span>';
     })
-    .whatsappSaveSettings(data);
+    .whatsappTestSend({ testPhone: phone, testMessage: message, _userEmail: currentUser && currentUser.email || '' });
 }
 
 function onWhatsAppProviderChange() {
-  var prov = document.getElementById('whatsappProvider').value;
+  var provEl = document.getElementById('whatsappProvider');
+  var prov = provEl ? provEl.value : 'meta';
   var endpoint = document.getElementById('whatsappApiEndpoint');
-  if (!endpoint) return;
-  if (prov === 'meta' && !endpoint.value) endpoint.value = 'https://graph.facebook.com/v18.0';
-  else if (prov === 'twilio' && !endpoint.value) endpoint.value = 'https://api.twilio.com/2010-04-01';
+  if (endpoint && !endpoint.value) {
+    if (prov === 'meta') endpoint.value = 'https://graph.facebook.com/v18.0';
+    else if (prov === 'twilio') endpoint.value = 'https://api.twilio.com/2010-04-01';
+  }
+  var label = document.getElementById('whatsappBusinessAccountLabel');
+  if (label) label.textContent = (prov === 'twilio') ? 'Twilio Account SID' : 'Business Account ID (Meta)';
 }
 
 function toggleFieldVisibility(id) {

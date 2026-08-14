@@ -19,13 +19,16 @@
 node tests\verify_whatsapp_regression.mjs
 ```
 
-## What it checks (44 assertions)
+## What it checks (57 assertions)
 
 - `whatsappSaveSettings` / `whatsappTestSend` require `CanManageWhatsApp` at both the
   API dispatcher layer and inside the GAS handler; missing perm -> 403
 - Settings round-trip, defaults seeding, audit + activity logging, apiToken masking
 - Test-send success/failure paths, phone normalization, disabled-module and
-  missing-credentials guards, template substitution
-- UI: page loads with admin session, settings/templates/logs render, toggle + save +
-  test-send payloads (no credentials leaked), provider endpoint switch,
+  missing-credentials guards, config-before-phone precedence, template substitution
+- `whatsappGetSettingsData` gated by `CanManageWhatsApp` (page-data security)
+- Job-status and low-stock WhatsApp hooks send + log end-to-end; graceful when disabled
+- UI: page loads with admin session, settings/templates/logs/stats render, toggle + save +
+  test-send payloads (no credentials leaked, toggle posts only `{enabled}`),
+  disabled banner + test log-id rendering, provider endpoint switch,
   WA-manager access allowed, restricted user redirected, permission checkbox toggling

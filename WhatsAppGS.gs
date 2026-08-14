@@ -346,6 +346,7 @@ function whatsappSendNotification(eventType, data) {
   try {
     var settings = whatsappGetSettings();
     if (!settings.enabled) return { success: false, status: WHATSAPP.STATUS.PENDING, message: 'WhatsApp disabled' };
+    whatsappInitTemplatesSheet();
     var template = whatsappGetTemplateByEvent(eventType);
     if (!template) {
       return { success: false, status: WHATSAPP.STATUS.FAILED, message: 'No template for event: ' + eventType };
@@ -427,14 +428,14 @@ function whatsappTestSend(data) {
     var user = requireUserPermission('CanManageWhatsApp', data);
     var settings = whatsappGetSettings();
     if (!settings.enabled) return { success: false, message: 'WhatsApp is disabled. Enable it in settings first.' };
+    var configIssue = whatsappConfigIssue(settings);
+    if (configIssue) return { success: false, message: configIssue };
     var phone = String((data && (data.testPhone || data.phone)) || settings.testPhone || '').replace(/[^0-9+]/g, '');
     if (!phone || phone.length < 10) {
       return { success: false, message: 'Invalid test phone number. Must be at least 10 digits.' };
     }
     var msg = String((data && (data.testMessage || data.message)) || settings.testMessage || '').trim();
     if (!msg) return { success: false, message: 'Test message cannot be empty.' };
-    var configIssue = whatsappConfigIssue(settings);
-    if (configIssue) return { success: false, message: configIssue };
     var company = settings.companyName || WHATSAPP.DEFAULTS.COMPANY_NAME;
     var fullMsg = '*Test Message from ' + company + '*\n\n' + msg + '\n\nSent: ' + getCurrentTimestamp();
     var sentBy = (user && user.Email) || (data && data._userEmail) || '';
@@ -460,11 +461,77 @@ function whatsappConfigIssue(settings) {
   return '';
 }
 
-function whatsappGetSettingsData() {
+function whatsappGetSettingsData(data) {
+  try {
+    requireUserPermission('CanManageWhatsApp', data);
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
   return {
+    success: true,
     settings: whatsappGetSettings(),
     templates: whatsappGetTemplates(),
     stats: whatsappGetDashboardStats(),
     logs: whatsappGetLogs({ limit: 50 })
   };
+}
+
+function whatsappSendJobStatusNotification(eventType, jobData) {
+  try {
+    if (!jobData) return { success: false, status: WHATSAPP.STATUS.FAILED, message: 'Missing job card data' };
+    var phones = [];
+    if (jobData.phoneNumbers) {
+      var pn = Array.isArray(jobData.phoneNumbers) ? jobData.phoneNumbers : [jobData.phoneNumbers];
+      pn.forEach(function(p) { if (p && phones.indexOf(p) === -1) phones.push(p); });
+    }
+    ['assignedTechEmail', 'complaintByEmail', 'approverEmail', 'reportedByEmail', 'customerEmail'].forEach(function(k) {
+      if (jobData[k]) {
+        var ph = whatsappGetUserPhone(jobData[k]);
+        if (ph && phones.indexOf(ph) === -1) phones.push(ph);
+      }
+    });
+    if (jobData.customerPhone && phones.indexOf(jobData.customerPhone) === -1) phones.push(jobData.customerPhone);
+    var payload = {
+      jobCardNo: jobData.jobCardNo || jobData.id || '',
+      machine: jobData.machine || '',
+      priority: jobData.priority || '',
+      complaint: jobData.complaint || '',
+      reportedBy: jobData.reportedBy || '',
+      dateTime: jobData.dateTime || jobData.startTime || getCurrentTimestamp(),
+      assignedTech: jobData.assignedTech || jobData.assignedTechEmail || '',
+      startedBy: jobData.startedBy || '',
+      startTime: jobData.startTime || '',
+      closedBy: jobData.closedBy || '',
+      workingTime: jobData.workingTime || '',
+      totalDuration: jobData.totalDuration || jobData.downtime || '',
+      approvedBy: jobData.approvedBy || '',
+      approvalStatus: jobData.approvalStatus || '',
+      approvalRemarks: jobData.approvalRemarks || jobData.remarks || '',
+      phoneNumbers: phones,
+      module: 'Jobs'
+    };
+    return whatsappSendNotification(eventType, payload);
+  } catch (e) {
+    return { success: false, status: WHATSAPP.STATUS.FAILED, message: e.message };
+  }
+}
+
+function whatsappSendStockAlertNotification(eventType, partData) {
+  try {
+    if (!partData) return { success: false, status: WHATSAPP.STATUS.FAILED, message: 'Missing part data' };
+    var payload = {
+      partCode: partData.partCode || partData.code || '',
+      partName: partData.partName || partData.name || '',
+      currentStock: partData.currentStock || partData.stock || partData.quantity || 0,
+      minStock: partData.minStock || partData.minimumStock || 0,
+      reorderLevel: partData.reorderLevel || partData.minimumQty || 0,
+      unit: partData.unit || '',
+      storeLocation: partData.storeLocation || partData.location || '',
+      phoneNumbers: whatsappGetStorePhones(),
+      module: 'Inventory'
+    };
+    return whatsappSendNotification(eventType, payload);
+  } catch (e) {
+    return { success: false, status: WHATSAPP.STATUS.FAILED, message: e.message };
+  }
 }

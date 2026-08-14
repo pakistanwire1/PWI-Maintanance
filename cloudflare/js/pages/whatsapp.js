@@ -28,6 +28,9 @@ var WhatsApp = (function() {
             '</div>' +
           '</div>' +
           '<div class="card-body">' +
+            '<div id="whatsappDisabledBanner" style="display:none;background:#fff3cd;color:#856404;border:1px solid #ffeeba;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:13px">' +
+              'WhatsApp is currently disabled. Toggle "Enable WhatsApp" to activate message delivery.' +
+            '</div>' +
             '<div class="whatsapp-grid">' +
               '<div class="form-group">' +
                 '<label>Company Name</label>' +
@@ -58,7 +61,7 @@ var WhatsApp = (function() {
                 '<input type="text" id="whatsappPhoneNumberId" class="form-input" placeholder="Phone number ID">' +
               '</div>' +
               '<div class="form-group">' +
-                '<label>Business Account ID</label>' +
+                '<label id="whatsappBusinessAccountLabel">Business Account ID (Meta)</label>' +
                 '<input type="text" id="whatsappBusinessAccountId" class="form-input" placeholder="Business account ID">' +
               '</div>' +
             '</div>' +
@@ -244,6 +247,17 @@ var WhatsApp = (function() {
     el = document.getElementById('whatsappApiToken'); if (el) el.value = s.apiToken || '';
     el = document.getElementById('whatsappPhoneNumberId'); if (el) el.value = s.phoneNumberId || '';
     el = document.getElementById('whatsappBusinessAccountId'); if (el) el.value = s.businessAccountId || '';
+    el = document.getElementById('whatsappTestPhone'); if (el) el.value = s.testPhone || '';
+    el = document.getElementById('whatsappTestMessage'); if (el) el.value = s.testMessage || '';
+    onProviderChange();
+    setDisabledBanner();
+  }
+
+  function setDisabledBanner() {
+    var banner = document.getElementById('whatsappDisabledBanner');
+    if (!banner) return;
+    var enabled = document.getElementById('whatsappEnabled');
+    banner.style.display = (enabled && enabled.checked) ? 'none' : 'block';
   }
 
   function renderTemplates(templates) {
@@ -274,10 +288,10 @@ var WhatsApp = (function() {
   }
 
   function renderStats(stats) {
-    var el;
-    el = document.getElementById('waStatSent'); if (el) el.textContent = stats.sentToday || '0';
-    el = document.getElementById('waStatFailed'); if (el) el.textContent = stats.failedToday || '0';
-    el = document.getElementById('waStatPending'); if (el) el.textContent = stats.pendingToday || '0';
+    stats = stats || {};
+    var el = document.getElementById('waStatSent'); if (el) el.textContent = stats.sentToday || 0;
+    el = document.getElementById('waStatFailed'); if (el) el.textContent = stats.failedToday || 0;
+    el = document.getElementById('waStatPending'); if (el) el.textContent = stats.pendingToday || 0;
   }
 
   function renderLogs(logs) {
@@ -309,15 +323,12 @@ var WhatsApp = (function() {
 
   function toggleEnabled() {
     var enabled = document.getElementById('whatsappEnabled').checked;
-    collectSettings(function(data) {
-      data.enabled = enabled;
-      API.post('whatsappSaveSettings', data)
-        .then(function(res) {
-          if (res && !res.success) Notify.error(res.message || 'Failed to save');
-          else Notify.success('WhatsApp ' + (enabled ? 'enabled' : 'disabled'));
-        })
-        .catch(function() { Notify.error('Failed to save settings'); });
-    });
+    API.post('whatsappSaveSettings', { enabled: enabled })
+      .then(function(res) {
+        if (res && !res.success) Notify.error(res.message || 'Failed to save');
+        else { Notify.success('WhatsApp ' + (enabled ? 'enabled' : 'disabled')); setDisabledBanner(); }
+      })
+      .catch(function() { Notify.error('Failed to save settings'); });
   }
 
   function saveSettings() {
@@ -327,6 +338,7 @@ var WhatsApp = (function() {
         .then(function(res) {
           if (res && !res.success) { Notify.error(res.message || 'Failed to save'); return; }
           Notify.success('WhatsApp settings saved');
+          setDisabledBanner();
         })
         .catch(function() { Notify.error('Failed to save settings'); });
     });
@@ -374,7 +386,8 @@ var WhatsApp = (function() {
         btn.disabled = false;
         btn.innerHTML = TEST_BTN_HTML;
         if (sendRes && sendRes.success) {
-          resultEl.innerHTML = '<span style="color:var(--success)">Test message sent successfully!</span>';
+          var logInfo = (sendRes.logId ? ' Log ID: ' + Utils.escapeHtml(sendRes.logId) : '') + (sendRes.status ? ' Status: ' + Utils.escapeHtml(sendRes.status) : '');
+          resultEl.innerHTML = '<span style="color:var(--success)">Test message sent successfully!' + logInfo + '</span>';
         } else {
           resultEl.innerHTML = '<span style="color:var(--danger)">Failed: ' + Utils.escapeHtml((sendRes && sendRes.message) || 'Unknown error') + '</span>';
         }
@@ -418,11 +431,15 @@ var WhatsApp = (function() {
   }
 
   function onProviderChange() {
-    var prov = document.getElementById('whatsappProvider').value;
+    var provEl = document.getElementById('whatsappProvider');
+    var prov = provEl ? provEl.value : 'meta';
     var endpoint = document.getElementById('whatsappApiEndpoint');
-    if (!endpoint) return;
-    if (prov === 'meta' && !endpoint.value) endpoint.value = 'https://graph.facebook.com/v18.0';
-    else if (prov === 'twilio' && !endpoint.value) endpoint.value = 'https://api.twilio.com/2010-04-01';
+    if (endpoint && !endpoint.value) {
+      if (prov === 'meta') endpoint.value = 'https://graph.facebook.com/v18.0';
+      else if (prov === 'twilio') endpoint.value = 'https://api.twilio.com/2010-04-01';
+    }
+    var label = document.getElementById('whatsappBusinessAccountLabel');
+    if (label) label.textContent = (prov === 'twilio') ? 'Twilio Account SID' : 'Business Account ID (Meta)';
   }
 
   function toggleTokenVisibility() {

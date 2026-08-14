@@ -421,6 +421,7 @@ function checkAndNotifyLowStock() {
             sendEmailNotification(storeUsers[u].Email, title, message);
           }
         }
+        try { whatsappSendStockAlertNotification(WHATSAPP.TEMPLATES.LOW_STOCK, { partCode: p.PartCode, partName: p.PartName, currentStock: stock, minStock: min, unit: p.Unit || '', storeLocation: p.StoreLocation || p.Location || '' }); } catch(e) {}
         createdCount++;
       }
     }
@@ -550,6 +551,7 @@ function checkAndNotifyMachineBreakdown() {
           sendEmailNotification(admins[a].Email, title, message);
         }
       }
+      try { whatsappSendJobStatusNotification(WHATSAPP.TEMPLATES.JC_STARTED, { jobCardNo: jc.JobCardNo || '', machine: jc.Machine || '', priority: jc.Priority || '', complaint: (jc.ComplaintDescription || '').substring(0, 200), phoneNumbers: whatsappGetAdminPhones(), module: 'Jobs' }); } catch(e) {}
       createdCount++;
     }
     return createdCount;
