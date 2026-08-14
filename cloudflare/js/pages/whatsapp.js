@@ -4,6 +4,7 @@ var WhatsApp = (function() {
   var waLogs = [];
   var waStats = {};
   var waDirtyTemplates = {};
+  var waAuthBlocked = false;
 
   var ICON = {
     help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
@@ -16,7 +17,9 @@ var WhatsApp = (function() {
     eyeOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
     shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
     wa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>',
-    list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>'
+    list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>',
+    refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>'
   };
 
   var TEST_BTN_HTML = ICON.wa + ' Send Test';
@@ -232,14 +235,15 @@ var WhatsApp = (function() {
               '</div>' +
               '<div class="wa-field wa-test-phone">' +
                 '<label for="whatsappTestPhone">Test Phone Number</label>' +
-                '<input type="text" id="whatsappTestPhone" class="wa-input" placeholder="3333655467" spellcheck="false">' +
+                '<input type="text" id="whatsappTestPhone" class="wa-input" placeholder="3333655467" spellcheck="false" autocomplete="off" inputmode="tel">' +
               '</div>' +
               '<div class="wa-field wa-test-msg">' +
                 '<label for="whatsappTestMessage">Test Message</label>' +
-                '<input type="text" id="whatsappTestMessage" class="wa-input" placeholder="Test message from PWI CMMS">' +
+                '<input type="text" id="whatsappTestMessage" class="wa-input" placeholder="Test message from PWI CMMS" autocomplete="off">' +
               '</div>' +
               '<button class="btn btn-primary wa-test-btn" onclick="WhatsApp.sendTest()" id="whatsappTestBtn">' + TEST_BTN_HTML + '</button>' +
             '</div>' +
+            '<div class="wa-test-hint">' + ICON.help + 'Local numbers are normalized with the selected country code (e.g. +92 for Pakistan).</div>' +
             '<div id="whatsappTestResult" class="wa-alert"></div>' +
           '</div>' +
         '</div>' +
@@ -355,6 +359,17 @@ var WhatsApp = (function() {
       '#whatsappPage .wa-alert-success { display:flex; border:1px solid rgba(34,197,94,0.4); background:var(--success-bg); color:var(--success); }' +
       '#whatsappPage .wa-alert-error { display:flex; border:1px solid rgba(239,68,68,0.45); background:var(--danger-bg); color:var(--danger); }' +
       '#whatsappPage .wa-alert-meta { display:block; margin-top:4px; font-size:12px; opacity:0.9; }' +
+      '#whatsappPage .wa-alert-icon { display:flex; flex-shrink:0; margin-top:1px; }' +
+      '#whatsappPage .wa-alert-content { flex:1 1 auto; min-width:0; }' +
+      '#whatsappPage .wa-alert-title { font-weight:600; font-size:13px; margin-bottom:2px; }' +
+      '#whatsappPage .wa-alert-msg { margin-top:2px; }' +
+      '#whatsappPage .wa-alert-sub { margin-top:6px; font-size:12px; opacity:0.9; }' +
+      '#whatsappPage .wa-alert-auth { display:flex; border:1px solid rgba(245,158,11,0.45); background:var(--warning-bg); color:var(--warning); }' +
+      '#whatsappPage .wa-authorize-btn { margin-top:12px; display:inline-flex; align-items:center; gap:6px; }' +
+      '#whatsappPage .wa-alert-details { margin-top:10px; font-size:11px; opacity:0.9; }' +
+      '#whatsappPage .wa-alert-details summary { cursor:pointer; display:inline-flex; align-items:center; gap:4px; }' +
+      '#whatsappPage .wa-alert-details pre { margin:8px 0 0; padding:8px 10px; background:rgba(0,0,0,0.35); border-radius:6px; white-space:pre-wrap; word-break:break-all; color:var(--text-secondary); max-height:140px; overflow:auto; }' +
+      '#whatsappPage .wa-test-hint { margin-top:10px; font-size:11px; color:var(--text-muted); line-height:1.5; display:flex; align-items:center; gap:6px; }' +
       '#whatsappPage .wa-placeholder { text-align:center; padding:20px; color:var(--text-muted); }' +
       '#whatsappPage .wa-legend { display:flex; gap:18px; flex-wrap:wrap; margin-bottom:12px; font-size:12px; color:var(--text-secondary); }' +
       '#whatsappPage .wa-legend strong { color:var(--text); }' +
@@ -453,6 +468,8 @@ var WhatsApp = (function() {
     el = getEl('whatsappTestMessage'); if (el) el.value = s.testMessage || '';
     el = getEl('whatsappTestCountry'); if (el) { el.innerHTML = countryOptions(s.defaultCountryCode); el.value = s.defaultCountryCode || ''; }
     el = getEl('whatsappTestResult'); if (el) { el.className = 'wa-alert'; el.innerHTML = ''; }
+    waAuthBlocked = false;
+    el = getEl('whatsappTestBtn'); if (el) el.disabled = false;
     onProviderChange();
     setDisabledBanner();
     renderIntegrationStatus();
@@ -526,17 +543,151 @@ var WhatsApp = (function() {
     banner.style.display = (enabled && enabled.checked) ? 'none' : 'block';
   }
 
+  function waErrorKind(msg) {
+    msg = String(msg || '');
+    if (/script\.external_request|permission to call|not allowed to call|authorization is required to perform that action/i.test(msg)) {
+      return 'auth';
+    }
+    return 'provider';
+  }
+
+  function waScrubSecrets(msg) {
+    msg = String(msg || '');
+    return msg
+      .replace(/EAAG[A-Za-z0-9]+/g, '[REDACTED]')
+      .replace(/AC[0-9a-fA-F]{24,}/g, '[REDACTED]')
+      .replace(/SK[0-9a-fA-F]{16,}/g, '[REDACTED]')
+      .replace(/AKfyc[a-zA-Z0-9_-]{20,}/g, '[REDACTED]')
+      .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer [REDACTED]')
+      .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]');
+  }
+
   function waFriendlyError(msg) {
     msg = String(msg || '');
-    if (/permission to call|script\.external_request|not authorized|not allowed to call/i.test(msg)) {
-      return 'WhatsApp API connection is not authorized. Please authorize the Apps Script external request permission.';
-    }
+    if (!msg) return 'The WhatsApp API could not be reached. Please try again later.';
     return msg;
   }
 
-  function waShowTestAlert(kind, html) {
+  function waAuthUrl() {
+    return window.location.href;
+  }
+
+  function waRenderAuthBlocked(raw) {
+    waShowTestAlert('auth', {
+      title: 'Connection authorization required',
+      message: 'WhatsApp API is configured, but Apps Script does not have permission to make external API requests.',
+      sub: 'Please authorize the Apps Script external request permission before sending a test message.',
+      action: true,
+      raw: raw
+    });
+  }
+
+  function authorizeConnection() {
+    var btn = getEl('whatsappTestBtn');
+    var authBtn = getEl('waAuthorizeBtn');
+    var phone = getEl('whatsappTestPhone');
+    var message = getEl('whatsappTestMessage');
+    var resultEl = getEl('whatsappTestResult');
+    if (!phone || !message || !resultEl) return;
+
+    if (authBtn) { authBtn.disabled = true; authBtn.innerHTML = ICON.refresh + ' Authorizing...'; }
+
+    function finish() {
+      if (authBtn) {
+        authBtn.disabled = false;
+        authBtn.innerHTML = ICON.lock + ' Authorize Connection';
+      }
+    }
+
+    var pv = phone.value.trim();
+    var mv = message.value.trim();
+    if (!pv || pv.replace(/[^0-9+]/g, '').length < 10 || !mv) {
+      waAuthBlocked = false;
+      if (btn) btn.disabled = false;
+      finish();
+      if (!pv) waShowTestAlert('error', { title: 'Phone number required', message: 'Please enter a test phone number.' });
+      else if (pv.replace(/[^0-9+]/g, '').length < 10) waShowTestAlert('error', { title: 'Invalid phone number', message: 'Enter a valid number with at least 10 digits, e.g. 3333655467 for Pakistan.' });
+      else waShowTestAlert('error', { title: 'Test message required', message: 'Please enter a test message.' });
+      return;
+    }
+
+    API.post('whatsappTestSend', { testPhone: pv, testMessage: mv })
+      .then(function(res) {
+        finish();
+        if (res && res.success) {
+          waAuthBlocked = false;
+          if (btn) btn.disabled = false;
+          var meta = (res.logId ? 'Log ID: ' + esc(res.logId) : '');
+          if (res.status) meta += (meta ? ' &middot; ' : '') + 'Status: ' + esc(res.status);
+          waShowTestAlert('success', { title: 'Test message sent successfully', meta: meta });
+          Notify.success('WhatsApp connection authorized');
+        } else {
+          var errMsg = waScrubSecrets(res && res.message);
+          if (waErrorKind(errMsg) === 'auth') {
+            waAuthBlocked = true;
+            if (btn) btn.disabled = true;
+            waRenderAuthBlocked(errMsg);
+            openAuthPage();
+          } else {
+            waAuthBlocked = false;
+            if (btn) btn.disabled = false;
+            waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg) });
+          }
+        }
+      })
+      .catch(function(err) {
+        finish();
+        var errMsg = waScrubSecrets((err && err.message) || 'Unknown error');
+        if (waErrorKind(errMsg) === 'auth') {
+          waAuthBlocked = true;
+          if (btn) btn.disabled = true;
+          waRenderAuthBlocked(errMsg);
+          openAuthPage();
+        } else {
+          waAuthBlocked = false;
+          if (btn) btn.disabled = false;
+          waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg) });
+        }
+      });
+  }
+
+  function openAuthPage() {
+    var url = waAuthUrl();
+    var w = window.open(url, '_blank', 'noopener');
+    if (w) w.opener = null;
+  }
+
+  function waShowTestAlert(kind, opts) {
     var el = getEl('whatsappTestResult');
     if (!el) return;
+    var o = (opts && typeof opts === 'object') ? opts : { message: String(opts || '') };
+    var html;
+    if (kind === 'success') {
+      html =
+        '<span class="wa-alert-icon">' + ICON.checkCircle + '</span>' +
+        '<div class="wa-alert-content">' +
+          (o.title ? '<div class="wa-alert-title">' + esc(o.title) + '</div>' : '') +
+          (o.message ? '<div class="wa-alert-msg">' + esc(o.message) + '</div>' : '') +
+          (o.meta ? '<div class="wa-alert-meta">' + o.meta + '</div>' : '') +
+        '</div>';
+    } else if (kind === 'auth') {
+      html =
+        '<span class="wa-alert-icon">' + ICON.lock + '</span>' +
+        '<div class="wa-alert-content">' +
+          (o.title ? '<div class="wa-alert-title">' + esc(o.title) + '</div>' : '') +
+          (o.message ? '<div class="wa-alert-msg">' + esc(o.message) + '</div>' : '') +
+          (o.sub ? '<div class="wa-alert-sub">' + esc(o.sub) + '</div>' : '') +
+          '<button type="button" class="btn btn-warning wa-authorize-btn" id="waAuthorizeBtn" onclick="WhatsApp.authorizeConnection()">' + ICON.lock + ' Authorize Connection</button>' +
+          (o.raw ? '<details class="wa-alert-details"><summary>Technical details</summary><pre>' + esc(o.raw) + '</pre></details>' : '') +
+        '</div>';
+    } else {
+      html =
+        '<span class="wa-alert-icon">' + ICON.alert + '</span>' +
+        '<div class="wa-alert-content">' +
+          (o.title ? '<div class="wa-alert-title">' + esc(o.title) + '</div>' : '') +
+          (o.message ? '<div class="wa-alert-msg">' + esc(o.message) + '</div>' : '') +
+        '</div>';
+    }
     el.className = 'wa-alert wa-alert-' + kind;
     el.innerHTML = html;
   }
@@ -648,20 +799,38 @@ var WhatsApp = (function() {
     var resultEl = getEl('whatsappTestResult');
     var btn = getEl('whatsappTestBtn');
     if (!phone || !message || !resultEl || !btn) return;
+
+    if (waAuthBlocked) {
+      waRenderAuthBlocked();
+      return;
+    }
+
     var pv = phone.value.trim();
     var mv = message.value.trim();
+
     if (!pv) {
-      waShowTestAlert('error', esc('Please enter a test phone number.'));
+      waShowTestAlert('error', { title: 'Phone number required', message: 'Please enter a test phone number.' });
       return;
     }
     if (pv.replace(/[^0-9+]/g, '').length < 10) {
-      waShowTestAlert('error', esc('Invalid phone number. Must be at least 10 digits.'));
+      waShowTestAlert('error', { title: 'Invalid phone number', message: 'Enter a valid number with at least 10 digits, e.g. 3333655467 for Pakistan.' });
       return;
     }
     if (!mv) {
-      waShowTestAlert('error', esc('Please enter a test message.'));
+      waShowTestAlert('error', { title: 'Test message required', message: 'Please enter a test message.' });
       return;
     }
+    var enabledEl = getEl('whatsappEnabled');
+    if (enabledEl && !enabledEl.checked) {
+      waShowTestAlert('error', { title: 'WhatsApp is disabled', message: 'Enable WhatsApp in the integration status before sending a test message.' });
+      return;
+    }
+    var issue = configIssue();
+    if (issue) {
+      waShowTestAlert('error', { title: 'Configuration required', message: issue });
+      return;
+    }
+
     btn.disabled = true;
     btn.innerHTML = 'Sending...';
     resultEl.className = 'wa-alert';
@@ -669,20 +838,36 @@ var WhatsApp = (function() {
 
     API.post('whatsappTestSend', { testPhone: pv, testMessage: mv })
       .then(function(sendRes) {
-        btn.disabled = false;
         btn.innerHTML = TEST_BTN_HTML;
         if (sendRes && sendRes.success) {
+          waAuthBlocked = false;
+          btn.disabled = false;
           var meta = (sendRes.logId ? 'Log ID: ' + esc(sendRes.logId) : '');
           if (sendRes.status) meta += (meta ? ' &middot; ' : '') + 'Status: ' + esc(sendRes.status);
-          waShowTestAlert('success', '<strong>Test message sent successfully</strong>' + (meta ? '<span class="wa-alert-meta">' + meta + '</span>' : ''));
+          waShowTestAlert('success', { title: 'Test message sent successfully', meta: meta });
         } else {
-          waShowTestAlert('error', esc(waFriendlyError(sendRes && sendRes.message)));
+          var errMsg = waScrubSecrets(sendRes && sendRes.message);
+          if (waErrorKind(errMsg) === 'auth') {
+            waAuthBlocked = true;
+            btn.disabled = true;
+            waRenderAuthBlocked(errMsg);
+          } else {
+            btn.disabled = false;
+            waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg) });
+          }
         }
       })
       .catch(function(err) {
-        btn.disabled = false;
         btn.innerHTML = TEST_BTN_HTML;
-        waShowTestAlert('error', esc(waFriendlyError((err && err.message) || 'Unknown error')));
+        var errMsg = waScrubSecrets((err && err.message) || 'Unknown error');
+        if (waErrorKind(errMsg) === 'auth') {
+          waAuthBlocked = true;
+          btn.disabled = true;
+          waRenderAuthBlocked(errMsg);
+        } else {
+          btn.disabled = false;
+          waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg) });
+        }
       });
   }
 
@@ -781,6 +966,7 @@ var WhatsApp = (function() {
     toggleEnabled: toggleEnabled,
     saveSettings: saveSettings,
     sendTest: sendTest,
+    authorizeConnection: authorizeConnection,
     toggleTemplate: toggleTemplate,
     markDirty: markDirty,
     saveTemplate: saveTemplate,

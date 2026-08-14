@@ -16437,14 +16437,15 @@ function emailSendDailySummary() {
         </div>
         <div class="wa-field wa-test-phone">
           <label for="whatsappTestPhone">Test Phone Number</label>
-          <input type="text" id="whatsappTestPhone" class="wa-input" placeholder="3333655467" spellcheck="false">
+          <input type="text" id="whatsappTestPhone" class="wa-input" placeholder="3333655467" spellcheck="false" autocomplete="off" inputmode="tel">
         </div>
         <div class="wa-field wa-test-msg">
           <label for="whatsappTestMessage">Test Message</label>
-          <input type="text" id="whatsappTestMessage" class="wa-input" placeholder="Test message from PWI CMMS">
+          <input type="text" id="whatsappTestMessage" class="wa-input" placeholder="Test message from PWI CMMS" autocomplete="off">
         </div>
         <button class="btn btn-primary wa-test-btn" onclick="whatsappSendTest()" id="whatsappTestBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test</button>
       </div>
+      <div class="wa-test-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Local numbers are normalized with the selected country code (e.g. +92 for Pakistan).</div>
       <div id="whatsappTestResult" class="wa-alert"></div>
     </div>
   </div>
@@ -16558,6 +16559,17 @@ function emailSendDailySummary() {
   #whatsappPage .wa-alert-success { display:flex; border:1px solid rgba(34,197,94,0.4); background:var(--success-bg); color:var(--success); }
   #whatsappPage .wa-alert-error { display:flex; border:1px solid rgba(239,68,68,0.45); background:var(--danger-bg); color:var(--danger); }
   #whatsappPage .wa-alert-meta { display:block; margin-top:4px; font-size:12px; opacity:0.9; }
+  #whatsappPage .wa-alert-icon { display:flex; flex-shrink:0; margin-top:1px; }
+  #whatsappPage .wa-alert-content { flex:1 1 auto; min-width:0; }
+  #whatsappPage .wa-alert-title { font-weight:600; font-size:13px; margin-bottom:2px; }
+  #whatsappPage .wa-alert-msg { margin-top:2px; }
+  #whatsappPage .wa-alert-sub { margin-top:6px; font-size:12px; opacity:0.9; }
+  #whatsappPage .wa-alert-auth { display:flex; border:1px solid rgba(245,158,11,0.45); background:var(--warning-bg); color:var(--warning); }
+  #whatsappPage .wa-authorize-btn { margin-top:12px; display:inline-flex; align-items:center; gap:6px; }
+  #whatsappPage .wa-alert-details { margin-top:10px; font-size:11px; opacity:0.9; }
+  #whatsappPage .wa-alert-details summary { cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+  #whatsappPage .wa-alert-details pre { margin:8px 0 0; padding:8px 10px; background:rgba(0,0,0,0.35); border-radius:6px; white-space:pre-wrap; word-break:break-all; color:var(--text-secondary); max-height:140px; overflow:auto; }
+  #whatsappPage .wa-test-hint { margin-top:10px; font-size:11px; color:var(--text-muted); line-height:1.5; display:flex; align-items:center; gap:6px; }
   #whatsappPage .wa-placeholder { text-align:center; padding:20px; color:var(--text-muted); }
   #whatsappPage .wa-legend { display:flex; gap:18px; flex-wrap:wrap; margin-bottom:12px; font-size:12px; color:var(--text-secondary); }
   #whatsappPage .wa-legend strong { color:var(--text); }
@@ -16585,6 +16597,7 @@ function emailSendDailySummary() {
   var gWaLogs = [];
   var gWaStats = {};
   var gWaDirty = {};
+  var waAuthBlocked = false;
 
   var WA_COUNTRY_LIST = [
     { dial: '1', iso: 'US', flag: '\uD83C\uDDFA\uD83C\uDDF8', name: 'United States' },
@@ -16658,7 +16671,12 @@ function emailSendDailySummary() {
   var WA_ICON = {
     eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
-    doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+    doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>',
+    refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>',
+    checkCircle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
   };
 
   function waGet(id) { return document.getElementById(id); }
@@ -16708,6 +16726,8 @@ function emailSendDailySummary() {
     el = waGet('whatsappTestMessage'); if (el) el.value = s.testMessage || '';
     el = waGet('whatsappTestCountry'); if (el) { el.innerHTML = waCountryOptions(s.defaultCountryCode); el.value = s.defaultCountryCode || ''; }
     el = waGet('whatsappTestResult'); if (el) { el.className = 'wa-alert'; el.innerHTML = ''; }
+    waAuthBlocked = false;
+    el = waGet('whatsappTestBtn'); if (el) el.disabled = false;
     onWhatsAppProviderChange();
     setWaDisabledBanner();
     renderWaIntegrationStatus();
@@ -16776,17 +16796,152 @@ function emailSendDailySummary() {
     banner.style.display = (enabled && enabled.checked) ? 'none' : 'block';
   }
 
+  function waErrorKind(msg) {
+    msg = String(msg || '');
+    if (/script\.external_request|permission to call|not allowed to call|authorization is required to perform that action/i.test(msg)) {
+      return 'auth';
+    }
+    return 'provider';
+  }
+
+  function waScrubSecrets(msg) {
+    msg = String(msg || '');
+    return msg
+      .replace(/EAAG[A-Za-z0-9]+/g, '[REDACTED]')
+      .replace(/AC[0-9a-fA-F]{24,}/g, '[REDACTED]')
+      .replace(/SK[0-9a-fA-F]{16,}/g, '[REDACTED]')
+      .replace(/AKfyc[a-zA-Z0-9_-]{20,}/g, '[REDACTED]')
+      .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer [REDACTED]')
+      .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]');
+  }
+
   function waFriendlyError(msg) {
     msg = String(msg || '');
-    if (/permission to call|script\.external_request|not authorized|not allowed to call/i.test(msg)) {
-      return 'WhatsApp API connection is not authorized. Please authorize the Apps Script external request permission.';
-    }
+    if (!msg) return 'The WhatsApp API could not be reached. Please try again later.';
     return msg;
   }
 
-  function waShowTestAlert(kind, html) {
+  function waAuthUrl() {
+    return window.location.href;
+  }
+
+  function waRenderAuthBlocked(raw) {
+    waShowTestAlert('auth', {
+      title: 'Connection authorization required',
+      message: 'WhatsApp API is configured, but Apps Script does not have permission to make external API requests.',
+      sub: 'Please authorize the Apps Script external request permission before sending a test message.',
+      action: true,
+      raw: raw
+    });
+  }
+
+  function waAuthorizeConnection() {
+    var btn = waGet('whatsappTestBtn');
+    var authBtn = waGet('waAuthorizeBtn');
+    var phone = waGet('whatsappTestPhone');
+    var message = waGet('whatsappTestMessage');
+    var resultEl = waGet('whatsappTestResult');
+    if (!phone || !message || !resultEl) return;
+
+    if (authBtn) { authBtn.disabled = true; authBtn.innerHTML = WA_ICON.refresh + ' Authorizing...'; }
+
+    function finish() {
+      if (authBtn) {
+        authBtn.disabled = false;
+        authBtn.innerHTML = WA_ICON.lock + ' Authorize Connection';
+      }
+    }
+
+    var pv = phone.value.trim();
+    var mv = message.value.trim();
+    if (!pv || pv.replace(/[^0-9+]/g, '').length < 10 || !mv) {
+      waAuthBlocked = false;
+      if (btn) btn.disabled = false;
+      finish();
+      if (!pv) waShowTestAlert('error', { title: 'Phone number required', message: 'Please enter a test phone number.' });
+      else if (pv.replace(/[^0-9+]/g, '').length < 10) waShowTestAlert('error', { title: 'Invalid phone number', message: 'Enter a valid number with at least 10 digits, e.g. 3333655467 for Pakistan.' });
+      else waShowTestAlert('error', { title: 'Test message required', message: 'Please enter a test message.' });
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        finish();
+        if (res && res.success) {
+          waAuthBlocked = false;
+          if (btn) btn.disabled = false;
+          var meta = (res.logId ? 'Log ID: ' + waEsc(res.logId) : '');
+          if (res.status) meta += (meta ? ' &middot; ' : '') + 'Status: ' + waEsc(res.status);
+          waShowTestAlert('success', { title: 'Test message sent successfully', meta: meta });
+          showToast('WhatsApp connection authorized', 'success');
+        } else {
+          var errMsg = waScrubSecrets(res && res.message);
+          if (waErrorKind(errMsg) === 'auth') {
+            waAuthBlocked = true;
+            if (btn) btn.disabled = true;
+            waRenderAuthBlocked(errMsg);
+            waOpenAuthPage();
+          } else {
+            waAuthBlocked = false;
+            if (btn) btn.disabled = false;
+            waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg) });
+          }
+        }
+      })
+      .withFailureHandler(function(err) {
+        finish();
+        var errMsg = waScrubSecrets((err && err.message) || 'Unknown error');
+        if (waErrorKind(errMsg) === 'auth') {
+          waAuthBlocked = true;
+          if (btn) btn.disabled = true;
+          waRenderAuthBlocked(errMsg);
+          waOpenAuthPage();
+        } else {
+          waAuthBlocked = false;
+          if (btn) btn.disabled = false;
+          waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg) });
+        }
+      })
+      .whatsappTestSend({ testPhone: pv, testMessage: mv, _userEmail: currentUser ? currentUser.email : '' });
+  }
+
+  function waOpenAuthPage() {
+    var url = waAuthUrl();
+    var w = window.open(url, '_blank', 'noopener');
+    if (w) w.opener = null;
+  }
+
+  function waShowTestAlert(kind, opts) {
     var el = waGet('whatsappTestResult');
     if (!el) return;
+    var o = (opts && typeof opts === 'object') ? opts : { message: String(opts || '') };
+    var html;
+    if (kind === 'success') {
+      html =
+        '<span class="wa-alert-icon">' + WA_ICON.checkCircle + '</span>' +
+        '<div class="wa-alert-content">' +
+          (o.title ? '<div class="wa-alert-title">' + waEsc(o.title) + '</div>' : '') +
+          (o.message ? '<div class="wa-alert-msg">' + waEsc(o.message) + '</div>' : '') +
+          (o.meta ? '<div class="wa-alert-meta">' + o.meta + '</div>' : '') +
+        '</div>';
+    } else if (kind === 'auth') {
+      html =
+        '<span class="wa-alert-icon">' + WA_ICON.lock + '</span>' +
+        '<div class="wa-alert-content">' +
+          (o.title ? '<div class="wa-alert-title">' + waEsc(o.title) + '</div>' : '') +
+          (o.message ? '<div class="wa-alert-msg">' + waEsc(o.message) + '</div>' : '') +
+          (o.sub ? '<div class="wa-alert-sub">' + waEsc(o.sub) + '</div>' : '') +
+          '<button type="button" class="btn btn-warning wa-authorize-btn" id="waAuthorizeBtn" onclick="waAuthorizeConnection()">' + WA_ICON.lock + ' Authorize Connection</button>' +
+          (o.raw ? '<details class="wa-alert-details"><summary>Technical details</summary><pre>' + waEsc(o.raw) + '</pre></details>' : '') +
+        '</div>';
+    } else {
+      html =
+        '<span class="wa-alert-icon">' + WA_ICON.alert + '</span>' +
+        '<div class="wa-alert-content">' +
+          (o.title ? '<div class="wa-alert-title">' + waEsc(o.title) + '</div>' : '') +
+          (o.message ? '<div class="wa-alert-msg">' + waEsc(o.message) + '</div>' : '') +
+        '</div>';
+    }
     el.className = 'wa-alert wa-alert-' + kind;
     el.innerHTML = html;
   }
@@ -16898,31 +17053,74 @@ function emailSendDailySummary() {
     var resultEl = waGet('whatsappTestResult');
     var btn = waGet('whatsappTestBtn');
     if (!phone || !message || !resultEl || !btn) return;
+
+    if (waAuthBlocked) {
+      waRenderAuthBlocked();
+      return;
+    }
+
     var pv = phone.value.trim();
     var mv = message.value.trim();
-    if (!pv) { waShowTestAlert('error', waEsc('Please enter a test phone number.')); return; }
-    if (pv.replace(/[^0-9+]/g, '').length < 10) { waShowTestAlert('error', waEsc('Invalid phone number. Must be at least 10 digits.')); return; }
-    if (!mv) { waShowTestAlert('error', waEsc('Please enter a test message.')); return; }
+
+    if (!pv) {
+      waShowTestAlert('error', { title: 'Phone number required', message: 'Please enter a test phone number.' });
+      return;
+    }
+    if (pv.replace(/[^0-9+]/g, '').length < 10) {
+      waShowTestAlert('error', { title: 'Invalid phone number', message: 'Enter a valid number with at least 10 digits, e.g. 3333655467 for Pakistan.' });
+      return;
+    }
+    if (!mv) {
+      waShowTestAlert('error', { title: 'Test message required', message: 'Please enter a test message.' });
+      return;
+    }
+    var enabledEl = waGet('whatsappEnabled');
+    if (enabledEl && !enabledEl.checked) {
+      waShowTestAlert('error', { title: 'WhatsApp is disabled', message: 'Enable WhatsApp in the integration status before sending a test message.' });
+      return;
+    }
+    var issue = waConfigIssue();
+    if (issue) {
+      waShowTestAlert('error', { title: 'Configuration required', message: issue });
+      return;
+    }
+
     btn.disabled = true;
     btn.textContent = 'Sending...';
     resultEl.className = 'wa-alert';
     resultEl.innerHTML = '';
     google.script.run
       .withSuccessHandler(function(sendRes) {
-        btn.disabled = false;
         btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
         if (sendRes && sendRes.success) {
+          waAuthBlocked = false;
+          btn.disabled = false;
           var meta = (sendRes.logId ? 'Log ID: ' + waEsc(sendRes.logId) : '');
           if (sendRes.status) meta += (meta ? ' &middot; ' : '') + 'Status: ' + waEsc(sendRes.status);
-          waShowTestAlert('success', '<strong>Test message sent successfully</strong>' + (meta ? '<span class="wa-alert-meta">' + meta + '</span>' : ''));
+          waShowTestAlert('success', { title: 'Test message sent successfully', meta: meta });
         } else {
-          waShowTestAlert('error', waEsc(waFriendlyError(sendRes && sendRes.message)));
+          var errMsg = waScrubSecrets(sendRes && sendRes.message);
+          if (waErrorKind(errMsg) === 'auth') {
+            waAuthBlocked = true;
+            btn.disabled = true;
+            waRenderAuthBlocked(errMsg);
+          } else {
+            btn.disabled = false;
+            waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg) });
+          }
         }
       })
       .withFailureHandler(function(err) {
-        btn.disabled = false;
         btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
-        waShowTestAlert('error', waEsc(waFriendlyError((err && err.message) || 'Unknown error')));
+        var errMsg = waScrubSecrets((err && err.message) || 'Unknown error');
+        if (waErrorKind(errMsg) === 'auth') {
+          waAuthBlocked = true;
+          btn.disabled = true;
+          waRenderAuthBlocked(errMsg);
+        } else {
+          btn.disabled = false;
+          waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg) });
+        }
       })
       .whatsappTestSend({ testPhone: pv, testMessage: mv, _userEmail: currentUser ? currentUser.email : '' });
   }
