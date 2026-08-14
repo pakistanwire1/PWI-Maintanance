@@ -795,7 +795,7 @@
       if (typeof WhatsApp !== 'undefined' && WhatsApp.show) WhatsApp.show(content);
       else content.innerHTML = '<div class="settings-card"><div class="settings-card-body">WhatsApp module is not available.</div></div>';
     } else {
-      if (typeof Email !== 'undefined' && Email.show) Email.show(content);
+      if (typeof EmailSettings !== 'undefined' && EmailSettings.show) EmailSettings.show(content);
       else content.innerHTML = '<div class="settings-card"><div class="settings-card-body">Email module is not available.</div></div>';
     }
   }

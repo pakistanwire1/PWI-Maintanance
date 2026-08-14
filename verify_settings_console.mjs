@@ -367,15 +367,15 @@ async function run() {
   await inPage(function() { Settings.gotoSection('emailwhatsapp'); });
   await sleep(1000);
   res = await inPage(function() {
-    return { ewLen: document.getElementById('ewContent').innerHTML.length, emailActive: document.getElementById('tab-email').classList.contains('active') };
+    return { ewLen: document.getElementById('ewContent').innerHTML.length, emailActive: document.getElementById('tab-email').classList.contains('active'), emailPage: !!document.querySelector('#ewContent #emailPage') };
   });
-  check('8a. Email tab renders', res.ewLen > 100 && res.emailActive, '');
+  check('8a. Email tab renders', res.ewLen > 100 && res.emailActive && res.emailPage, '');
   await inPage(function() { Settings.showEWTab('whatsapp'); });
   await sleep(1000);
   res = await inPage(function() {
-    return { ewLen: document.getElementById('ewContent').innerHTML.length, waActive: document.getElementById('tab-whatsapp').classList.contains('active') };
+    return { ewLen: document.getElementById('ewContent').innerHTML.length, waActive: document.getElementById('tab-whatsapp').classList.contains('active'), waPage: !!document.querySelector('#ewContent [id*="whatsapp" i], #ewContent #whatsappPage') };
   });
-  check('8b. WhatsApp tab renders', res.ewLen > 100 && res.waActive, '');
+  check('8b. WhatsApp tab renders', res.ewLen > 100 && res.waActive && res.waPage, '');
 
   await inPage(function() { Settings.gotoSection('backup'); });
   await sleep(1000);
