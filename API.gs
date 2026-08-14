@@ -323,8 +323,9 @@ var API_ROUTES = {
   'whatsappGetTemplates':  { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappGetTemplates(); } },
   'whatsappSaveTemplate':  { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappSaveTemplate(d); } },
   'whatsappGetLogs':       { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappGetLogs(d.filters); } },
-  'whatsappGetPanelData':  { auth: true,  handler: function(d) { return whatsappGetPanelData(); } },
-  'whatsappTestSend':      { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappTestSend(d); } },
+'whatsappGetPanelData':  { auth: true,  handler: function(d) { return whatsappGetPanelData(); } },
+'whatsappAuthProbe':     { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappAuthProbe(d); } },
+'whatsappTestSend':      { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappTestSend(d); } },
 
   /* ---- Backup ---- */
   'getBackupHistory':      { auth: true, perm: 'CanBackupRestore', handler: function(d) { return getBackupHistory(); } },

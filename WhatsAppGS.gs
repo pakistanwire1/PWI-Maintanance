@@ -447,10 +447,18 @@ function whatsappTestSend(data) {
   }
 }
 
+function whatsappMetaIdValid(v) {
+  v = String(v || '').trim();
+  return /^\d+$/.test(v) && v.length >= 14 && v.length <= 20;
+}
+
 function whatsappConfigIssue(settings) {
   if (settings.provider === 'meta') {
     if (!settings.apiToken) return 'Meta API token is not configured.';
     if (!settings.phoneNumberId) return 'Meta Phone Number ID is not configured.';
+    if (!whatsappMetaIdValid(settings.phoneNumberId)) return 'Meta Phone Number ID looks invalid. It must be the numeric ID from Meta (e.g. 106540352242922), not the phone number.';
+    if (!settings.businessAccountId) return 'Meta Business Account ID is not configured.';
+    if (!whatsappMetaIdValid(settings.businessAccountId)) return 'Meta Business Account ID looks invalid. It must be the numeric WhatsApp Business Account ID (e.g. 375420581369195).';
   } else if (settings.provider === 'twilio') {
     if (!settings.apiToken) return 'Twilio API token is not configured.';
     if (!settings.businessAccountId) return 'Twilio Account SID is not configured.';
@@ -459,6 +467,25 @@ function whatsappConfigIssue(settings) {
     return 'Unknown WhatsApp provider: ' + settings.provider;
   }
   return '';
+}
+
+function whatsappAuthProbe(data) {
+  try {
+    requireUserPermission('CanManageWhatsApp', data);
+    var settings = whatsappGetSettings();
+    var r = authorizeExternalRequest();
+    var status = r.success
+      ? 'External API access is authorized.'
+      : (r.message || ('External API request failed with status ' + r.code + '. Apps Script does not have the required external request (script.external_request) permission.'));
+    return {
+      success: !!r.success,
+      code: r.code,
+      provider: settings.provider,
+      message: status
+    };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
 }
 
 function whatsappGetSettingsData(data) {

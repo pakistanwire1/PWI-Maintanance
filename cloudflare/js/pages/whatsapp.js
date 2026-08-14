@@ -366,6 +366,7 @@ var WhatsApp = (function() {
       '#whatsappPage .wa-alert-sub { margin-top:6px; font-size:12px; opacity:0.9; }' +
       '#whatsappPage .wa-alert-auth { display:flex; border:1px solid rgba(245,158,11,0.45); background:var(--warning-bg); color:var(--warning); }' +
       '#whatsappPage .wa-authorize-btn { margin-top:12px; display:inline-flex; align-items:center; gap:6px; }' +
+      '#whatsappPage .wa-alert-actions { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }' +
       '#whatsappPage .wa-alert-details { margin-top:10px; font-size:11px; opacity:0.9; }' +
       '#whatsappPage .wa-alert-details summary { cursor:pointer; display:inline-flex; align-items:center; gap:4px; }' +
       '#whatsappPage .wa-alert-details pre { margin:8px 0 0; padding:8px 10px; background:rgba(0,0,0,0.35); border-radius:6px; white-space:pre-wrap; word-break:break-all; color:var(--text-secondary); max-height:140px; overflow:auto; }' +
@@ -485,6 +486,11 @@ var WhatsApp = (function() {
     return el ? el.value : 'meta';
   }
 
+  function waMetaIdValid(v) {
+    v = String(v || '').trim();
+    return /^\d+$/.test(v) && v.length >= 14 && v.length <= 20;
+  }
+
   function configIssue() {
     var p = currentProvider();
     var token = getEl('whatsappApiToken') ? getEl('whatsappApiToken').value : '';
@@ -493,6 +499,9 @@ var WhatsApp = (function() {
     if (p === 'meta') {
       if (!token) return 'Meta API token is not configured.';
       if (!phoneId) return 'Meta Phone Number ID is not configured.';
+      if (!waMetaIdValid(phoneId)) return 'Meta Phone Number ID looks invalid. It must be the numeric ID from Meta (e.g. 106540352242922), not the phone number.';
+      if (!bizId) return 'Meta Business Account ID is not configured.';
+      if (!waMetaIdValid(bizId)) return 'Meta Business Account ID looks invalid. It must be the numeric WhatsApp Business Account ID (e.g. 375420581369195).';
     } else if (p === 'twilio') {
       if (!token) return 'Twilio API token is not configured.';
       if (!bizId) return 'Twilio Account SID is not configured.';
@@ -544,11 +553,25 @@ var WhatsApp = (function() {
   }
 
   function waErrorKind(msg) {
+    var st = waErrorState(msg);
+    if (st === 'AUTHORIZATION_REQUIRED') return 'auth';
+    if (st === 'WHATSAPP_DISABLED') return 'disabled';
+    return 'provider';
+  }
+
+  function waErrorState(msg) {
     msg = String(msg || '');
     if (/script\.external_request|permission to call|not allowed to call|authorization is required to perform that action/i.test(msg)) {
-      return 'auth';
+      return 'AUTHORIZATION_REQUIRED';
     }
-    return 'provider';
+    if (/business account id looks invalid/i.test(msg)) return 'BUSINESS_ACCOUNT_ID_INVALID';
+    if (/phone number id looks invalid/i.test(msg)) return 'PHONE_NUMBER_ID_INVALID';
+    if (/not configured/i.test(msg)) return 'CONFIGURATION_REQUIRED';
+    if (/token/i.test(msg)) return 'TOKEN_MISSING';
+    if (/phone|number/i.test(msg)) return 'PHONE_INVALID';
+    if (/disabled/i.test(msg)) return 'WHATSAPP_DISABLED';
+    if (/success/i.test(msg)) return 'SUCCESS';
+    return 'PROVIDER_ERROR';
   }
 
   function waScrubSecrets(msg) {
@@ -563,91 +586,71 @@ var WhatsApp = (function() {
   }
 
   function waFriendlyError(msg) {
-    msg = String(msg || '');
-    if (!msg) return 'The WhatsApp API could not be reached. Please try again later.';
-    return msg;
+    var st = waErrorState(msg);
+    if (st === 'AUTHORIZATION_REQUIRED') {
+      return 'Apps Script does not have permission to make external API requests. Open the Apps Script editor and run any function to complete the authorization prompt, then use "Re-check Authorization".';
+    }
+    if (st === 'PHONE_NUMBER_ID_INVALID') {
+      return 'The Phone Number ID is not a valid Meta ID. It must be the numeric Phone Number ID from your Meta Business app (e.g. 106540352242922), not the phone number itself.';
+    }
+    if (st === 'BUSINESS_ACCOUNT_ID_INVALID') {
+      return 'The Business Account ID is not a valid Meta ID. It must be the numeric WhatsApp Business Account ID (e.g. 375420581369195).';
+    }
+    if (st === 'TOKEN_MISSING') {
+      return 'The API token is missing. Add your API token in the API Configuration section and save before sending.';
+    }
+    if (st === 'CONFIGURATION_REQUIRED') {
+      return msg || 'The WhatsApp provider configuration is incomplete.';
+    }
+    if (st === 'PHONE_INVALID') {
+      return 'The test phone number is invalid. Enter a valid number with at least 10 digits, e.g. 3333655467 for Pakistan.';
+    }
+    if (st === 'WHATSAPP_DISABLED') {
+      return 'WhatsApp is disabled. Enable it in the integration status before sending a test message.';
+    }
+    return String(msg || '').trim() || 'The WhatsApp API could not be reached. Please try again later.';
   }
 
+  var WA_SCRIPT_ID = '11sM4FFLZXVR5-P_tsK61yf8xbX81wTwbfdzTUK_OKfTrTmqnuOrTfyTo';
+
   function waAuthUrl() {
-    return window.location.href;
+    return 'https://script.google.com/home/projects/' + WA_SCRIPT_ID + '/edit';
   }
 
   function waRenderAuthBlocked(raw) {
     waShowTestAlert('auth', {
       title: 'Connection authorization required',
-      message: 'WhatsApp API is configured, but Apps Script does not have permission to make external API requests.',
-      sub: 'Please authorize the Apps Script external request permission before sending a test message.',
-      action: true,
+      message: 'WhatsApp API is configured, but Apps Script does not have permission to make external API requests yet.',
+      sub: 'Open the Apps Script editor, run any function to complete the authorization prompt (granting the script.external_request permission), then re-check authorization. The first production test will not be sent until authorization is confirmed.',
       raw: raw
     });
   }
 
   function authorizeConnection() {
-    var btn = getEl('whatsappTestBtn');
-    var authBtn = getEl('waAuthorizeBtn');
-    var phone = getEl('whatsappTestPhone');
-    var message = getEl('whatsappTestMessage');
-    var resultEl = getEl('whatsappTestResult');
-    if (!phone || !message || !resultEl) return;
+    waAuthBlocked = true;
+    waRenderAuthBlocked('');
+  }
 
-    if (authBtn) { authBtn.disabled = true; authBtn.innerHTML = ICON.refresh + ' Authorizing...'; }
-
-    function finish() {
-      if (authBtn) {
-        authBtn.disabled = false;
-        authBtn.innerHTML = ICON.lock + ' Authorize Connection';
-      }
-    }
-
-    var pv = phone.value.trim();
-    var mv = message.value.trim();
-    if (!pv || pv.replace(/[^0-9+]/g, '').length < 10 || !mv) {
-      waAuthBlocked = false;
-      if (btn) btn.disabled = false;
-      finish();
-      if (!pv) waShowTestAlert('error', { title: 'Phone number required', message: 'Please enter a test phone number.' });
-      else if (pv.replace(/[^0-9+]/g, '').length < 10) waShowTestAlert('error', { title: 'Invalid phone number', message: 'Enter a valid number with at least 10 digits, e.g. 3333655467 for Pakistan.' });
-      else waShowTestAlert('error', { title: 'Test message required', message: 'Please enter a test message.' });
-      return;
-    }
-
-    API.post('whatsappTestSend', { testPhone: pv, testMessage: mv })
+  function recheckAuth() {
+    var authBtn = getEl('waRecheckAuthBtn');
+    if (authBtn) { authBtn.disabled = true; authBtn.innerHTML = ICON.refresh + ' Checking...'; }
+    API.post('whatsappAuthProbe', {})
       .then(function(res) {
-        finish();
+        if (authBtn) { authBtn.disabled = false; authBtn.innerHTML = ICON.refresh + ' Re-check Authorization'; }
         if (res && res.success) {
           waAuthBlocked = false;
+          var btn = getEl('whatsappTestBtn');
           if (btn) btn.disabled = false;
-          var meta = (res.logId ? 'Log ID: ' + esc(res.logId) : '');
-          if (res.status) meta += (meta ? ' &middot; ' : '') + 'Status: ' + esc(res.status);
-          waShowTestAlert('success', { title: 'Test message sent successfully', meta: meta });
-          Notify.success('WhatsApp connection authorized');
+          waShowTestAlert('success', { title: 'Authorization confirmed', message: 'Apps Script has permission to make external API requests. You can now send a test message.' });
         } else {
-          var errMsg = waScrubSecrets(res && res.message);
-          if (waErrorKind(errMsg) === 'auth') {
-            waAuthBlocked = true;
-            if (btn) btn.disabled = true;
-            waRenderAuthBlocked(errMsg);
-            openAuthPage();
-          } else {
-            waAuthBlocked = false;
-            if (btn) btn.disabled = false;
-            waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg) });
-          }
+          waAuthBlocked = true;
+          waRenderAuthBlocked(waScrubSecrets(res && res.message));
         }
       })
       .catch(function(err) {
-        finish();
-        var errMsg = waScrubSecrets((err && err.message) || 'Unknown error');
-        if (waErrorKind(errMsg) === 'auth') {
-          waAuthBlocked = true;
-          if (btn) btn.disabled = true;
-          waRenderAuthBlocked(errMsg);
-          openAuthPage();
-        } else {
-          waAuthBlocked = false;
-          if (btn) btn.disabled = false;
-          waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg) });
-        }
+        if (authBtn) { authBtn.disabled = false; authBtn.innerHTML = ICON.refresh + ' Re-check Authorization'; }
+        waAuthBlocked = true;
+        waRenderAuthBlocked(waScrubSecrets((err && err.message) || 'Unknown error'));
       });
   }
 
@@ -677,7 +680,10 @@ var WhatsApp = (function() {
           (o.title ? '<div class="wa-alert-title">' + esc(o.title) + '</div>' : '') +
           (o.message ? '<div class="wa-alert-msg">' + esc(o.message) + '</div>' : '') +
           (o.sub ? '<div class="wa-alert-sub">' + esc(o.sub) + '</div>' : '') +
-          '<button type="button" class="btn btn-warning wa-authorize-btn" id="waAuthorizeBtn" onclick="WhatsApp.authorizeConnection()">' + ICON.lock + ' Authorize Connection</button>' +
+          '<div class="wa-alert-actions">' +
+            '<button type="button" class="btn btn-warning wa-authorize-btn" onclick="WhatsApp.openAuthPage()">' + ICON.doc + ' Open Apps Script Editor</button>' +
+            '<button type="button" class="btn btn-secondary wa-authorize-btn" id="waRecheckAuthBtn" onclick="WhatsApp.recheckAuth()">' + ICON.refresh + ' Re-check Authorization</button>' +
+          '</div>' +
           (o.raw ? '<details class="wa-alert-details"><summary>Technical details</summary><pre>' + esc(o.raw) + '</pre></details>' : '') +
         '</div>';
     } else {
@@ -686,6 +692,7 @@ var WhatsApp = (function() {
         '<div class="wa-alert-content">' +
           (o.title ? '<div class="wa-alert-title">' + esc(o.title) + '</div>' : '') +
           (o.message ? '<div class="wa-alert-msg">' + esc(o.message) + '</div>' : '') +
+          (o.raw ? '<details class="wa-alert-details"><summary>Technical details</summary><pre>' + esc(o.raw) + '</pre></details>' : '') +
         '</div>';
     }
     el.className = 'wa-alert wa-alert-' + kind;
@@ -767,7 +774,24 @@ var WhatsApp = (function() {
       .catch(function() { Notify.error('Failed to save settings'); });
   }
 
+  function waConfigHardErrors() {
+    var p = currentProvider();
+    var phoneId = getEl('whatsappPhoneNumberId') ? getEl('whatsappPhoneNumberId').value.trim() : '';
+    var bizId = getEl('whatsappBusinessAccountId') ? getEl('whatsappBusinessAccountId').value.trim() : '';
+    if (p === 'meta') {
+      if (phoneId && !waMetaIdValid(phoneId)) return 'Phone Number ID looks invalid: it must be the numeric Meta ID (e.g. 106540352242922), not the phone number.';
+      if (bizId && !waMetaIdValid(bizId)) return 'Business Account ID looks invalid: it must be the numeric WhatsApp Business Account ID (e.g. 375420581369195).';
+    }
+    return '';
+  }
+
   function saveSettings() {
+    var hard = waConfigHardErrors();
+    if (hard) {
+      Notify.error(hard);
+      waShowTestAlert('error', { title: 'Invalid configuration', message: hard });
+      return;
+    }
     collectSettings(function(data) {
       data.enabled = getEl('whatsappEnabled').checked;
       API.post('whatsappSaveSettings', data)
@@ -827,47 +851,66 @@ var WhatsApp = (function() {
     }
     var issue = configIssue();
     if (issue) {
-      waShowTestAlert('error', { title: 'Configuration required', message: issue });
+      waShowTestAlert('error', { title: 'Configuration required', message: waFriendlyError(issue) });
       return;
     }
 
     btn.disabled = true;
-    btn.innerHTML = 'Sending...';
+    btn.innerHTML = 'Checking authorization...';
     resultEl.className = 'wa-alert';
     resultEl.innerHTML = '';
 
-    API.post('whatsappTestSend', { testPhone: pv, testMessage: mv })
-      .then(function(sendRes) {
-        btn.innerHTML = TEST_BTN_HTML;
-        if (sendRes && sendRes.success) {
-          waAuthBlocked = false;
+    API.post('whatsappAuthProbe', {})
+      .then(function(probeRes) {
+        if (!probeRes || !probeRes.success) {
+          btn.innerHTML = TEST_BTN_HTML;
           btn.disabled = false;
-          var meta = (sendRes.logId ? 'Log ID: ' + esc(sendRes.logId) : '');
-          if (sendRes.status) meta += (meta ? ' &middot; ' : '') + 'Status: ' + esc(sendRes.status);
-          waShowTestAlert('success', { title: 'Test message sent successfully', meta: meta });
-        } else {
-          var errMsg = waScrubSecrets(sendRes && sendRes.message);
-          if (waErrorKind(errMsg) === 'auth') {
-            waAuthBlocked = true;
-            btn.disabled = true;
-            waRenderAuthBlocked(errMsg);
-          } else {
-            btn.disabled = false;
-            waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg) });
-          }
+          waAuthBlocked = true;
+          waRenderAuthBlocked(waScrubSecrets(probeRes && probeRes.message));
+          return;
         }
+        waAuthBlocked = false;
+        btn.innerHTML = 'Sending...';
+
+        API.post('whatsappTestSend', { testPhone: pv, testMessage: mv })
+          .then(function(sendRes) {
+            btn.innerHTML = TEST_BTN_HTML;
+            if (sendRes && sendRes.success) {
+              waAuthBlocked = false;
+              btn.disabled = false;
+              var meta = (sendRes.logId ? 'Log ID: ' + esc(sendRes.logId) : '');
+              if (sendRes.status) meta += (meta ? ' &middot; ' : '') + 'Status: ' + esc(sendRes.status);
+              waShowTestAlert('success', { title: 'Test message sent successfully', meta: meta });
+            } else {
+              var errMsg = waScrubSecrets(sendRes && sendRes.message);
+              if (waErrorKind(errMsg) === 'auth') {
+                waAuthBlocked = true;
+                btn.disabled = true;
+                waRenderAuthBlocked(errMsg);
+              } else {
+                btn.disabled = false;
+                waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg), raw: errMsg });
+              }
+            }
+          })
+          .catch(function(err) {
+            btn.innerHTML = TEST_BTN_HTML;
+            var errMsg = waScrubSecrets((err && err.message) || 'Unknown error');
+            if (waErrorKind(errMsg) === 'auth') {
+              waAuthBlocked = true;
+              btn.disabled = true;
+              waRenderAuthBlocked(errMsg);
+            } else {
+              btn.disabled = false;
+              waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg), raw: errMsg });
+            }
+          });
       })
       .catch(function(err) {
         btn.innerHTML = TEST_BTN_HTML;
-        var errMsg = waScrubSecrets((err && err.message) || 'Unknown error');
-        if (waErrorKind(errMsg) === 'auth') {
-          waAuthBlocked = true;
-          btn.disabled = true;
-          waRenderAuthBlocked(errMsg);
-        } else {
-          btn.disabled = false;
-          waShowTestAlert('error', { title: 'Connection failed', message: waFriendlyError(errMsg) });
-        }
+        btn.disabled = false;
+        waAuthBlocked = true;
+        waRenderAuthBlocked(waScrubSecrets((err && err.message) || 'Unknown error'));
       });
   }
 
@@ -926,8 +969,8 @@ var WhatsApp = (function() {
     } else {
       if (helpers.endpoint) helpers.endpoint.textContent = 'Meta Graph API endpoint URL';
       if (helpers.token) helpers.token.textContent = 'Your Meta Access Token is stored securely.';
-      if (helpers.phone) helpers.phone.textContent = 'WhatsApp Business Phone Number ID';
-      if (helpers.biz) helpers.biz.textContent = 'WhatsApp Business Account ID';
+      if (helpers.phone) helpers.phone.textContent = 'WhatsApp Business Phone Number ID (numeric, e.g. 106540352242922)';
+      if (helpers.biz) helpers.biz.textContent = 'WhatsApp Business Account ID (numeric, e.g. 375420581369195)';
     }
     var docsBtn = getEl('waDocsBtn');
     if (docsBtn) {
@@ -967,6 +1010,8 @@ var WhatsApp = (function() {
     saveSettings: saveSettings,
     sendTest: sendTest,
     authorizeConnection: authorizeConnection,
+    recheckAuth: recheckAuth,
+    openAuthPage: openAuthPage,
     toggleTemplate: toggleTemplate,
     markDirty: markDirty,
     saveTemplate: saveTemplate,

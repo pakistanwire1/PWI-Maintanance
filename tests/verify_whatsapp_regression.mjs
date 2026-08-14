@@ -21,6 +21,7 @@ const check = (name, pass, detail) => {
   const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
   const api = read('API.gs');
   const waGs = read('WhatsAppGS.gs');
+  const authProbe = read('AuthProbeGS.gs');
   const session = read('cloudflare/js/core/session.js');
   const settings = read('cloudflare/js/pages/settings.js');
   const waJs = read('cloudflare/js/pages/whatsapp.js');
@@ -34,6 +35,23 @@ const check = (name, pass, detail) => {
   check('A5. whatsappTestSend re-checks permission inside handler', waGs.indexOf("requireUserPermission('CanManageWhatsApp', data)") !== -1);
   check('A6. Router maps whatsapp page -> manageWhatsApp permission', session.indexOf("whatsapp: 'manageWhatsApp'") !== -1);
   check('A7. Settings section requires email/whatsapp perms', settings.indexOf("id: 'emailwhatsapp'") !== -1 && settings.indexOf("['manageEmail', 'manageWhatsApp']") !== -1);
+
+  check('H1. whatsappAuthProbe route exists and requires CanManageWhatsApp', /'whatsappAuthProbe':\s*\{\s*auth:\s*true,\s*perm:\s*'CanManageWhatsApp'/.test(api));
+  check('H2. whatsappAuthProbe backend fn exists (perm-gated)', waGs.indexOf('function whatsappAuthProbe(data)') !== -1 && waGs.indexOf("requireUserPermission('CanManageWhatsApp', data)") !== -1);
+  check('H3. AuthProbeGS.gs probes googleapis discovery endpoint (no Meta creds)', authProbe.indexOf('https://www.googleapis.com/discovery/v1/apis') !== -1 && authProbe.indexOf('muteHttpExceptions: true') !== -1 && authProbe.indexOf('EAAG') === -1 && authProbe.indexOf('graph.facebook') === -1);
+  check('H4. authorizeConnection does NOT send a WhatsApp message', (function() {
+    const seg = (waJs.split('function authorizeConnection()')[1] || '').split('function recheckAuth()')[0];
+    return seg.indexOf('whatsappTestSend') === -1 && seg.indexOf('API.post') === -1;
+  })());
+  check('H5. waAuthUrl points to the Apps Script editor', waJs.indexOf("waAuthUrl") !== -1 && waJs.indexOf('script.google.com/home/projects/') !== -1);
+  check('H6. sendTest gates on whatsappAuthProbe before whatsappTestSend', (function() {
+    const body = waJs.split('function sendTest()')[1].split('function toggleTemplate')[0];
+    return body.indexOf("API.post('whatsappAuthProbe'") !== -1 && body.indexOf("API.post('whatsappTestSend'") !== -1;
+  })());
+  check('H7. saveSettings blocks obviously invalid Meta IDs before posting', waJs.indexOf('function waConfigHardErrors()') !== -1 && waJs.split('function saveSettings()')[1].indexOf('waConfigHardErrors') !== -1);
+  check('H8. Meta Phone Number ID validated as numeric in configIssue', waJs.indexOf('waMetaIdValid') !== -1 && waJs.indexOf('Phone Number ID looks invalid') !== -1);
+  check('H9. Meta Business Account ID validated as numeric in configIssue', waJs.indexOf('Business Account ID looks invalid') !== -1);
+
 
   const afterSendTest = waJs.split('function sendTest()')[1] || '';
   const sendTestBody = afterSendTest.split('function toggleTemplate')[0] || afterSendTest;
@@ -65,6 +83,15 @@ var __auditLog = [];
 var __providerCalls = [];
 var __providerMode = 'ok';
 var __activeUser = { Email: 'admin@cmms.com', Role: 'Administrator', IsAdmin: true };
+var __probeMode = 'ok';
+
+var UrlFetchApp = {
+  fetch: function(url, opts) {
+    if (__probeMode === 'fail') throw new Error('Permission denied: authorization is required to perform that action.');
+    if (String(url).indexOf('discovery/v1/apis') === -1) return { getResponseCode: function() { return 404; } };
+    return { getResponseCode: function() { return 200; } };
+  }
+};
 
 function getSetting(k) {
   if (!Object.prototype.hasOwnProperty.call(__settings, k)) return null;
@@ -170,9 +197,9 @@ var b1 = whatsappGetSettings();
 __ok('B1. Defaults: disabled, meta provider, default company', b1.enabled === false && b1.provider === 'meta' && b1.companyName === 'PWI CMMS', JSON.stringify(b1));
 
 /* B2 save settings (admin) */
-var s2 = whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: 'pid_1', businessAccountId: 'ba_1', companyName: 'PWI CMMS', defaultCountryCode: '92', apiEndpoint: 'https://graph.facebook.com/v18.0', testPhone: '3001234567', testMessage: 'Hello', _userEmail: 'admin@cmms.com' });
+var s2 = whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: '106540352242922', businessAccountId: '123456789012345', companyName: 'PWI CMMS', defaultCountryCode: '92', apiEndpoint: 'https://graph.facebook.com/v18.0', testPhone: '3001234567', testMessage: 'Hello', _userEmail: 'admin@cmms.com' });
 var b2 = whatsappGetSettings();
-__ok('B2. Admin can save settings; stored token round-trips', s2.success === true && b2.enabled === true && b2.apiToken === 'tok_abc' && b2.phoneNumberId === 'pid_1', JSON.stringify(b2));
+__ok('B2. Admin can save settings; stored token round-trips', s2.success === true && b2.enabled === true && b2.apiToken === 'tok_abc' && b2.phoneNumberId === '106540352242922', JSON.stringify(b2));
 
 /* B3 activity log masks token */
 var act3 = __activityLog[__activityLog.length - 1];
@@ -206,7 +233,7 @@ var r9 = whatsappTestSend({ testPhone: '03001234567', testMessage: 'x', _userEma
 __ok('B9. Missing Meta credentials blocked before send', r9.success === false && r9.message.indexOf('Meta API token is not configured') > -1, r9.message);
 
 /* B10 provider failure path */
-whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: 'pid_1', _userEmail: 'admin@cmms.com' });
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: '106540352242922', _userEmail: 'admin@cmms.com' });
 __providerMode = 'fail';
 var r10 = whatsappTestSend({ testPhone: '03001234567', testMessage: 'x', _userEmail: 'wa@cmms.com' });
 __providerMode = 'ok';
@@ -224,7 +251,7 @@ var en12b = whatsappGetSettings().enabled;
 __ok('B12. User without CanManageWhatsApp cannot save settings', s12.success === false && en12a === en12b && en12b === true, JSON.stringify({ s: s12, enabledBefore: en12a, enabledAfter: en12b }));
 
 /* B13 admin bypass */
-var s13 = whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: 'pid_1', _userEmail: 'admin@cmms.com' });
+var s13 = whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: '106540352242922', _userEmail: 'admin@cmms.com' });
 __ok('B13. Admin can always save settings', s13.success === true, JSON.stringify(s13));
 
 /* B14 template format + save */
@@ -246,7 +273,7 @@ var b17 = whatsappGetSettings();
 __ok('B17. Missing defaults seeded correctly', b17.enabled === false && b17.apiToken === '' && b17.testMessage === 'Test message from PWI CMMS' && b17.defaultCountryCode === '91', JSON.stringify(b17));
 
 /* B18 00-prefix phone not double-prefixed */
-whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: 'pid_1', _userEmail: 'admin@cmms.com' });
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: '106540352242922', businessAccountId: '123456789012345', _userEmail: 'admin@cmms.com' });
 __providerCalls = [];
 var r18 = whatsappTestSend({ testPhone: '00923001234567', testMessage: 'x', _userEmail: 'wa@cmms.com' });
 var pc18 = __providerCalls[__providerCalls.length - 1];
@@ -271,7 +298,7 @@ __ok('B21. whatsappGetSettingsData gated by CanManageWhatsApp', d21a.success ===
 /* B22 job status hook end-to-end */
 __sheets[WHATSAPP.TEMPLATES_SHEET] = [];
 whatsappInitTemplatesSheet();
-whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: 'pid_1', defaultCountryCode: '92', _userEmail: 'admin@cmms.com' });
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: '106540352242922', defaultCountryCode: '92', _userEmail: 'admin@cmms.com' });
 __providerCalls = [];
 var j22 = whatsappSendJobStatusNotification(WHATSAPP.TEMPLATES.JC_STARTED, { jobCardNo: 'JC-1001', machine: 'Lathe-1', priority: 'High', complaint: 'Overheating', assignedTechEmail: 'wa@cmms.com', startedBy: 'Tech A', startTime: '10:30' });
 var pc22 = __providerCalls[__providerCalls.length - 1];
@@ -290,12 +317,37 @@ whatsappSaveSettings({ enabled: false, _userEmail: 'admin@cmms.com' });
 var r24a = whatsappSendJobStatusNotification(WHATSAPP.TEMPLATES.JC_CLOSED, { jobCardNo: 'JC-1002' });
 var r24b = whatsappSendStockAlertNotification(WHATSAPP.TEMPLATES.LOW_STOCK, { partCode: 'SP-002' });
 __ok('B24. Hooks return graceful result when disabled', r24a.success === false && String(r24a.message).indexOf('disabled') > -1 && r24b.success === false, JSON.stringify({ a: r24a, b: r24b }));
+
+/* B25 auth probe (permission-gated, no Meta credentials, read-only) */
+__probeMode = 'ok';
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: '106540352242922', businessAccountId: '123456789012345', _userEmail: 'admin@cmms.com' });
+var p25a = whatsappAuthProbe({ _userEmail: 'wa@cmms.com' });
+var p25b = whatsappAuthProbe({ _userEmail: 'tech@cmms.com' });
+__ok('B25. Auth probe succeeds for WA manager; blocked for unauthorized user', p25a.success === true && p25a.code === 200 && p25b.success === false && String(p25b.message).indexOf('permission') > -1, JSON.stringify({ a: p25a, b: p25b }));
+
+/* B26 probe reflects failed external request (no script.external_request) */
+__probeMode = 'fail';
+var p26 = whatsappAuthProbe({ _userEmail: 'wa@cmms.com' });
+__probeMode = 'ok';
+__ok('B26. Auth probe reports permission failure without throwing', p26.success === false && String(p26.message).toLowerCase().indexOf('permission') > -1, JSON.stringify(p26));
+
+/* B27 obviously-invalid Meta Phone Number ID blocks send (10-digit demo value) */
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: '3333655467', businessAccountId: '123456789012345', _userEmail: 'admin@cmms.com' });
+var r27 = whatsappTestSend({ testPhone: '03001234567', testMessage: 'x', _userEmail: 'wa@cmms.com' });
+__ok('B27. 10-digit value rejected as Meta Phone Number ID (no send)', r27.success === false && r27.message.indexOf('Phone Number ID') > -1, r27.message);
+
+/* B28 obviously-invalid Meta Business Account ID blocks send */
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: '106540352242922', businessAccountId: 'Alam', _userEmail: 'admin@cmms.com' });
+var r28 = whatsappTestSend({ testPhone: '03001234567', testMessage: 'x', _userEmail: 'wa@cmms.com' });
+__ok('B28. Non-numeric Business Account ID rejected (no send)', r28.success === false && r28.message.indexOf('Business Account ID') > -1, r28.message);
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: '106540352242922', businessAccountId: '123456789012345', _userEmail: 'admin@cmms.com' });
 `;
 
   const sandbox = {};
   vm.createContext(sandbox);
+  const authProbeGs = fs.readFileSync(path.join(ROOT, 'AuthProbeGS.gs'), 'utf8');
   try {
-    vm.runInContext(prescript + '\n' + waGs + '\n' + postscript, sandbox, { filename: 'WhatsAppGS.gs' });
+    vm.runInContext(prescript + '\n' + waGs + '\n' + authProbeGs + '\n' + postscript, sandbox, { filename: 'WhatsAppGS.gs' });
   } catch (e) {
     check('B-PART. WhatsAppGS.gs executed in sandbox', false, e.message);
     return;
@@ -332,8 +384,9 @@ const serverState = {
   settings: {
     enabled: true, companyName: 'PWI CMMS', defaultCountryCode: '92', provider: 'meta',
     apiEndpoint: 'https://graph.facebook.com/v18.0', apiToken: 'server_token_abc',
-    phoneNumberId: 'PID-123', businessAccountId: 'BA-123', testPhone: '', testMessage: 'Test message from PWI CMMS'
+    phoneNumberId: '106540352242922', businessAccountId: '123456789012345', testPhone: '', testMessage: 'Test message from PWI CMMS'
   },
+  probeOk: true,
   users: [
     { UserID: 'U1', EmployeeID: 'EMP-WA', Name: 'WA Manager', Email: 'wa@cmms.com', Role: 'Manager', Department: 'Maintenance', Section: '', Mobile: '3001234567', CanManageWhatsApp: 'TRUE', Status: 'Active', Designation: 'Manager' }
   ],
@@ -356,6 +409,9 @@ function handleApi(action, data) {
       return ok({ success: true, settings: serverState.settings });
     case 'whatsappTestSend':
       return ok({ success: true, messageId: 'wamid.ui.1', logId: 'WA00002', message: 'Sent via Meta API' });
+    case 'whatsappAuthProbe':
+      if (serverState.probeOk === false) return ok({ success: false, code: 403, message: 'permission denied: authorization is required to perform that action.' });
+      return ok({ success: true, code: 200, provider: 'meta', message: 'External API access is authorized.' });
     case 'whatsappGetTemplates': return ok(serverState.templates);
     case 'whatsappGetLogs': return ok(serverState.logs);
     case 'whatsappGetPanelData': return ok({ stats: { sentToday: 1, failedToday: 0, pendingToday: 0 }, recentLogs: serverState.logs.slice(0, 10) });
@@ -515,6 +571,72 @@ try {
   check('C8. Test Send payload contains no credentials', !!ts && !('apiToken' in ts.data) && !('phoneNumberId' in ts.data) && !('businessAccountId' in ts.data) && !('apiEndpoint' in ts.data), JSON.stringify(ts && ts.data));
   const resultText = await page.evaluate(() => (document.getElementById('whatsappTestResult') || {}).textContent || '');
   check('C6b. Test result renders logId + sent message', resultText.indexOf('WA00002') > -1 && resultText.indexOf('successfully') > -1, resultText);
+
+  /* C9: authorizeConnection shows editor instructions and does NOT send */
+  const authSendsBefore = serverState.actions.filter((a) => a.action === 'whatsappTestSend').length;
+  await page.evaluate(() => WhatsApp.authorizeConnection());
+  await page.waitForFunction(() => {
+    const el = document.getElementById('whatsappTestResult');
+    return el && el.textContent.indexOf('authorization required') > -1;
+  }, { timeout: 15000 });
+  const authAlertOk = await page.evaluate(() => {
+    const el = document.getElementById('whatsappTestResult');
+    return el.textContent.indexOf('authorization required') > -1 && el.textContent.indexOf('Open Apps Script Editor') > -1 && !!document.getElementById('waRecheckAuthBtn');
+  });
+  const authSendsAfter = serverState.actions.filter((a) => a.action === 'whatsappTestSend').length;
+  check('C9. authorizeConnection shows editor instructions, does NOT send a message', authAlertOk && authSendsAfter === authSendsBefore, JSON.stringify({ alert: authAlertOk, sendsBefore: authSendsBefore, sendsAfter: authSendsAfter }));
+
+  /* C9b: Re-check Authorization runs the auth probe */
+  await page.evaluate(() => WhatsApp.recheckAuth());
+  await page.waitForFunction(() => {
+    const el = document.getElementById('whatsappTestResult');
+    return el && el.textContent.indexOf('Authorization confirmed') > -1;
+  }, { timeout: 15000 });
+  const probeCalls = serverState.actions.filter((a) => a.action === 'whatsappAuthProbe').length;
+  const sendBtnOk = await page.evaluate(() => { const b = document.getElementById('whatsappTestBtn'); return !!b && b.disabled === false; });
+  check('C9b. Re-check Authorization runs auth probe and re-enables send', probeCalls >= 1 && sendBtnOk, 'probeCalls=' + probeCalls);
+
+  /* C9c: Send Test is gated when authorization is NOT confirmed */
+  serverState.probeOk = false;
+  const gateSendsBefore = serverState.actions.filter((a) => a.action === 'whatsappTestSend').length;
+  await page.evaluate(() => WhatsApp.sendTest());
+  await page.waitForFunction(() => {
+    const el = document.getElementById('whatsappTestResult');
+    return el && el.textContent.indexOf('authorization required') > -1;
+  }, { timeout: 15000 });
+  const gateSendsAfter = serverState.actions.filter((a) => a.action === 'whatsappTestSend').length;
+  check('C9c. Send Test gated when authorization fails (no whatsappTestSend)', gateSendsAfter === gateSendsBefore, JSON.stringify({ before: gateSendsBefore, after: gateSendsAfter }));
+  serverState.probeOk = true;
+
+  /* C9d/C9e: obviously-invalid Meta IDs are blocked on save */
+  const saveCountBefore1 = serverState.actions.filter((a) => a.action === 'whatsappSaveSettings').length;
+  await page.evaluate(() => {
+    document.getElementById('whatsappPhoneNumberId').value = '3333655467';
+    WhatsApp.saveSettings();
+  });
+  await new Promise((r) => setTimeout(r, 500));
+  const saveCountAfter1 = serverState.actions.filter((a) => a.action === 'whatsappSaveSettings').length;
+  const invalidPhoneAlert = await page.evaluate(() => (document.getElementById('whatsappTestResult') || {}).textContent || '');
+  check('C9d. Invalid Phone Number ID (3333655467) blocks save', saveCountAfter1 === saveCountBefore1 && invalidPhoneAlert.indexOf('Phone Number ID') > -1, JSON.stringify({ before: saveCountBefore1, after: saveCountAfter1, alert: invalidPhoneAlert.slice(0, 80) }));
+
+  const saveCountBefore2 = serverState.actions.filter((a) => a.action === 'whatsappSaveSettings').length;
+  await page.evaluate(() => {
+    document.getElementById('whatsappPhoneNumberId').value = '106540352242922';
+    document.getElementById('whatsappBusinessAccountId').value = 'Alam';
+    WhatsApp.saveSettings();
+  });
+  await new Promise((r) => setTimeout(r, 500));
+  const saveCountAfter2 = serverState.actions.filter((a) => a.action === 'whatsappSaveSettings').length;
+  const invalidWabaAlert = await page.evaluate(() => (document.getElementById('whatsappTestResult') || {}).textContent || '');
+  check('C9e. Invalid Business Account ID (Alam) blocks save', saveCountAfter2 === saveCountBefore2 && invalidWabaAlert.indexOf('Business Account ID') > -1, JSON.stringify({ before: saveCountBefore2, after: saveCountAfter2, alert: invalidWabaAlert.slice(0, 80) }));
+
+  await page.evaluate(() => {
+    document.getElementById('whatsappBusinessAccountId').value = '123456789012345';
+    WhatsApp.saveSettings();
+  });
+  await new Promise((r) => setTimeout(r, 800));
+  const saveValid = serverState.actions.filter((a) => a.action === 'whatsappSaveSettings').slice(-1)[0];
+  check('C9f. Valid Meta IDs save normally', !!saveValid && saveValid.data.phoneNumberId === '106540352242922' && saveValid.data.businessAccountId === '123456789012345', JSON.stringify(saveValid && saveValid.data));
 
   /* C10: provider switch */
   const endpoint = await page.evaluate(() => {

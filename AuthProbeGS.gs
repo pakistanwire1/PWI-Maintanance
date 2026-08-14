@@ -1,6 +1,6 @@
 function authorizeExternalRequest() {
   try {
-    var r = UrlFetchApp.fetch('https://www.googleapis.com/robots.txt', {
+    var r = UrlFetchApp.fetch('https://www.googleapis.com/discovery/v1/apis', {
       muteHttpExceptions: true
     });
     return {
