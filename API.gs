@@ -324,7 +324,7 @@ var API_ROUTES = {
   'whatsappSaveTemplate':  { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappSaveTemplate(d); } },
   'whatsappGetLogs':       { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappGetLogs(d.filters); } },
   'whatsappGetPanelData':  { auth: true,  handler: function(d) { return whatsappGetPanelData(); } },
-  'whatsappTestSend':      { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappTestSend(); } },
+  'whatsappTestSend':      { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappTestSend(d); } },
 
   /* ---- Backup ---- */
   'getBackupHistory':      { auth: true, perm: 'CanBackupRestore', handler: function(d) { return getBackupHistory(); } },

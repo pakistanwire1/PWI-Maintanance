@@ -105,15 +105,7 @@ function whatsappGetSettings() {
 
 function whatsappSaveSettings(data) {
   try {
-    var currentUser = data && data.email || '';
-    var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
-    var isAdmin = false;
-    for (var ui = 0; ui < users.length; ui++) {
-      if (users[ui].Email === currentUser && (users[ui].IsAdmin === 'TRUE' || users[ui].IsAdmin === true || users[ui].Role === 'Admin')) {
-        isAdmin = true; break;
-      }
-    }
-    if (!isAdmin) throw new Error('Only administrators can change WhatsApp settings.');
+    requireUserPermission('CanManageWhatsApp', data);
     whatsappEnsureDefaults();
     if (data.hasOwnProperty('enabled')) saveSetting(WHATSAPP.SETTINGS.ENABLED, data.enabled ? 'true' : 'false');
     if (data.hasOwnProperty('companyName')) saveSetting(WHATSAPP.SETTINGS.COMPANY_NAME, String(data.companyName));
@@ -125,8 +117,10 @@ function whatsappSaveSettings(data) {
     if (data.hasOwnProperty('businessAccountId')) saveSetting(WHATSAPP.SETTINGS.BUSINESS_ACCOUNT_ID, String(data.businessAccountId));
     if (data.hasOwnProperty('testPhone')) saveSetting(WHATSAPP.SETTINGS.TEST_PHONE, String(data.testPhone));
     if (data.hasOwnProperty('testMessage')) saveSetting(WHATSAPP.SETTINGS.TEST_MESSAGE, String(data.testMessage));
-    logActivity('WhatsApp Settings Updated', JSON.stringify(data));
-    try { createAuditLog(CONFIG.AUDIT_MODULES.SETTINGS, CONFIG.AUDIT_ACTIONS.UPDATE, 'WhatsAppSettings', 'WhatsApp settings changed', '', JSON.stringify(data).substring(0, 200), 'Success', 'WhatsApp settings updated'); } catch(e) {}
+    var safeData = JSON.parse(JSON.stringify(data));
+    if (safeData && safeData.apiToken) safeData.apiToken = '***';
+    logActivity('WhatsApp Settings Updated', JSON.stringify(safeData));
+    try { createAuditLog(CONFIG.AUDIT_MODULES.SETTINGS, CONFIG.AUDIT_ACTIONS.UPDATE, 'WhatsAppSettings', 'WhatsApp settings changed', '', JSON.stringify(safeData).substring(0, 200), 'Success', 'WhatsApp settings updated'); } catch(e) {}
     return { success: true, settings: whatsappGetSettings() };
   } catch (e) {
     return { success: false, message: e.message };
@@ -143,15 +137,8 @@ function whatsappGetTemplates() {
 
 function whatsappSaveTemplate(data) {
   try {
-    var currentUser = Session.getActiveUser().getEmail();
-    var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
-    var isAdmin = false;
-    for (var ui = 0; ui < users.length; ui++) {
-      if (users[ui].Email === currentUser && (users[ui].IsAdmin === 'TRUE' || users[ui].IsAdmin === true || users[ui].Role === 'Admin')) {
-        isAdmin = true; break;
-      }
-    }
-    if (!isAdmin) throw new Error('Only administrators can modify WhatsApp templates.');
+    var user = requireUserPermission('CanManageWhatsApp', data);
+    var currentUser = (data && data._userEmail) || (user && user.Email) || '';
     if (data.TemplateID) {
       data.UpdatedBy = currentUser;
       data.UpdatedAt = getCurrentTimestamp();
@@ -327,7 +314,7 @@ function whatsappTwilioSend(settings, phoneNumber, messageBody) {
   }
 }
 
-function whatsappSendMessage(phoneNumber, messageBody, module, refId, templateName, recipientName) {
+function whatsappSendMessage(phoneNumber, messageBody, module, refId, templateName, recipientName, sentBy) {
   try {
     var settings = whatsappGetSettings();
     if (!settings.enabled) return { success: false, status: WHATSAPP.STATUS.PENDING, message: 'WhatsApp disabled' };
@@ -339,10 +326,10 @@ function whatsappSendMessage(phoneNumber, messageBody, module, refId, templateNa
     }
     var result = whatsappProviderSend(settings, fullNumber, messageBody);
     var status = result.success ? WHATSAPP.STATUS.SENT : WHATSAPP.STATUS.FAILED;
-    var waId = whatsappLog(result.messageId || '', recipientName || '', fullNumber, module || '', refId || '', templateName || '', status, settings.provider, result.success ? '' : result.message, Session.getActiveUser().getEmail());
+    var waId = whatsappLog(result.messageId || '', recipientName || '', fullNumber, module || '', refId || '', templateName || '', status, settings.provider, result.success ? '' : result.message, sentBy || Session.getActiveUser().getEmail());
     return { success: result.success, status: status, messageId: result.messageId, logId: waId, message: result.message };
   } catch (e) {
-    whatsappLog('', recipientName || '', phoneNumber || '', module || '', refId || '', templateName || '', WHATSAPP.STATUS.FAILED, '', e.message, Session.getActiveUser().getEmail());
+    whatsappLog('', recipientName || '', phoneNumber || '', module || '', refId || '', templateName || '', WHATSAPP.STATUS.FAILED, '', e.message, sentBy || Session.getActiveUser().getEmail());
     return { success: false, status: WHATSAPP.STATUS.FAILED, message: e.message };
   }
 }
@@ -435,32 +422,42 @@ function whatsappGetTechPhone(email) {
   return '';
 }
 
-function whatsappTestSend() {
+function whatsappTestSend(data) {
   try {
-    var currentUser = Session.getActiveUser().getEmail();
-    var users = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
-    var isAdmin = false;
-    for (var ui = 0; ui < users.length; ui++) {
-      if (users[ui].Email === currentUser && (users[ui].IsAdmin === 'TRUE' || users[ui].IsAdmin === true || users[ui].Role === 'Admin')) {
-        isAdmin = true; break;
-      }
-    }
-    if (!isAdmin) return { success: false, message: 'Only administrators can send test messages.' };
+    var user = requireUserPermission('CanManageWhatsApp', data);
     var settings = whatsappGetSettings();
     if (!settings.enabled) return { success: false, message: 'WhatsApp is disabled. Enable it in settings first.' };
-    if (!settings.testPhone) return { success: false, message: 'Test phone number not configured.' };
-    var phone = String(settings.testPhone).replace(/[^0-9+]/g, '');
-    if (phone.length < 10 && !phone.startsWith('+')) {
+    var phone = String((data && (data.testPhone || data.phone)) || settings.testPhone || '').replace(/[^0-9+]/g, '');
+    if (!phone || phone.length < 10) {
       return { success: false, message: 'Invalid test phone number. Must be at least 10 digits.' };
     }
-    var msg = settings.testMessage || WHATSAPP.DEFAULTS.TEST_MESSAGE;
+    var msg = String((data && (data.testMessage || data.message)) || settings.testMessage || '').trim();
+    if (!msg) return { success: false, message: 'Test message cannot be empty.' };
+    var configIssue = whatsappConfigIssue(settings);
+    if (configIssue) return { success: false, message: configIssue };
     var company = settings.companyName || WHATSAPP.DEFAULTS.COMPANY_NAME;
     var fullMsg = '*Test Message from ' + company + '*\n\n' + msg + '\n\nSent: ' + getCurrentTimestamp();
-    var result = whatsappSendMessage(phone, fullMsg, 'System', '', 'TestMessage', currentUser);
+    var sentBy = (user && user.Email) || (data && data._userEmail) || '';
+    var recipientName = (data && (data._userName || data.recipientName)) || sentBy || '';
+    var result = whatsappSendMessage(phone, fullMsg, 'System', '', 'TestMessage', recipientName, sentBy);
     return result;
   } catch (e) {
     return { success: false, message: e.message };
   }
+}
+
+function whatsappConfigIssue(settings) {
+  if (settings.provider === 'meta') {
+    if (!settings.apiToken) return 'Meta API token is not configured.';
+    if (!settings.phoneNumberId) return 'Meta Phone Number ID is not configured.';
+  } else if (settings.provider === 'twilio') {
+    if (!settings.apiToken) return 'Twilio API token is not configured.';
+    if (!settings.businessAccountId) return 'Twilio Account SID is not configured.';
+    if (!settings.phoneNumberId) return 'Twilio sender number is not configured.';
+  } else {
+    return 'Unknown WhatsApp provider: ' + settings.provider;
+  }
+  return '';
 }
 
 function whatsappGetSettingsData() {

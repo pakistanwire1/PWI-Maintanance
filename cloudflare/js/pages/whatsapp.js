@@ -5,6 +5,8 @@ var WhatsApp = (function() {
   var waStats = {};
   var waDirtyTemplates = {};
 
+  var TEST_BTN_HTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
+
   function renderPage(el) {
     var el = el || document.getElementById('pageContent');
     if (!el) return;
@@ -84,8 +86,7 @@ var WhatsApp = (function() {
                 '<input type="text" id="whatsappTestMessage" class="form-input" placeholder="Test message from CMMS">' +
               '</div>' +
               '<button class="btn btn-primary" onclick="WhatsApp.sendTest()" id="whatsappTestBtn" style="height:36px">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>' +
-                'Send Test' +
+                TEST_BTN_HTML +
               '</button>' +
             '</div>' +
             '<div id="whatsappTestResult" style="margin-top:8px;font-size:12px"></div>' +
@@ -340,11 +341,14 @@ var WhatsApp = (function() {
     data.apiToken = document.getElementById('whatsappApiToken').value;
     data.phoneNumberId = document.getElementById('whatsappPhoneNumberId').value;
     data.businessAccountId = document.getElementById('whatsappBusinessAccountId').value;
+    data.testPhone = document.getElementById('whatsappTestPhone').value;
+    data.testMessage = document.getElementById('whatsappTestMessage').value;
     callback(data);
   }
 
   function sendTest() {
     var phone = document.getElementById('whatsappTestPhone').value.trim();
+    var message = document.getElementById('whatsappTestMessage').value.trim();
     var resultEl = document.getElementById('whatsappTestResult');
     var btn = document.getElementById('whatsappTestBtn');
     if (!resultEl || !btn) return;
@@ -352,43 +356,34 @@ var WhatsApp = (function() {
       resultEl.innerHTML = '<span style="color:var(--danger)">Please enter a test phone number.</span>';
       return;
     }
+    var digits = phone.replace(/[^0-9+]/g, '');
+    if (digits.length < 10) {
+      resultEl.innerHTML = '<span style="color:var(--danger)">Invalid phone number. Must be at least 10 digits.</span>';
+      return;
+    }
+    if (!message) {
+      resultEl.innerHTML = '<span style="color:var(--danger)">Please enter a test message.</span>';
+      return;
+    }
     btn.disabled = true;
-    btn.innerHTML = 'Saving settings...';
+    btn.innerHTML = 'Sending...';
     resultEl.textContent = '';
 
-    collectSettings(function(settingsData) {
-      settingsData.enabled = document.getElementById('whatsappEnabled').checked;
-      API.post('whatsappSaveSettings', settingsData)
-        .then(function(res) {
-          if (res && !res.success) {
-            btn.disabled = false;
-            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
-            resultEl.innerHTML = '<span style="color:var(--danger)">Failed to save settings: ' + Utils.escapeHtml(res.message || 'Unknown error') + '</span>';
-            return;
-          }
-          btn.innerHTML = 'Sending...';
-          API.post('whatsappTestSend', {})
-            .then(function(sendRes) {
-              btn.disabled = false;
-              btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
-              if (sendRes && sendRes.success) {
-                resultEl.innerHTML = '<span style="color:var(--success)">Test message sent successfully!</span>';
-              } else {
-                resultEl.innerHTML = '<span style="color:var(--danger)">Failed: ' + Utils.escapeHtml(sendRes.message || 'Unknown error') + '</span>';
-              }
-            })
-            .catch(function(err) {
-              btn.disabled = false;
-              btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
-              resultEl.innerHTML = '<span style="color:var(--danger)">Error: ' + Utils.escapeHtml(err.message) + '</span>';
-            });
-        })
-        .catch(function(err) {
-          btn.disabled = false;
-          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test';
-          resultEl.innerHTML = '<span style="color:var(--danger)">Error: ' + Utils.escapeHtml(err.message) + '</span>';
-        });
-    });
+    API.post('whatsappTestSend', { testPhone: phone, testMessage: message })
+      .then(function(sendRes) {
+        btn.disabled = false;
+        btn.innerHTML = TEST_BTN_HTML;
+        if (sendRes && sendRes.success) {
+          resultEl.innerHTML = '<span style="color:var(--success)">Test message sent successfully!</span>';
+        } else {
+          resultEl.innerHTML = '<span style="color:var(--danger)">Failed: ' + Utils.escapeHtml((sendRes && sendRes.message) || 'Unknown error') + '</span>';
+        }
+      })
+      .catch(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = TEST_BTN_HTML;
+        resultEl.innerHTML = '<span style="color:var(--danger)">Error: ' + Utils.escapeHtml((err && err.message) || 'Unknown error') + '</span>';
+      });
   }
 
   function toggleTemplate(tid) {
