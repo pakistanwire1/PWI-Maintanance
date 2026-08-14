@@ -43,36 +43,60 @@ async function handleRequest(context) {
       fetchOpts.body = body;
     }
 
-    var gasResponse;
-    try {
+    // GAS web apps intermittently answer with a Google HTML interstitial page
+    // (consent / re-authorization) instead of the application JSON. Retry a
+    // couple of times before surfacing an error to the client.
+    var attempts = 3;
+    var delayMs = 500;
+    var gasResponse = null;
+    var responseBody = null;
+    var ct = '';
+    var isJson = false;
+    var lastStatus = 0;
+
+    for (var attempt = 1; attempt <= attempts; attempt++) {
       var controller = new AbortController();
       var tid = setTimeout(function() { controller.abort(); }, GAS_TIMEOUT_MS);
-      gasResponse = await fetch(gasUrl, fetchOpts);
+      try {
+        gasResponse = await fetch(gasUrl, Object.assign({ signal: controller.signal }, fetchOpts));
+      } catch (fetchErr) {
+        clearTimeout(tid);
+        if (attempt < attempts) { await new Promise(function(res) { setTimeout(res, delayMs); }); continue; }
+        var errMsg = fetchErr.name === 'AbortError'
+          ? 'GAS backend timed out after ' + (GAS_TIMEOUT_MS / 1000) + 's'
+          : 'GAS backend unreachable: ' + fetchErr.message;
+        return jsonResponse({ success: false, error: errMsg }, 502);
+      }
       clearTimeout(tid);
-    } catch (fetchErr) {
-      var errMsg = fetchErr.name === 'AbortError'
-        ? 'GAS backend timed out after ' + (GAS_TIMEOUT_MS / 1000) + 's'
-        : 'GAS backend unreachable: ' + fetchErr.message;
-      return jsonResponse({ success: false, error: errMsg }, 502);
-    }
 
-    var responseBody;
-    try {
-      responseBody = await gasResponse.text();
-    } catch (textErr) {
-      return jsonResponse({ success: false, error: 'Failed to read GAS response: ' + textErr.message }, 502);
-    }
+      try {
+        responseBody = await gasResponse.text();
+      } catch (textErr) {
+        return jsonResponse({ success: false, error: 'Failed to read GAS response: ' + textErr.message }, 502);
+      }
 
-    var ct = gasResponse.headers.get('content-type') || '';
-    var isJson = ct.indexOf('application/json') > -1 || (responseBody && responseBody.charAt(0) === '{');
+      ct = gasResponse.headers.get('content-type') || '';
+      isJson = ct.indexOf('application/json') > -1 || (responseBody && responseBody.charAt(0) === '{');
+      lastStatus = gasResponse.status;
+      if (isJson) break;
+
+      if (attempt < attempts) {
+        await new Promise(function(res) { setTimeout(res, delayMs * attempt); });
+        continue;
+      }
+      return jsonResponse({
+        success: false,
+        error: 'GAS backend returned a non-JSON response (status ' + lastStatus + '). Please try again.'
+      }, 502);
+    }
 
     var respHeaders = Object.assign({}, CORS_HEADERS, {
-      'Content-Type': isJson ? 'application/json; charset=utf-8' : ct || 'text/html; charset=utf-8',
+      'Content-Type': 'application/json; charset=utf-8',
       'Cache-Control': 'no-store, no-cache, must-revalidate'
     });
 
     return new Response(responseBody, {
-      status: gasResponse.status,
+      status: lastStatus,
       headers: respHeaders
     });
   } catch (err) {

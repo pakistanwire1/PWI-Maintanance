@@ -31,10 +31,17 @@ await page.waitForSelector('#pageContent', { timeout: 60000 });
 
 const token = await page.evaluate(() => localStorage.getItem('cmms_token'));
 const api = async (action, data) => {
-  const res = await fetch(BASE + '/api/exec', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, token, data }) });
-  const j = await res.json();
-  if (j && j.error) return { error: j.error };
-  return j.data || j;
+  // Retry transient GAS failures (Google interstitial / throttling) once, matching the production proxy retry.
+  let last = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(BASE + '/api/exec', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, token, data }) });
+      const j = await res.json();
+      if (j && j.error) { last = { error: j.error }; await sleep(1200); continue; }
+      return j.data || j;
+    } catch (e) { last = { error: String(e && e.message || e) }; await sleep(1200); }
+  }
+  return last;
 };
 
 const base = {
@@ -44,7 +51,7 @@ const base = {
   fromDate: '', toDate: ''
 };
 
-console.log('======== LIVE PROD GAS VERIFICATION (deployment @433 via CF proxy) ========\n');
+console.log('======== LIVE PROD GAS VERIFICATION (deployment @466 via CF proxy) ========\n');
 
 // ---- 0. getReportFilterOptions ----
 const opts = await api('getReportFilterOptions', {});
@@ -64,33 +71,34 @@ const test = async (id, label, patch, expect) => {
   return rows;
 };
 
-const total = (await test('F_total', 'baseline machine_history (no filters)', {}, 65));
+const total = (await test('F_total', 'baseline machine_history (no filters)', {}, 70));
 
-await test('F_div_ID', 'division ID DIV001', { division: 'DIV001' }, 64);
-await test('F_div_NAME', 'division NAME Spoke Division', { division: 'Spoke Division' }, 64);
-await test('F_sec_ID', 'section ID SEC002', { section: 'SEC002' }, 62);
-await test('F_sec_NAME', 'section NAME Spoke', { section: 'Spoke' }, 62);
-await test('F_dept_ID', 'department ID DEPT003', { department: 'DEPT003' }, 19);
-await test('F_dept_NAME', 'department NAME Swagging', { department: 'Swagging' }, 19);
-await test('F_mach_num', 'machineNumber SW # 06', { machineNumber: 'SW # 06' }, 19);
-await test('F_mach_sp05', 'machineNumber SP # 05', { machineNumber: 'SP # 05' }, 16);
-await test('F_mach_name_fallback', 'machineNumber Hydraulic Press (name fallback)', { machineNumber: 'Hydraulic Press' }, 12);
-await test('F_tech_ARIF', 'technician ARIF (token match)', { technician: 'ARIF' }, 10);
-await test('F_tech_ARSALAN', 'technician ARSALAN', { technician: 'ARSALAN' }, 25);
+await test('F_div_ID', 'division ID DIV001', { division: 'DIV001' }, 69);
+await test('F_div_NAME', 'division NAME Spoke Division', { division: 'Spoke Division' }, 69);
+await test('F_sec_ID', 'section ID SEC002', { section: 'SEC002' }, 67);
+await test('F_sec_NAME', 'section NAME Spoke', { section: 'Spoke' }, 67);
+await test('F_dept_ID', 'department ID DEPT003', { department: 'DEPT003' }, 21);
+await test('F_dept_NAME', 'department NAME Swagging', { department: 'Swagging' }, 21);
+await test('F_mach_num', 'machineNumber SW # 06', { machineNumber: 'SW # 06' }, 21);
+await test('F_mach_sp07', 'machineNumber SP # 07', { machineNumber: 'SP # 07' }, 23);
+await test('F_mach_st05', 'machineNumber ST # 05', { machineNumber: 'ST # 05' }, 22);
+await test('F_mach_name_fallback', 'machineNumber Spoke (name fallback)', { machineNumber: 'Spoke' }, 23);
+await test('F_tech_ARIF', 'technician ARIF (token match)', { technician: 'ARIF' }, 13);
+await test('F_tech_ARSALAN', 'technician ARSALAN', { technician: 'ARSALAN' }, 26);
 await test('F_prio_High', 'priority High', { priority: 'High' }, 2);
-await test('F_status_RUNNING', 'status RUNNING', { status: 'RUNNING' }, 13);
-await test('F_maint_BD', 'maintenanceType Breakdown Maintenance', { maintenanceType: 'Breakdown Maintenance' }, 59);
+await test('F_status_RUNNING', 'status RUNNING', { status: 'RUNNING' }, 12);
+await test('F_maint_BD', 'maintenanceType Breakdown Maintenance', { maintenanceType: 'Breakdown Maintenance' }, 64);
 await test('F_maint_PM', 'maintenanceType Preventive Maintenance', { maintenanceType: 'Preventive Maintenance' }, 4);
 await test('F_maint_BDE', 'maintenanceType Breakdown Electrical', { maintenanceType: 'Breakdown Electrical' }, 2);
 await test('F_date_jul', 'date range Jul 2026', { fromDate: '2026-07-01T00:00:00', toDate: '2026-07-31T23:59:59' }, 64);
 await test('F_date_sameday', 'same-day 2026-07-23', { fromDate: '2026-07-23T00:00:00', toDate: '2026-07-23T23:59:59' }, 28);
 
 // ---- 2. Combinations ----
-await test('C_div_sec_dept_ID', 'DIV001+SEC002+DEPT003', { division: 'DIV001', section: 'SEC002', department: 'DEPT003' }, 19);
-await test('C_div_sec_dept_NAME', 'Spoke Division+Spoke+Swagging', { division: 'Spoke Division', section: 'Spoke', department: 'Swagging' }, 19);
+await test('C_div_sec_dept_ID', 'DIV001+SEC002+DEPT003', { division: 'DIV001', section: 'SEC002', department: 'DEPT003' }, 21);
+await test('C_div_sec_dept_NAME', 'Spoke Division+Spoke+Swagging', { division: 'Spoke Division', section: 'Spoke', department: 'Swagging' }, 21);
 await test('C_mach_prio_status', 'SW # 06 + High + OPEN', { machineNumber: 'SW # 06', priority: 'High', status: 'OPEN' }, 0);
-await test('C_dept_tech', 'DEPT003 + ARIF', { department: 'DEPT003', technician: 'ARIF' }, 1);
-await test('C_dept_mach', 'DEPT002 + SP # 05', { department: 'DEPT002', machineNumber: 'SP # 05' }, 16);
+await test('C_dept_tech', 'DEPT003 + ARIF', { department: 'DEPT003', technician: 'ARIF' }, 3);
+await test('C_dept_mach', 'DEPT003 (Swagging) + SW # 06', { department: 'DEPT003', machineNumber: 'SW # 06' }, 21);
 // JC-2026-000065 (DIV001) OpenDate=2026-08-06 -> correctly EXCLUDED from Jul range
 await test('C_div_date', 'DIV001 + Jul 2026 (JC-2026-000065 is Aug 6, so 63 is correct)', { division: 'DIV001', fromDate: '2026-07-01T00:00:00', toDate: '2026-07-31T23:59:59' }, 63);
 await test('C_maint_mach', 'Breakdown Maintenance + SW # 06', { maintenanceType: 'Breakdown Maintenance', machineNumber: 'SW # 06' }, rows => rows.length > 0);
@@ -99,13 +107,13 @@ await test('C_tech_status', 'ARSALAN + RUNNING', { technician: 'ARSALAN', status
 // ---- 3. Every report type ----
 console.log('\n--- ALL REPORT TYPES (live deployed getReportData) ---');
 const typeExpect = {
-  machine_history: { rows: 65, kpi: true },
-  breakdown_history: { rows: 61 },
+  machine_history: { rows: 70, kpi: true },
+  breakdown_history: { rows: 66 },
   preventive_maintenance: { rows: 4 },
-  machine_performance: { rows: 8 },
+  machine_performance: { rows: 6 },
   department_performance: { rows: 6 },
-  technician_performance: { rows: 16 },
-  pending_jobs: { rows: 4 },
+  technician_performance: { rows: 18 },
+  pending_jobs: { rows: 7 },
   closed_jobs: { rows: 0, note: 'true zero - no closed/completed CurrentStatus in live data; matches JobCardsPage closed tab filter' }
 };
 for (const rt of repTypes) {
@@ -128,9 +136,9 @@ for (const rt of repTypes) {
 }
 // KPI on machine_history
 const mh = await api('getReportData', { ...base, reportType: 'machine_history' });
-check('KPI_breakdown', mh.kpi && mh.kpi.breakdownJobs === 61, 'kpi.breakdownJobs=' + (mh.kpi && mh.kpi.breakdownJobs) + ' (expect 61)');
+check('KPI_breakdown', mh.kpi && mh.kpi.breakdownJobs === 66, 'kpi.breakdownJobs=' + (mh.kpi && mh.kpi.breakdownJobs) + ' (expect 66)');
 check('KPI_preventive', mh.kpi && mh.kpi.preventiveJobs === 4, 'kpi.preventiveJobs=' + (mh.kpi && mh.kpi.preventiveJobs) + ' (expect 4)');
-check('KPI_total', mh.kpi && mh.kpi.totalJobs === 65, 'kpi.totalJobs=' + (mh.kpi && mh.kpi.totalJobs) + ' (expect 65)');
+check('KPI_total', mh.kpi && mh.kpi.totalJobs === 70, 'kpi.totalJobs=' + (mh.kpi && mh.kpi.totalJobs) + ' (expect 70)');
 const chartKeys = mh.charts ? Object.keys(mh.charts) : [];
 console.log('machine_history chart payload keys: ' + JSON.stringify(chartKeys));
 check('CHARTS_present', chartKeys.length >= 4, 'charts keys=' + chartKeys.length);
