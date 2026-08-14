@@ -66,7 +66,13 @@ var __providerCalls = [];
 var __providerMode = 'ok';
 var __activeUser = { Email: 'admin@cmms.com', Role: 'Administrator', IsAdmin: true };
 
-function getSetting(k) { return Object.prototype.hasOwnProperty.call(__settings, k) ? __settings[k] : null; }
+function getSetting(k) {
+  if (!Object.prototype.hasOwnProperty.call(__settings, k)) return null;
+  var raw = __settings[k];
+  if (raw === 'true') return true;
+  if (raw === 'false') return false;
+  return raw;
+}
 function saveSetting(k, v) { __settings[k] = String(v); }
 function getAllData(name) { return __sheets[name] || []; }
 function addRow(name, obj) {
@@ -145,6 +151,18 @@ whatsappProviderSend = function(settings, phoneNumber, messageBody) {
 
 var __checks = [];
 function __ok(name, pass, detail) { __checks.push({ name: name, pass: !!pass, detail: detail || '' }); }
+
+/* B-REG boolean-coercion regression: Google Sheets stores 'true'/'false' strings
+   but reads them back as booleans (setValue('true') -> cell value true) */
+whatsappEnsureDefaults();
+var br0 = getSetting(WHATSAPP.SETTINGS.ENABLED);
+__ok('BR1. Harness simulates Sheets coercion (stored string reads back as boolean)', br0 === false && typeof br0 === 'boolean', 'stored=' + String(__settings[WHATSAPP.SETTINGS.ENABLED]) + ' read=' + String(br0) + ' (type ' + typeof br0 + ')');
+whatsappSaveSettings({ enabled: true, _userEmail: 'admin@cmms.com' });
+var br2 = whatsappGetSettings();
+__ok('BR2. Toggle ON -> whatsappGetSettings().enabled === true (boolean true stored)', br2.enabled === true, JSON.stringify(br2));
+whatsappSaveSettings({ enabled: false, _userEmail: 'admin@cmms.com' });
+var br3 = whatsappGetSettings();
+__ok('BR3. Toggle OFF -> whatsappGetSettings().enabled === false (boolean false stored)', br3.enabled === false, JSON.stringify(br3));
 
 /* B1 defaults */
 whatsappEnsureDefaults();

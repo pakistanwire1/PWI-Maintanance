@@ -19,7 +19,7 @@
 node tests\verify_whatsapp_regression.mjs
 ```
 
-## What it checks (57 assertions)
+## What it checks (60 assertions)
 
 - `whatsappSaveSettings` / `whatsappTestSend` require `CanManageWhatsApp` at both the
   API dispatcher layer and inside the GAS handler; missing perm -> 403

@@ -87,7 +87,7 @@ function whatsappGetSettings() {
   try {
     whatsappEnsureDefaults();
     return {
-      enabled: getSetting(WHATSAPP.SETTINGS.ENABLED) === 'true',
+      enabled: getSetting(WHATSAPP.SETTINGS.ENABLED) === true || getSetting(WHATSAPP.SETTINGS.ENABLED) === 'true',
       companyName: getSetting(WHATSAPP.SETTINGS.COMPANY_NAME) || WHATSAPP.DEFAULTS.COMPANY_NAME,
       defaultCountryCode: getSetting(WHATSAPP.SETTINGS.DEFAULT_COUNTRY_CODE) || WHATSAPP.DEFAULTS.DEFAULT_COUNTRY_CODE,
       provider: getSetting(WHATSAPP.SETTINGS.PROVIDER) || WHATSAPP.DEFAULTS.PROVIDER,
