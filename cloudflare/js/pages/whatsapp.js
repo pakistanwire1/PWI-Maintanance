@@ -4,6 +4,8 @@ var WhatsApp = (function() {
   var waLogs = [];
   var waStats = {};
   var waDirtyTemplates = {};
+  var waActiveProvider = null;
+  var waProviderValues = { meta: null, twilio: null };
   var waAuthBlocked = false;
 
   var ICON = {
@@ -187,26 +189,26 @@ var WhatsApp = (function() {
                 '<span class="wa-helper">Select your WhatsApp Business API provider</span>' +
               '</div>' +
               '<div class="wa-field">' +
-                '<label for="whatsappApiEndpoint">API Endpoint (Graph API)</label>' +
-                '<input type="text" id="whatsappApiEndpoint" class="wa-input" placeholder="https://graph.facebook.com/v18.0" spellcheck="false">' +
+                '<label for="whatsappApiEndpoint" id="whatsappApiEndpointLabel">API Endpoint (Graph API)</label>' +
+                '<input type="text" id="whatsappApiEndpoint" class="wa-input" placeholder="https://graph.facebook.com/v18.0" spellcheck="false" oninput="WhatsApp.updateTestBtnState()">' +
                 '<span class="wa-helper" id="whatsappApiEndpointHelper">Meta Graph API endpoint URL</span>' +
               '</div>' +
               '<div class="wa-field full">' +
                 '<label for="whatsappApiToken">API Token</label>' +
                 '<div class="wa-input-group">' +
-                  '<input type="password" id="whatsappApiToken" class="wa-input" placeholder="Enter API token" autocomplete="off" spellcheck="false">' +
+                  '<input type="password" id="whatsappApiToken" class="wa-input" placeholder="Enter API token" autocomplete="off" spellcheck="false" oninput="WhatsApp.updateTestBtnState()">' +
                   '<button type="button" class="wa-eye" onclick="WhatsApp.toggleTokenVisibility()" title="Show / hide token" aria-label="Show or hide token">' + ICON.eye + '</button>' +
                 '</div>' +
                 '<span class="wa-helper" id="whatsappApiTokenHelper">Your Meta Access Token is stored securely.</span>' +
               '</div>' +
               '<div class="wa-field">' +
                 '<label for="whatsappPhoneNumberId">Phone Number ID</label>' +
-                '<input type="text" id="whatsappPhoneNumberId" class="wa-input" placeholder="WhatsApp Business phone number ID" spellcheck="false">' +
+                '<input type="text" id="whatsappPhoneNumberId" class="wa-input" placeholder="WhatsApp Business phone number ID" spellcheck="false" oninput="WhatsApp.updateTestBtnState()">' +
                 '<span class="wa-helper" id="whatsappPhoneNumberIdHelper">WhatsApp Business Phone Number ID</span>' +
               '</div>' +
               '<div class="wa-field">' +
                 '<label id="whatsappBusinessAccountLabel" for="whatsappBusinessAccountId">Business Account ID (Meta)</label>' +
-                '<input type="text" id="whatsappBusinessAccountId" class="wa-input" placeholder="Business account ID" spellcheck="false">' +
+                '<input type="text" id="whatsappBusinessAccountId" class="wa-input" placeholder="Business account ID" spellcheck="false" oninput="WhatsApp.updateTestBtnState()">' +
                 '<span class="wa-helper" id="whatsappBusinessAccountIdHelper">WhatsApp Business Account ID</span>' +
               '</div>' +
             '</div>' +
@@ -216,7 +218,7 @@ var WhatsApp = (function() {
                 '<button class="btn btn-secondary" onclick="WhatsApp.resetForm()">Reset</button>' +
               '</div>' +
               '<div class="wa-action-right">' +
-                '<button class="btn btn-success" onclick="WhatsApp.sendTest()">Test Connection</button>' +
+                '<button class="btn btn-success" id="whatsappTestConnBtn" onclick="WhatsApp.sendTest()">Test Connection</button>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -243,7 +245,7 @@ var WhatsApp = (function() {
               '</div>' +
               '<button class="btn btn-primary wa-test-btn" onclick="WhatsApp.sendTest()" id="whatsappTestBtn">' + TEST_BTN_HTML + '</button>' +
             '</div>' +
-            '<div class="wa-test-hint">' + ICON.help + 'Local numbers are normalized with the selected country code (e.g. +92 for Pakistan).</div>' +
+            '<div class="wa-test-hint" id="whatsappTestHint">' + ICON.help + 'Local numbers are normalized with the selected country code (e.g. +92 for Pakistan).</div>' +
             '<div id="whatsappTestResult" class="wa-alert"></div>' +
           '</div>' +
         '</div>' +
@@ -292,7 +294,7 @@ var WhatsApp = (function() {
             '</div>' +
           '</div>' +
           '<div class="card-body">' +
-            '<ul class="wa-help-list">' +
+            '<ul class="wa-help-list" id="waHelpList">' +
               '<li>' + ICON.check + 'Your Access Token must be valid and have the correct permissions</li>' +
               '<li>' + ICON.check + 'Phone Number ID must be correct</li>' +
               '<li>' + ICON.check + 'Business Account ID must be correct</li>' +
@@ -457,14 +459,26 @@ var WhatsApp = (function() {
 
   function renderSettings(s) {
     var el;
+    s = s || {};
+    waSettings = s;
     el = getEl('whatsappEnabled'); if (el) el.checked = !!s.enabled;
     el = getEl('whatsappCompanyName'); if (el) el.value = s.companyName || '';
     el = getEl('whatsappCountryCode'); if (el) { el.innerHTML = countryOptions(s.defaultCountryCode); el.value = s.defaultCountryCode || ''; }
     el = getEl('whatsappProvider'); if (el) el.value = s.provider || 'meta';
-    el = getEl('whatsappApiEndpoint'); if (el) el.value = s.apiEndpoint || '';
-    el = getEl('whatsappApiToken'); if (el) el.value = s.apiToken || '';
-    el = getEl('whatsappPhoneNumberId'); if (el) el.value = s.phoneNumberId || '';
-    el = getEl('whatsappBusinessAccountId'); if (el) el.value = s.businessAccountId || '';
+    waProviderValues.meta = {
+      apiEndpoint: (s.meta && s.meta.apiEndpoint) || s.apiEndpoint || '',
+      apiToken: (s.meta && s.meta.apiToken) || s.apiToken || '',
+      phoneNumberId: (s.meta && s.meta.phoneNumberId) || s.phoneNumberId || '',
+      businessAccountId: (s.meta && s.meta.businessAccountId) || s.businessAccountId || ''
+    };
+    waProviderValues.twilio = {
+      apiEndpoint: (s.twilio && s.twilio.apiEndpoint) || '',
+      apiToken: (s.twilio && s.twilio.apiToken) || '',
+      phoneNumberId: (s.twilio && s.twilio.phoneNumberId) || '',
+      businessAccountId: (s.twilio && s.twilio.businessAccountId) || ''
+    };
+    waActiveProvider = s.provider || 'meta';
+    applyProviderFields(waActiveProvider, waProviderValues[waActiveProvider] || providerDefaults(waActiveProvider));
     el = getEl('whatsappTestPhone'); if (el) el.value = s.testPhone || '';
     el = getEl('whatsappTestMessage'); if (el) el.value = s.testMessage || '';
     el = getEl('whatsappTestCountry'); if (el) { el.innerHTML = countryOptions(s.defaultCountryCode); el.value = s.defaultCountryCode || ''; }
@@ -474,11 +488,37 @@ var WhatsApp = (function() {
     onProviderChange();
     setDisabledBanner();
     renderIntegrationStatus();
+    updateTestBtnState();
   }
 
   function resetForm() {
     renderSettings(waSettings);
     Notify.info('Settings reset to saved values');
+  }
+
+  function readProviderFields() {
+    return {
+      apiEndpoint: getEl('whatsappApiEndpoint') ? getEl('whatsappApiEndpoint').value : '',
+      apiToken: getEl('whatsappApiToken') ? getEl('whatsappApiToken').value : '',
+      phoneNumberId: getEl('whatsappPhoneNumberId') ? getEl('whatsappPhoneNumberId').value : '',
+      businessAccountId: getEl('whatsappBusinessAccountId') ? getEl('whatsappBusinessAccountId').value : ''
+    };
+  }
+
+  function applyProviderFields(prov, v) {
+    v = v || {};
+    var d = providerDefaults(prov);
+    var el = getEl('whatsappApiEndpoint'); if (el) el.value = v.apiEndpoint || d.apiEndpoint;
+    el = getEl('whatsappApiToken'); if (el) el.value = v.apiToken || '';
+    el = getEl('whatsappPhoneNumberId'); if (el) el.value = v.phoneNumberId || '';
+    el = getEl('whatsappBusinessAccountId'); if (el) el.value = v.businessAccountId || '';
+  }
+
+  function providerDefaults(prov) {
+    if (prov === 'twilio') {
+      return { apiEndpoint: 'https://api.twilio.com/2010-04-01', apiToken: '', phoneNumberId: '', businessAccountId: '' };
+    }
+    return { apiEndpoint: 'https://graph.facebook.com/v18.0', apiToken: '', phoneNumberId: '', businessAccountId: '' };
   }
 
   function currentProvider() {
@@ -491,25 +531,55 @@ var WhatsApp = (function() {
     return /^\d+$/.test(v) && v.length >= 14 && v.length <= 20;
   }
 
+  function waTwilioSidValid(v) {
+    v = String(v || '').trim();
+    return /^AC[0-9a-fA-F]{32}$/.test(v);
+  }
+
+  function waTwilioSenderValid(v) {
+    v = String(v || '').trim();
+    return /^\+[1-9][0-9]{6,14}$/.test(v);
+  }
+
+  function waEndpointValid(prov, v) {
+    v = String(v || '').trim();
+    if (prov === 'twilio') return v.indexOf('api.twilio.com') !== -1 && v.indexOf('graph.facebook.com') === -1;
+    if (prov === 'meta') return v.indexOf('graph.facebook.com') !== -1 && v.indexOf('api.twilio.com') === -1;
+    return true;
+  }
+
   function configIssue() {
     var p = currentProvider();
+    var endpoint = getEl('whatsappApiEndpoint') ? getEl('whatsappApiEndpoint').value : '';
     var token = getEl('whatsappApiToken') ? getEl('whatsappApiToken').value : '';
     var phoneId = getEl('whatsappPhoneNumberId') ? getEl('whatsappPhoneNumberId').value : '';
     var bizId = getEl('whatsappBusinessAccountId') ? getEl('whatsappBusinessAccountId').value : '';
     if (p === 'meta') {
+      if (endpoint && !waEndpointValid(p, endpoint)) return 'Meta API Endpoint must be the Meta Graph API endpoint (graph.facebook.com), not a Twilio endpoint.';
       if (!token) return 'Meta API token is not configured.';
       if (!phoneId) return 'Meta Phone Number ID is not configured.';
       if (!waMetaIdValid(phoneId)) return 'Meta Phone Number ID looks invalid. It must be the numeric ID from Meta (e.g. 106540352242922), not the phone number.';
       if (!bizId) return 'Meta Business Account ID is not configured.';
       if (!waMetaIdValid(bizId)) return 'Meta Business Account ID looks invalid. It must be the numeric WhatsApp Business Account ID (e.g. 375420581369195).';
     } else if (p === 'twilio') {
-      if (!token) return 'Twilio API token is not configured.';
+      if (endpoint && !waEndpointValid(p, endpoint)) return 'Twilio API Endpoint must point to api.twilio.com, not the Meta Graph API endpoint (graph.facebook.com).';
+      if (!token) return 'Twilio Auth Token is not configured.';
       if (!bizId) return 'Twilio Account SID is not configured.';
-      if (!phoneId) return 'Twilio sender number is not configured.';
+      if (!waTwilioSidValid(bizId)) return 'Twilio Account SID looks invalid. It must start with "AC" followed by 32 hex characters (e.g. ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx), not a Meta Business Account ID.';
+      if (!phoneId) return 'Twilio WhatsApp sender (From) is not configured.';
+      if (!waTwilioSenderValid(phoneId)) return 'Twilio WhatsApp sender (From) looks invalid. It must be an E.164 phone number with a leading + (e.g. +14155238886), not a Meta Phone Number ID.';
     } else {
       return 'Unknown WhatsApp provider: ' + p;
     }
     return '';
+  }
+
+  function updateTestBtnState() {
+    var btn = getEl('whatsappTestBtn');
+    var connBtn = getEl('whatsappTestConnBtn');
+    var blocked = !!configIssue();
+    if (btn) btn.disabled = blocked;
+    if (connBtn) connBtn.disabled = blocked;
   }
 
   function renderIntegrationStatus() {
@@ -587,6 +657,9 @@ var WhatsApp = (function() {
 
   function waFriendlyError(msg) {
     var st = waErrorState(msg);
+    if (/twilio/i.test(msg)) {
+      return String(msg || '').trim() || 'The Twilio API could not be reached. Please try again later.';
+    }
     if (st === 'AUTHORIZATION_REQUIRED') {
       return 'Apps Script does not have permission to make external API requests. Open the Apps Script editor and run any function to complete the authorization prompt, then use "Re-check Authorization".';
     }
@@ -639,8 +712,7 @@ var WhatsApp = (function() {
         if (authBtn) { authBtn.disabled = false; authBtn.innerHTML = ICON.refresh + ' Re-check Authorization'; }
         if (res && res.success) {
           waAuthBlocked = false;
-          var btn = getEl('whatsappTestBtn');
-          if (btn) btn.disabled = false;
+          updateTestBtnState();
           waShowTestAlert('success', { title: 'Authorization confirmed', message: 'Apps Script has permission to make external API requests. You can now send a test message.' });
         } else {
           waAuthBlocked = true;
@@ -766,6 +838,7 @@ var WhatsApp = (function() {
       .then(function(res) {
         if (res && !res.success) Notify.error(res.message || 'Failed to save');
         else {
+          if (res && res.settings) waSettings = res.settings;
           Notify.success('WhatsApp ' + (enabled ? 'enabled' : 'disabled'));
           setDisabledBanner();
           renderIntegrationStatus();
@@ -776,11 +849,17 @@ var WhatsApp = (function() {
 
   function waConfigHardErrors() {
     var p = currentProvider();
+    var endpoint = getEl('whatsappApiEndpoint') ? getEl('whatsappApiEndpoint').value.trim() : '';
     var phoneId = getEl('whatsappPhoneNumberId') ? getEl('whatsappPhoneNumberId').value.trim() : '';
     var bizId = getEl('whatsappBusinessAccountId') ? getEl('whatsappBusinessAccountId').value.trim() : '';
     if (p === 'meta') {
+      if (endpoint && !waEndpointValid(p, endpoint)) return 'API Endpoint must be the Meta Graph API endpoint (graph.facebook.com), not a Twilio endpoint.';
       if (phoneId && !waMetaIdValid(phoneId)) return 'Phone Number ID looks invalid: it must be the numeric Meta ID (e.g. 106540352242922), not the phone number.';
       if (bizId && !waMetaIdValid(bizId)) return 'Business Account ID looks invalid: it must be the numeric WhatsApp Business Account ID (e.g. 375420581369195).';
+    } else if (p === 'twilio') {
+      if (endpoint && !waEndpointValid(p, endpoint)) return 'API Endpoint must point to api.twilio.com, not the Meta Graph API endpoint (graph.facebook.com).';
+      if (bizId && !waTwilioSidValid(bizId)) return 'Account SID looks invalid: it must start with "AC" followed by 32 hex characters, not a Meta Business Account ID.';
+      if (phoneId && !waTwilioSenderValid(phoneId)) return 'WhatsApp sender (From) looks invalid: it must be an E.164 number with a leading + (e.g. +14155238886), not a Meta Phone Number ID.';
     }
     return '';
   }
@@ -797,6 +876,7 @@ var WhatsApp = (function() {
       API.post('whatsappSaveSettings', data)
         .then(function(res) {
           if (res && !res.success) { Notify.error(res.message || 'Failed to save'); return; }
+          if (res && res.settings) waSettings = res.settings;
           Notify.success('WhatsApp settings saved'); setDisabledBanner();
         })
         .catch(function() { Notify.error('Failed to save settings'); });
@@ -814,6 +894,10 @@ var WhatsApp = (function() {
     data.businessAccountId = getEl('whatsappBusinessAccountId').value;
     data.testPhone = getEl('whatsappTestPhone').value;
     data.testMessage = getEl('whatsappTestMessage').value;
+    var prov = data.provider || 'meta';
+    var active = readProviderFields();
+    data.meta = prov === 'meta' ? active : (waProviderValues.meta || { apiEndpoint: '', apiToken: '', phoneNumberId: '', businessAccountId: '' });
+    data.twilio = prov === 'twilio' ? active : (waProviderValues.twilio || { apiEndpoint: '', apiToken: '', phoneNumberId: '', businessAccountId: '' });
     callback(data);
   }
 
@@ -948,35 +1032,80 @@ var WhatsApp = (function() {
   function onProviderChange() {
     var provEl = getEl('whatsappProvider');
     var prov = provEl ? provEl.value : 'meta';
-    var endpoint = getEl('whatsappApiEndpoint');
-    if (endpoint && !endpoint.value) {
-      if (prov === 'meta') endpoint.value = 'https://graph.facebook.com/v18.0';
-      else if (prov === 'twilio') endpoint.value = 'https://api.twilio.com/2010-04-01';
+    var from = waActiveProvider;
+    if (from && from !== prov && waProviderValues[from]) {
+      waProviderValues[from] = readProviderFields();
     }
+    waActiveProvider = prov;
+    applyProviderFields(prov, waProviderValues[prov] || providerDefaults(prov));
+
+    var isTwilio = prov === 'twilio';
     var bizLabel = getEl('whatsappBusinessAccountLabel');
-    if (bizLabel) bizLabel.textContent = (prov === 'twilio') ? 'Twilio Account SID' : 'Business Account ID (Meta)';
+    if (bizLabel) bizLabel.textContent = isTwilio ? 'Twilio Account SID' : 'Business Account ID (Meta)';
+    var endpointLabel = getEl('whatsappApiEndpointLabel');
+    if (endpointLabel) endpointLabel.textContent = isTwilio ? 'API Endpoint (Twilio)' : 'API Endpoint (Graph API)';
     var helpers = {
       endpoint: getEl('whatsappApiEndpointHelper'),
       token: getEl('whatsappApiTokenHelper'),
       phone: getEl('whatsappPhoneNumberIdHelper'),
       biz: getEl('whatsappBusinessAccountIdHelper')
     };
-    if (prov === 'twilio') {
-      if (helpers.endpoint) helpers.endpoint.textContent = 'Twilio API endpoint URL';
+    var placeholders = {
+      endpoint: getEl('whatsappApiEndpoint'),
+      token: getEl('whatsappApiToken'),
+      phone: getEl('whatsappPhoneNumberId'),
+      biz: getEl('whatsappBusinessAccountId')
+    };
+    if (isTwilio) {
+      if (helpers.endpoint) helpers.endpoint.textContent = 'Twilio API endpoint URL (api.twilio.com)';
       if (helpers.token) helpers.token.textContent = 'Your Twilio Auth Token is stored securely.';
-      if (helpers.phone) helpers.phone.textContent = 'Twilio WhatsApp sender number (From)';
-      if (helpers.biz) helpers.biz.textContent = 'Your Twilio Account SID (AC...)';
+      if (helpers.phone) helpers.phone.textContent = 'Twilio WhatsApp sender number (From), E.164 format with +';
+      if (helpers.biz) helpers.biz.textContent = 'Your Twilio Account SID (AC followed by 32 hex chars)';
+      if (placeholders.endpoint) placeholders.endpoint.placeholder = 'https://api.twilio.com/2010-04-01';
+      if (placeholders.token) placeholders.token.placeholder = 'Enter Twilio Auth Token';
+      if (placeholders.phone) placeholders.phone.placeholder = 'e.g. +14155238886';
+      if (placeholders.biz) placeholders.biz.placeholder = 'e.g. ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
     } else {
       if (helpers.endpoint) helpers.endpoint.textContent = 'Meta Graph API endpoint URL';
       if (helpers.token) helpers.token.textContent = 'Your Meta Access Token is stored securely.';
       if (helpers.phone) helpers.phone.textContent = 'WhatsApp Business Phone Number ID (numeric, e.g. 106540352242922)';
       if (helpers.biz) helpers.biz.textContent = 'WhatsApp Business Account ID (numeric, e.g. 375420581369195)';
+      if (placeholders.endpoint) placeholders.endpoint.placeholder = 'https://graph.facebook.com/v18.0';
+      if (placeholders.token) placeholders.token.placeholder = 'Enter Meta Access Token';
+      if (placeholders.phone) placeholders.phone.placeholder = 'Numeric Phone Number ID';
+      if (placeholders.biz) placeholders.biz.placeholder = 'Numeric Business Account ID';
     }
     var docsBtn = getEl('waDocsBtn');
     if (docsBtn) {
-      docsBtn.innerHTML = ICON.doc + (prov === 'twilio' ? 'Twilio API Documentation' : 'Meta API Documentation');
+      docsBtn.innerHTML = ICON.doc + (isTwilio ? 'Twilio API Documentation' : 'Meta API Documentation');
+    }
+    var hint = getEl('whatsappTestHint');
+    if (hint) {
+      hint.innerHTML = ICON.help + (isTwilio
+        ? 'Local numbers are normalized with the selected country code (e.g. +92 for Pakistan). Twilio numbers must be E.164 (e.g. +14155238886).'
+        : 'Local numbers are normalized with the selected country code (e.g. +92 for Pakistan).');
+    }
+    var helpList = getEl('waHelpList');
+    if (helpList) {
+      var items = isTwilio
+        ? [
+            'Your Twilio Account SID and Auth Token must come from your Twilio Console',
+            'The From sender must be a WhatsApp-enabled Twilio number in E.164 format (e.g. +14155238886)',
+            'The API Endpoint must point to api.twilio.com (2010-04-01)',
+            'The test number must be a valid WhatsApp recipient',
+            'WhatsApp notifications must be enabled'
+          ]
+        : [
+            'Your Access Token must be valid and have the correct permissions',
+            'Phone Number ID must be correct',
+            'Business Account ID must be correct',
+            'Test number must be a valid WhatsApp Business recipient',
+            'WhatsApp notifications must be enabled'
+          ];
+      helpList.innerHTML = items.map(function(t) { return '<li>' + ICON.check + esc(t) + '</li>'; }).join('');
     }
     renderIntegrationStatus();
+    updateTestBtnState();
   }
 
   function toggleTokenVisibility() {
@@ -1019,6 +1148,7 @@ var WhatsApp = (function() {
     toggleTokenVisibility: toggleTokenVisibility,
     resetForm: resetForm,
     openDocs: openDocs,
-    syncCountry: syncCountry
+    syncCountry: syncCountry,
+    updateTestBtnState: updateTestBtnState
   };
 })();

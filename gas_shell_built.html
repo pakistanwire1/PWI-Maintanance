@@ -16389,26 +16389,26 @@ function emailSendDailySummary() {
           <span class="wa-helper">Select your WhatsApp Business API provider</span>
         </div>
         <div class="wa-field">
-          <label for="whatsappApiEndpoint">API Endpoint (Graph API)</label>
-          <input type="text" id="whatsappApiEndpoint" class="wa-input" placeholder="https://graph.facebook.com/v18.0" spellcheck="false">
+          <label for="whatsappApiEndpoint" id="whatsappApiEndpointLabel">API Endpoint (Graph API)</label>
+          <input type="text" id="whatsappApiEndpoint" class="wa-input" placeholder="https://graph.facebook.com/v18.0" spellcheck="false" oninput="waUpdateTestBtnState()">
           <span class="wa-helper" id="whatsappApiEndpointHelper">Meta Graph API endpoint URL</span>
         </div>
         <div class="wa-field full">
           <label for="whatsappApiToken">API Token</label>
           <div class="wa-input-group">
-            <input type="password" id="whatsappApiToken" class="wa-input" placeholder="Enter API token" autocomplete="off" spellcheck="false">
+            <input type="password" id="whatsappApiToken" class="wa-input" placeholder="Enter API token" autocomplete="off" spellcheck="false" oninput="waUpdateTestBtnState()">
             <button type="button" id="whatsappTokenEye" class="wa-eye" onclick="toggleWaTokenVisibility()" title="Show / hide token" aria-label="Show or hide token"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
           </div>
           <span class="wa-helper" id="whatsappApiTokenHelper">Your Meta Access Token is stored securely.</span>
         </div>
         <div class="wa-field">
           <label for="whatsappPhoneNumberId">Phone Number ID</label>
-          <input type="text" id="whatsappPhoneNumberId" class="wa-input" placeholder="WhatsApp Business phone number ID" spellcheck="false">
+          <input type="text" id="whatsappPhoneNumberId" class="wa-input" placeholder="WhatsApp Business phone number ID" spellcheck="false" oninput="waUpdateTestBtnState()">
           <span class="wa-helper" id="whatsappPhoneNumberIdHelper">WhatsApp Business Phone Number ID</span>
         </div>
         <div class="wa-field">
           <label id="whatsappBusinessAccountLabel" for="whatsappBusinessAccountId">Business Account ID (Meta)</label>
-          <input type="text" id="whatsappBusinessAccountId" class="wa-input" placeholder="Business account ID" spellcheck="false">
+          <input type="text" id="whatsappBusinessAccountId" class="wa-input" placeholder="Business account ID" spellcheck="false" oninput="waUpdateTestBtnState()">
           <span class="wa-helper" id="whatsappBusinessAccountIdHelper">WhatsApp Business Account ID</span>
         </div>
       </div>
@@ -16418,7 +16418,7 @@ function emailSendDailySummary() {
           <button class="btn btn-secondary" onclick="waResetForm()">Reset</button>
         </div>
         <div class="wa-action-right">
-          <button class="btn btn-success" onclick="whatsappSendTest()">Test Connection</button>
+          <button class="btn btn-success" id="whatsappTestConnBtn" onclick="whatsappSendTest()">Test Connection</button>
         </div>
       </div>
     </div>
@@ -16445,7 +16445,7 @@ function emailSendDailySummary() {
         </div>
         <button class="btn btn-primary wa-test-btn" onclick="whatsappSendTest()" id="whatsappTestBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> Send Test</button>
       </div>
-      <div class="wa-test-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Local numbers are normalized with the selected country code (e.g. +92 for Pakistan).</div>
+      <div class="wa-test-hint" id="whatsappTestHint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Local numbers are normalized with the selected country code (e.g. +92 for Pakistan).</div>
       <div id="whatsappTestResult" class="wa-alert"></div>
     </div>
   </div>
@@ -16494,7 +16494,7 @@ function emailSendDailySummary() {
       </div>
     </div>
     <div class="card-body">
-      <ul class="wa-help-list">
+      <ul class="wa-help-list" id="waHelpList">
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:16px;height:16px"><path d="M20 6L9 17l-5-5"/></svg>Your Access Token must be valid and have the correct permissions</li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:16px;height:16px"><path d="M20 6L9 17l-5-5"/></svg>Phone Number ID must be correct</li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:16px;height:16px"><path d="M20 6L9 17l-5-5"/></svg>Business Account ID must be correct</li>
@@ -16598,6 +16598,8 @@ function emailSendDailySummary() {
   var gWaLogs = [];
   var gWaStats = {};
   var gWaDirty = {};
+  var gWaActiveProvider = null;
+  var gWaProviderValues = { meta: null, twilio: null };
   var waAuthBlocked = false;
 
   var WA_COUNTRY_LIST = [
@@ -16672,6 +16674,7 @@ function emailSendDailySummary() {
   var WA_ICON = {
     eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:16px;height:16px"><path d="M20 6L9 17l-5-5"/></svg>',
     doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
     lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>',
     refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>',
@@ -16715,14 +16718,26 @@ function emailSendDailySummary() {
 
   function renderWhatsAppSettings(s) {
     var el;
+    s = s || {};
+    gWaSettings = s;
     el = waGet('whatsappEnabled'); if (el) el.checked = !!s.enabled;
     el = waGet('whatsappCompanyName'); if (el) el.value = s.companyName || '';
     el = waGet('whatsappCountryCode'); if (el) { el.innerHTML = waCountryOptions(s.defaultCountryCode); el.value = s.defaultCountryCode || ''; }
     el = waGet('whatsappProvider'); if (el) el.value = s.provider || 'meta';
-    el = waGet('whatsappApiEndpoint'); if (el) el.value = s.apiEndpoint || '';
-    el = waGet('whatsappApiToken'); if (el) el.value = s.apiToken || '';
-    el = waGet('whatsappPhoneNumberId'); if (el) el.value = s.phoneNumberId || '';
-    el = waGet('whatsappBusinessAccountId'); if (el) el.value = s.businessAccountId || '';
+    gWaProviderValues.meta = {
+      apiEndpoint: (s.meta && s.meta.apiEndpoint) || s.apiEndpoint || '',
+      apiToken: (s.meta && s.meta.apiToken) || s.apiToken || '',
+      phoneNumberId: (s.meta && s.meta.phoneNumberId) || s.phoneNumberId || '',
+      businessAccountId: (s.meta && s.meta.businessAccountId) || s.businessAccountId || ''
+    };
+    gWaProviderValues.twilio = {
+      apiEndpoint: (s.twilio && s.twilio.apiEndpoint) || '',
+      apiToken: (s.twilio && s.twilio.apiToken) || '',
+      phoneNumberId: (s.twilio && s.twilio.phoneNumberId) || '',
+      businessAccountId: (s.twilio && s.twilio.businessAccountId) || ''
+    };
+    gWaActiveProvider = s.provider || 'meta';
+    waApplyProviderFields(gWaProviderValues[gWaActiveProvider] || waProviderDefaults(gWaActiveProvider));
     el = waGet('whatsappTestPhone'); if (el) el.value = s.testPhone || '';
     el = waGet('whatsappTestMessage'); if (el) el.value = s.testMessage || '';
     el = waGet('whatsappTestCountry'); if (el) { el.innerHTML = waCountryOptions(s.defaultCountryCode); el.value = s.defaultCountryCode || ''; }
@@ -16732,6 +16747,31 @@ function emailSendDailySummary() {
     onWhatsAppProviderChange();
     setWaDisabledBanner();
     renderWaIntegrationStatus();
+    waUpdateTestBtnState();
+  }
+
+  function waReadProviderFields() {
+    return {
+      apiEndpoint: waGet('whatsappApiEndpoint') ? waGet('whatsappApiEndpoint').value : '',
+      apiToken: waGet('whatsappApiToken') ? waGet('whatsappApiToken').value : '',
+      phoneNumberId: waGet('whatsappPhoneNumberId') ? waGet('whatsappPhoneNumberId').value : '',
+      businessAccountId: waGet('whatsappBusinessAccountId') ? waGet('whatsappBusinessAccountId').value : ''
+    };
+  }
+
+  function waApplyProviderFields(v) {
+    v = v || {};
+    var el = waGet('whatsappApiEndpoint'); if (el) el.value = v.apiEndpoint || '';
+    el = waGet('whatsappApiToken'); if (el) el.value = v.apiToken || '';
+    el = waGet('whatsappPhoneNumberId'); if (el) el.value = v.phoneNumberId || '';
+    el = waGet('whatsappBusinessAccountId'); if (el) el.value = v.businessAccountId || '';
+  }
+
+  function waProviderDefaults(prov) {
+    if (prov === 'twilio') {
+      return { apiEndpoint: 'https://api.twilio.com/2010-04-01', apiToken: '', phoneNumberId: '', businessAccountId: '' };
+    }
+    return { apiEndpoint: 'https://graph.facebook.com/v18.0', apiToken: '', phoneNumberId: '', businessAccountId: '' };
   }
 
   function waResetForm() {
@@ -16744,25 +16784,55 @@ function emailSendDailySummary() {
     return /^\d+$/.test(v) && v.length >= 14 && v.length <= 20;
   }
 
+  function waTwilioSidValid(v) {
+    v = String(v || '').trim();
+    return /^AC[0-9a-fA-F]{32}$/.test(v);
+  }
+
+  function waTwilioSenderValid(v) {
+    v = String(v || '').trim();
+    return /^\+[1-9][0-9]{6,14}$/.test(v);
+  }
+
+  function waEndpointValid(prov, v) {
+    v = String(v || '').trim();
+    if (prov === 'twilio') return v.indexOf('api.twilio.com') !== -1 && v.indexOf('graph.facebook.com') === -1;
+    if (prov === 'meta') return v.indexOf('graph.facebook.com') !== -1 && v.indexOf('api.twilio.com') === -1;
+    return true;
+  }
+
   function waConfigIssue() {
     var p = waGet('whatsappProvider') ? waGet('whatsappProvider').value : 'meta';
+    var endpoint = waGet('whatsappApiEndpoint') ? waGet('whatsappApiEndpoint').value : '';
     var token = waGet('whatsappApiToken') ? waGet('whatsappApiToken').value : '';
     var phoneId = waGet('whatsappPhoneNumberId') ? waGet('whatsappPhoneNumberId').value : '';
     var bizId = waGet('whatsappBusinessAccountId') ? waGet('whatsappBusinessAccountId').value : '';
     if (p === 'meta') {
+      if (endpoint && !waEndpointValid(p, endpoint)) return 'Meta API Endpoint must be the Meta Graph API endpoint (graph.facebook.com), not a Twilio endpoint.';
       if (!token) return 'Meta API token is not configured.';
       if (!phoneId) return 'Meta Phone Number ID is not configured.';
       if (!waMetaIdValid(phoneId)) return 'Meta Phone Number ID looks invalid. It must be the numeric ID from Meta (e.g. 106540352242922), not the phone number.';
       if (!bizId) return 'Meta Business Account ID is not configured.';
       if (!waMetaIdValid(bizId)) return 'Meta Business Account ID looks invalid. It must be the numeric WhatsApp Business Account ID (e.g. 375420581369195).';
     } else if (p === 'twilio') {
-      if (!token) return 'Twilio API token is not configured.';
+      if (endpoint && !waEndpointValid(p, endpoint)) return 'Twilio API Endpoint must point to api.twilio.com, not the Meta Graph API endpoint (graph.facebook.com).';
+      if (!token) return 'Twilio Auth Token is not configured.';
       if (!bizId) return 'Twilio Account SID is not configured.';
-      if (!phoneId) return 'Twilio sender number is not configured.';
+      if (!waTwilioSidValid(bizId)) return 'Twilio Account SID looks invalid. It must start with "AC" followed by 32 hex characters (e.g. ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx), not a Meta Business Account ID.';
+      if (!phoneId) return 'Twilio WhatsApp sender (From) is not configured.';
+      if (!waTwilioSenderValid(phoneId)) return 'Twilio WhatsApp sender (From) looks invalid. It must be an E.164 phone number with a leading + (e.g. +14155238886), not a Meta Phone Number ID.';
     } else {
       return 'Unknown WhatsApp provider: ' + p;
     }
     return '';
+  }
+
+  function waUpdateTestBtnState() {
+    var btn = waGet('whatsappTestBtn');
+    var connBtn = waGet('whatsappTestConnBtn');
+    var blocked = !!waConfigIssue();
+    if (btn) btn.disabled = blocked;
+    if (connBtn) connBtn.disabled = blocked;
   }
 
   function renderWaIntegrationStatus() {
@@ -16840,6 +16910,9 @@ function emailSendDailySummary() {
 
   function waFriendlyError(msg) {
     var st = waErrorState(msg);
+    if (/twilio/i.test(msg)) {
+      return String(msg || '').trim() || 'The Twilio API could not be reached. Please try again later.';
+    }
     if (st === 'AUTHORIZATION_REQUIRED') {
       return 'Apps Script does not have permission to make external API requests. Open the Apps Script editor and run any function to complete the authorization prompt, then use "Re-check Authorization".';
     }
@@ -16892,8 +16965,7 @@ function emailSendDailySummary() {
         if (authBtn) { authBtn.disabled = false; authBtn.innerHTML = WA_ICON.refresh + ' Re-check Authorization'; }
         if (res && res.success) {
           waAuthBlocked = false;
-          var btn = waGet('whatsappTestBtn');
-          if (btn) btn.disabled = false;
+          waUpdateTestBtnState();
           waShowTestAlert('success', { title: 'Authorization confirmed', message: 'Apps Script has permission to make external API requests. You can now send a test message.' });
         } else {
           waAuthBlocked = true;
@@ -17018,6 +17090,7 @@ function emailSendDailySummary() {
         if (res && res.success === false) {
           showToast(res.message || 'Failed to save', 'error');
         } else {
+          if (res && res.settings) gWaSettings = res.settings;
           showToast('WhatsApp ' + (enabled ? 'enabled' : 'disabled'), 'success');
           setWaDisabledBanner();
           renderWaIntegrationStatus();
@@ -17038,16 +17111,26 @@ function emailSendDailySummary() {
     data.businessAccountId = waGet('whatsappBusinessAccountId').value;
     data.testPhone = waGet('whatsappTestPhone').value;
     data.testMessage = waGet('whatsappTestMessage').value;
+    var prov = data.provider || 'meta';
+    var active = waReadProviderFields();
+    data.meta = prov === 'meta' ? active : (gWaProviderValues.meta || { apiEndpoint: '', apiToken: '', phoneNumberId: '', businessAccountId: '' });
+    data.twilio = prov === 'twilio' ? active : (gWaProviderValues.twilio || { apiEndpoint: '', apiToken: '', phoneNumberId: '', businessAccountId: '' });
     return data;
   }
 
   function waConfigHardErrors() {
     var p = waGet('whatsappProvider') ? waGet('whatsappProvider').value : 'meta';
+    var endpoint = waGet('whatsappApiEndpoint') ? waGet('whatsappApiEndpoint').value.trim() : '';
     var phoneId = waGet('whatsappPhoneNumberId') ? waGet('whatsappPhoneNumberId').value.trim() : '';
     var bizId = waGet('whatsappBusinessAccountId') ? waGet('whatsappBusinessAccountId').value.trim() : '';
     if (p === 'meta') {
+      if (endpoint && !waEndpointValid(p, endpoint)) return 'API Endpoint must be the Meta Graph API endpoint (graph.facebook.com), not a Twilio endpoint.';
       if (phoneId && !waMetaIdValid(phoneId)) return 'Phone Number ID looks invalid: it must be the numeric Meta ID (e.g. 106540352242922), not the phone number.';
       if (bizId && !waMetaIdValid(bizId)) return 'Business Account ID looks invalid: it must be the numeric WhatsApp Business Account ID (e.g. 375420581369195).';
+    } else if (p === 'twilio') {
+      if (endpoint && !waEndpointValid(p, endpoint)) return 'API Endpoint must point to api.twilio.com, not the Meta Graph API endpoint (graph.facebook.com).';
+      if (bizId && !waTwilioSidValid(bizId)) return 'Account SID looks invalid: it must start with "AC" followed by 32 hex characters, not a Meta Business Account ID.';
+      if (phoneId && !waTwilioSenderValid(phoneId)) return 'WhatsApp sender (From) looks invalid: it must be an E.164 number with a leading + (e.g. +14155238886), not a Meta Phone Number ID.';
     }
     return '';
   }
@@ -17064,6 +17147,7 @@ function emailSendDailySummary() {
     google.script.run
       .withSuccessHandler(function(res) {
         if (res && res.success === false) { showToast(res.message || 'Failed to save', 'error'); return; }
+        if (res && res.settings) gWaSettings = res.settings;
         showToast('WhatsApp settings saved', 'success');
         setWaDisabledBanner();
       })
@@ -17201,33 +17285,78 @@ function emailSendDailySummary() {
 
   function onWhatsAppProviderChange() {
     var prov = waGet('whatsappProvider') ? waGet('whatsappProvider').value : 'meta';
-    var endpoint = waGet('whatsappApiEndpoint');
-    if (endpoint && !endpoint.value) {
-      if (prov === 'meta') endpoint.value = 'https://graph.facebook.com/v18.0';
-      else if (prov === 'twilio') endpoint.value = 'https://api.twilio.com/2010-04-01';
+    var from = gWaActiveProvider;
+    if (from && from !== prov && gWaProviderValues[from]) {
+      gWaProviderValues[from] = waReadProviderFields();
     }
+    gWaActiveProvider = prov;
+    waApplyProviderFields(gWaProviderValues[prov] || waProviderDefaults(prov));
+
+    var isTwilio = prov === 'twilio';
     var bizLabel = waGet('whatsappBusinessAccountLabel');
-    if (bizLabel) bizLabel.textContent = (prov === 'twilio') ? 'Twilio Account SID' : 'Business Account ID (Meta)';
+    if (bizLabel) bizLabel.textContent = isTwilio ? 'Twilio Account SID' : 'Business Account ID (Meta)';
+    var endpointLabel = waGet('whatsappApiEndpointLabel');
+    if (endpointLabel) endpointLabel.textContent = isTwilio ? 'API Endpoint (Twilio)' : 'API Endpoint (Graph API)';
     var helpers = {
       endpoint: waGet('whatsappApiEndpointHelper'),
       token: waGet('whatsappApiTokenHelper'),
       phone: waGet('whatsappPhoneNumberIdHelper'),
       biz: waGet('whatsappBusinessAccountIdHelper')
     };
-    if (prov === 'twilio') {
-      if (helpers.endpoint) helpers.endpoint.textContent = 'Twilio API endpoint URL';
+    var placeholders = {
+      endpoint: waGet('whatsappApiEndpoint'),
+      token: waGet('whatsappApiToken'),
+      phone: waGet('whatsappPhoneNumberId'),
+      biz: waGet('whatsappBusinessAccountId')
+    };
+    if (isTwilio) {
+      if (helpers.endpoint) helpers.endpoint.textContent = 'Twilio API endpoint URL (api.twilio.com)';
       if (helpers.token) helpers.token.textContent = 'Your Twilio Auth Token is stored securely.';
-      if (helpers.phone) helpers.phone.textContent = 'Twilio WhatsApp sender number (From)';
-      if (helpers.biz) helpers.biz.textContent = 'Your Twilio Account SID (AC...)';
+      if (helpers.phone) helpers.phone.textContent = 'Twilio WhatsApp sender number (From), E.164 format with +';
+      if (helpers.biz) helpers.biz.textContent = 'Your Twilio Account SID (AC followed by 32 hex chars)';
+      if (placeholders.endpoint) placeholders.endpoint.placeholder = 'https://api.twilio.com/2010-04-01';
+      if (placeholders.token) placeholders.token.placeholder = 'Enter Twilio Auth Token';
+      if (placeholders.phone) placeholders.phone.placeholder = 'e.g. +14155238886';
+      if (placeholders.biz) placeholders.biz.placeholder = 'e.g. ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
     } else {
       if (helpers.endpoint) helpers.endpoint.textContent = 'Meta Graph API endpoint URL';
       if (helpers.token) helpers.token.textContent = 'Your Meta Access Token is stored securely.';
       if (helpers.phone) helpers.phone.textContent = 'WhatsApp Business Phone Number ID (numeric, e.g. 106540352242922)';
       if (helpers.biz) helpers.biz.textContent = 'WhatsApp Business Account ID (numeric, e.g. 375420581369195)';
+      if (placeholders.endpoint) placeholders.endpoint.placeholder = 'https://graph.facebook.com/v18.0';
+      if (placeholders.token) placeholders.token.placeholder = 'Enter Meta Access Token';
+      if (placeholders.phone) placeholders.phone.placeholder = 'Numeric Phone Number ID';
+      if (placeholders.biz) placeholders.biz.placeholder = 'Numeric Business Account ID';
     }
     var docsBtn = waGet('waDocsBtn');
-    if (docsBtn) docsBtn.innerHTML = WA_ICON.doc + (prov === 'twilio' ? 'Twilio API Documentation' : 'Meta API Documentation');
+    if (docsBtn) docsBtn.innerHTML = WA_ICON.doc + (isTwilio ? 'Twilio API Documentation' : 'Meta API Documentation');
+    var hint = waGet('whatsappTestHint');
+    if (hint) {
+      hint.innerHTML = WA_ICON.help + (isTwilio
+        ? 'Local numbers are normalized with the selected country code (e.g. +92 for Pakistan). Twilio numbers must be E.164 (e.g. +14155238886).'
+        : 'Local numbers are normalized with the selected country code (e.g. +92 for Pakistan).');
+    }
+    var helpList = waGet('waHelpList');
+    if (helpList) {
+      var items = isTwilio
+        ? [
+            'Your Twilio Account SID and Auth Token must come from your Twilio Console',
+            'The From sender must be a WhatsApp-enabled Twilio number in E.164 format (e.g. +14155238886)',
+            'The API Endpoint must point to api.twilio.com (2010-04-01)',
+            'The test number must be a valid WhatsApp recipient',
+            'WhatsApp notifications must be enabled'
+          ]
+        : [
+            'Your Access Token must be valid and have the correct permissions',
+            'Phone Number ID must be correct',
+            'Business Account ID must be correct',
+            'Test number must be a valid WhatsApp Business recipient',
+            'WhatsApp notifications must be enabled'
+          ];
+      helpList.innerHTML = items.map(function(t) { return '<li>' + WA_ICON.check + waEsc(t) + '</li>'; }).join('');
+    }
     renderWaIntegrationStatus();
+    waUpdateTestBtnState();
   }
 
   function toggleWaTokenVisibility() {

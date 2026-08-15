@@ -52,6 +52,23 @@ const check = (name, pass, detail) => {
   check('H8. Meta Phone Number ID validated as numeric in configIssue', waJs.indexOf('waMetaIdValid') !== -1 && waJs.indexOf('Phone Number ID looks invalid') !== -1);
   check('H9. Meta Business Account ID validated as numeric in configIssue', waJs.indexOf('Business Account ID looks invalid') !== -1);
 
+  /* K: provider-switch + Twilio validation regressions */
+  const waPage = read('WhatsAppPage.html');
+  check('K1. Per-provider value capture exists (no cross-copy on switch)', waJs.indexOf('waProviderValues') !== -1 && waJs.indexOf("waProviderValues[from] = readProviderFields();") !== -1 && waJs.indexOf("applyProviderFields(prov, waProviderValues[prov]") !== -1);
+  check('K2. Twilio Account SID validated as AC+32 hex in configIssue', waJs.indexOf('waTwilioSidValid') !== -1 && waJs.indexOf('AC[0-9a-fA-F]{32}') !== -1);
+  check('K3. Twilio From sender validated as E.164 in configIssue', waJs.indexOf('waTwilioSenderValid') !== -1 && waJs.indexOf('E.164') !== -1 && waJs.indexOf('+14155238886') !== -1);
+  check('K4. Meta Graph endpoint flagged as invalid Twilio endpoint', waJs.indexOf('Twilio API Endpoint must point to api.twilio.com') !== -1 && waJs.indexOf('graph.facebook.com') !== -1);
+  check('K5. Meta IDs flagged when used as Twilio Account SID / From', waJs.indexOf('not a Meta Business Account ID') !== -1 && waJs.indexOf('not a Meta Phone Number ID') !== -1);
+  check('K6. Send Test disabled when config invalid (updateTestBtnState)', waJs.indexOf('function updateTestBtnState()') !== -1 && waJs.indexOf('whatsappTestBtn') !== -1 && waJs.indexOf('whatsappTestConnBtn') !== -1);
+  check('K7. Endpoint label + placeholders update on provider switch', waJs.indexOf('whatsappApiEndpointLabel') !== -1 && waJs.indexOf('.placeholder = \'https://api.twilio.com/2010-04-01\'') !== -1 && waJs.indexOf('.placeholder = \'https://graph.facebook.com/v18.0\'') !== -1);
+  check('K8. Test hint + help list are provider-aware', waJs.indexOf('whatsappTestHint') !== -1 && waJs.indexOf('waHelpList') !== -1 && waJs.indexOf('From sender must be a WhatsApp-enabled Twilio number') !== -1);
+  check('K9. collectSettings posts per-provider meta/twilio objects', waJs.indexOf('data.meta =') !== -1 && waJs.indexOf('data.twilio =') !== -1);
+  check('K10. Backend persists per-provider configs (whatsappSaveProviderConfigs)', waGs.indexOf('function whatsappSaveProviderConfigs(') !== -1 && waGs.indexOf('META_API_TOKEN') !== -1 && waGs.indexOf('TWILIO_API_TOKEN') !== -1);
+  check('K11. Backend returns per-provider meta/twilio settings', waGs.indexOf('meta: meta') !== -1 && waGs.indexOf('twilio: twilio') !== -1 && waGs.indexOf('META_BUSINESS_ACCOUNT_ID') !== -1);
+  check('K12. Backend validates Twilio SID/sender/endpoint in configIssue', waGs.indexOf('whatsappTwilioSidValid') !== -1 && waGs.indexOf('whatsappTwilioSenderValid') !== -1 && waGs.indexOf('whatsappEndpointBelongsTo') !== -1);
+  check('K13. Backend masks nested meta/twilio tokens in activity log', waGs.indexOf('safeData.meta.apiToken') !== -1 && waGs.indexOf('safeData.twilio.apiToken') !== -1);
+  check('K14. GAS page mirrors per-provider capture + dynamic labels', waPage.indexOf('gWaProviderValues') !== -1 && waPage.indexOf('whatsappApiEndpointLabel') !== -1 && waPage.indexOf('whatsappTestHint') !== -1 && waPage.indexOf('waHelpList') !== -1 && waPage.indexOf('waUpdateTestBtnState()') !== -1);
+
 
   const afterSendTest = waJs.split('function sendTest()')[1] || '';
   const sendTestBody = afterSendTest.split('function toggleTemplate')[0] || afterSendTest;
@@ -341,6 +358,40 @@ whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', pho
 var r28 = whatsappTestSend({ testPhone: '03001234567', testMessage: 'x', _userEmail: 'wa@cmms.com' });
 __ok('B28. Non-numeric Business Account ID rejected (no send)', r28.success === false && r28.message.indexOf('Business Account ID') > -1, r28.message);
 whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: '106540352242922', businessAccountId: '123456789012345', _userEmail: 'admin@cmms.com' });
+
+/* K: per-provider config independence + Twilio validation regressions */
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'meta_tok', phoneNumberId: '106540352242922', businessAccountId: '123456789012345', apiEndpoint: 'https://graph.facebook.com/v18.0', _userEmail: 'admin@cmms.com' });
+whatsappSaveSettings({ enabled: true, provider: 'twilio', apiToken: 'twilio_at', phoneNumberId: '+14155238886', businessAccountId: 'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', apiEndpoint: 'https://api.twilio.com/2010-04-01', _userEmail: 'admin@cmms.com' });
+var g29 = whatsappGetSettings();
+__ok('B29. Twilio save does not overwrite Meta config (no cross-copy)', g29.meta.apiToken === 'meta_tok' && g29.meta.phoneNumberId === '106540352242922' && g29.meta.apiEndpoint === 'https://graph.facebook.com/v18.0' && g29.twilio.apiToken === 'twilio_at' && g29.twilio.phoneNumberId === '+14155238886', JSON.stringify({ meta: g29.meta, twilio: g29.twilio }));
+__ok('B30. Active values follow selected provider (twilio)', g29.provider === 'twilio' && g29.apiToken === 'twilio_at' && g29.businessAccountId === 'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' && g29.phoneNumberId === '+14155238886', JSON.stringify({ provider: g29.provider, apiToken: g29.apiToken, biz: g29.businessAccountId, from: g29.phoneNumberId }));
+
+var i31 = whatsappConfigIssue({ provider: 'twilio', apiToken: 'twilio_at', businessAccountId: 'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', phoneNumberId: '+14155238886', apiEndpoint: 'https://api.twilio.com/2010-04-01' });
+__ok('B31. Valid Twilio config passes whatsappConfigIssue', i31 === '', i31);
+
+var i32 = whatsappConfigIssue({ provider: 'twilio', apiToken: 'twilio_at', businessAccountId: 'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', phoneNumberId: '+14155238886', apiEndpoint: 'https://graph.facebook.com/v18.0' });
+__ok('B32. Meta Graph endpoint flagged as invalid Twilio endpoint', i32.indexOf('api.twilio.com') > -1 && i32.indexOf('graph.facebook.com') > -1, i32);
+
+var i33 = whatsappConfigIssue({ provider: 'twilio', apiToken: 'twilio_at', businessAccountId: '375420581369195', phoneNumberId: '+14155238886', apiEndpoint: 'https://api.twilio.com/2010-04-01' });
+__ok('B33. Meta Business Account ID rejected as Twilio Account SID', i33.indexOf('Account SID') > -1 && i33.indexOf('AC') > -1 && i33.indexOf('Meta') > -1, i33);
+
+var i34 = whatsappConfigIssue({ provider: 'twilio', apiToken: 'twilio_at', businessAccountId: 'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', phoneNumberId: '106540352242922', apiEndpoint: 'https://api.twilio.com/2010-04-01' });
+__ok('B34. Meta Phone Number ID rejected as Twilio From sender', i34.indexOf('From') > -1 && i34.indexOf('E.164') > -1, i34);
+
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiEndpoint: 'https://graph.facebook.com/v18.0', apiToken: 'meta_tok', phoneNumberId: '106540352242922', businessAccountId: '123456789012345',
+  meta: { apiEndpoint: 'https://graph.facebook.com/v18.0', apiToken: 'meta_tok', phoneNumberId: '106540352242922', businessAccountId: '123456789012345' },
+  twilio: { apiEndpoint: 'https://api.twilio.com/2010-04-01', apiToken: 'twilio_at', phoneNumberId: '+14155238886', businessAccountId: 'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
+  _userEmail: 'admin@cmms.com' });
+var g35 = whatsappGetSettings();
+__ok('B35. Explicit meta/twilio objects persisted per provider', g35.meta.apiToken === 'meta_tok' && g35.twilio.apiToken === 'twilio_at' && g35.provider === 'meta' && g35.apiToken === 'meta_tok', JSON.stringify({ meta: g35.meta.apiToken, twilio: g35.twilio.apiToken, active: g35.apiToken }));
+
+var act36 = __activityLog[__activityLog.length - 1];
+var masked36 = act36 && act36.detail && act36.detail.indexOf('meta_tok') === -1 && act36.detail.indexOf('twilio_at') === -1 && JSON.parse(act36.detail).meta && JSON.parse(act36.detail).meta.apiToken === '***' && JSON.parse(act36.detail).twilio && JSON.parse(act36.detail).twilio.apiToken === '***';
+__ok('B36. Nested meta/twilio tokens masked in activity log', !!masked36, act36 ? act36.detail : 'no activity');
+
+whatsappSaveSettings({ enabled: true, provider: 'twilio', apiToken: 'twilio_at', phoneNumberId: '+14155238886', businessAccountId: 'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', apiEndpoint: 'https://api.twilio.com/2010-04-01', _userEmail: 'admin@cmms.com' });
+var g37 = whatsappGetSettings();
+__ok('B37. Meta config preserved across twilio-only save', g37.meta.apiToken === 'meta_tok' && g37.meta.phoneNumberId === '106540352242922', JSON.stringify(g37.meta));
 `;
 
   const sandbox = {};
@@ -692,6 +743,119 @@ try {
   await new Promise((r) => setTimeout(r, 1200));
   const up = serverState.actions.filter((a) => a.action === 'updateUser').slice(-1)[0];
   check('C14. Unchecking WA perm saves CanManageWhatsApp=FALSE', !!up && up.data.CanManageWhatsApp === 'FALSE', JSON.stringify(up && up.data));
+
+  /* C16: provider switch to Twilio must NOT copy Meta values, and all UI
+     labels/helpers/placeholders/docs/hint/help must become Twilio-specific */
+  await page.evaluate(() => Router.navigate('whatsapp'));
+  await page.waitForFunction(() => Router.current === 'whatsapp' && document.getElementById('whatsappPage'), { timeout: 30000 });
+  await page.waitForFunction(() => (document.getElementById('whatsappProvider') || {}).value === 'meta', { timeout: 30000 });
+  const c16 = await page.evaluate(() => {
+    const g = (id) => document.getElementById(id);
+    g('whatsappProvider').value = 'twilio';
+    WhatsApp.onProviderChange();
+    return {
+      endpoint: g('whatsappApiEndpoint').value,
+      phone: g('whatsappPhoneNumberId').value,
+      biz: g('whatsappBusinessAccountId').value,
+      token: g('whatsappApiToken').value,
+      bizLabel: g('whatsappBusinessAccountLabel').textContent,
+      endpointLabel: g('whatsappApiEndpointLabel').textContent,
+      bizHelper: g('whatsappBusinessAccountIdHelper').textContent,
+      phoneHelper: g('whatsappPhoneNumberIdHelper').textContent,
+      phonePlaceholder: g('whatsappPhoneNumberId').placeholder,
+      tokenPlaceholder: g('whatsappApiToken').placeholder,
+      endpointPlaceholder: g('whatsappApiEndpoint').placeholder,
+      docsBtn: g('waDocsBtn').textContent,
+      hint: g('whatsappTestHint').textContent,
+      help: g('waHelpList').textContent,
+      status: g('whatsappIntegrationStatus').textContent,
+      sendBtnDisabled: g('whatsappTestBtn').disabled,
+      connBtnDisabled: g('whatsappTestConnBtn').disabled
+    };
+  });
+  check('C16. Twilio switch: no Meta IDs copied; labels/helpers/placeholders/docs/hint/help updated; Send Test disabled',
+    c16.endpoint === 'https://api.twilio.com/2010-04-01' &&
+    c16.phone === '' && c16.biz === '' && c16.token === '' &&
+    c16.bizLabel === 'Twilio Account SID' && c16.endpointLabel === 'API Endpoint (Twilio)' &&
+    c16.bizHelper.indexOf('AC followed by 32 hex') > -1 && c16.phoneHelper.indexOf('From') > -1 &&
+    c16.phonePlaceholder.indexOf('+14155238886') > -1 && c16.tokenPlaceholder === 'Enter Twilio Auth Token' &&
+    c16.endpointPlaceholder === 'https://api.twilio.com/2010-04-01' &&
+    c16.docsBtn.indexOf('Twilio') > -1 && c16.hint.indexOf('E.164') > -1 && c16.help.indexOf('From sender') > -1 &&
+    c16.status.indexOf('Configuration Required') > -1 &&
+    c16.sendBtnDisabled === true && c16.connBtnDisabled === true,
+    JSON.stringify(c16));
+
+  /* C17: switch back to Meta restores captured Meta values */
+  const c17 = await page.evaluate(() => {
+    const g = (id) => document.getElementById(id);
+    g('whatsappProvider').value = 'meta';
+    WhatsApp.onProviderChange();
+    return {
+      endpoint: g('whatsappApiEndpoint').value,
+      phone: g('whatsappPhoneNumberId').value,
+      biz: g('whatsappBusinessAccountId').value,
+      token: g('whatsappApiToken').value,
+      bizLabel: g('whatsappBusinessAccountLabel').textContent,
+      sendBtnDisabled: g('whatsappTestBtn').disabled
+    };
+  });
+  check('C17. Switch back to Meta: Meta values restored (capture not lost)',
+    c17.endpoint === 'https://graph.facebook.com/v18.0' &&
+    c17.phone === '106540352242922' && c17.biz === '123456789012345' &&
+    c17.token === 'server_token_abc' && c17.bizLabel === 'Business Account ID (Meta)' &&
+    c17.sendBtnDisabled === false,
+    JSON.stringify(c17));
+
+  /* C18: Twilio config with Meta IDs / Meta endpoint is blocked on save */
+  const saveB1 = serverState.actions.filter((a) => a.action === 'whatsappSaveSettings').length;
+  await page.evaluate(() => {
+    const g = (id) => document.getElementById(id);
+    g('whatsappProvider').value = 'twilio';
+    WhatsApp.onProviderChange();
+    g('whatsappApiEndpoint').value = 'https://api.twilio.com/2010-04-01';
+    g('whatsappApiToken').value = 'twilio_at';
+    g('whatsappPhoneNumberId').value = '106540352242922';
+    g('whatsappBusinessAccountId').value = '123456789012345';
+    WhatsApp.saveSettings();
+  });
+  await new Promise((r) => setTimeout(r, 500));
+  const saveA1 = serverState.actions.filter((a) => a.action === 'whatsappSaveSettings').length;
+  const c18Alert = await page.evaluate(() => (document.getElementById('whatsappTestResult') || {}).textContent || '');
+  check('C18. Twilio save blocked when Meta SID/From used (Account SID flagged)', saveA1 === saveB1 && c18Alert.indexOf('Account SID') > -1, JSON.stringify({ blocked: saveA1 === saveB1, alert: c18Alert.slice(0, 100) }));
+
+  const saveB2 = serverState.actions.filter((a) => a.action === 'whatsappSaveSettings').length;
+  await page.evaluate(() => {
+    const g = (id) => document.getElementById(id);
+    g('whatsappBusinessAccountId').value = 'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+    WhatsApp.saveSettings();
+  });
+  await new Promise((r) => setTimeout(r, 500));
+  const saveA2 = serverState.actions.filter((a) => a.action === 'whatsappSaveSettings').length;
+  const c18bAlert = await page.evaluate(() => (document.getElementById('whatsappTestResult') || {}).textContent || '');
+  check('C18b. Twilio From must be E.164 (Meta Phone Number ID flagged)', saveA2 === saveB2 && c18bAlert.indexOf('From') > -1 && c18bAlert.indexOf('E.164') > -1, JSON.stringify({ blocked: saveA2 === saveB2, alert: c18bAlert.slice(0, 100) }));
+
+  const saveB3 = serverState.actions.filter((a) => a.action === 'whatsappSaveSettings').length;
+  await page.evaluate(() => {
+    const g = (id) => document.getElementById(id);
+    g('whatsappApiEndpoint').value = 'https://graph.facebook.com/v18.0';
+    g('whatsappPhoneNumberId').value = '+14155238886';
+    WhatsApp.saveSettings();
+  });
+  await new Promise((r) => setTimeout(r, 500));
+  const saveA3 = serverState.actions.filter((a) => a.action === 'whatsappSaveSettings').length;
+  const c18cAlert = await page.evaluate(() => (document.getElementById('whatsappTestResult') || {}).textContent || '');
+  check('C18c. Meta Graph endpoint blocked for Twilio on save', saveA3 === saveB3 && c18cAlert.indexOf('api.twilio.com') > -1, JSON.stringify({ blocked: saveA3 === saveB3, alert: c18cAlert.slice(0, 100) }));
+
+  /* restore clean Meta state for remaining checks */
+  serverState.settings.provider = 'meta';
+  serverState.settings.apiEndpoint = 'https://graph.facebook.com/v18.0';
+  serverState.settings.apiToken = 'server_token_abc';
+  serverState.settings.phoneNumberId = '106540352242922';
+  serverState.settings.businessAccountId = '123456789012345';
+  await page.evaluate(() => Router.navigate('dashboard'));
+  await page.waitForFunction(() => Router.current === 'dashboard', { timeout: 30000 });
+  await page.evaluate(() => Router.navigate('whatsapp'));
+  await page.waitForFunction(() => Router.current === 'whatsapp' && (document.getElementById('whatsappProvider') || {}).value === 'meta', { timeout: 30000 });
 
   /* C15: no app errors (filter network/offline noise) */
   const noiseRe = /net::|Failed to load resource|favicon|gstatic|Google Charts|charts\.google|404|Intercept|blockedbyclient|ERR_/;

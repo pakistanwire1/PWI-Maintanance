@@ -12,7 +12,18 @@ var WHATSAPP = {
     PHONE_NUMBER_ID: 'whatsapp_phone_number_id',
     BUSINESS_ACCOUNT_ID: 'whatsapp_business_account_id',
     TEST_PHONE: 'whatsapp_test_phone',
-    TEST_MESSAGE: 'whatsapp_test_message'
+    TEST_MESSAGE: 'whatsapp_test_message',
+    META_API_ENDPOINT: 'whatsapp_meta_api_endpoint',
+    META_API_TOKEN: 'whatsapp_meta_api_token',
+    META_PHONE_NUMBER_ID: 'whatsapp_meta_phone_number_id',
+    META_BUSINESS_ACCOUNT_ID: 'whatsapp_meta_business_account_id',
+    TWILIO_API_ENDPOINT: 'whatsapp_twilio_api_endpoint',
+    TWILIO_API_TOKEN: 'whatsapp_twilio_api_token',
+    TWILIO_PHONE_NUMBER_ID: 'whatsapp_twilio_phone_number_id',
+    TWILIO_BUSINESS_ACCOUNT_ID: 'whatsapp_twilio_business_account_id'
+  },
+  TWILIO_DEFAULTS: {
+    API_ENDPOINT: 'https://api.twilio.com/2010-04-01'
   },
   DEFAULTS: {
     COMPANY_NAME: 'PWI CMMS',
@@ -81,22 +92,75 @@ function whatsappEnsureDefaults() {
   if (getSetting(WHATSAPP.SETTINGS.BUSINESS_ACCOUNT_ID) === null) saveSetting(WHATSAPP.SETTINGS.BUSINESS_ACCOUNT_ID, '');
   if (getSetting(WHATSAPP.SETTINGS.TEST_PHONE) === null) saveSetting(WHATSAPP.SETTINGS.TEST_PHONE, '');
   if (getSetting(WHATSAPP.SETTINGS.TEST_MESSAGE) === null) saveSetting(WHATSAPP.SETTINGS.TEST_MESSAGE, WHATSAPP.DEFAULTS.TEST_MESSAGE);
+  whatsappEnsureProviderDefaults();
+}
+
+function whatsappEnsureProviderDefaults() {
+  var provider = getSetting(WHATSAPP.SETTINGS.PROVIDER) || WHATSAPP.DEFAULTS.PROVIDER;
+  var endpoint = getSetting(WHATSAPP.SETTINGS.API_ENDPOINT) || '';
+  var sharedLooksMeta = provider === 'meta' || endpoint.indexOf('graph.facebook.com') !== -1;
+  var sharedLooksTwilio = provider === 'twilio' || endpoint.indexOf('api.twilio.com') !== -1;
+  if (getSetting(WHATSAPP.SETTINGS.META_API_ENDPOINT) === null) {
+    saveSetting(WHATSAPP.SETTINGS.META_API_ENDPOINT, sharedLooksMeta ? (endpoint || WHATSAPP.DEFAULTS.API_ENDPOINT) : WHATSAPP.DEFAULTS.API_ENDPOINT);
+  }
+  if (getSetting(WHATSAPP.SETTINGS.META_API_TOKEN) === null) {
+    saveSetting(WHATSAPP.SETTINGS.META_API_TOKEN, sharedLooksMeta ? (getSetting(WHATSAPP.SETTINGS.API_TOKEN) || '') : '');
+  }
+  if (getSetting(WHATSAPP.SETTINGS.META_PHONE_NUMBER_ID) === null) {
+    saveSetting(WHATSAPP.SETTINGS.META_PHONE_NUMBER_ID, sharedLooksMeta ? (getSetting(WHATSAPP.SETTINGS.PHONE_NUMBER_ID) || '') : '');
+  }
+  if (getSetting(WHATSAPP.SETTINGS.META_BUSINESS_ACCOUNT_ID) === null) {
+    saveSetting(WHATSAPP.SETTINGS.META_BUSINESS_ACCOUNT_ID, sharedLooksMeta ? (getSetting(WHATSAPP.SETTINGS.BUSINESS_ACCOUNT_ID) || '') : '');
+  }
+  if (getSetting(WHATSAPP.SETTINGS.TWILIO_API_ENDPOINT) === null) {
+    saveSetting(WHATSAPP.SETTINGS.TWILIO_API_ENDPOINT, sharedLooksTwilio ? (endpoint || WHATSAPP.TWILIO_DEFAULTS.API_ENDPOINT) : WHATSAPP.TWILIO_DEFAULTS.API_ENDPOINT);
+  }
+  if (getSetting(WHATSAPP.SETTINGS.TWILIO_API_TOKEN) === null) {
+    saveSetting(WHATSAPP.SETTINGS.TWILIO_API_TOKEN, sharedLooksTwilio ? (getSetting(WHATSAPP.SETTINGS.API_TOKEN) || '') : '');
+  }
+  if (getSetting(WHATSAPP.SETTINGS.TWILIO_PHONE_NUMBER_ID) === null) {
+    saveSetting(WHATSAPP.SETTINGS.TWILIO_PHONE_NUMBER_ID, sharedLooksTwilio ? (getSetting(WHATSAPP.SETTINGS.PHONE_NUMBER_ID) || '') : '');
+  }
+  if (getSetting(WHATSAPP.SETTINGS.TWILIO_BUSINESS_ACCOUNT_ID) === null) {
+    saveSetting(WHATSAPP.SETTINGS.TWILIO_BUSINESS_ACCOUNT_ID, sharedLooksTwilio ? (getSetting(WHATSAPP.SETTINGS.BUSINESS_ACCOUNT_ID) || '') : '');
+  }
+}
+
+function whatsappCleanSetting(v, fallback) {
+  if (v === 'undefined' || v === null) return fallback;
+  return v || fallback;
 }
 
 function whatsappGetSettings() {
   try {
     whatsappEnsureDefaults();
+    var provider = getSetting(WHATSAPP.SETTINGS.PROVIDER) || WHATSAPP.DEFAULTS.PROVIDER;
+    var meta = {
+      apiEndpoint: whatsappCleanSetting(getSetting(WHATSAPP.SETTINGS.META_API_ENDPOINT), WHATSAPP.DEFAULTS.API_ENDPOINT),
+      apiToken: whatsappCleanSetting(getSetting(WHATSAPP.SETTINGS.META_API_TOKEN), ''),
+      phoneNumberId: whatsappCleanSetting(getSetting(WHATSAPP.SETTINGS.META_PHONE_NUMBER_ID), ''),
+      businessAccountId: whatsappCleanSetting(getSetting(WHATSAPP.SETTINGS.META_BUSINESS_ACCOUNT_ID), '')
+    };
+    var twilio = {
+      apiEndpoint: whatsappCleanSetting(getSetting(WHATSAPP.SETTINGS.TWILIO_API_ENDPOINT), WHATSAPP.TWILIO_DEFAULTS.API_ENDPOINT),
+      apiToken: whatsappCleanSetting(getSetting(WHATSAPP.SETTINGS.TWILIO_API_TOKEN), ''),
+      phoneNumberId: whatsappCleanSetting(getSetting(WHATSAPP.SETTINGS.TWILIO_PHONE_NUMBER_ID), ''),
+      businessAccountId: whatsappCleanSetting(getSetting(WHATSAPP.SETTINGS.TWILIO_BUSINESS_ACCOUNT_ID), '')
+    };
+    var active = provider === 'twilio' ? twilio : meta;
     return {
       enabled: getSetting(WHATSAPP.SETTINGS.ENABLED) === true || getSetting(WHATSAPP.SETTINGS.ENABLED) === 'true',
       companyName: getSetting(WHATSAPP.SETTINGS.COMPANY_NAME) || WHATSAPP.DEFAULTS.COMPANY_NAME,
       defaultCountryCode: getSetting(WHATSAPP.SETTINGS.DEFAULT_COUNTRY_CODE) || WHATSAPP.DEFAULTS.DEFAULT_COUNTRY_CODE,
-      provider: getSetting(WHATSAPP.SETTINGS.PROVIDER) || WHATSAPP.DEFAULTS.PROVIDER,
-      apiEndpoint: getSetting(WHATSAPP.SETTINGS.API_ENDPOINT) || WHATSAPP.DEFAULTS.API_ENDPOINT,
-      apiToken: getSetting(WHATSAPP.SETTINGS.API_TOKEN) || '',
-      phoneNumberId: getSetting(WHATSAPP.SETTINGS.PHONE_NUMBER_ID) || '',
-      businessAccountId: getSetting(WHATSAPP.SETTINGS.BUSINESS_ACCOUNT_ID) || '',
+      provider: provider,
+      apiEndpoint: active.apiEndpoint,
+      apiToken: active.apiToken,
+      phoneNumberId: active.phoneNumberId,
+      businessAccountId: active.businessAccountId,
       testPhone: getSetting(WHATSAPP.SETTINGS.TEST_PHONE) || '',
-      testMessage: getSetting(WHATSAPP.SETTINGS.TEST_MESSAGE) || WHATSAPP.DEFAULTS.TEST_MESSAGE
+      testMessage: getSetting(WHATSAPP.SETTINGS.TEST_MESSAGE) || WHATSAPP.DEFAULTS.TEST_MESSAGE,
+      meta: meta,
+      twilio: twilio
     };
   } catch (e) {
     return { enabled: false, provider: WHATSAPP.DEFAULTS.PROVIDER, companyName: WHATSAPP.DEFAULTS.COMPANY_NAME, defaultCountryCode: WHATSAPP.DEFAULTS.DEFAULT_COUNTRY_CODE };
@@ -117,13 +181,51 @@ function whatsappSaveSettings(data) {
     if (data.hasOwnProperty('businessAccountId')) saveSetting(WHATSAPP.SETTINGS.BUSINESS_ACCOUNT_ID, String(data.businessAccountId));
     if (data.hasOwnProperty('testPhone')) saveSetting(WHATSAPP.SETTINGS.TEST_PHONE, String(data.testPhone));
     if (data.hasOwnProperty('testMessage')) saveSetting(WHATSAPP.SETTINGS.TEST_MESSAGE, String(data.testMessage));
+    whatsappSaveProviderConfigs(data);
     var safeData = JSON.parse(JSON.stringify(data));
     if (safeData && safeData.apiToken) safeData.apiToken = '***';
+    if (safeData && safeData.meta && safeData.meta.apiToken) safeData.meta.apiToken = '***';
+    if (safeData && safeData.twilio && safeData.twilio.apiToken) safeData.twilio.apiToken = '***';
     logActivity('WhatsApp Settings Updated', JSON.stringify(safeData));
     try { createAuditLog(CONFIG.AUDIT_MODULES.SETTINGS, CONFIG.AUDIT_ACTIONS.UPDATE, 'WhatsAppSettings', 'WhatsApp settings changed', '', JSON.stringify(safeData).substring(0, 200), 'Success', 'WhatsApp settings updated'); } catch(e) {}
     return { success: true, settings: whatsappGetSettings() };
   } catch (e) {
     return { success: false, message: e.message };
+  }
+}
+
+function whatsappSaveProviderConfigs(data) {
+  var hasFields = data.hasOwnProperty('apiEndpoint') || data.hasOwnProperty('apiToken') ||
+                  data.hasOwnProperty('phoneNumberId') || data.hasOwnProperty('businessAccountId');
+  if (!hasFields) return;
+  var provider = data.hasOwnProperty('provider') ? String(data.provider) : (getSetting(WHATSAPP.SETTINGS.PROVIDER) || WHATSAPP.DEFAULTS.PROVIDER);
+  var metaCfg = data.meta || null;
+  var twilioCfg = data.twilio || null;
+  if (provider === 'meta' && !metaCfg) {
+    metaCfg = {};
+    if (data.hasOwnProperty('apiEndpoint') && data.apiEndpoint !== undefined) metaCfg.apiEndpoint = data.apiEndpoint;
+    if (data.hasOwnProperty('apiToken') && data.apiToken !== undefined) metaCfg.apiToken = data.apiToken;
+    if (data.hasOwnProperty('phoneNumberId') && data.phoneNumberId !== undefined) metaCfg.phoneNumberId = data.phoneNumberId;
+    if (data.hasOwnProperty('businessAccountId') && data.businessAccountId !== undefined) metaCfg.businessAccountId = data.businessAccountId;
+  }
+  if (provider === 'twilio' && !twilioCfg) {
+    twilioCfg = {};
+    if (data.hasOwnProperty('apiEndpoint') && data.apiEndpoint !== undefined) twilioCfg.apiEndpoint = data.apiEndpoint;
+    if (data.hasOwnProperty('apiToken') && data.apiToken !== undefined) twilioCfg.apiToken = data.apiToken;
+    if (data.hasOwnProperty('phoneNumberId') && data.phoneNumberId !== undefined) twilioCfg.phoneNumberId = data.phoneNumberId;
+    if (data.hasOwnProperty('businessAccountId') && data.businessAccountId !== undefined) twilioCfg.businessAccountId = data.businessAccountId;
+  }
+  if (metaCfg) {
+    if (metaCfg.hasOwnProperty('apiEndpoint') && metaCfg.apiEndpoint !== undefined) saveSetting(WHATSAPP.SETTINGS.META_API_ENDPOINT, String(metaCfg.apiEndpoint));
+    if (metaCfg.hasOwnProperty('apiToken') && metaCfg.apiToken !== undefined) saveSetting(WHATSAPP.SETTINGS.META_API_TOKEN, String(metaCfg.apiToken));
+    if (metaCfg.hasOwnProperty('phoneNumberId') && metaCfg.phoneNumberId !== undefined) saveSetting(WHATSAPP.SETTINGS.META_PHONE_NUMBER_ID, String(metaCfg.phoneNumberId));
+    if (metaCfg.hasOwnProperty('businessAccountId') && metaCfg.businessAccountId !== undefined) saveSetting(WHATSAPP.SETTINGS.META_BUSINESS_ACCOUNT_ID, String(metaCfg.businessAccountId));
+  }
+  if (twilioCfg) {
+    if (twilioCfg.hasOwnProperty('apiEndpoint') && twilioCfg.apiEndpoint !== undefined) saveSetting(WHATSAPP.SETTINGS.TWILIO_API_ENDPOINT, String(twilioCfg.apiEndpoint));
+    if (twilioCfg.hasOwnProperty('apiToken') && twilioCfg.apiToken !== undefined) saveSetting(WHATSAPP.SETTINGS.TWILIO_API_TOKEN, String(twilioCfg.apiToken));
+    if (twilioCfg.hasOwnProperty('phoneNumberId') && twilioCfg.phoneNumberId !== undefined) saveSetting(WHATSAPP.SETTINGS.TWILIO_PHONE_NUMBER_ID, String(twilioCfg.phoneNumberId));
+    if (twilioCfg.hasOwnProperty('businessAccountId') && twilioCfg.businessAccountId !== undefined) saveSetting(WHATSAPP.SETTINGS.TWILIO_BUSINESS_ACCOUNT_ID, String(twilioCfg.businessAccountId));
   }
 }
 
@@ -452,17 +554,38 @@ function whatsappMetaIdValid(v) {
   return /^\d+$/.test(v) && v.length >= 14 && v.length <= 20;
 }
 
+function whatsappTwilioSidValid(v) {
+  v = String(v || '').trim();
+  return /^AC[0-9a-fA-F]{32}$/.test(v);
+}
+
+function whatsappTwilioSenderValid(v) {
+  v = String(v || '').trim();
+  return /^\+[1-9][0-9]{6,14}$/.test(v);
+}
+
+function whatsappEndpointBelongsTo(settings, provider) {
+  var ep = String(settings.apiEndpoint || '').trim();
+  if (provider === 'twilio') return ep.indexOf('api.twilio.com') !== -1 && ep.indexOf('graph.facebook.com') === -1;
+  if (provider === 'meta') return ep.indexOf('graph.facebook.com') !== -1 && ep.indexOf('api.twilio.com') === -1;
+  return true;
+}
+
 function whatsappConfigIssue(settings) {
   if (settings.provider === 'meta') {
+    if (settings.apiEndpoint && !whatsappEndpointBelongsTo(settings, 'meta')) return 'Meta API Endpoint must be the Meta Graph API endpoint (graph.facebook.com), not a Twilio endpoint.';
     if (!settings.apiToken) return 'Meta API token is not configured.';
     if (!settings.phoneNumberId) return 'Meta Phone Number ID is not configured.';
     if (!whatsappMetaIdValid(settings.phoneNumberId)) return 'Meta Phone Number ID looks invalid. It must be the numeric ID from Meta (e.g. 106540352242922), not the phone number.';
     if (!settings.businessAccountId) return 'Meta Business Account ID is not configured.';
     if (!whatsappMetaIdValid(settings.businessAccountId)) return 'Meta Business Account ID looks invalid. It must be the numeric WhatsApp Business Account ID (e.g. 375420581369195).';
   } else if (settings.provider === 'twilio') {
-    if (!settings.apiToken) return 'Twilio API token is not configured.';
+    if (settings.apiEndpoint && !whatsappEndpointBelongsTo(settings, 'twilio')) return 'Twilio API Endpoint must point to api.twilio.com, not the Meta Graph API endpoint (graph.facebook.com).';
+    if (!settings.apiToken) return 'Twilio Auth Token is not configured.';
     if (!settings.businessAccountId) return 'Twilio Account SID is not configured.';
-    if (!settings.phoneNumberId) return 'Twilio sender number is not configured.';
+    if (!whatsappTwilioSidValid(settings.businessAccountId)) return 'Twilio Account SID looks invalid. It must start with "AC" followed by 32 hex characters (e.g. ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx), not a Meta Business Account ID.';
+    if (!settings.phoneNumberId) return 'Twilio WhatsApp sender (From) is not configured.';
+    if (!whatsappTwilioSenderValid(settings.phoneNumberId)) return 'Twilio WhatsApp sender (From) looks invalid. It must be an E.164 phone number with a leading + (e.g. +14155238886), not a Meta Phone Number ID.';
   } else {
     return 'Unknown WhatsApp provider: ' + settings.provider;
   }
