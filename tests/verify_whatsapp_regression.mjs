@@ -69,6 +69,22 @@ const check = (name, pass, detail) => {
   check('K13. Backend masks nested meta/twilio tokens in activity log', waGs.indexOf('safeData.meta.apiToken') !== -1 && waGs.indexOf('safeData.twilio.apiToken') !== -1);
   check('K14. GAS page mirrors per-provider capture + dynamic labels', waPage.indexOf('gWaProviderValues') !== -1 && waPage.indexOf('whatsappApiEndpointLabel') !== -1 && waPage.indexOf('whatsappTestHint') !== -1 && waPage.indexOf('waHelpList') !== -1 && waPage.indexOf('waUpdateTestBtnState()') !== -1);
 
+  /* U: UltraMsg provider static checks */
+  check('U1. API.gs registers whatsappConnectionTest with CanManageWhatsApp', /'whatsappConnectionTest':\s*\{\s*auth:\s*true,\s*perm:\s*'CanManageWhatsApp'/.test(api));
+  check('U2. Backend has ULTRAMSG settings keys + defaults', waGs.indexOf("ULTRAMSG_API_URL: 'whatsapp_ultramsg_api_url'") !== -1 && waGs.indexOf('ULTRAMSG_DEFAULTS') !== -1 && waGs.indexOf('https://api.ultramsg.com') !== -1);
+  check('U3. Backend routes ultramsg in whatsappProviderSend + has whatsappUltraMsgSend/ConnectionTest', waGs.indexOf("if (provider === 'ultramsg') return whatsappUltraMsgSend(") !== -1 && waGs.indexOf('function whatsappUltraMsgSend(') !== -1 && waGs.indexOf('function whatsappUltraMsgConnectionTest(') !== -1);
+  check('U4. whatsappGetSettings returns nested ultramsg object + active mapping', waGs.indexOf('ultramsg: ultramsg') !== -1 && waGs.indexOf("provider === 'ultramsg' ? ultramsg : meta") !== -1);
+  check('U5. Backend whatsappConfigIssue validates ultramsg endpoint/instance/token', waGs.indexOf("settings.provider === 'ultramsg'") !== -1 && waGs.indexOf('UltraMsg Instance ID is not configured') !== -1 && waGs.indexOf('UltraMsg Token is not configured') !== -1 && waGs.indexOf("if (provider === 'ultramsg') return ep.indexOf('api.ultramsg.com')") !== -1);
+  check('U6. Backend masks ultramsg token in activity log', waGs.indexOf('safeData.ultramsg.token') !== -1 && waGs.indexOf("safeData.ultramsg.token = '***'") !== -1);
+  check('U7. whatsappConnectionTest returns DISABLED/CONFIGURATION_REQUIRED/CONNECTED/CONFIGURED statuses', waGs.indexOf("status: 'DISABLED'") !== -1 && waGs.indexOf("status: 'CONFIGURATION_REQUIRED'") !== -1 && waGs.indexOf("status: 'CONNECTED'") !== -1 && waGs.indexOf("status: 'CONFIGURED'") !== -1);
+  check('U8. CF page offers ultramsg option + Instance ID field + docs', waJs.indexOf('value="ultramsg"') !== -1 && waJs.indexOf('whatsappInstanceId') !== -1 && waJs.indexOf("https://docs.ultramsg.com") !== -1);
+  check('U9. CF onProviderChange caches from-provider + applies ultramsg defaults', waJs.indexOf("waProviderValues = { meta: null, twilio: null, ultramsg: null }") !== -1 && waJs.indexOf("waProviderValues[from] = readProviderFields();") !== -1 && waJs.indexOf("apiUrl: 'https://api.ultramsg.com'") !== -1);
+  check('U10. CF hard-errors validates Instance ID format', waJs.indexOf('/^[A-Za-z0-9_-]{1,64}$/') !== -1 && waJs.indexOf('Instance ID looks invalid') !== -1);
+  check('U11. CF testConnection posts whatsappConnectionTest for ultramsg only', waJs.indexOf("API.post('whatsappConnectionTest', {})") !== -1 && waJs.indexOf("currentProvider() !== 'ultramsg'") !== -1 && waJs.indexOf("sendTest(); return;") !== -1);
+  check('U12. CF collectSettings posts per-provider ultramsg object', waJs.indexOf('data.ultramsg =') !== -1 && waJs.indexOf('instanceId: active.instanceId') !== -1);
+  check('U13. GAS page offers ultramsg option + Instance ID field + testWaConnection', waPage.indexOf('value="ultramsg"') !== -1 && waPage.indexOf('whatsappInstanceId') !== -1 && waPage.indexOf('function testWaConnection()') !== -1 && waPage.indexOf('whatsappConnectionTest({') !== -1);
+  check('U14. GAS page mirrors ultramsg provider values + collect + configIssue branches', waPage.indexOf('gWaProviderValues = { meta: null, twilio: null, ultramsg: null }') !== -1 && waPage.indexOf('data.ultramsg =') !== -1 && waPage.indexOf("p === 'ultramsg'") !== -1 && waPage.indexOf('waConfigIssue()') !== -1);
+
 
   const afterSendTest = waJs.split('function sendTest()')[1] || '';
   const sendTestBody = afterSendTest.split('function toggleTemplate')[0] || afterSendTest;
@@ -101,12 +117,26 @@ var __providerCalls = [];
 var __providerMode = 'ok';
 var __activeUser = { Email: 'admin@cmms.com', Role: 'Administrator', IsAdmin: true };
 var __probeMode = 'ok';
+var __fetchCalls = [];
+var __ultraMode = 'ok';
 
 var UrlFetchApp = {
   fetch: function(url, opts) {
+    __fetchCalls.push({ url: String(url), opts: opts || {} });
     if (__probeMode === 'fail') throw new Error('Permission denied: authorization is required to perform that action.');
-    if (String(url).indexOf('discovery/v1/apis') === -1) return { getResponseCode: function() { return 404; } };
-    return { getResponseCode: function() { return 200; } };
+    if (String(url).indexOf('discovery/v1/apis') !== -1) return { getResponseCode: function() { return 200; }, getContentText: function() { return '{}'; } };
+    if (String(url).indexOf('/instance/me') !== -1) {
+      if (__ultraMode === 'unauth') return { getResponseCode: function() { return 401; }, getContentText: function() { return 'Unauthorized'; } };
+      if (__ultraMode === 'bodyauth') return { getResponseCode: function() { return 200; }, getContentText: function() { return JSON.stringify({ error: 'Unauthorized' }); } };
+      if (__ultraMode === 'servererr') return { getResponseCode: function() { return 500; }, getContentText: function() { return JSON.stringify({ error: 'Internal error' }); } };
+      return { getResponseCode: function() { return 200; }, getContentText: function() { return JSON.stringify({}); } };
+    }
+    if (String(url).indexOf('/messages/chat') !== -1) {
+      if (__ultraMode === 'sentfalse') return { getResponseCode: function() { return 200; }, getContentText: function() { return JSON.stringify({ sent: false, error: 'rejected' }); } };
+      if (__ultraMode === 'apierr') return { getResponseCode: function() { return 400; }, getContentText: function() { return JSON.stringify({ error: 'bad request' }); } };
+      return { getResponseCode: function() { return 200; }, getContentText: function() { return JSON.stringify({ sent: true, messageId: 'wamid.ultra.1' }); } };
+    }
+    return { getResponseCode: function() { return 404; }, getContentText: function() { return 'Not found'; } };
   }
 };
 
@@ -392,6 +422,117 @@ __ok('B36. Nested meta/twilio tokens masked in activity log', !!masked36, act36 
 whatsappSaveSettings({ enabled: true, provider: 'twilio', apiToken: 'twilio_at', phoneNumberId: '+14155238886', businessAccountId: 'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', apiEndpoint: 'https://api.twilio.com/2010-04-01', _userEmail: 'admin@cmms.com' });
 var g37 = whatsappGetSettings();
 __ok('B37. Meta config preserved across twilio-only save', g37.meta.apiToken === 'meta_tok' && g37.meta.phoneNumberId === '106540352242922', JSON.stringify(g37.meta));
+
+/* U: UltraMsg provider sandbox tests */
+__settings = {};
+whatsappEnsureDefaults();
+var u1 = whatsappGetSettings();
+__ok('U15. UltraMsg defaults seeded (apiUrl default, empty instance/token)', u1.ultramsg.apiUrl === 'https://api.ultramsg.com' && u1.ultramsg.instanceId === '' && u1.ultramsg.token === '', JSON.stringify(u1.ultramsg));
+
+whatsappSaveSettings({ enabled: true, provider: 'ultramsg', apiEndpoint: 'https://api.ultramsg.com', apiToken: 'ultra_tok', instanceId: 'instance1234', _userEmail: 'admin@cmms.com' });
+var u2 = whatsappGetSettings();
+__ok('U16. UltraMsg config round-trips via top-level fields', u2.provider === 'ultramsg' && u2.instanceId === 'instance1234' && u2.apiToken === 'ultra_tok' && u2.apiEndpoint === 'https://api.ultramsg.com' && u2.ultramsg.instanceId === 'instance1234' && u2.ultramsg.token === 'ultra_tok', JSON.stringify({ active: { id: u2.instanceId, tok: u2.apiToken }, nested: u2.ultramsg }));
+
+whatsappSaveSettings({ enabled: true, provider: 'ultramsg', ultramsg: { apiUrl: 'https://api.ultramsg.com', instanceId: 'instance5678', token: 'ultra_tok2' }, _userEmail: 'admin@cmms.com' });
+var u3 = whatsappGetSettings();
+__ok('U17. UltraMsg config round-trips via explicit ultramsg object', u3.ultramsg.instanceId === 'instance5678' && u3.ultramsg.token === 'ultra_tok2' && u3.instanceId === 'instance5678' && u3.apiToken === 'ultra_tok2', JSON.stringify(u3.ultramsg));
+
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'meta_tok', phoneNumberId: '106540352242922', businessAccountId: '123456789012345', apiEndpoint: 'https://graph.facebook.com/v18.0', _userEmail: 'admin@cmms.com' });
+whatsappSaveSettings({ enabled: true, provider: 'ultramsg', apiToken: 'ultra_tok', instanceId: 'instance1234', apiEndpoint: 'https://api.ultramsg.com', _userEmail: 'admin@cmms.com' });
+var u4 = whatsappGetSettings();
+__ok('U18. Meta config preserved across ultramsg-only save (isolation)', u4.meta.apiToken === 'meta_tok' && u4.meta.phoneNumberId === '106540352242922' && u4.provider === 'ultramsg' && u4.apiToken === 'ultra_tok', JSON.stringify({ meta: u4.meta.apiToken, active: u4.apiToken }));
+
+var u5bad = false;
+(function scanU5(v, path) {
+  if (v === null || v === undefined) return;
+  if (typeof v === 'object') { Object.keys(v).forEach(function(k) { scanU5(v[k], path + '.' + k); }); }
+  else if (String(v).indexOf('undefined') > -1) { u5bad = true; }
+})(whatsappGetSettings(), 'settings');
+__ok('U19. No literal "undefined" anywhere in settings output', u5bad === false, JSON.stringify(whatsappGetSettings()).slice(0, 300));
+
+whatsappSaveSettings({ enabled: true, provider: 'ultramsg', apiEndpoint: 'https://api.ultramsg.com', apiToken: 'ultra_tok', instanceId: 'instance1234', ultramsg: { apiUrl: 'https://api.ultramsg.com', instanceId: 'instance1234', token: 'ultra_tok' }, _userEmail: 'admin@cmms.com' });
+var actU6 = __activityLog[__activityLog.length - 1];
+var maskedU6 = actU6 && actU6.detail && actU6.detail.indexOf('ultra_tok') === -1 && JSON.parse(actU6.detail).apiToken === '***' && JSON.parse(actU6.detail).ultramsg && JSON.parse(actU6.detail).ultramsg.token === '***';
+__ok('U20. Activity log masks ultramsg token (nested + top-level)', !!maskedU6, actU6 ? actU6.detail : 'no activity');
+
+var iU7 = whatsappConfigIssue({ provider: 'ultramsg', apiEndpoint: 'https://api.ultramsg.com', apiToken: 'ultra_tok', instanceId: 'instance1234' });
+__ok('U21. Valid UltraMsg config passes whatsappConfigIssue', iU7 === '', iU7);
+
+var iU8 = whatsappConfigIssue({ provider: 'ultramsg', apiEndpoint: 'https://graph.facebook.com/v18.0', apiToken: 'ultra_tok', instanceId: 'instance1234' });
+__ok('U22. Meta endpoint flagged as invalid UltraMsg URL', iU8.indexOf('api.ultramsg.com') > -1 && iU8.indexOf('Meta') > -1, iU8);
+
+var iU9a = whatsappConfigIssue({ provider: 'ultramsg', apiEndpoint: 'https://api.ultramsg.com', apiToken: 'ultra_tok', instanceId: '' });
+var iU9b = whatsappConfigIssue({ provider: 'ultramsg', apiEndpoint: 'https://api.ultramsg.com', apiToken: '', instanceId: 'instance1234' });
+__ok('U23. Missing UltraMsg Instance ID / Token reported', iU9a.indexOf('Instance ID') > -1 && iU9b.indexOf('Token') > -1, iU9a + ' | ' + iU9b);
+
+whatsappSaveSettings({ enabled: false, provider: 'ultramsg', _userEmail: 'admin@cmms.com' });
+var cU10 = whatsappConnectionTest({ _userEmail: 'wa@cmms.com' });
+__ok('U24. Connection test returns DISABLED when module off', cU10.success === false && cU10.status === 'DISABLED', JSON.stringify(cU10));
+
+whatsappSaveSettings({ enabled: true, provider: 'ultramsg', apiToken: '', instanceId: '', _userEmail: 'admin@cmms.com' });
+var cU11 = whatsappConnectionTest({ _userEmail: 'wa@cmms.com' });
+__ok('U25. Connection test returns CONFIGURATION_REQUIRED for incomplete config', cU11.success === false && cU11.status === 'CONFIGURATION_REQUIRED', JSON.stringify(cU11));
+
+whatsappSaveSettings({ enabled: true, provider: 'ultramsg', apiToken: 'ultra_tok', instanceId: 'instance1234', apiEndpoint: 'https://api.ultramsg.com', _userEmail: 'admin@cmms.com' });
+__ultraMode = 'ok';
+var cU12 = whatsappConnectionTest({ _userEmail: 'wa@cmms.com' });
+__ok('U26. Connection test CONNECTED on 200 from instance/me', cU12.success === true && cU12.status === 'CONNECTED', JSON.stringify(cU12));
+
+__ultraMode = 'unauth';
+var cU13 = whatsappConnectionTest({ _userEmail: 'wa@cmms.com' });
+__ultraMode = 'ok';
+__ok('U27. Connection test AUTHORIZATION_FAILED on 401', cU13.success === false && cU13.status === 'AUTHORIZATION_FAILED', JSON.stringify(cU13));
+
+__ultraMode = 'bodyauth';
+var cU14 = whatsappConnectionTest({ _userEmail: 'wa@cmms.com' });
+__ultraMode = 'ok';
+__ok('U28. Connection test AUTHORIZATION_FAILED when body reports Unauthorized', cU14.success === false && cU14.status === 'AUTHORIZATION_FAILED', JSON.stringify(cU14));
+
+__ultraMode = 'servererr';
+var cU15 = whatsappConnectionTest({ _userEmail: 'wa@cmms.com' });
+__ultraMode = 'ok';
+__ok('U29. Connection test PROVIDER_ERROR on 500', cU15.success === false && cU15.status === 'PROVIDER_ERROR', JSON.stringify(cU15));
+
+__fetchCalls = [];
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'meta_tok', phoneNumberId: '106540352242922', businessAccountId: '123456789012345', _userEmail: 'admin@cmms.com' });
+var cU16 = whatsappConnectionTest({ _userEmail: 'wa@cmms.com' });
+var fetchU16 = __fetchCalls.filter(function(c) { return String(c.url).indexOf('instance/me') > -1; }).length;
+__ok('U30. Meta connection test returns CONFIGURED, no instance/me call', cU16.success === true && cU16.status === 'CONFIGURED' && fetchU16 === 0, JSON.stringify(cU16));
+
+__ultraMode = 'ok';
+var sU17 = whatsappUltraMsgSend({ provider: 'ultramsg', ultramsg: { apiUrl: 'https://api.ultramsg.com', instanceId: 'instance1234', token: 'ultra_tok' }, apiEndpoint: 'https://api.ultramsg.com', instanceId: 'instance1234', apiToken: 'ultra_tok' }, '+923001234567', 'Hello Ultra');
+var callU17 = __fetchCalls[__fetchCalls.length - 1];
+var parsedU17 = callU17 ? JSON.parse(callU17.opts.payload) : {};
+__ok('U31. UltraMsg send POSTs /{instance}/messages/chat with {token,to,body}', sU17.success === true && sU17.messageId === 'wamid.ultra.1' && callU17 && callU17.url === 'https://api.ultramsg.com/instance1234/messages/chat' && callU17.opts.method === 'post' && parsedU17.token === 'ultra_tok' && parsedU17.to === '+923001234567' && parsedU17.body === 'Hello Ultra', JSON.stringify({ r: sU17, url: callU17 && callU17.url }));
+
+__ultraMode = 'sentfalse';
+var sU18 = whatsappUltraMsgSend({ provider: 'ultramsg', ultramsg: { apiUrl: 'https://api.ultramsg.com', instanceId: 'instance1234', token: 'ultra_tok' } }, '+923001234567', 'x');
+__ultraMode = 'ok';
+__ok('U32. UltraMsg send: sent:false treated as failure', sU18.success === false && String(sU18.message).indexOf('UltraMsg') > -1, JSON.stringify(sU18));
+
+whatsappSaveSettings({ enabled: false, provider: 'ultramsg', _userEmail: 'admin@cmms.com' });
+var rU19 = whatsappTestSend({ testPhone: '03001234567', testMessage: 'x', _userEmail: 'wa@cmms.com' });
+__ok('U33. Disabled module rejects ultramsg test send', rU19.success === false && rU19.message.indexOf('disabled') > -1, rU19.message);
+
+whatsappSaveSettings({ enabled: true, provider: 'ultramsg', apiToken: 'ultra_tok', instanceId: 'instance1234', apiEndpoint: 'https://api.ultramsg.com', defaultCountryCode: '92', _userEmail: 'admin@cmms.com' });
+__providerCalls = [];
+var rU20 = whatsappTestSend({ testPhone: '0312-3456789', testMessage: 'Hi Ultra', _userEmail: 'wa@cmms.com' });
+var pcU20 = __providerCalls[__providerCalls.length - 1];
+var lU20 = __logRows[__logRows.length - 1];
+__ok('U34. UltraMsg test send succeeds via provider router + normalizes +92', rU20.success === true && pcU20 && pcU20.phoneNumber === '+923123456789' && pcU20.provider === 'ultramsg', JSON.stringify({ r: rU20, pc: pcU20 && pcU20.phoneNumber }));
+__ok('U35. Log row records Provider=ultramsg + Status=Sent + Template=TestMessage', lU20 && lU20.Provider === 'ultramsg' && lU20.Status === 'Sent' && lU20.Template === 'TestMessage', JSON.stringify(lU20));
+
+whatsappSaveSettings({ enabled: true, provider: 'ultramsg', apiToken: 'ultra_tok', instanceId: 'instance1234', defaultCountryCode: '92', _userEmail: 'admin@cmms.com' });
+__providerCalls = [];
+var jU22 = whatsappSendJobStatusNotification(WHATSAPP.TEMPLATES.JC_STARTED, { jobCardNo: 'JC-2001', machine: 'Press-2', priority: 'High', assignedTechEmail: 'wa@cmms.com', startedBy: 'Tech B', startTime: '11:00' });
+var pcU22 = __providerCalls[__providerCalls.length - 1];
+__ok('U36. Job hook chain works with ultramsg provider', jU22.success === true && pcU22 && pcU22.provider === 'ultramsg' && pcU22.phoneNumber === '+923001234567', JSON.stringify({ r: jU22, pc: pcU22 && pcU22.phoneNumber }));
+
+var cU23 = whatsappConnectionTest({ _userEmail: 'tech@cmms.com' });
+__ok('U37. User without CanManageWhatsApp cannot run connection test', cU23.success === false && cU23.message.indexOf('permission') > -1, cU23.message);
+
+var cU24 = whatsappConnectionTest({ _userEmail: 'wa@cmms.com' });
+__ok('U38. WA manager can run connection test (CONNECTED)', cU24.success === true && cU24.status === 'CONNECTED', JSON.stringify(cU24));
 `;
 
   const sandbox = {};
@@ -463,6 +604,7 @@ function handleApi(action, data) {
     case 'whatsappAuthProbe':
       if (serverState.probeOk === false) return ok({ success: false, code: 403, message: 'permission denied: authorization is required to perform that action.' });
       return ok({ success: true, code: 200, provider: 'meta', message: 'External API access is authorized.' });
+    case 'whatsappConnectionTest': return ok({ success: true, status: 'CONNECTED', message: 'UltraMsg connection verified.' });
     case 'whatsappGetTemplates': return ok(serverState.templates);
     case 'whatsappGetLogs': return ok(serverState.logs);
     case 'whatsappGetPanelData': return ok({ stats: { sentToday: 1, failedToday: 0, pendingToday: 0 }, recentLogs: serverState.logs.slice(0, 10) });
@@ -856,6 +998,62 @@ try {
   await page.waitForFunction(() => Router.current === 'dashboard', { timeout: 30000 });
   await page.evaluate(() => Router.navigate('whatsapp'));
   await page.waitForFunction(() => Router.current === 'whatsapp' && (document.getElementById('whatsappProvider') || {}).value === 'meta', { timeout: 30000 });
+
+  /* U: UltraMsg browser UI */
+  const uC = await page.evaluate(() => {
+    const g = (id) => document.getElementById(id);
+    g('whatsappProvider').value = 'ultramsg';
+    WhatsApp.onProviderChange();
+    return {
+      endpoint: g('whatsappApiEndpoint').value,
+      instance: g('whatsappInstanceId').value,
+      phone: g('whatsappPhoneNumberId').value,
+      biz: g('whatsappBusinessAccountId').value,
+      token: g('whatsappApiToken').value,
+      instanceFieldDisplay: g('waInstanceField').style.display,
+      phoneFieldDisplay: g('waPhoneField').style.display,
+      bizFieldDisplay: g('waBizField').style.display,
+      endpointLabel: g('whatsappApiEndpointLabel').textContent,
+      endpointPlaceholder: g('whatsappApiEndpoint').placeholder,
+      instancePlaceholder: g('whatsappInstanceId').placeholder,
+      docsBtn: g('waDocsBtn').textContent,
+      endpointHelper: g('whatsappApiEndpointHelper').textContent
+    };
+  });
+  check('U-C1. UltraMsg switch: instance field shown, phone/biz hidden, no Meta values copied',
+    uC.endpoint === 'https://api.ultramsg.com' && uC.instance === '' && uC.phone === '' && uC.biz === '' && uC.token === '' &&
+    uC.instanceFieldDisplay === 'block' && uC.phoneFieldDisplay === 'none' && uC.bizFieldDisplay === 'none' &&
+    uC.endpointLabel === 'API URL (UltraMsg)' && uC.endpointPlaceholder === 'https://api.ultramsg.com' &&
+    uC.instancePlaceholder === 'e.g. instance1234' && uC.docsBtn.indexOf('UltraMsg') > -1 && uC.endpointHelper.indexOf('api.ultramsg.com') > -1,
+    JSON.stringify(uC));
+
+  const connB = serverState.actions.filter((a) => a.action === 'whatsappConnectionTest').length;
+  await page.evaluate(() => {
+    const g = (id) => document.getElementById(id);
+    g('whatsappApiEndpoint').value = 'https://api.ultramsg.com';
+    g('whatsappApiToken').value = 'ultra_tok';
+    g('whatsappInstanceId').value = 'instance1234';
+    WhatsApp.testConnection();
+  });
+  await page.waitForFunction(() => {
+    const el = document.getElementById('whatsappTestResult');
+    return el && el.textContent.indexOf('CONNECTED') > -1;
+  }, { timeout: 15000 });
+  const connA = serverState.actions.filter((a) => a.action === 'whatsappConnectionTest').length;
+  const connPayload = serverState.actions.filter((a) => a.action === 'whatsappConnectionTest').slice(-1)[0];
+  const connResText = await page.evaluate(() => (document.getElementById('whatsappTestResult') || {}).textContent || '');
+  check('U-C2. Test Connection posts whatsappConnectionTest for ultramsg + renders CONNECTED',
+    connA === connB + 1 && !!connPayload && connResText.indexOf('CONNECTED') > -1 && connResText.indexOf('Connection OK') > -1,
+    JSON.stringify({ connCalls: connA - connB, payload: connPayload && connPayload.data, text: connResText.slice(0, 80) }));
+
+  /* switch back to Meta so remaining state is clean */
+  serverState.settings.provider = 'meta';
+  await page.evaluate(() => {
+    const g = (id) => document.getElementById(id);
+    g('whatsappProvider').value = 'meta';
+    WhatsApp.onProviderChange();
+  });
+  await page.evaluate(() => WhatsApp.saveSettings());
 
   /* C15: no app errors (filter network/offline noise) */
   const noiseRe = /net::|Failed to load resource|favicon|gstatic|Google Charts|charts\.google|404|Intercept|blockedbyclient|ERR_/;

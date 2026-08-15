@@ -5,7 +5,7 @@ var WhatsApp = (function() {
   var waStats = {};
   var waDirtyTemplates = {};
   var waActiveProvider = null;
-  var waProviderValues = { meta: null, twilio: null };
+  var waProviderValues = { meta: null, twilio: null, ultramsg: null };
   var waAuthBlocked = false;
 
   var ICON = {
@@ -185,6 +185,7 @@ var WhatsApp = (function() {
                 '<select id="whatsappProvider" class="wa-select" onchange="WhatsApp.onProviderChange()">' +
                   '<option value="meta">Meta WhatsApp Cloud API</option>' +
                   '<option value="twilio">Twilio WhatsApp</option>' +
+                  '<option value="ultramsg">UltraMsg WhatsApp</option>' +
                 '</select>' +
                 '<span class="wa-helper">Select your WhatsApp Business API provider</span>' +
               '</div>' +
@@ -201,12 +202,17 @@ var WhatsApp = (function() {
                 '</div>' +
                 '<span class="wa-helper" id="whatsappApiTokenHelper">Your Meta Access Token is stored securely.</span>' +
               '</div>' +
-              '<div class="wa-field">' +
+              '<div class="wa-field" id="waInstanceField" style="display:none">' +
+                '<label for="whatsappInstanceId">Instance ID</label>' +
+                '<input type="text" id="whatsappInstanceId" class="wa-input" placeholder="instance1234" spellcheck="false" autocomplete="off" oninput="WhatsApp.updateTestBtnState()">' +
+                '<span class="wa-helper" id="whatsappInstanceIdHelper">UltraMsg Instance ID (from your UltraMsg dashboard)</span>' +
+              '</div>' +
+              '<div class="wa-field" id="waPhoneField">' +
                 '<label for="whatsappPhoneNumberId">Phone Number ID</label>' +
                 '<input type="text" id="whatsappPhoneNumberId" class="wa-input" placeholder="WhatsApp Business phone number ID" spellcheck="false" oninput="WhatsApp.updateTestBtnState()">' +
                 '<span class="wa-helper" id="whatsappPhoneNumberIdHelper">WhatsApp Business Phone Number ID</span>' +
               '</div>' +
-              '<div class="wa-field">' +
+              '<div class="wa-field" id="waBizField">' +
                 '<label id="whatsappBusinessAccountLabel" for="whatsappBusinessAccountId">Business Account ID (Meta)</label>' +
                 '<input type="text" id="whatsappBusinessAccountId" class="wa-input" placeholder="Business account ID" spellcheck="false" oninput="WhatsApp.updateTestBtnState()">' +
                 '<span class="wa-helper" id="whatsappBusinessAccountIdHelper">WhatsApp Business Account ID</span>' +
@@ -218,7 +224,7 @@ var WhatsApp = (function() {
                 '<button class="btn btn-secondary" onclick="WhatsApp.resetForm()">Reset</button>' +
               '</div>' +
               '<div class="wa-action-right">' +
-                '<button class="btn btn-success" id="whatsappTestConnBtn" onclick="WhatsApp.sendTest()">Test Connection</button>' +
+                '<button class="btn btn-success" id="whatsappTestConnBtn" onclick="WhatsApp.testConnection()">Test Connection</button>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -477,6 +483,11 @@ var WhatsApp = (function() {
       phoneNumberId: (s.twilio && s.twilio.phoneNumberId) || '',
       businessAccountId: (s.twilio && s.twilio.businessAccountId) || ''
     };
+    waProviderValues.ultramsg = {
+      apiUrl: (s.ultramsg && s.ultramsg.apiUrl) || '',
+      token: (s.ultramsg && s.ultramsg.token) || '',
+      instanceId: (s.ultramsg && s.ultramsg.instanceId) || ''
+    };
     waActiveProvider = s.provider || 'meta';
     applyProviderFields(waActiveProvider, waProviderValues[waActiveProvider] || providerDefaults(waActiveProvider));
     el = getEl('whatsappTestPhone'); if (el) el.value = s.testPhone || '';
@@ -500,6 +511,7 @@ var WhatsApp = (function() {
     return {
       apiEndpoint: getEl('whatsappApiEndpoint') ? getEl('whatsappApiEndpoint').value : '',
       apiToken: getEl('whatsappApiToken') ? getEl('whatsappApiToken').value : '',
+      instanceId: getEl('whatsappInstanceId') ? getEl('whatsappInstanceId').value : '',
       phoneNumberId: getEl('whatsappPhoneNumberId') ? getEl('whatsappPhoneNumberId').value : '',
       businessAccountId: getEl('whatsappBusinessAccountId') ? getEl('whatsappBusinessAccountId').value : ''
     };
@@ -508,15 +520,20 @@ var WhatsApp = (function() {
   function applyProviderFields(prov, v) {
     v = v || {};
     var d = providerDefaults(prov);
-    var el = getEl('whatsappApiEndpoint'); if (el) el.value = v.apiEndpoint || d.apiEndpoint;
-    el = getEl('whatsappApiToken'); if (el) el.value = v.apiToken || '';
-    el = getEl('whatsappPhoneNumberId'); if (el) el.value = v.phoneNumberId || '';
-    el = getEl('whatsappBusinessAccountId'); if (el) el.value = v.businessAccountId || '';
+    var isUltra = prov === 'ultramsg';
+    var el = getEl('whatsappApiEndpoint'); if (el) el.value = isUltra ? (v.apiUrl || d.apiUrl) : (v.apiEndpoint || d.apiEndpoint);
+    el = getEl('whatsappApiToken'); if (el) el.value = isUltra ? (v.token || '') : (v.apiToken || '');
+    el = getEl('whatsappInstanceId'); if (el) el.value = isUltra ? (v.instanceId || '') : '';
+    el = getEl('whatsappPhoneNumberId'); if (el) el.value = isUltra ? '' : (v.phoneNumberId || '');
+    el = getEl('whatsappBusinessAccountId'); if (el) el.value = isUltra ? '' : (v.businessAccountId || '');
   }
 
   function providerDefaults(prov) {
     if (prov === 'twilio') {
       return { apiEndpoint: 'https://api.twilio.com/2010-04-01', apiToken: '', phoneNumberId: '', businessAccountId: '' };
+    }
+    if (prov === 'ultramsg') {
+      return { apiUrl: 'https://api.ultramsg.com', token: '', instanceId: '' };
     }
     return { apiEndpoint: 'https://graph.facebook.com/v18.0', apiToken: '', phoneNumberId: '', businessAccountId: '' };
   }
@@ -543,8 +560,9 @@ var WhatsApp = (function() {
 
   function waEndpointValid(prov, v) {
     v = String(v || '').trim();
-    if (prov === 'twilio') return v.indexOf('api.twilio.com') !== -1 && v.indexOf('graph.facebook.com') === -1;
-    if (prov === 'meta') return v.indexOf('graph.facebook.com') !== -1 && v.indexOf('api.twilio.com') === -1;
+    if (prov === 'twilio') return v.indexOf('api.twilio.com') !== -1 && v.indexOf('graph.facebook.com') === -1 && v.indexOf('api.ultramsg.com') === -1;
+    if (prov === 'meta') return v.indexOf('graph.facebook.com') !== -1 && v.indexOf('api.twilio.com') === -1 && v.indexOf('api.ultramsg.com') === -1;
+    if (prov === 'ultramsg') return v.indexOf('api.ultramsg.com') !== -1 && v.indexOf('graph.facebook.com') === -1 && v.indexOf('api.twilio.com') === -1;
     return true;
   }
 
@@ -568,6 +586,11 @@ var WhatsApp = (function() {
       if (!waTwilioSidValid(bizId)) return 'Twilio Account SID looks invalid. It must start with "AC" followed by 32 hex characters (e.g. ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx), not a Meta Business Account ID.';
       if (!phoneId) return 'Twilio WhatsApp sender (From) is not configured.';
       if (!waTwilioSenderValid(phoneId)) return 'Twilio WhatsApp sender (From) looks invalid. It must be an E.164 phone number with a leading + (e.g. +14155238886), not a Meta Phone Number ID.';
+    } else if (p === 'ultramsg') {
+      if (endpoint && !waEndpointValid(p, endpoint)) return 'UltraMsg API URL must point to api.ultramsg.com, not a Meta or Twilio endpoint.';
+      var inst = getEl('whatsappInstanceId') ? getEl('whatsappInstanceId').value : '';
+      if (!inst) return 'UltraMsg Instance ID is not configured.';
+      if (!token) return 'UltraMsg Token is not configured.';
     } else {
       return 'Unknown WhatsApp provider: ' + p;
     }
@@ -860,6 +883,10 @@ var WhatsApp = (function() {
       if (endpoint && !waEndpointValid(p, endpoint)) return 'API Endpoint must point to api.twilio.com, not the Meta Graph API endpoint (graph.facebook.com).';
       if (bizId && !waTwilioSidValid(bizId)) return 'Account SID looks invalid: it must start with "AC" followed by 32 hex characters, not a Meta Business Account ID.';
       if (phoneId && !waTwilioSenderValid(phoneId)) return 'WhatsApp sender (From) looks invalid: it must be an E.164 number with a leading + (e.g. +14155238886), not a Meta Phone Number ID.';
+    } else if (p === 'ultramsg') {
+      if (endpoint && !waEndpointValid(p, endpoint)) return 'API URL must point to api.ultramsg.com, not a Meta or Twilio endpoint.';
+      var inst = getEl('whatsappInstanceId') ? getEl('whatsappInstanceId').value.trim() : '';
+      if (inst && !/^[A-Za-z0-9_-]{1,64}$/.test(inst)) return 'Instance ID looks invalid: it must be the UltraMsg Instance ID (e.g. instance1234), not a phone number or token.';
     }
     return '';
   }
@@ -898,6 +925,7 @@ var WhatsApp = (function() {
     var active = readProviderFields();
     data.meta = prov === 'meta' ? active : (waProviderValues.meta || { apiEndpoint: '', apiToken: '', phoneNumberId: '', businessAccountId: '' });
     data.twilio = prov === 'twilio' ? active : (waProviderValues.twilio || { apiEndpoint: '', apiToken: '', phoneNumberId: '', businessAccountId: '' });
+    data.ultramsg = prov === 'ultramsg' ? { apiUrl: active.apiEndpoint, token: active.apiToken, instanceId: active.instanceId } : (waProviderValues.ultramsg || { apiUrl: '', token: '', instanceId: '' });
     callback(data);
   }
 
@@ -1040,23 +1068,43 @@ var WhatsApp = (function() {
     applyProviderFields(prov, waProviderValues[prov] || providerDefaults(prov));
 
     var isTwilio = prov === 'twilio';
+    var isUltra = prov === 'ultramsg';
+    var isMeta = !isTwilio && !isUltra;
+
     var bizLabel = getEl('whatsappBusinessAccountLabel');
     if (bizLabel) bizLabel.textContent = isTwilio ? 'Twilio Account SID' : 'Business Account ID (Meta)';
     var endpointLabel = getEl('whatsappApiEndpointLabel');
-    if (endpointLabel) endpointLabel.textContent = isTwilio ? 'API Endpoint (Twilio)' : 'API Endpoint (Graph API)';
+    if (endpointLabel) endpointLabel.textContent = isTwilio ? 'API Endpoint (Twilio)' : (isUltra ? 'API URL (UltraMsg)' : 'API Endpoint (Graph API)');
     var helpers = {
       endpoint: getEl('whatsappApiEndpointHelper'),
       token: getEl('whatsappApiTokenHelper'),
+      instance: getEl('whatsappInstanceIdHelper'),
       phone: getEl('whatsappPhoneNumberIdHelper'),
       biz: getEl('whatsappBusinessAccountIdHelper')
     };
     var placeholders = {
       endpoint: getEl('whatsappApiEndpoint'),
       token: getEl('whatsappApiToken'),
+      instance: getEl('whatsappInstanceId'),
       phone: getEl('whatsappPhoneNumberId'),
       biz: getEl('whatsappBusinessAccountId')
     };
-    if (isTwilio) {
+    var fieldEls = {
+      instance: getEl('waInstanceField'),
+      phone: getEl('waPhoneField'),
+      biz: getEl('waBizField')
+    };
+    if (fieldEls.instance) fieldEls.instance.style.display = isUltra ? 'block' : 'none';
+    if (fieldEls.phone) fieldEls.phone.style.display = isUltra ? 'none' : 'block';
+    if (fieldEls.biz) fieldEls.biz.style.display = isUltra ? 'none' : 'block';
+    if (isUltra) {
+      if (helpers.endpoint) helpers.endpoint.textContent = 'UltraMsg API URL (api.ultramsg.com)';
+      if (helpers.token) helpers.token.textContent = 'Your UltraMsg Token is stored securely.';
+      if (helpers.instance) helpers.instance.textContent = 'UltraMsg Instance ID (from your UltraMsg dashboard)';
+      if (placeholders.endpoint) placeholders.endpoint.placeholder = 'https://api.ultramsg.com';
+      if (placeholders.token) placeholders.token.placeholder = 'Enter UltraMsg Token';
+      if (placeholders.instance) placeholders.instance.placeholder = 'e.g. instance1234';
+    } else if (isTwilio) {
       if (helpers.endpoint) helpers.endpoint.textContent = 'Twilio API endpoint URL (api.twilio.com)';
       if (helpers.token) helpers.token.textContent = 'Your Twilio Auth Token is stored securely.';
       if (helpers.phone) helpers.phone.textContent = 'Twilio WhatsApp sender number (From), E.164 format with +';
@@ -1077,7 +1125,7 @@ var WhatsApp = (function() {
     }
     var docsBtn = getEl('waDocsBtn');
     if (docsBtn) {
-      docsBtn.innerHTML = ICON.doc + (isTwilio ? 'Twilio API Documentation' : 'Meta API Documentation');
+      docsBtn.innerHTML = ICON.doc + (isTwilio ? 'Twilio API Documentation' : (isUltra ? 'UltraMsg API Documentation' : 'Meta API Documentation'));
     }
     var hint = getEl('whatsappTestHint');
     if (hint) {
@@ -1095,13 +1143,20 @@ var WhatsApp = (function() {
             'The test number must be a valid WhatsApp recipient',
             'WhatsApp notifications must be enabled'
           ]
-        : [
-            'Your Access Token must be valid and have the correct permissions',
-            'Phone Number ID must be correct',
-            'Business Account ID must be correct',
-            'Test number must be a valid WhatsApp Business recipient',
-            'WhatsApp notifications must be enabled'
-          ];
+        : (isUltra
+          ? [
+              'Your UltraMsg Instance ID and Token come from your UltraMsg dashboard',
+              'The API URL must point to api.ultramsg.com',
+              'The test number must be a valid WhatsApp recipient',
+              'WhatsApp notifications must be enabled'
+            ]
+          : [
+              'Your Access Token must be valid and have the correct permissions',
+              'Phone Number ID must be correct',
+              'Business Account ID must be correct',
+              'Test number must be a valid WhatsApp Business recipient',
+              'WhatsApp notifications must be enabled'
+            ]);
       helpList.innerHTML = items.map(function(t) { return '<li>' + ICON.check + esc(t) + '</li>'; }).join('');
     }
     renderIntegrationStatus();
@@ -1118,12 +1173,43 @@ var WhatsApp = (function() {
   }
 
   function docsUrl() {
-    return currentProvider() === 'twilio' ? 'https://www.twilio.com/docs/whatsapp' : 'https://developers.facebook.com/docs/whatsapp/cloud-api';
+    var p = currentProvider();
+    if (p === 'twilio') return 'https://www.twilio.com/docs/whatsapp';
+    if (p === 'ultramsg') return 'https://docs.ultramsg.com';
+    return 'https://developers.facebook.com/docs/whatsapp/cloud-api';
   }
 
   function openDocs() {
     var w = window.open(docsUrl(), '_blank', 'noopener');
     if (w) w.opener = null;
+  }
+
+  function testConnection() {
+    if (currentProvider() !== 'ultramsg') { sendTest(); return; }
+    var btn = getEl('whatsappTestConnBtn');
+    var resultEl = getEl('whatsappTestResult');
+    if (!resultEl) return;
+    var issue = configIssue();
+    if (issue) {
+      waShowTestAlert('error', { title: 'Configuration required', message: waFriendlyError(issue) });
+      return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = 'Testing...'; }
+    resultEl.className = 'wa-alert';
+    resultEl.innerHTML = '';
+    API.post('whatsappConnectionTest', {})
+      .then(function(res) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Test Connection'; }
+        if (res && res.success && res.status === 'CONNECTED') {
+          waShowTestAlert('success', { title: 'Connection OK', message: res.message || 'UltraMsg connection verified.', meta: 'Status: CONNECTED' });
+        } else {
+          waShowTestAlert('error', { title: 'Connection failed', message: (res && res.message) || 'UltraMsg connection could not be verified.', meta: res && res.status ? 'Status: ' + res.status : '', raw: res && res.message });
+        }
+      })
+      .catch(function(err) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Test Connection'; }
+        waShowTestAlert('error', { title: 'Connection failed', message: waScrubSecrets((err && err.message) || 'Unknown error') });
+      });
   }
 
   function syncCountry(from) {
@@ -1149,6 +1235,7 @@ var WhatsApp = (function() {
     resetForm: resetForm,
     openDocs: openDocs,
     syncCountry: syncCountry,
-    updateTestBtnState: updateTestBtnState
+    updateTestBtnState: updateTestBtnState,
+    testConnection: testConnection
   };
 })();

@@ -20,10 +20,16 @@ var WHATSAPP = {
     TWILIO_API_ENDPOINT: 'whatsapp_twilio_api_endpoint',
     TWILIO_API_TOKEN: 'whatsapp_twilio_api_token',
     TWILIO_PHONE_NUMBER_ID: 'whatsapp_twilio_phone_number_id',
-    TWILIO_BUSINESS_ACCOUNT_ID: 'whatsapp_twilio_business_account_id'
+    TWILIO_BUSINESS_ACCOUNT_ID: 'whatsapp_twilio_business_account_id',
+    ULTRAMSG_API_URL: 'whatsapp_ultramsg_api_url',
+    ULTRAMSG_INSTANCE_ID: 'whatsapp_ultramsg_instance_id',
+    ULTRAMSG_TOKEN: 'whatsapp_ultramsg_token'
   },
   TWILIO_DEFAULTS: {
     API_ENDPOINT: 'https://api.twilio.com/2010-04-01'
+  },
+  ULTRAMSG_DEFAULTS: {
+    API_URL: 'https://api.ultramsg.com'
   },
   DEFAULTS: {
     COMPANY_NAME: 'PWI CMMS',
@@ -124,6 +130,9 @@ function whatsappEnsureProviderDefaults() {
   if (getSetting(WHATSAPP.SETTINGS.TWILIO_BUSINESS_ACCOUNT_ID) === null) {
     saveSetting(WHATSAPP.SETTINGS.TWILIO_BUSINESS_ACCOUNT_ID, sharedLooksTwilio ? (getSetting(WHATSAPP.SETTINGS.BUSINESS_ACCOUNT_ID) || '') : '');
   }
+  if (getSetting(WHATSAPP.SETTINGS.ULTRAMSG_API_URL) === null) saveSetting(WHATSAPP.SETTINGS.ULTRAMSG_API_URL, WHATSAPP.ULTRAMSG_DEFAULTS.API_URL);
+  if (getSetting(WHATSAPP.SETTINGS.ULTRAMSG_INSTANCE_ID) === null) saveSetting(WHATSAPP.SETTINGS.ULTRAMSG_INSTANCE_ID, '');
+  if (getSetting(WHATSAPP.SETTINGS.ULTRAMSG_TOKEN) === null) saveSetting(WHATSAPP.SETTINGS.ULTRAMSG_TOKEN, '');
 }
 
 function whatsappCleanSetting(v, fallback) {
@@ -147,20 +156,27 @@ function whatsappGetSettings() {
       phoneNumberId: whatsappCleanSetting(getSetting(WHATSAPP.SETTINGS.TWILIO_PHONE_NUMBER_ID), ''),
       businessAccountId: whatsappCleanSetting(getSetting(WHATSAPP.SETTINGS.TWILIO_BUSINESS_ACCOUNT_ID), '')
     };
-    var active = provider === 'twilio' ? twilio : meta;
+    var ultramsg = {
+      apiUrl: whatsappCleanSetting(getSetting(WHATSAPP.SETTINGS.ULTRAMSG_API_URL), WHATSAPP.ULTRAMSG_DEFAULTS.API_URL),
+      instanceId: whatsappCleanSetting(getSetting(WHATSAPP.SETTINGS.ULTRAMSG_INSTANCE_ID), ''),
+      token: whatsappCleanSetting(getSetting(WHATSAPP.SETTINGS.ULTRAMSG_TOKEN), '')
+    };
+    var active = provider === 'twilio' ? twilio : (provider === 'ultramsg' ? ultramsg : meta);
     return {
       enabled: getSetting(WHATSAPP.SETTINGS.ENABLED) === true || getSetting(WHATSAPP.SETTINGS.ENABLED) === 'true',
       companyName: getSetting(WHATSAPP.SETTINGS.COMPANY_NAME) || WHATSAPP.DEFAULTS.COMPANY_NAME,
       defaultCountryCode: getSetting(WHATSAPP.SETTINGS.DEFAULT_COUNTRY_CODE) || WHATSAPP.DEFAULTS.DEFAULT_COUNTRY_CODE,
       provider: provider,
-      apiEndpoint: active.apiEndpoint,
-      apiToken: active.apiToken,
-      phoneNumberId: active.phoneNumberId,
-      businessAccountId: active.businessAccountId,
+      apiEndpoint: active.apiUrl || active.apiEndpoint || '',
+      apiToken: active.token || active.apiToken || '',
+      instanceId: active.instanceId || '',
+      phoneNumberId: active.phoneNumberId || '',
+      businessAccountId: active.businessAccountId || '',
       testPhone: getSetting(WHATSAPP.SETTINGS.TEST_PHONE) || '',
       testMessage: getSetting(WHATSAPP.SETTINGS.TEST_MESSAGE) || WHATSAPP.DEFAULTS.TEST_MESSAGE,
       meta: meta,
-      twilio: twilio
+      twilio: twilio,
+      ultramsg: ultramsg
     };
   } catch (e) {
     return { enabled: false, provider: WHATSAPP.DEFAULTS.PROVIDER, companyName: WHATSAPP.DEFAULTS.COMPANY_NAME, defaultCountryCode: WHATSAPP.DEFAULTS.DEFAULT_COUNTRY_CODE };
@@ -186,6 +202,7 @@ function whatsappSaveSettings(data) {
     if (safeData && safeData.apiToken) safeData.apiToken = '***';
     if (safeData && safeData.meta && safeData.meta.apiToken) safeData.meta.apiToken = '***';
     if (safeData && safeData.twilio && safeData.twilio.apiToken) safeData.twilio.apiToken = '***';
+    if (safeData && safeData.ultramsg && safeData.ultramsg.token) safeData.ultramsg.token = '***';
     logActivity('WhatsApp Settings Updated', JSON.stringify(safeData));
     try { createAuditLog(CONFIG.AUDIT_MODULES.SETTINGS, CONFIG.AUDIT_ACTIONS.UPDATE, 'WhatsAppSettings', 'WhatsApp settings changed', '', JSON.stringify(safeData).substring(0, 200), 'Success', 'WhatsApp settings updated'); } catch(e) {}
     return { success: true, settings: whatsappGetSettings() };
@@ -196,11 +213,13 @@ function whatsappSaveSettings(data) {
 
 function whatsappSaveProviderConfigs(data) {
   var hasFields = data.hasOwnProperty('apiEndpoint') || data.hasOwnProperty('apiToken') ||
-                  data.hasOwnProperty('phoneNumberId') || data.hasOwnProperty('businessAccountId');
+                  data.hasOwnProperty('phoneNumberId') || data.hasOwnProperty('businessAccountId') ||
+                  data.hasOwnProperty('instanceId') || data.hasOwnProperty('ultramsg');
   if (!hasFields) return;
   var provider = data.hasOwnProperty('provider') ? String(data.provider) : (getSetting(WHATSAPP.SETTINGS.PROVIDER) || WHATSAPP.DEFAULTS.PROVIDER);
   var metaCfg = data.meta || null;
   var twilioCfg = data.twilio || null;
+  var ultramsgCfg = data.ultramsg || null;
   if (provider === 'meta' && !metaCfg) {
     metaCfg = {};
     if (data.hasOwnProperty('apiEndpoint') && data.apiEndpoint !== undefined) metaCfg.apiEndpoint = data.apiEndpoint;
@@ -215,6 +234,12 @@ function whatsappSaveProviderConfigs(data) {
     if (data.hasOwnProperty('phoneNumberId') && data.phoneNumberId !== undefined) twilioCfg.phoneNumberId = data.phoneNumberId;
     if (data.hasOwnProperty('businessAccountId') && data.businessAccountId !== undefined) twilioCfg.businessAccountId = data.businessAccountId;
   }
+  if (provider === 'ultramsg' && !ultramsgCfg) {
+    ultramsgCfg = {};
+    if (data.hasOwnProperty('apiEndpoint') && data.apiEndpoint !== undefined) ultramsgCfg.apiUrl = data.apiEndpoint;
+    if (data.hasOwnProperty('apiToken') && data.apiToken !== undefined) ultramsgCfg.token = data.apiToken;
+    if (data.hasOwnProperty('instanceId') && data.instanceId !== undefined) ultramsgCfg.instanceId = data.instanceId;
+  }
   if (metaCfg) {
     if (metaCfg.hasOwnProperty('apiEndpoint') && metaCfg.apiEndpoint !== undefined) saveSetting(WHATSAPP.SETTINGS.META_API_ENDPOINT, String(metaCfg.apiEndpoint));
     if (metaCfg.hasOwnProperty('apiToken') && metaCfg.apiToken !== undefined) saveSetting(WHATSAPP.SETTINGS.META_API_TOKEN, String(metaCfg.apiToken));
@@ -226,6 +251,11 @@ function whatsappSaveProviderConfigs(data) {
     if (twilioCfg.hasOwnProperty('apiToken') && twilioCfg.apiToken !== undefined) saveSetting(WHATSAPP.SETTINGS.TWILIO_API_TOKEN, String(twilioCfg.apiToken));
     if (twilioCfg.hasOwnProperty('phoneNumberId') && twilioCfg.phoneNumberId !== undefined) saveSetting(WHATSAPP.SETTINGS.TWILIO_PHONE_NUMBER_ID, String(twilioCfg.phoneNumberId));
     if (twilioCfg.hasOwnProperty('businessAccountId') && twilioCfg.businessAccountId !== undefined) saveSetting(WHATSAPP.SETTINGS.TWILIO_BUSINESS_ACCOUNT_ID, String(twilioCfg.businessAccountId));
+  }
+  if (ultramsgCfg) {
+    if (ultramsgCfg.hasOwnProperty('apiUrl') && ultramsgCfg.apiUrl !== undefined) saveSetting(WHATSAPP.SETTINGS.ULTRAMSG_API_URL, String(ultramsgCfg.apiUrl));
+    if (ultramsgCfg.hasOwnProperty('instanceId') && ultramsgCfg.instanceId !== undefined) saveSetting(WHATSAPP.SETTINGS.ULTRAMSG_INSTANCE_ID, String(ultramsgCfg.instanceId));
+    if (ultramsgCfg.hasOwnProperty('token') && ultramsgCfg.token !== undefined) saveSetting(WHATSAPP.SETTINGS.ULTRAMSG_TOKEN, String(ultramsgCfg.token));
   }
 }
 
@@ -346,6 +376,7 @@ function whatsappProviderSend(settings, phoneNumber, messageBody) {
   var provider = settings.provider || WHATSAPP.DEFAULTS.PROVIDER;
   if (provider === 'meta') return whatsappMetaSend(settings, phoneNumber, messageBody);
   if (provider === 'twilio') return whatsappTwilioSend(settings, phoneNumber, messageBody);
+  if (provider === 'ultramsg') return whatsappUltraMsgSend(settings, phoneNumber, messageBody);
   return { success: false, message: 'Unknown provider: ' + provider };
 }
 
@@ -413,6 +444,81 @@ function whatsappTwilioSend(settings, phoneNumber, messageBody) {
     return { success: false, message: 'Twilio API error (' + code + '): ' + (body.message || JSON.stringify(body)) };
   } catch (e) {
     return { success: false, message: 'Twilio API exception: ' + e.message };
+  }
+}
+
+function whatsappUltraMsgSend(settings, phoneNumber, messageBody) {
+  try {
+    var apiUrl = (settings.ultramsg && settings.ultramsg.apiUrl) || settings.apiEndpoint || WHATSAPP.ULTRAMSG_DEFAULTS.API_URL;
+    var instanceId = (settings.ultramsg && settings.ultramsg.instanceId) || settings.instanceId || '';
+    var token = (settings.ultramsg && settings.ultramsg.token) || settings.apiToken || '';
+    if (!instanceId || !token) return { success: false, message: 'UltraMsg credentials not configured' };
+    var url = apiUrl.replace(/\/+$/, '') + '/' + encodeURIComponent(instanceId) + '/messages/chat';
+    var payload = {
+      token: token,
+      to: phoneNumber,
+      body: messageBody
+    };
+    var options = {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+    var response = UrlFetchApp.fetch(url, options);
+    var code = response.getResponseCode();
+    var body;
+    try { body = JSON.parse(response.getContentText()); } catch (e) { body = {}; }
+    var failed = body.sent === false || body.sent === 'false' || !!body.error;
+    if (code >= 200 && code < 300 && !failed) {
+      return { success: true, messageId: body.messageId || body.id || '', message: 'Sent via UltraMsg API' };
+    }
+    var errText = body.description || body.message || body.error || JSON.stringify(body);
+    return { success: false, message: 'UltraMsg API error (' + code + '): ' + errText };
+  } catch (e) {
+    return { success: false, message: 'UltraMsg API exception: ' + e.message };
+  }
+}
+
+function whatsappConnectionTest(data) {
+  try {
+    requireUserPermission('CanManageWhatsApp', data);
+    var settings = whatsappGetSettings();
+    if (!settings.enabled) return { success: false, status: 'DISABLED', message: 'WhatsApp is disabled. Enable it in the integration status first.' };
+    var issue = whatsappConfigIssue(settings);
+    if (issue) return { success: false, status: 'CONFIGURATION_REQUIRED', message: issue };
+    if (settings.provider === 'ultramsg') return whatsappUltraMsgConnectionTest(settings);
+    return { success: true, status: 'CONFIGURED', message: 'Configuration looks complete. Use "Send Test" to verify message delivery.' };
+  } catch (e) {
+    return { success: false, status: 'PROVIDER_ERROR', message: e.message };
+  }
+}
+
+function whatsappUltraMsgConnectionTest(settings) {
+  try {
+    var apiUrl = (settings.ultramsg && settings.ultramsg.apiUrl) || settings.apiEndpoint || WHATSAPP.ULTRAMSG_DEFAULTS.API_URL;
+    var instanceId = (settings.ultramsg && settings.ultramsg.instanceId) || settings.instanceId || '';
+    var token = (settings.ultramsg && settings.ultramsg.token) || settings.apiToken || '';
+    if (!instanceId || !token) return { success: false, status: 'CONFIGURATION_REQUIRED', message: 'UltraMsg Instance ID and Token are required.' };
+    var url = apiUrl.replace(/\/+$/, '') + '/' + encodeURIComponent(instanceId) + '/instance/me?token=' + encodeURIComponent(token);
+    var options = { method: 'get', muteHttpExceptions: true };
+    var response = UrlFetchApp.fetch(url, options);
+    var code = response.getResponseCode();
+    var body;
+    try { body = JSON.parse(response.getContentText()); } catch (e) { body = {}; }
+    if (code === 401 || code === 403) {
+      return { success: false, status: 'AUTHORIZATION_FAILED', message: 'UltraMsg authorization failed. Check your Instance ID and Token.' };
+    }
+    var errText = String(body.error || body.message || '').toLowerCase();
+    if (errText.indexOf('authorization') > -1 || errText.indexOf('unauthorized') > -1 || errText.indexOf('not found') > -1) {
+      return { success: false, status: 'AUTHORIZATION_FAILED', message: 'UltraMsg authorization failed. Check your Instance ID and Token.' };
+    }
+    if (code >= 200 && code < 300 && !body.error) {
+      return { success: true, status: 'CONNECTED', message: 'UltraMsg connection verified.' };
+    }
+    return { success: false, status: 'PROVIDER_ERROR', message: 'UltraMsg returned HTTP ' + code + (body.error ? ': ' + body.error : '') + '.' };
+  } catch (e) {
+    return { success: false, status: 'PROVIDER_ERROR', message: 'UltraMsg connection exception: ' + e.message };
   }
 }
 
@@ -566,8 +672,9 @@ function whatsappTwilioSenderValid(v) {
 
 function whatsappEndpointBelongsTo(settings, provider) {
   var ep = String(settings.apiEndpoint || '').trim();
-  if (provider === 'twilio') return ep.indexOf('api.twilio.com') !== -1 && ep.indexOf('graph.facebook.com') === -1;
-  if (provider === 'meta') return ep.indexOf('graph.facebook.com') !== -1 && ep.indexOf('api.twilio.com') === -1;
+  if (provider === 'twilio') return ep.indexOf('api.twilio.com') !== -1 && ep.indexOf('graph.facebook.com') === -1 && ep.indexOf('api.ultramsg.com') === -1;
+  if (provider === 'meta') return ep.indexOf('graph.facebook.com') !== -1 && ep.indexOf('api.twilio.com') === -1 && ep.indexOf('api.ultramsg.com') === -1;
+  if (provider === 'ultramsg') return ep.indexOf('api.ultramsg.com') !== -1 && ep.indexOf('graph.facebook.com') === -1 && ep.indexOf('api.twilio.com') === -1;
   return true;
 }
 
@@ -586,6 +693,12 @@ function whatsappConfigIssue(settings) {
     if (!whatsappTwilioSidValid(settings.businessAccountId)) return 'Twilio Account SID looks invalid. It must start with "AC" followed by 32 hex characters (e.g. ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx), not a Meta Business Account ID.';
     if (!settings.phoneNumberId) return 'Twilio WhatsApp sender (From) is not configured.';
     if (!whatsappTwilioSenderValid(settings.phoneNumberId)) return 'Twilio WhatsApp sender (From) looks invalid. It must be an E.164 phone number with a leading + (e.g. +14155238886), not a Meta Phone Number ID.';
+  } else if (settings.provider === 'ultramsg') {
+    if (settings.apiEndpoint && !whatsappEndpointBelongsTo(settings, 'ultramsg')) return 'UltraMsg API URL must point to api.ultramsg.com, not a Meta or Twilio endpoint.';
+    var uInstanceId = (settings.ultramsg && settings.ultramsg.instanceId) || settings.instanceId || '';
+    var uToken = (settings.ultramsg && settings.ultramsg.token) || settings.apiToken || '';
+    if (!uInstanceId) return 'UltraMsg Instance ID is not configured.';
+    if (!uToken) return 'UltraMsg Token is not configured.';
   } else {
     return 'Unknown WhatsApp provider: ' + settings.provider;
   }

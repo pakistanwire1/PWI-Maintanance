@@ -326,6 +326,7 @@ var API_ROUTES = {
 'whatsappGetPanelData':  { auth: true,  handler: function(d) { return whatsappGetPanelData(); } },
 'whatsappAuthProbe':     { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappAuthProbe(d); } },
 'whatsappTestSend':      { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappTestSend(d); } },
+'whatsappConnectionTest':{ auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappConnectionTest(d); } },
 
   /* ---- Backup ---- */
   'getBackupHistory':      { auth: true, perm: 'CanBackupRestore', handler: function(d) { return getBackupHistory(); } },
