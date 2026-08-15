@@ -16737,7 +16737,7 @@ function emailSendDailySummary() {
       businessAccountId: (s.twilio && s.twilio.businessAccountId) || ''
     };
     gWaActiveProvider = s.provider || 'meta';
-    waApplyProviderFields(gWaProviderValues[gWaActiveProvider] || waProviderDefaults(gWaActiveProvider));
+    waApplyProviderFields(gWaActiveProvider, gWaProviderValues[gWaActiveProvider] || waProviderDefaults(gWaActiveProvider));
     el = waGet('whatsappTestPhone'); if (el) el.value = s.testPhone || '';
     el = waGet('whatsappTestMessage'); if (el) el.value = s.testMessage || '';
     el = waGet('whatsappTestCountry'); if (el) { el.innerHTML = waCountryOptions(s.defaultCountryCode); el.value = s.defaultCountryCode || ''; }
@@ -16759,9 +16759,10 @@ function emailSendDailySummary() {
     };
   }
 
-  function waApplyProviderFields(v) {
+  function waApplyProviderFields(prov, v) {
     v = v || {};
-    var el = waGet('whatsappApiEndpoint'); if (el) el.value = v.apiEndpoint || '';
+    var d = waProviderDefaults(prov);
+    var el = waGet('whatsappApiEndpoint'); if (el) el.value = v.apiEndpoint || d.apiEndpoint;
     el = waGet('whatsappApiToken'); if (el) el.value = v.apiToken || '';
     el = waGet('whatsappPhoneNumberId'); if (el) el.value = v.phoneNumberId || '';
     el = waGet('whatsappBusinessAccountId'); if (el) el.value = v.businessAccountId || '';
@@ -17290,7 +17291,7 @@ function emailSendDailySummary() {
       gWaProviderValues[from] = waReadProviderFields();
     }
     gWaActiveProvider = prov;
-    waApplyProviderFields(gWaProviderValues[prov] || waProviderDefaults(prov));
+    waApplyProviderFields(prov, gWaProviderValues[prov] || waProviderDefaults(prov));
 
     var isTwilio = prov === 'twilio';
     var bizLabel = waGet('whatsappBusinessAccountLabel');
