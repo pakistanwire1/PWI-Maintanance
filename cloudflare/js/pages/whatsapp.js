@@ -258,6 +258,16 @@ var WhatsApp = (function() {
 
         '<div class="card wa-section">' +
           '<div class="card-header">' +
+            '<div class="card-title">' + ICON.wa + ' Job Card Lifecycle Templates</div>' +
+            '<div class="card-actions"><span style="font-size:11px;color:var(--text-muted)">Read-only preview of the centralized Job Card WhatsApp design</span></div>' +
+          '</div>' +
+          '<div class="card-body" id="whatsappJceContainer">' +
+            '<div class="wa-placeholder">Loading lifecycle templates...</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="card wa-section">' +
+          '<div class="card-header">' +
             '<div class="card-title">' + ICON.list + ' Message Templates</div>' +
             '<div class="card-actions"><span style="font-size:11px;color:var(--text-muted)">Edit template content below</span></div>' +
           '</div>' +
@@ -380,6 +390,13 @@ var WhatsApp = (function() {
       '#whatsappPage .wa-alert-details pre { margin:8px 0 0; padding:8px 10px; background:rgba(0,0,0,0.35); border-radius:6px; white-space:pre-wrap; word-break:break-all; color:var(--text-secondary); max-height:140px; overflow:auto; }' +
       '#whatsappPage .wa-test-hint { margin-top:10px; font-size:11px; color:var(--text-muted); line-height:1.5; display:flex; align-items:center; gap:6px; }' +
       '#whatsappPage .wa-placeholder { text-align:center; padding:20px; color:var(--text-muted); }' +
+      '#whatsappPage .wa-jce-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }' +
+      '#whatsappPage .wa-jce-item { border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-card); overflow:hidden; }' +
+      '#whatsappPage .wa-jce-head { display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--border); flex-wrap:wrap; }' +
+      '#whatsappPage .wa-jce-badge { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:10px; font-size:11px; font-weight:700; letter-spacing:0.3px; white-space:nowrap; }' +
+      '#whatsappPage .wa-jce-action { font-size:11px; color:var(--text-muted); margin-left:auto; min-width:0; }' +
+      '#whatsappPage .wa-jce-body { padding:12px; font-size:12px; line-height:1.55; color:var(--text-secondary); white-space:pre-wrap; word-break:break-word; max-height:300px; overflow:auto; }' +
+      '#whatsappPage .wa-jce-next { padding:8px 12px; font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); }' +
       '#whatsappPage .wa-legend { display:flex; gap:18px; flex-wrap:wrap; margin-bottom:12px; font-size:12px; color:var(--text-secondary); }' +
       '#whatsappPage .wa-legend strong { color:var(--text); }' +
       '#whatsappPage .status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; vertical-align:middle; }' +
@@ -397,14 +414,14 @@ var WhatsApp = (function() {
       '#whatsappPage .wa-help-list li svg { color:var(--success); flex-shrink:0; margin-top:1px; }' +
       '#whatsappPage .wa-security-note { display:flex; align-items:center; gap:9px; margin-top:18px; padding:12px 14px; border:1px dashed var(--border-light); border-radius:var(--radius-sm); color:var(--text-muted); font-size:12px; background:var(--bg-secondary); }' +
       '#whatsappPage .wa-security-note svg { color:var(--success); flex-shrink:0; }' +
-      '@media(max-width:768px) { #whatsappPage .wa-grid-2 { grid-template-columns:1fr; } #whatsappPage .wa-test-country { flex:1 1 140px; } #whatsappPage .wa-action-bar { flex-direction:column; align-items:stretch; } #whatsappPage .wa-action-left, #whatsappPage .wa-action-right { justify-content:space-between; } #whatsappPage .wa-integration { flex-direction:column; align-items:flex-start; } }';
+      '@media(max-width:768px) { #whatsappPage .wa-grid-2 { grid-template-columns:1fr; } #whatsappPage .wa-test-country { flex:1 1 140px; } #whatsappPage .wa-action-bar { flex-direction:column; align-items:stretch; } #whatsappPage .wa-action-left, #whatsappPage .wa-action-right { justify-content:space-between; } #whatsappPage .wa-integration { flex-direction:column; align-items:flex-start; } #whatsappPage .wa-jce-grid { grid-template-columns:1fr; } }';
   }
 
   function loadData() {
-    var settingsDone = false, templatesDone = false, logsDone = false, statsDone = false;
+    var settingsDone = false, templatesDone = false, logsDone = false, statsDone = false, jceDone = false;
 
     function checkAllDone() {
-      if (settingsDone && templatesDone && logsDone && statsDone) Loader.hide();
+      if (settingsDone && templatesDone && logsDone && statsDone && jceDone) Loader.hide();
     }
 
     Loader.show();
@@ -459,6 +476,19 @@ var WhatsApp = (function() {
       .catch(function() {
         renderStats({ sentToday: 0, failedToday: 0, pendingToday: 0 });
         statsDone = true;
+        checkAllDone();
+      });
+
+    API.post('whatsappGetJcePreviews', {})
+      .then(function(data) {
+        renderJcePreviews(data);
+        jceDone = true;
+        checkAllDone();
+      })
+      .catch(function() {
+        var c = getEl('whatsappJceContainer');
+        if (c) c.innerHTML = '<div class="wa-placeholder">Lifecycle previews unavailable.</div>';
+        jceDone = true;
         checkAllDone();
       });
   }
@@ -794,6 +824,40 @@ var WhatsApp = (function() {
     el.innerHTML = html;
   }
 
+  var JCE_COLORS = {
+    JobOpened:   { bg: 'rgba(99,102,241,0.16)', fg: '#818cf8' },
+    JobAssigned: { bg: 'rgba(168,85,247,0.16)', fg: '#c084fc' },
+    JobPending:  { bg: 'rgba(245,158,11,0.16)', fg: '#fbbf24' },
+    JobStarted:  { bg: 'rgba(34,197,94,0.16)',  fg: '#4ade80' },
+    JobApproved: { bg: 'rgba(20,184,166,0.16)', fg: '#2dd4bf' },
+    JobClosed:   { bg: 'rgba(148,163,184,0.18)', fg: '#94a3b8' }
+  };
+
+  function renderJcePreviews(previews) {
+    var container = getEl('whatsappJceContainer');
+    if (!container) return;
+    var events = (previews && previews.events) || [];
+    if (!events || events.length === 0) {
+      container.innerHTML = '<div class="wa-placeholder">No lifecycle templates found.</div>';
+      return;
+    }
+    var html = '<div class="wa-jce-grid">';
+    events.forEach(function(ev) {
+      var color = JCE_COLORS[ev.eventType] || { bg: 'rgba(99,102,241,0.16)', fg: '#818cf8' };
+      html +=
+        '<div class="wa-jce-item">' +
+          '<div class="wa-jce-head">' +
+            '<span class="wa-jce-badge" style="background:' + color.bg + ';color:' + color.fg + '">' + (ev.emoji || '') + ' ' + esc(ev.label || ev.eventType || '') + '</span>' +
+            '<span class="wa-jce-action">' + esc(ev.action || '') + '</span>' +
+          '</div>' +
+          '<div class="wa-jce-body">' + esc(ev.__body || '') + '</div>' +
+          '<div class="wa-jce-next">' + esc('NEXT ACTION: ' + (ev.next || '')) + '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
   function renderTemplates(templates) {
     var container = getEl('whatsappTemplatesContainer');
     if (!container) return;
@@ -811,7 +875,7 @@ var WhatsApp = (function() {
             '<span style="font-size:10px;color:var(--text-muted)">Variables: ' + esc(t.Variables || '') + '</span>' +
           '</div>' +
           '<div id="' + tid + '_body" class="template-body" style="display:' + (idx === 0 ? 'block' : 'none') + '">' +
-            '<textarea id="' + tid + '_textarea" onchange="WhatsApp.markDirty(\'' + esc(t.TemplateID) + '\',\'' + tid + '\')">' + esc(t.TemplateBody || '') + '</textarea>' +
+            '<textarea id="' + tid + '_textarea" oninput="WhatsApp.markDirty(\'' + esc(t.TemplateID) + '\',\'' + tid + '\')">' + esc(t.TemplateBody || '') + '</textarea>' +
             '<div class="template-footer">' +
               '<button class="btn btn-xs btn-primary" id="' + tid + '_savebtn" onclick="WhatsApp.saveTemplate(\'' + esc(t.TemplateID || '') + '\',\'' + tid + '\')" disabled>Save</button>' +
             '</div>' +
@@ -1047,9 +1111,20 @@ var WhatsApp = (function() {
     API.post('whatsappSaveTemplate', { TemplateID: tplId, TemplateBody: textarea.value })
       .then(function(res) {
         btn.textContent = 'Saved';
-        setTimeout(function() { btn.textContent = 'Save'; }, 2000);
         delete waDirtyTemplates[tplId];
-        if (res && res.templates) renderTemplates(res.templates);
+        if (res && res.templates) {
+          var i, found = null;
+          for (i = 0; i < res.templates.length; i++) {
+            if (res.templates[i].TemplateID === tplId) { found = res.templates[i]; break; }
+          }
+          if (found) {
+            textarea.value = found.TemplateBody || '';
+            for (i = 0; i < waTemplates.length; i++) {
+              if (waTemplates[i].TemplateID === tplId) { waTemplates[i] = found; break; }
+            }
+          }
+        }
+        setTimeout(function() { btn.textContent = 'Save'; btn.disabled = false; }, 2000);
       })
       .catch(function() {
         btn.textContent = 'Error';

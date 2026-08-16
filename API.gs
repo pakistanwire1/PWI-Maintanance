@@ -327,6 +327,7 @@ var API_ROUTES = {
 'whatsappAuthProbe':     { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappAuthProbe(d); } },
 'whatsappTestSend':      { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappTestSend(d); } },
 'whatsappConnectionTest':{ auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappConnectionTest(d); } },
+'whatsappGetJcePreviews': { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappGetJcePreviews(); } },
 
   /* ---- Backup ---- */
   'getBackupHistory':      { auth: true, perm: 'CanBackupRestore', handler: function(d) { return getBackupHistory(); } },
@@ -576,4 +577,67 @@ function apiGetNotifications(d) {
 }
 
 function diagJobCards() {
+}
+
+/* ============================================================
+   WhatsApp Job Card Lifecycle (JCE) previews
+   Read-only: renders the centralized Job Card WhatsApp design
+   (data.__body) for each JC lifecycle event. Never mutates data.
+   ============================================================ */
+
+function whatsappGetJcePreviews() {
+  var company = WHATSAPP.DEFAULTS.COMPANY_NAME;
+  try { company = whatsappGetSettings().companyName || company; } catch (e) {}
+
+  var sample = {
+    JobCardNo: 'JC-2026-000001',
+    CurrentStatus: 'Pending',
+    OpenDateTime: '2026-08-16 09:15:00',
+    StartDateTime: '2026-08-16 09:40:00',
+    PendingDateTime: '2026-08-16 11:05:00',
+    ApprovedDateTime: '2026-08-16 11:50:00',
+    CloseDateTime: '2026-08-16 12:10:00',
+    Section: 'Drawing Section',
+    Department: 'Maintenance',
+    Machine: 'Straightener',
+    MachineNumber: 'MCH-0042',
+    MachineID: 'mch0042',
+    AssetID: 'AST-0007',
+    ComplaintCategory: 'Mechanical',
+    ComplaintDescription: 'Excessive vibration and bearing noise during operation',
+    Priority: 'High',
+    BreakdownType: 'Mechanical',
+    RootCause: 'Worn drive bearing',
+    CorrectiveAction: 'Replaced defective bearing and realigned the drive shaft',
+    FinalRemarks: 'Machine returned to service after a successful test run',
+    InitialRemarks: 'Reported at the start of the shift',
+    PendingRemarks: 'Submitted for supervisor review',
+    ApprovalStatus: 'Approved',
+    ApprovalRemarks: 'Work quality verified and approved',
+    MaintenanceTeam: 'Maintenance Team A',
+    ComplaintBy: 'Muhammad Rizwan',
+    AssignedTechnician: 'Ali Hassan',
+    StartedBy: 'Ali Hassan',
+    PendingBy: 'Ali Hassan',
+    ApprovedBy: 'Supervisor Afsar',
+    ClosedBy: 'Supervisor Afsar',
+    SpareParts: 'Bearing 6205-ZZ (SPR-0011) x 2, EP-2 Grease (SPR-0012) x 1'
+  };
+
+  var jc = whatsappJceNormalize(sample);
+  var events = [];
+  var keys = Object.keys(WHATSAPP_JCE.EVENTS);
+  for (var i = 0; i < keys.length; i++) {
+    var ev = keys[i];
+    var meta = WHATSAPP_JCE.EVENTS[ev];
+    events.push({
+      eventType: ev,
+      label: meta.label,
+      emoji: meta.emoji,
+      action: meta.action,
+      next: meta.next,
+      __body: whatsappBuildJobCardBody(ev, jc, company)
+    });
+  }
+  return { company: company, events: events };
 }
