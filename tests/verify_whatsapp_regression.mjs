@@ -36,6 +36,17 @@ const check = (name, pass, detail) => {
   check('A6. Router maps whatsapp page -> manageWhatsApp permission', session.indexOf("whatsapp: 'manageWhatsApp'") !== -1);
   check('A7. Settings section requires email/whatsapp perms', settings.indexOf("id: 'emailwhatsapp'") !== -1 && settings.indexOf("['manageEmail', 'manageWhatsApp']") !== -1);
 
+  /* OB: openById fix regression (web-app deployment context cannot rely on
+     the active spreadsheet; all access must be via CONFIG.SPREADSHEET_ID) */
+  const configGs = read('ConfigGS.gs');
+  const sheetsGs = read('SheetsGS.gs');
+  const manifest = read('appsscript.json');
+  const gsAll = fs.readdirSync(ROOT).filter((n) => n.endsWith('.gs')).map((n) => read(n)).join('\n');
+  check('OB1. ConfigGS defines SPREADSHEET_ID (Drive ID of the backing sheet)', /SPREADSHEET_ID:\s*'1-[A-Za-z0-9_-]{30,}'/.test(configGs));
+  check('OB2. SheetsGS.getSheet resolves via openById(CONFIG.SPREADSHEET_ID)', /function getSheet\(name\)/.test(sheetsGs) && sheetsGs.indexOf('SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID)') !== -1);
+  check('OB3. No getActiveSpreadsheet remains in any .gs file', gsAll.indexOf('getActiveSpreadsheet') === -1);
+  check('OB4. appsscript.json declares spreadsheets + external_request scopes', manifest.indexOf('https://www.googleapis.com/auth/spreadsheets') !== -1 && manifest.indexOf('https://www.googleapis.com/auth/script.external_request') !== -1);
+
   check('H1. whatsappAuthProbe route exists and requires CanManageWhatsApp', /'whatsappAuthProbe':\s*\{\s*auth:\s*true,\s*perm:\s*'CanManageWhatsApp'/.test(api));
   check('H2. whatsappAuthProbe backend fn exists (perm-gated)', waGs.indexOf('function whatsappAuthProbe(data)') !== -1 && waGs.indexOf("requireUserPermission('CanManageWhatsApp', data)") !== -1);
   check('H3. AuthProbeGS.gs probes googleapis discovery endpoint (no Meta creds)', authProbe.indexOf('https://www.googleapis.com/discovery/v1/apis') !== -1 && authProbe.indexOf('muteHttpExceptions: true') !== -1 && authProbe.indexOf('EAAG') === -1 && authProbe.indexOf('graph.facebook') === -1);
