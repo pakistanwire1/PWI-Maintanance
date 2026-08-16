@@ -84,6 +84,7 @@ const check = (name, pass, detail) => {
   check('U12. CF collectSettings posts per-provider ultramsg object', waJs.indexOf('data.ultramsg =') !== -1 && waJs.indexOf('instanceId: active.instanceId') !== -1);
   check('U13. GAS page offers ultramsg option + Instance ID field + testWaConnection', waPage.indexOf('value="ultramsg"') !== -1 && waPage.indexOf('whatsappInstanceId') !== -1 && waPage.indexOf('function testWaConnection()') !== -1 && waPage.indexOf('whatsappConnectionTest({') !== -1);
   check('U14. GAS page mirrors ultramsg provider values + collect + configIssue branches', waPage.indexOf('gWaProviderValues = { meta: null, twilio: null, ultramsg: null }') !== -1 && waPage.indexOf('data.ultramsg =') !== -1 && waPage.indexOf("p === 'ultramsg'") !== -1 && waPage.indexOf('waConfigIssue()') !== -1);
+  check('U14b. Backend skips country-code normalization for @c.us chat IDs (internal transport capability)', waGs.indexOf("fullNumber.indexOf('@') === -1") !== -1 && waGs.indexOf("!fullNumber.startsWith('+') && !fullNumber.startsWith('00')") !== -1);
 
 
   const afterSendTest = waJs.split('function sendTest()')[1] || '';
@@ -533,6 +534,19 @@ __ok('U37. User without CanManageWhatsApp cannot run connection test', cU23.succ
 
 var cU24 = whatsappConnectionTest({ _userEmail: 'wa@cmms.com' });
 __ok('U38. WA manager can run connection test (CONNECTED)', cU24.success === true && cU24.status === 'CONNECTED', JSON.stringify(cU24));
+
+var rU25 = whatsappTestSend({ testPhone: '33333655222', testMessage: 'Normalize', _userEmail: 'wa@cmms.com' });
+var pcU25 = __providerCalls[__providerCalls.length - 1];
+__ok('U39. Test phone 33333655222 normalized to E.164 +9233333655222 for UltraMsg', rU25.success === true && pcU25 && pcU25.phoneNumber === '+9233333655222' && pcU25.provider === 'ultramsg', JSON.stringify({ r: rU25, pc: pcU25 && pcU25.phoneNumber }));
+
+var rU26 = whatsappSendMessage('923333655222@c.us', 'ChatID', 'System', '', 'TestMessage', 'Test', 'wa@cmms.com');
+var pcU26 = __providerCalls[__providerCalls.length - 1];
+__ok('U40. whatsappSendMessage passes @c.us chat ID through without normalization', rU26.success === true && pcU26 && pcU26.phoneNumber === '923333655222@c.us', JSON.stringify({ r: rU26, pc: pcU26 && pcU26.phoneNumber }));
+
+var sU27 = whatsappUltraMsgSend({ provider: 'ultramsg', ultramsg: { apiUrl: 'https://api.ultramsg.com', instanceId: 'instance1234', token: 'ultra_tok' } }, '923333655222@c.us', 'Chat');
+var callU27 = __fetchCalls[__fetchCalls.length - 1];
+var parsedU27 = callU27 ? JSON.parse(callU27.opts.payload) : {};
+__ok('U41. UltraMsg transport sends @c.us chat ID as-is in to', sU27.success === true && parsedU27.to === '923333655222@c.us', JSON.stringify({ r: sU27, to: parsedU27.to }));
 `;
 
   const sandbox = {};

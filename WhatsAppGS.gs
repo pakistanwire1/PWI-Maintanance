@@ -528,7 +528,7 @@ function whatsappSendMessage(phoneNumber, messageBody, module, refId, templateNa
     if (!settings.enabled) return { success: false, status: WHATSAPP.STATUS.PENDING, message: 'WhatsApp disabled' };
     if (!phoneNumber) return { success: false, status: WHATSAPP.STATUS.FAILED, message: 'No phone number' };
     var fullNumber = phoneNumber;
-    if (!fullNumber.startsWith('+') && !fullNumber.startsWith('00')) {
+    if (!fullNumber.startsWith('+') && !fullNumber.startsWith('00') && fullNumber.indexOf('@') === -1) {
       var cc = settings.defaultCountryCode || WHATSAPP.DEFAULTS.DEFAULT_COUNTRY_CODE;
       fullNumber = '+' + cc + fullNumber.replace(/^0+/, '');
     }
