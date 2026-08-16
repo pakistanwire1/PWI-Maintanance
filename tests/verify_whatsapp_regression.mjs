@@ -668,6 +668,101 @@ __providerCalls = [];
 var jceWrap = whatsappSendJobStatusNotification(WHATSAPP.TEMPLATES.JC_STARTED, { jobCardNo: 'JC-WRAP', machine: 'Lathe-1', priority: 'High', complaint: 'x', assignedTechEmail: 'wa@cmms.com' });
 var jceWrapBody = __providerCalls.length ? __providerCalls[__providerCalls.length - 1].messageBody : '';
 __ok('JCE14. Legacy whatsappSendJobStatusNotification routes through centralized formatter', jceWrap.success === true && jceWrapBody.indexOf('*JOB CARD STARTED*') > -1, '');
+
+/* =====================================================================
+   JCE ARCHITECTURE: single WhatsAppTemplates store + master design
+   ===================================================================== */
+
+var __seedRows = [
+  { TemplateID: 'TMP001', TemplateName: 'Job Opened', EventType: 'JobOpened', TemplateBody: '*Job Card Opened*\\n\\nJob: {{jobCardNo}}\\nMachine: {{machine}}\\nPriority: {{priority}}', Variables: 'jobCardNo,machine,priority', CreatedBy: 'system', CreatedAt: '2026-08-01', UpdatedBy: '', UpdatedAt: '' },
+  { TemplateID: 'TMP002', TemplateName: 'Job Assigned', EventType: 'JobAssigned', TemplateBody: '*Job Assigned*\\n\\nJob: {{jobCardNo}}\\nMachine: {{machine}}\\nAssigned To: {{assignedTech}}', Variables: 'jobCardNo,machine,assignedTech', CreatedBy: 'system', CreatedAt: '2026-08-01', UpdatedBy: '', UpdatedAt: '' },
+  { TemplateID: 'TMP003', TemplateName: 'Job Started', EventType: 'JobStarted', TemplateBody: '*Job Started*\\n\\nJob: {{jobCardNo}}\\nMachine: {{machine}}\\nStarted By: {{startedBy}}', Variables: 'jobCardNo,machine,startedBy', CreatedBy: 'system', CreatedAt: '2026-08-01', UpdatedBy: '', UpdatedAt: '' },
+  { TemplateID: 'TMP004', TemplateName: 'Job Closed', EventType: 'JobClosed', TemplateBody: '*Job Closed*\\n\\nJob: {{jobCardNo}}\\nMachine: {{machine}}\\nClosed By: {{closedBy}}', Variables: 'jobCardNo,machine,closedBy', CreatedBy: 'system', CreatedAt: '2026-08-01', UpdatedBy: '', UpdatedAt: '' },
+  { TemplateID: 'TMP005', TemplateName: 'Job Approved', EventType: 'JobApproved', TemplateBody: '*Job Approved*\\n\\nJob: {{jobCardNo}}\\nMachine: {{machine}}\\nApproved By: {{approvedBy}}', Variables: 'jobCardNo,machine,approvedBy', CreatedBy: 'system', CreatedAt: '2026-08-01', UpdatedBy: '', UpdatedAt: '' },
+  { TemplateID: 'TMP006', TemplateName: 'PM Due Reminder', EventType: 'PMDue', TemplateBody: '*PM Due Reminder*\\n\\nPM: {{title}}', Variables: 'title', CreatedBy: 'system', CreatedAt: '2026-08-01', UpdatedBy: '', UpdatedAt: '' },
+  { TemplateID: 'TMP007', TemplateName: 'PM Overdue', EventType: 'PMOverdue', TemplateBody: '*PM Overdue*\\n\\nPM: {{title}}', Variables: 'title', CreatedBy: 'system', CreatedAt: '2026-08-01', UpdatedBy: '', UpdatedAt: '' },
+  { TemplateID: 'TMP008', TemplateName: 'Low Stock Alert', EventType: 'LowStock', TemplateBody: '*Low Stock*\\n\\nPart: {{partCode}}', Variables: 'partCode', CreatedBy: 'system', CreatedAt: '2026-08-01', UpdatedBy: '', UpdatedAt: '' },
+  { TemplateID: 'TMP009', TemplateName: 'Out of Stock Alert', EventType: 'OutOfStock', TemplateBody: '*Out of Stock*\\n\\nPart: {{partCode}}', Variables: 'partCode', CreatedBy: 'system', CreatedAt: '2026-08-01', UpdatedBy: '', UpdatedAt: '' },
+  { TemplateID: 'TMP010', TemplateName: 'Purchase Request', EventType: 'PurchaseRequest', TemplateBody: '*Purchase Request*\\n\\nPart: {{partCode}}', Variables: 'partCode', CreatedBy: 'system', CreatedAt: '2026-08-01', UpdatedBy: '', UpdatedAt: '' },
+  { TemplateID: 'TMP011', TemplateName: 'Goods Received', EventType: 'GoodsReceipt', TemplateBody: '*Goods Received*\\n\\nGRN: {{grnNo}}', Variables: 'grnNo', CreatedBy: 'system', CreatedAt: '2026-08-01', UpdatedBy: '', UpdatedAt: '' },
+  { TemplateID: 'TMP012', TemplateName: 'User Created', EventType: 'UserCreated', TemplateBody: '*User Created*\\n\\nName: {{name}}', Variables: 'name', CreatedBy: 'system', CreatedAt: '2026-08-01', UpdatedBy: '', UpdatedAt: '' },
+  { TemplateID: 'TMP013', TemplateName: 'Password Reset', EventType: 'PasswordReset', TemplateBody: '*Password Reset*\\n\\nUser: {{name}}', Variables: 'name', CreatedBy: 'system', CreatedAt: '2026-08-01', UpdatedBy: '', UpdatedAt: '' }
+];
+var __seedBodies = {};
+__seedRows.forEach(function(r) { __seedBodies[r.TemplateID] = r.TemplateBody; });
+__sheets[WHATSAPP.TEMPLATES_SHEET] = __seedRows.map(function(r) { var c = {}; for (var k in r) c[k] = r[k]; return c; });
+delete __settings['WHATSAPP_JCE_TEMPLATES_MIGRATED'];
+
+var t15 = whatsappGetTemplates();
+var t15byId = {};
+t15.forEach(function(t) { t15byId[t.TemplateID] = t; });
+var t15ids = ['TMP001','TMP002','TMP003','TMP004','TMP005','TMP006','TMP007','TMP008','TMP009','TMP010','TMP011','TMP012','TMP013'].every(function(id) { return !!t15byId[id]; });
+__ok('JCE15. Existing TMP001-TMP013 rows remain present (IDs unchanged, no new database)', t15ids, Object.keys(t15byId).join(','));
+
+var t15master = ['TMP001','TMP002','TMP003','TMP004','TMP005'].every(function(id) {
+  var b = t15byId[id].TemplateBody || '';
+  var sec = ['*JOB CARD INFORMATION*','*MAINTENANCE DETAILS*','*RESPONSIBILITY*','*ACTION*','*SYSTEM*','*NEXT ACTION*'].every(function(s) { return b.indexOf(s) !== -1; });
+  return b.indexOf('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━') === 0 && sec && b.indexOf('Pakistan Wire Industries') !== -1;
+});
+__ok('JCE16. TMP001-TMP005 upgraded to Job Card master design (visible in templates editor)', t15master, t15byId['TMP001'].TemplateBody.split('\\n')[1]);
+
+var t15untouched = ['TMP006','TMP007','TMP008','TMP009','TMP010','TMP011','TMP012','TMP013'].every(function(id) { return (t15byId[id].TemplateBody || '') === __seedBodies[id] && t15byId[id].CreatedBy === 'system' && t15byId[id].UpdatedBy === ''; });
+__ok('JCE17. TMP006-TMP013 untouched by upgrade (no row modified)', t15untouched, '');
+
+var t15pres = t15byId['TMP001'].CreatedBy === 'system' && t15byId['TMP001'].CreatedAt === '2026-08-01' && t15byId['TMP001'].TemplateID === 'TMP001' && t15byId['TMP001'].UpdatedBy === 'system' && t15byId['TMP001'].Variables.indexOf('companyName') !== -1;
+__ok('JCE18. Upgrade preserves TemplateID/CreatedBy/CreatedAt, sets UpdatedBy, updates Variables to master list', t15pres, JSON.stringify({ id: t15byId['TMP001'].TemplateID, cb: t15byId['TMP001'].CreatedBy, ca: t15byId['TMP001'].CreatedAt, ub: t15byId['TMP001'].UpdatedBy }));
+
+var t19before = __sheets[WHATSAPP.TEMPLATES_SHEET].length;
+var t19 = whatsappSaveTemplate({ TemplateID: 'TMP001', TemplateBody: 'TEST-SAVED-BODY-1', _userEmail: 'wa@cmms.com' });
+var t19after = __sheets[WHATSAPP.TEMPLATES_SHEET].length;
+var t19row = whatsappFindTemplate({ TemplateID: 'TMP001' });
+__ok('JCE19. Save updates existing TMP001 row by TemplateID (no duplicate row)', t19.success === true && t19after === t19before && t19row.TemplateBody === 'TEST-SAVED-BODY-1', JSON.stringify({ before: t19before, after: t19after, body: t19row.TemplateBody }));
+__ok('JCE20. Save preserves Variables/CreatedBy/CreatedAt, updates UpdatedBy/UpdatedAt', t19row.Variables.indexOf('companyName') !== -1 && t19row.CreatedBy === 'system' && t19row.CreatedAt === '2026-08-01' && t19row.UpdatedBy === 'wa@cmms.com' && !!t19row.UpdatedAt, JSON.stringify({ v: t19row.Variables, cb: t19row.CreatedBy, ca: t19row.CreatedAt, ub: t19row.UpdatedBy, ua: t19row.UpdatedAt }));
+
+var t21 = whatsappGetTemplates();
+var t21row = whatsappFindTemplate({ TemplateID: 'TMP001' });
+__ok('JCE21. Reload (re-fetch) shows the saved TemplateBody, not re-migrated', t21row.TemplateBody === 'TEST-SAVED-BODY-1' && (t21.filter(function(x) { return x.TemplateID === 'TMP001'; }).length) === 1, JSON.stringify(t21row.TemplateBody));
+
+var t22before = __sheets[WHATSAPP.TEMPLATES_SHEET].length;
+var t22 = whatsappSaveTemplate({ EventType: 'JobOpened', TemplateBody: 'EVT-SAVED', _userEmail: 'wa@cmms.com' });
+var t22after = __sheets[WHATSAPP.TEMPLATES_SHEET].length;
+var t22row = whatsappFindTemplate({ EventType: 'JobOpened' });
+__ok('JCE22. Save by EventType updates the existing row (no duplicate)', t22.success === true && t22after === t22before && t22row.TemplateID === 'TMP001' && t22row.TemplateBody === 'EVT-SAVED', JSON.stringify({ before: t22before, after: t22after, id: t22row.TemplateID }));
+
+var t23 = whatsappSaveTemplate({ TemplateID: 'TMP002', TemplateBody: 'BODY-OK', _userEmail: 'wa@cmms.com' });
+var t23json = JSON.stringify(__sheets[WHATSAPP.TEMPLATES_SHEET]);
+__ok('JCE23. Save never writes literal "undefined"/"null" into any template cell', t23.success === true && t23json.indexOf('"undefined"') === -1 && t23json.indexOf('"null"') === -1, '');
+
+var sheetNames = Object.keys(__sheets);
+var t24noDb = sheetNames.filter(function(s) { return /whatsapp/i.test(s) && s !== WHATSAPP.TEMPLATES_SHEET && s !== WHATSAPP.SHEET; }).length === 0;
+__ok('JCE24. No second/new template database created (only WhatsAppTemplates + WhatsAppLogs)', t24noDb, sheetNames.join(','));
+
+__providerCalls = [];
+var p25 = whatsappGetJcePreviews({ _userEmail: 'wa@cmms.com' });
+__ok('JCE25. Lifecycle preview available (6 events, no "unavailable")', p25.success === true && p25.events.length === 6 && __providerCalls.length === 0, JSON.stringify({ n: p25.events.length, calls: __providerCalls.length }));
+__ok('JCE26. Preview is read-only and never calls send/provider APIs', __providerCalls.length === 0, JSON.stringify(__providerCalls));
+
+var p25bodies = p25.events.map(function(e) { return e.__body || ''; });
+var p25clean = p25bodies.every(function(b) { return b.indexOf('undefined') === -1 && b.indexOf('null') === -1 && b.indexOf('meta_tok') === -1 && b.indexOf('twilio_at') === -1 && b.indexOf('ultra_tok') === -1; });
+__ok('JCE27. Preview bodies contain no "undefined"/"null"/credentials', p25clean, '');
+var p25sec = p25bodies.every(function(b) { return ['*JOB CARD INFORMATION*','*MAINTENANCE DETAILS*','*RESPONSIBILITY*','*ACTION*','*SYSTEM*','*NEXT ACTION*'].every(function(s) { return b.indexOf(s) !== -1; }); });
+__ok('JCE28. Preview uses the centralized master design (all sections in every event)', p25sec, '');
+
+var p29 = whatsappGetJcePreviews({ _userEmail: 'tech@cmms.com' });
+__ok('JCE29. Preview permission-gated (rejected without CanManageWhatsApp)', p29.success === false && String(p29.message).indexOf('permission') > -1, JSON.stringify(p29));
+
+var p30 = whatsappGetJcePreviews({ _userEmail: 'wa@cmms.com' });
+var p30match = true;
+var p30checked = 0;
+for (var p30i = 0; p30i < p30.events.length; p30i++) {
+  var p30ev = p30.events[p30i];
+  var p30row = whatsappGetTemplateByEvent(p30ev.eventType);
+  if (p30row && (p30row.TemplateBody || '').indexOf('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━') === 0) {
+    p30checked++;
+    if ((p30row.TemplateBody || '').indexOf(p30ev.label.toUpperCase()) === -1) p30match = false;
+  }
+}
+__ok('JCE30. Preview renders the same master design stored in existing TMP rows', p30match && p30checked >= 3, JSON.stringify({ checked: p30checked, match: p30match }));
 `;
 
   const sandbox = {};
@@ -912,10 +1007,12 @@ try {
       editControls: c.querySelectorAll('textarea, button, input').length,
       hasSections: hasSections,
       hasSeparator: firstBody.indexOf('\u2501') !== -1,
-      hasFooter: firstBody.indexOf('Pakistan Wire Industries') !== -1
+      hasFooter: firstBody.indexOf('Pakistan Wire Industries') !== -1,
+      hasUnavailable: c.textContent.indexOf('unavailable') !== -1
     };
   });
   check('C3c. JCE lifecycle section renders 6 read-only preview cards (no edit controls)', jceOk.items === 6 && jceOk.badges === 6 && jceOk.editControls === 0 && jceOk.hasSections && jceOk.hasSeparator && jceOk.hasFooter, JSON.stringify(jceOk));
+  check('C3c2. Lifecycle preview never shows "Lifecycle previews unavailable" when templates exist', jceOk.hasUnavailable === false, JSON.stringify(jceOk));
 
   /* C3d: template Save button persists edited body (oninput enables button) */
   const tplBodyBefore = serverState.templates[0].TemplateBody;
