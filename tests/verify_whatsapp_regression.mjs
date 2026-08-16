@@ -97,6 +97,21 @@ const check = (name, pass, detail) => {
   check('U14. GAS page mirrors ultramsg provider values + collect + configIssue branches', waPage.indexOf('gWaProviderValues = { meta: null, twilio: null, ultramsg: null }') !== -1 && waPage.indexOf('data.ultramsg =') !== -1 && waPage.indexOf("p === 'ultramsg'") !== -1 && waPage.indexOf('waConfigIssue()') !== -1);
   check('U14b. Backend skips country-code normalization for @c.us chat IDs (internal transport capability)', waGs.indexOf("fullNumber.indexOf('@') === -1") !== -1 && waGs.indexOf("!fullNumber.startsWith('+') && !fullNumber.startsWith('00')") !== -1);
 
+  /* JCE: Job Card WhatsApp notification design system (centralized formatter) */
+  const jceGs = read('WhatsAppGS.gs');
+  const jcbGs = read('JobCardsGS.gs');
+  check('JCE-A1. Centralized whatsappSendJobCardEvent formatter exists', jceGs.indexOf('function whatsappSendJobCardEvent(') !== -1);
+  check('JCE-A2. Master template covers all 6 authorized events (opened/assigned/pending/started/approved/closed)', ['JobOpened', 'JobAssigned', 'JobPending', 'JobStarted', 'JobApproved', 'JobClosed'].every((ev) => jceGs.indexOf(ev) !== -1));
+  check('JCE-A3. Master template sections + separators + fixed footer present', ['JOB CARD INFORMATION', 'MAINTENANCE DETAILS', 'RESPONSIBILITY', 'ACTION', 'SYSTEM', 'NEXT ACTION', 'MATERIAL / PARTS USED'].every((s) => jceGs.indexOf(s) !== -1) && jceGs.indexOf('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━') !== -1 && jceGs.indexOf('Pakistan Wire Industries') !== -1);
+  check('JCE-A4. whatsappSendNotification honors prebuilt __body (provider-independent send chain)', jceGs.indexOf('data.__body') !== -1);
+  check('JCE-A5. Session-scoped dedup cache keyed by event+job card', jceGs.indexOf('WHATSAPP_JCE_SENT') !== -1 && jceGs.indexOf("eventType + '|' + jc.jobCardNo") !== -1);
+  check('JCE-A6. Existing whatsappSendJobStatusNotification delegates to centralized formatter', jceGs.indexOf('function whatsappSendJobStatusNotification(') !== -1 && jceGs.indexOf('return whatsappSendJobCardEvent(eventType, jobData);') !== -1);
+  check('JCE-A7. Job card lifecycle wired for all 6 events', ['JC_OPENED', 'JC_ASSIGNED', 'JC_PENDING', 'JC_STARTED', 'JC_CLOSED', 'JC_APPROVED'].every((ev) => jcbGs.indexOf(ev) !== -1));
+  check('JCE-A8. Message body builder never reads provider credentials', (function() {
+    const seg = jceGs.split('function whatsappBuildJobCardBody(')[1].split('function whatsappSendJobCardEvent(')[0] || '';
+    return seg.indexOf('apiToken') === -1 && seg.indexOf('api_token') === -1 && seg.indexOf('ULTRAMSG') === -1;
+  })());
+
 
   const afterSendTest = waJs.split('function sendTest()')[1] || '';
   const sendTestBody = afterSendTest.split('function toggleTemplate')[0] || afterSendTest;
@@ -558,6 +573,101 @@ var sU27 = whatsappUltraMsgSend({ provider: 'ultramsg', ultramsg: { apiUrl: 'htt
 var callU27 = __fetchCalls[__fetchCalls.length - 1];
 var parsedU27 = callU27 ? JSON.parse(callU27.opts.payload) : {};
 __ok('U41. UltraMsg transport sends @c.us chat ID as-is in to', sU27.success === true && parsedU27.to === '923333655222@c.us', JSON.stringify({ r: sU27, to: parsedU27.to }));
+
+/* ===================== JCE: JOB CARD WHATSAPP DESIGN SYSTEM ===================== */
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'meta_tok', phoneNumberId: '106540352242922', businessAccountId: '123456789012345', defaultCountryCode: '92', _userEmail: 'admin@cmms.com' });
+var jceBase = { JobCardNo: 'JC-JCE', OpenDateTime: '2026-08-16 09:00:00', Section: 'Maintenance', Department: 'Production', Machine: 'Lathe-1', MachineNumber: 'ML-01', AssetID: 'AST-01', ComplaintCategory: 'Breakdown', ComplaintDescription: 'Motor bearing noise', Priority: 'High', MaintenanceTeam: 'Electrical', ComplaintBy: 'wa@cmms.com', AssignedTechnician: 'wa@cmms.com', CreatedBy: 'admin@cmms.com', UpdatedBy: 'admin@cmms.com' };
+function __jceRec(over) {
+  var o = {};
+  for (var k in jceBase) o[k] = jceBase[k];
+  for (var k2 in over) o[k2] = over[k2];
+  return o;
+}
+var __jceEvents = {
+  JC_OPENED:   __jceRec({ JobCardNo: 'JC-OPEN', CurrentStatus: 'OPEN' }),
+  JC_ASSIGNED: __jceRec({ JobCardNo: 'JC-ASGN', CurrentStatus: 'OPEN' }),
+  JC_STARTED:  __jceRec({ JobCardNo: 'JC-START', CurrentStatus: 'RUNNING', StartDateTime: '2026-08-16 10:05:00', StartedBy: 'wa@cmms.com' }),
+  JC_PENDING:  __jceRec({ JobCardNo: 'JC-PEND', CurrentStatus: 'PENDING', PendingDateTime: '2026-08-16 12:00:00', PendingBy: 'wa@cmms.com', PendingRemarks: 'Awaiting supervisor review' }),
+  JC_APPROVED: __jceRec({ JobCardNo: 'JC-APPR', CurrentStatus: 'APPROVED', ApprovedDateTime: '2026-08-16 13:00:00', ApprovedBy: 'wa@cmms.com', ApprovalStatus: 'Approved', ApprovalRemarks: 'Looks good' }),
+  JC_CLOSED:   __jceRec({ JobCardNo: 'JC-CLOS', CurrentStatus: 'CLOSED', CloseDateTime: '2026-08-16 12:30:00', ClosedBy: 'admin@cmms.com', WorkingTime: 150, Downtime: 210, TotalDuration: 210, RootCause: 'Bearing worn', CorrectiveAction: 'Bearing replaced', FinalRemarks: 'Machine OK', SpareParts: 'Bearing SKF-6205 x2, Grease 500g' })
+};
+var __jceCounts = {};
+var __jceBodies = {};
+var __jceTitles = {};
+(function() {
+  var evs = ['JC_OPENED', 'JC_ASSIGNED', 'JC_STARTED', 'JC_PENDING', 'JC_APPROVED', 'JC_CLOSED'];
+  evs.forEach(function(ev) {
+    __providerCalls = [];
+    whatsappSendJobCardEvent(WHATSAPP.TEMPLATES[ev], __jceEvents[ev]);
+    var call = __providerCalls[__providerCalls.length - 1];
+    __jceCounts[ev] = __providerCalls.length;
+    __jceBodies[ev] = call ? call.messageBody : '';
+    __jceTitles[ev] = call ? call.messageBody.split('\\n')[1] : '';
+  });
+})();
+__ok('JCE1. All 6 job card events send exactly one notification', ['JC_OPENED', 'JC_ASSIGNED', 'JC_STARTED', 'JC_PENDING', 'JC_APPROVED', 'JC_CLOSED'].every(function(ev) { return __jceCounts[ev] === 1; }), JSON.stringify(__jceCounts));
+__ok('JCE2. Each event renders its own emoji + title', __jceTitles['JC_OPENED'] === '🆕 *JOB CARD OPENED*' && __jceTitles['JC_ASSIGNED'] === '👤 *JOB CARD ASSIGNED*' && __jceTitles['JC_STARTED'] === '▶️ *JOB CARD STARTED*' && __jceTitles['JC_PENDING'] === '⏳ *JOB CARD PENDING REVIEW*' && __jceTitles['JC_APPROVED'] === '✅ *JOB CARD APPROVED*' && __jceTitles['JC_CLOSED'] === '🔒 *JOB CARD CLOSED*', JSON.stringify(__jceTitles));
+__ok('JCE3. Actual CurrentStatus shown (never an invented status)', __jceBodies['JC_OPENED'].indexOf('📊 Status: OPEN') > -1 && __jceBodies['JC_ASSIGNED'].indexOf('📊 Status: OPEN') > -1 && __jceBodies['JC_STARTED'].indexOf('📊 Status: RUNNING') > -1 && __jceBodies['JC_PENDING'].indexOf('📊 Status: PENDING') > -1 && __jceBodies['JC_APPROVED'].indexOf('📊 Status: APPROVED') > -1 && __jceBodies['JC_CLOSED'].indexOf('📊 Status: CLOSED') > -1, '');
+__ok('JCE4. Core + event-specific fields rendered', (function() {
+  var b = __jceBodies;
+  return b['JC_OPENED'].indexOf('📇 Job Card: JC-OPEN') > -1 &&
+    b['JC_OPENED'].indexOf('⚠️ *Issue:* Motor bearing noise') > -1 &&
+    b['JC_ASSIGNED'].indexOf('👤 Assigned To: WA Manager') > -1 &&
+    b['JC_STARTED'].indexOf('▶️ Started By: WA Manager') > -1 &&
+    b['JC_PENDING'].indexOf('📝 Remarks: Awaiting supervisor review') > -1 &&
+    b['JC_APPROVED'].indexOf('📝 Remarks: Looks good') > -1 &&
+    b['JC_CLOSED'].indexOf('✅ *Resolution:* Bearing replaced') > -1;
+})());
+__ok('JCE5. Master layout identical across events (separators/sections/footer)', (function() {
+  var evs = ['JC_OPENED', 'JC_ASSIGNED', 'JC_STARTED', 'JC_PENDING', 'JC_APPROVED', 'JC_CLOSED'];
+  return evs.every(function(ev) {
+    var b = __jceBodies[ev];
+    return b.indexOf('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━') > -1 &&
+      b.indexOf('*JOB CARD INFORMATION*') > -1 && b.indexOf('*MAINTENANCE DETAILS*') > -1 &&
+      b.indexOf('*RESPONSIBILITY*') > -1 && b.indexOf('*ACTION*') > -1 && b.indexOf('*SYSTEM*') > -1 &&
+      b.indexOf('*NEXT ACTION*') > -1 && b.indexOf('🤖 Generated by') > -1 && b.indexOf('🏢 Pakistan Wire Industries') > -1;
+  });
+})());
+__ok('JCE6. Empty fields omitted (no undefined / null / blank labels)', (function() {
+  __providerCalls = [];
+  whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_OPENED, { JobCardNo: 'JC-MIN', CurrentStatus: 'OPEN', customerPhone: '3001112222' });
+  var b = __providerCalls.length ? __providerCalls[__providerCalls.length - 1].messageBody : '';
+  return b.indexOf('undefined') === -1 && b.indexOf('null') === -1 && b.indexOf('Section:') === -1 && b.indexOf('Machine:') === -1 && b.indexOf('Priority:') === -1 && b.indexOf('🧑') === -1 && b.indexOf('📇 Job Card: JC-MIN') > -1 && b.indexOf('📊 Status: OPEN') > -1;
+})());
+__ok('JCE7. No provider credentials leak into any message body', ['JC_OPENED', 'JC_ASSIGNED', 'JC_STARTED', 'JC_PENDING', 'JC_APPROVED', 'JC_CLOSED'].every(function(ev) {
+  var b = __jceBodies[ev];
+  return b.indexOf('meta_tok') === -1 && b.indexOf('tok_abc') === -1 && b.indexOf('apiToken') === -1 && b.indexOf('106540352242922') === -1;
+}));
+__ok('JCE8. MATERIAL / PARTS section only when parts recorded', __jceBodies['JC_CLOSED'].indexOf('*MATERIAL / PARTS USED*') > -1 && __jceBodies['JC_CLOSED'].indexOf('🔩 Bearing SKF-6205 x2') > -1 && __jceBodies['JC_OPENED'].indexOf('*MATERIAL / PARTS USED*') === -1);
+var __jceProviderBodies = {};
+['meta', 'twilio', 'ultramsg'].forEach(function(prov) {
+  whatsappSaveSettings({ enabled: true, provider: prov, apiToken: 't_' + prov, phoneNumberId: prov === 'twilio' ? '+14155238886' : '106540352242922', businessAccountId: prov === 'twilio' ? 'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' : '123456789012345', apiEndpoint: prov === 'meta' ? 'https://graph.facebook.com/v18.0' : prov === 'twilio' ? 'https://api.twilio.com/2010-04-01' : 'https://api.ultramsg.com', instanceId: 'instance1234', defaultCountryCode: '92', _userEmail: 'admin@cmms.com' });
+  WHATSAPP_JCE_SENT = {};
+  __providerCalls = [];
+  whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_STARTED, __jceRec({ JobCardNo: 'JC-PROV', CurrentStatus: 'RUNNING', StartDateTime: '2026-08-16 11:00:00', StartedBy: 'wa@cmms.com' }));
+  __jceProviderBodies[prov] = __providerCalls.length ? __providerCalls[__providerCalls.length - 1].messageBody : '';
+});
+__ok('JCE9. Identical message body across Meta / Twilio / UltraMsg providers', __jceProviderBodies['meta'] === __jceProviderBodies['twilio'] && __jceProviderBodies['twilio'] === __jceProviderBodies['ultramsg'] && __jceProviderBodies['meta'].indexOf('JC-PROV') > -1, JSON.stringify({ meta: (__jceProviderBodies['meta'] || '').split('\\n')[1], twilio: (__jceProviderBodies['twilio'] || '').split('\\n')[1], ultramsg: (__jceProviderBodies['ultramsg'] || '').split('\\n')[1] }));
+whatsappSaveSettings({ enabled: false, _userEmail: 'admin@cmms.com' });
+__providerCalls = [];
+var jceDis = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_STARTED, __jceRec({ JobCardNo: 'JC-DIS', CurrentStatus: 'RUNNING', StartedBy: 'wa@cmms.com' }));
+__ok('JCE10. Disabled WhatsApp -> zero provider calls, graceful result', jceDis.success === false && String(jceDis.message).indexOf('disabled') > -1 && __providerCalls.length === 0, JSON.stringify({ r: jceDis, calls: __providerCalls.length }));
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'meta_tok', phoneNumberId: '106540352242922', businessAccountId: '123456789012345', defaultCountryCode: '92', _userEmail: 'admin@cmms.com' });
+__providerCalls = [];
+var jceNoPh = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_OPENED, { JobCardNo: 'JC-NOPH', CurrentStatus: 'OPEN', ComplaintBy: 'tech@cmms.com' });
+__ok('JCE11. Missing recipient -> no throw, graceful no-recipients result, business continues', jceNoPh.success === false && String(jceNoPh.message).indexOf('No phone numbers') > -1 && __providerCalls.length === 0, JSON.stringify({ r: jceNoPh, calls: __providerCalls.length }));
+var jceUnsup = whatsappSendJobCardEvent('LowStock', { JobCardNo: 'JC-X' });
+__ok('JCE12. Unsupported event type rejected', jceUnsup.success === false && String(jceUnsup.message).indexOf('Unsupported') > -1, JSON.stringify(jceUnsup));
+__providerCalls = [];
+var jceD1 = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_STARTED, __jceRec({ JobCardNo: 'JC-DUP', CurrentStatus: 'RUNNING', StartedBy: 'wa@cmms.com' }));
+var jceDupC1 = __providerCalls.length;
+var jceD2 = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_STARTED, __jceRec({ JobCardNo: 'JC-DUP', CurrentStatus: 'RUNNING', StartedBy: 'wa@cmms.com' }));
+var jceDupC2 = __providerCalls.length;
+__ok('JCE13. Duplicate call for same event+job card suppressed (single send)', jceD1.success === true && jceDupC1 === 1 && jceD2.deduplicated === true && jceD2.success === false && jceDupC2 === 1, JSON.stringify({ c1: jceDupC1, c2: jceDupC2, d2: jceD2 }));
+__providerCalls = [];
+var jceWrap = whatsappSendJobStatusNotification(WHATSAPP.TEMPLATES.JC_STARTED, { jobCardNo: 'JC-WRAP', machine: 'Lathe-1', priority: 'High', complaint: 'x', assignedTechEmail: 'wa@cmms.com' });
+var jceWrapBody = __providerCalls.length ? __providerCalls[__providerCalls.length - 1].messageBody : '';
+__ok('JCE14. Legacy whatsappSendJobStatusNotification routes through centralized formatter', jceWrap.success === true && jceWrapBody.indexOf('*JOB CARD STARTED*') > -1, '');
 `;
 
   const sandbox = {};

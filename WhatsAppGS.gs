@@ -42,6 +42,7 @@ var WHATSAPP = {
     JC_OPENED: 'JobOpened',
     JC_ASSIGNED: 'JobAssigned',
     JC_STARTED: 'JobStarted',
+    JC_PENDING: 'JobPending',
     JC_CLOSED: 'JobClosed',
     JC_APPROVED: 'JobApproved',
     PM_DUE: 'PMDue',
@@ -55,6 +56,21 @@ var WHATSAPP = {
   },
   TEMPLATE_FIELDS: ['TemplateID','TemplateName','EventType','TemplateBody','Variables','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'],
   STATUS: { PENDING: 'Pending', SENT: 'Sent', FAILED: 'Failed' }
+};
+
+var WHATSAPP_JCE_SENT = {};
+
+var WHATSAPP_JCE = {
+  SEP: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  FOOTER_COMPANY: 'Pakistan Wire Industries',
+  EVENTS: {
+    JobOpened:   { label: 'Job Card Opened',   emoji: '🆕', timestamp: 'opened',   action: 'Job card opened and awaiting assignment', next: 'Technician to be assigned and maintenance started' },
+    JobAssigned: { label: 'Job Card Assigned', emoji: '👤', timestamp: '',          action: 'Job card assigned to technician', next: 'Technician to start maintenance work' },
+    JobPending:  { label: 'Job Card Pending Review', emoji: '⏳', timestamp: 'pending', action: 'Job submitted for supervisor review', next: 'Supervisor to review and approve' },
+    JobStarted:  { label: 'Job Card Started',  emoji: '▶️', timestamp: 'started',   action: 'Maintenance work started', next: 'Complete repair and submit for review' },
+    JobApproved: { label: 'Job Card Approved', emoji: '✅', timestamp: 'approved',  action: 'Job approved and closed out', next: 'None - job complete' },
+    JobClosed:   { label: 'Job Card Closed',   emoji: '🔒', timestamp: 'closed',    action: 'Job closed after completion', next: 'None - job complete' }
+  }
 };
 
 function whatsappInitLogsSheet() {
@@ -554,12 +570,17 @@ function whatsappSendNotification(eventType, data) {
   try {
     var settings = whatsappGetSettings();
     if (!settings.enabled) return { success: false, status: WHATSAPP.STATUS.PENDING, message: 'WhatsApp disabled' };
-    whatsappInitTemplatesSheet();
-    var template = whatsappGetTemplateByEvent(eventType);
-    if (!template) {
-      return { success: false, status: WHATSAPP.STATUS.FAILED, message: 'No template for event: ' + eventType };
+    var messageBody;
+    if (data.__body) {
+      messageBody = data.__body;
+    } else {
+      whatsappInitTemplatesSheet();
+      var template = whatsappGetTemplateByEvent(eventType);
+      if (!template) {
+        return { success: false, status: WHATSAPP.STATUS.FAILED, message: 'No template for event: ' + eventType };
+      }
+      messageBody = whatsappFormatMessage(template.TemplateBody, data);
     }
-    var messageBody = whatsappFormatMessage(template.TemplateBody, data);
     var phoneField = data.phone || data.mobile || '';
     var phones = [];
     if (phoneField) {
@@ -741,39 +762,278 @@ function whatsappGetSettingsData(data) {
 
 function whatsappSendJobStatusNotification(eventType, jobData) {
   try {
-    if (!jobData) return { success: false, status: WHATSAPP.STATUS.FAILED, message: 'Missing job card data' };
-    var phones = [];
-    if (jobData.phoneNumbers) {
-      var pn = Array.isArray(jobData.phoneNumbers) ? jobData.phoneNumbers : [jobData.phoneNumbers];
-      pn.forEach(function(p) { if (p && phones.indexOf(p) === -1) phones.push(p); });
+    return whatsappSendJobCardEvent(eventType, jobData);
+  } catch (e) {
+    return { success: false, status: WHATSAPP.STATUS.FAILED, message: e.message };
+  }
+}
+
+function whatsappJcePick(src, keys) {
+  for (var i = 0; i < keys.length; i++) {
+    var v = src[keys[i]];
+    if (v !== undefined && v !== null && v !== '') return v;
+  }
+  return '';
+}
+
+function whatsappJceRow(label, value) {
+  if (value === undefined || value === null) return '';
+  var s = String(value).trim();
+  if (s === '') return '';
+  return label + s + '\n';
+}
+
+function whatsappJceSection(title, lines) {
+  var body = '';
+  for (var i = 0; i < lines.length; i++) if (lines[i]) body += lines[i];
+  if (body === '') return '';
+  return '*' + title + '*\n' + body + '\n';
+}
+
+function whatsappJceName(email) {
+  if (!email) return '';
+  var e = String(email).trim();
+  if (!e || e.indexOf('@') === -1) return e;
+  var users = (typeof getAllData === 'function') ? (getAllData(CONFIG.SHEET_NAMES.USERS) || []) : [];
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].Email === e) return users[i].Name || e;
+  }
+  var techSheet = (CONFIG.SHEET_NAMES && CONFIG.SHEET_NAMES.TECHNICIANS) || '';
+  if (techSheet) {
+    var techs = (typeof getAllData === 'function') ? (getAllData(techSheet) || []) : [];
+    for (var j = 0; j < techs.length; j++) {
+      if (techs[j].Email === e) return techs[j].Name || e;
     }
-    ['assignedTechEmail', 'complaintByEmail', 'approverEmail', 'reportedByEmail', 'customerEmail'].forEach(function(k) {
-      if (jobData[k]) {
-        var ph = whatsappGetUserPhone(jobData[k]);
-        if (ph && phones.indexOf(ph) === -1) phones.push(ph);
+  }
+  return e;
+}
+
+function whatsappJceNames(csv) {
+  if (!csv) return '';
+  var out = [];
+  String(csv).split(',').forEach(function(p) {
+    var n = whatsappJceName(p.trim());
+    if (n) out.push(n);
+  });
+  return out.join(', ');
+}
+
+function whatsappJceDuration(v) {
+  if (v === undefined || v === null || v === '') return '';
+  var s = String(v).trim();
+  if (s === '') return '';
+  if (s.indexOf(':') !== -1 || /^\d+[dD]/.test(s)) return s;
+  var mins = parseFloat(s) || 0;
+  if (typeof durationToDisplay === 'function') return durationToDisplay(mins);
+  var h = Math.floor(mins / 60);
+  var m = Math.floor(mins % 60);
+  return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+}
+
+function whatsappJceMaterials(spareParts) {
+  if (!spareParts) return [];
+  var s = String(spareParts).trim();
+  if (!s) return [];
+  var items = [];
+  if (s.charAt(0) === '[') {
+    try {
+      var arr = JSON.parse(s);
+      if (Array.isArray(arr)) {
+        arr.forEach(function(m) {
+          if (m && (m.partName || m.material || m.name || m.partCode)) {
+            var line = '🔩 Material: ' + (m.partName || m.material || m.name || m.partCode || '');
+            if (m.quantity !== undefined && m.quantity !== null && m.quantity !== '') line += ' / Quantity: ' + m.quantity;
+            if (m.unit) line += ' / Unit: ' + m.unit;
+            items.push(line);
+          }
+        });
       }
+    } catch (e) { items = []; }
+  }
+  if (items.length === 0) {
+    String(s).split(/\r?\n/).forEach(function(ln) {
+      var t = ln.trim();
+      if (t) items.push('🔩 ' + t);
     });
-    if (jobData.customerPhone && phones.indexOf(jobData.customerPhone) === -1) phones.push(jobData.customerPhone);
+  }
+  return items;
+}
+
+function whatsappJceCollectPhones(jc) {
+  var phones = [];
+  function add(p) {
+    if (p && phones.indexOf(p) === -1) phones.push(p);
+  }
+  if (jc.phoneNumbers) {
+    var pn = Array.isArray(jc.phoneNumbers) ? jc.phoneNumbers : [jc.phoneNumbers];
+    pn.forEach(add);
+  }
+  if (jc.phone) add(jc.phone);
+  if (jc.customerPhone) add(jc.customerPhone);
+  if (jc.assignedEmails) String(jc.assignedEmails).split(',').forEach(function(e) { add(whatsappGetUserPhone(e.trim())); });
+  if (jc.complaintEmail) add(whatsappGetUserPhone(jc.complaintEmail));
+  if (jc.approverEmail) add(whatsappGetUserPhone(jc.approverEmail));
+  return phones;
+}
+
+function whatsappJceNormalize(jc) {
+  var src = {};
+  for (var k in jc) src[k] = jc[k];
+  if (!src.JobCardNo && src.jobCardNo && typeof getJobCard === 'function') {
+    try {
+      var rec = getJobCard(src.jobCardNo);
+      if (rec) { for (var r in rec) if (src[r] === undefined) src[r] = rec[r]; }
+    } catch (e) {}
+  }
+  return {
+    jobCardNo: whatsappJcePick(src, ['JobCardNo', 'jobCardNo']),
+    currentStatus: whatsappJcePick(src, ['CurrentStatus', 'currentStatus']),
+    opened: whatsappJcePick(src, ['OpenDateTime', 'opened']),
+    started: whatsappJcePick(src, ['StartDateTime', 'startTime', 'started']),
+    pending: whatsappJcePick(src, ['PendingDateTime', 'pending']),
+    approved: whatsappJcePick(src, ['ApprovedDateTime', 'approved']),
+    closed: whatsappJcePick(src, ['CloseDateTime', 'closed']),
+    section: whatsappJcePick(src, ['Section', 'section']),
+    department: whatsappJcePick(src, ['Department', 'department']),
+    machine: whatsappJcePick(src, ['Machine', 'machine']),
+    machineNumber: whatsappJcePick(src, ['MachineNumber', 'machineNumber']),
+    machineId: whatsappJcePick(src, ['MachineID', 'machineId']),
+    assetId: whatsappJcePick(src, ['AssetID', 'assetId']),
+    category: whatsappJcePick(src, ['ComplaintCategory', 'category']),
+    issue: whatsappJcePick(src, ['ComplaintDescription', 'issue', 'complaint']),
+    priority: whatsappJcePick(src, ['Priority', 'priority']),
+    breakdownType: whatsappJcePick(src, ['BreakdownType', 'breakdownType']),
+    rootCause: whatsappJcePick(src, ['RootCause', 'rootCause']),
+    correctiveAction: whatsappJcePick(src, ['CorrectiveAction', 'correctiveAction']),
+    finalRemarks: whatsappJcePick(src, ['FinalRemarks', 'remarks', 'finalRemarks']),
+    initialRemarks: whatsappJcePick(src, ['InitialRemarks', 'initialRemarks']),
+    pendingRemarks: whatsappJcePick(src, ['PendingRemarks', 'pendingRemarks']),
+    approvalStatus: whatsappJcePick(src, ['ApprovalStatus', 'approvalStatus']),
+    approvalRemarks: whatsappJcePick(src, ['ApprovalRemarks', 'approvalRemarks']),
+    maintenanceTeam: whatsappJcePick(src, ['MaintenanceTeam', 'maintenanceTeam']),
+    reportedBy: whatsappJceName(whatsappJcePick(src, ['ComplaintBy', 'ComplaintByEmail', 'reportedBy', 'complaintByEmail'])),
+    assignedTo: whatsappJceNames(whatsappJcePick(src, ['AssignedTechnician', 'assignedTech', 'assignedTechEmail'])),
+    startedBy: whatsappJceName(whatsappJcePick(src, ['StartedBy', 'startedBy'])),
+    pendingBy: whatsappJceName(whatsappJcePick(src, ['PendingBy', 'pendingBy'])),
+    approvedBy: whatsappJceName(whatsappJcePick(src, ['ApprovedBy', 'approvedBy'])),
+    closedBy: whatsappJceName(whatsappJcePick(src, ['ClosedBy', 'closedBy'])),
+    createdBy: whatsappJceName(whatsappJcePick(src, ['CreatedBy', 'createdBy'])),
+    updatedBy: whatsappJceName(whatsappJcePick(src, ['UpdatedBy', 'updatedBy'])),
+    workingTime: whatsappJceDuration(whatsappJcePick(src, ['WorkingTime', 'workingTime'])),
+    downtime: whatsappJceDuration(whatsappJcePick(src, ['Downtime', 'downtime'])),
+    totalDuration: whatsappJceDuration(whatsappJcePick(src, ['TotalDuration', 'totalDuration'])),
+    spareParts: whatsappJcePick(src, ['SpareParts', 'spareParts']),
+    assignedEmails: whatsappJcePick(src, ['AssignedTechnician', 'assignedTechEmail', 'assignedTech']),
+    complaintEmail: whatsappJcePick(src, ['ComplaintByEmail', 'ComplaintBy', 'complaintByEmail', 'reportedByEmail']),
+    approverEmail: whatsappJcePick(src, ['ApprovedBy', 'approverEmail']),
+    customerPhone: whatsappJcePick(src, ['customerPhone']),
+    phone: whatsappJcePick(src, ['phone']),
+    phoneNumbers: whatsappJcePick(src, ['phoneNumbers']),
+    module: whatsappJcePick(src, ['module']),
+    recipientName: whatsappJcePick(src, ['recipientName', 'name'])
+  };
+}
+
+function whatsappBuildJobCardBody(eventType, jc, company) {
+  var ev = WHATSAPP_JCE.EVENTS[eventType];
+  var sep = WHATSAPP_JCE.SEP;
+  var b = '';
+  b += sep + '\n';
+  b += ev.emoji + ' *' + ev.label.toUpperCase() + '*\n';
+  b += sep + '\n';
+  b += '🏢 *' + company + '*\n\n';
+
+  var info = [whatsappJceRow('📇 Job Card: ', jc.jobCardNo), whatsappJceRow('📊 Status: ', jc.currentStatus)];
+  if (ev.timestamp === 'opened') info.push(whatsappJceRow('📅 Opened: ', jc.opened));
+  if (ev.timestamp === 'started') info.push(whatsappJceRow('▶️ Started: ', jc.started));
+  if (ev.timestamp === 'pending') info.push(whatsappJceRow('⏳ Pending Since: ', jc.pending));
+  if (ev.timestamp === 'approved') info.push(whatsappJceRow('✅ Approved: ', jc.approved));
+  if (ev.timestamp === 'closed') info.push(whatsappJceRow('🔒 Closed: ', jc.closed));
+  b += whatsappJceSection('JOB CARD INFORMATION', info);
+
+  var details = [
+    whatsappJceRow('🏭 Section: ', jc.section),
+    whatsappJceRow('🏗️ Department: ', jc.department),
+    whatsappJceRow('⚙️ Machine: ', jc.machine),
+    whatsappJceRow('🔢 Machine Number: ', jc.machineNumber),
+    whatsappJceRow('📌 Machine ID: ', jc.machineId),
+    whatsappJceRow('🔖 Asset ID: ', jc.assetId),
+    whatsappJceRow('🏷️ Category: ', jc.category)
+  ];
+  if (jc.issue) details.push('⚠️ *Issue:* ' + jc.issue + '\n');
+  details.push(whatsappJceRow('🎯 Priority: ', jc.priority));
+  if (eventType === WHATSAPP.TEMPLATES.JC_CLOSED) {
+    details.push(whatsappJceRow('🔨 Breakdown Type: ', jc.breakdownType));
+    details.push(whatsappJceRow('🩺 Root Cause: ', jc.rootCause));
+    if (jc.correctiveAction) details.push('✅ *Resolution:* ' + jc.correctiveAction + '\n');
+    details.push(whatsappJceRow('📝 Final Remarks: ', jc.finalRemarks));
+    details.push(whatsappJceRow('⏱️ Working Time: ', jc.workingTime));
+    details.push(whatsappJceRow('📉 Downtime: ', jc.downtime));
+    details.push(whatsappJceRow('🕓 Total Duration: ', jc.totalDuration));
+  }
+  b += whatsappJceSection('MAINTENANCE DETAILS', details);
+
+  var resp = [
+    whatsappJceRow('🛠️ Maintenance Team: ', jc.maintenanceTeam),
+    whatsappJceRow('🧑‍🔧 Reported By: ', jc.reportedBy),
+    whatsappJceRow('👤 Assigned To: ', jc.assignedTo),
+    whatsappJceRow('▶️ Started By: ', jc.startedBy),
+    whatsappJceRow('⏳ Pending By: ', jc.pendingBy),
+    whatsappJceRow('✅ Approved By: ', jc.approvedBy),
+    whatsappJceRow('🔒 Closed By: ', jc.closedBy)
+  ];
+  b += whatsappJceSection('RESPONSIBILITY', resp);
+
+  var action = [ev.emoji + ' ' + ev.action + '\n'];
+  if (eventType === WHATSAPP.TEMPLATES.JC_OPENED && jc.initialRemarks) action.push('📝 Remarks: ' + jc.initialRemarks + '\n');
+  if (eventType === WHATSAPP.TEMPLATES.JC_PENDING && jc.pendingRemarks) action.push('📝 Remarks: ' + jc.pendingRemarks + '\n');
+  if (eventType === WHATSAPP.TEMPLATES.JC_APPROVED && jc.approvalRemarks) action.push('📝 Remarks: ' + jc.approvalRemarks + '\n');
+  b += whatsappJceSection('ACTION', action);
+
+  var mats = whatsappJceMaterials(jc.spareParts);
+  if (mats.length > 0) {
+    b += '*MATERIAL / PARTS USED*\n';
+    mats.forEach(function(m) { b += m + '\n'; });
+    b += '\n';
+  }
+
+  var sys = [
+    whatsappJceRow('💾 Created By: ', jc.createdBy),
+    whatsappJceRow('👤 Updated By: ', jc.updatedBy),
+    whatsappJceRow('🔔 Notification: ', ev.label),
+    whatsappJceRow('🕒 Generated: ', getCurrentTimestamp())
+  ];
+  b += whatsappJceSection('SYSTEM', sys);
+
+  b += '*NEXT ACTION*\n';
+  b += '🎯 ' + ev.next + '\n\n';
+  b += '🤖 Generated by ' + company + ' | 🏢 ' + WHATSAPP_JCE.FOOTER_COMPANY + '\n';
+  b += sep;
+  return b;
+}
+
+function whatsappSendJobCardEvent(eventType, jobCardData) {
+  try {
+    if (!jobCardData) return { success: false, status: WHATSAPP.STATUS.FAILED, message: 'Missing job card data' };
+    if (!WHATSAPP_JCE.EVENTS[eventType]) return { success: false, status: WHATSAPP.STATUS.FAILED, message: 'Unsupported job card event: ' + eventType };
+    var jc = whatsappJceNormalize(jobCardData);
+    if (!jc.jobCardNo) return { success: false, status: WHATSAPP.STATUS.FAILED, message: 'Missing job card number' };
+    var key = eventType + '|' + jc.jobCardNo;
+    if (WHATSAPP_JCE_SENT[key]) {
+      return { success: false, status: 'DUPLICATE', deduplicated: true, message: 'WhatsApp notification already sent for this job card event' };
+    }
+    var company = WHATSAPP.DEFAULTS.COMPANY_NAME;
+    try { company = whatsappGetSettings().companyName || company; } catch (e) {}
     var payload = {
-      jobCardNo: jobData.jobCardNo || jobData.id || '',
-      machine: jobData.machine || '',
-      priority: jobData.priority || '',
-      complaint: jobData.complaint || '',
-      reportedBy: jobData.reportedBy || '',
-      dateTime: jobData.dateTime || jobData.startTime || getCurrentTimestamp(),
-      assignedTech: jobData.assignedTech || jobData.assignedTechEmail || '',
-      startedBy: jobData.startedBy || '',
-      startTime: jobData.startTime || '',
-      closedBy: jobData.closedBy || '',
-      workingTime: jobData.workingTime || '',
-      totalDuration: jobData.totalDuration || jobData.downtime || '',
-      approvedBy: jobData.approvedBy || '',
-      approvalStatus: jobData.approvalStatus || '',
-      approvalRemarks: jobData.approvalRemarks || jobData.remarks || '',
-      phoneNumbers: phones,
-      module: 'Jobs'
+      jobCardNo: jc.jobCardNo,
+      module: jc.module || 'Jobs',
+      phoneNumbers: whatsappJceCollectPhones(jc),
+      recipientName: jc.recipientName || '',
+      __body: whatsappBuildJobCardBody(eventType, jc, company)
     };
-    return whatsappSendNotification(eventType, payload);
+    var result = whatsappSendNotification(eventType, payload);
+    WHATSAPP_JCE_SENT[key] = true;
+    return result;
   } catch (e) {
     return { success: false, status: WHATSAPP.STATUS.FAILED, message: e.message };
   }

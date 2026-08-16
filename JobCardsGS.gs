@@ -103,6 +103,13 @@ function normalizeJobCard(jc) {
   return jc;
 }
 
+function jobCardWithUpdate(current, update) {
+  var merged = {};
+  for (var k in current) merged[k] = current[k];
+  for (var k2 in update) merged[k2] = update[k2];
+  return merged;
+}
+
 function approveJobCard(id, approvalData) {
   Logger.log('approveJobCard() called: ' + id);
   console.log('approveJobCard() called: ' + id);
@@ -129,6 +136,7 @@ function approveJobCard(id, approvalData) {
     try { createNotification('Job Approved: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been approved.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.ApprovedBy, current.ComplaintBy || '', "navigateTo('jobcards')"); } catch(e) {}
     try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.APPROVE, id, current.Machine || '', '', 'Approved by: ' + (data.ApprovedBy || ''), 'Success', 'Job approved'); } catch(e) {}
     try { emailJobCardStatusChange(id, 'APPROVED', { approvedBy: data.ApprovedBy || '', approvalStatus: 'Approved', approvalRemarks: approvalData.ApprovalRemarks || '' }); } catch(e) { console.error(e); }
+    try { whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_APPROVED, jobCardWithUpdate(current, data)); } catch(e) { console.error(e); }
     return result.map(function(jc) { return normalizeJobCard(jc); });
   } catch (e) {
     Logger.log('approveJobCard() ERROR: ' + e.message);
@@ -363,6 +371,7 @@ function addJobCard(data) {
   try { createNotification('Job Card Opened: ' + (data.JobCardNo || ''), 'Job card ' + (data.JobCardNo || '') + ' opened for ' + (data.Machine || '') + ' - ' + (data.ComplaintDescription || '').substring(0, 100), CONFIG.NOTIFICATION_MODULES.JOBCARD, data.Priority || CONFIG.PRIORITY.MEDIUM, data.CreatedBy, data.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
   try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.OPEN, data.JobCardNo, data.Machine || '', '', 'Priority: ' + (data.Priority || '') + ', Machine: ' + (data.Machine || ''), 'Success', 'Job card opened'); } catch(e) {}
   try { emailJobCardStatusChange(data.JobCardNo, 'OPEN'); } catch(e) { console.error(e); }
+  try { whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_OPENED, data); } catch(e) { console.error(e); }
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
 
@@ -410,21 +419,25 @@ function updateJobCard(id, data) {
   logActivity('Update Job Card', id);
   if (data.AssignedTechnician && data.AssignedTechnician !== current.AssignedTechnician && data.AssignedTechnician !== '') {
     try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.JC_ASSIGNED, { jobCardNo: id, machine: current.Machine || '', assignedTech: data.AssignedTechnician, priority: current.Priority || '', complaint: (current.ComplaintDescription || '').substring(0, 200), reportedBy: current.ComplaintBy || '', assignedTechEmail: data.AssignedTechnician || '', complaintByEmail: current.ComplaintBy || '' }); } catch(e) {}
+    try { whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_ASSIGNED, jobCardWithUpdate(current, { AssignedTechnician: data.AssignedTechnician })); } catch(e) {}
   }
   if (data.CurrentStatus === 'RUNNING') {
     try { createNotification('Job Started: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been started.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
     try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.START, id, current.Machine || '', '', 'Assigned: ' + (current.AssignedTechnician || ''), 'Success', 'Job started'); } catch(e) {}
     try { emailJobCardStatusChange(id, 'RUNNING', { startedBy: data.UpdatedBy || '', startTime: data.StartDateTime || '' }); } catch(e) { console.error(e); }
+    try { whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_STARTED, jobCardWithUpdate(current, { CurrentStatus: 'RUNNING', StartDateTime: data.StartDateTime, StartedBy: data.StartedBy })); } catch(e) { console.error(e); }
   }
   if (data.CurrentStatus === 'PENDING') {
     try { createNotification('Job Pending Review: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' is pending supervisor review.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('pendingjobcard')"); } catch(e) {}
     try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.CLOSE, id, current.Machine || '', '', 'Waiting: ' + durationToDisplay(data.WaitingTime || 0) + ', Working: ' + durationToDisplay(data.WorkingTime || 0), 'Success', 'Job closed - pending review'); } catch(e) {}
     try { emailJobCardStatusChange(id, 'PENDING', { closedBy: data.UpdatedBy || '' }); } catch(e) { console.error(e); }
+    try { whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_PENDING, jobCardWithUpdate(current, { CurrentStatus: 'PENDING', PendingDateTime: data.PendingDateTime, PendingBy: data.PendingBy, PendingRemarks: data.PendingRemarks })); } catch(e) { console.error(e); }
   }
   if (data.CurrentStatus === 'CLOSED') {
     try { createNotification('Job Closed: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been closed.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
     try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.CLOSE, id, current.Machine || '', '', 'Waiting: ' + durationToDisplay(data.WaitingTime || 0) + ', Working: ' + durationToDisplay(data.WorkingTime || 0), 'Success', 'Job closed'); } catch(e) {}
     try { emailJobCardStatusChange(id, 'CLOSED', { closedBy: data.UpdatedBy || '' }); } catch(e) { console.error(e); }
+    try { whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_CLOSED, jobCardWithUpdate(current, data)); } catch(e) { console.error(e); }
   }
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
@@ -463,13 +476,13 @@ function updateJobCardStatus(id, status) {
     try { createNotification('Job Started: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been started.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
     try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.START, id, current.Machine || '', '', 'Status changed to Running', 'Success', 'Job started'); } catch(e) {}
     try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.JC_STARTED, { jobCardNo: id, machine: current.Machine || '', startedBy: data.UpdatedBy || '', startTime: data.StartDateTime || '', priority: current.Priority || '', complaint: (current.ComplaintDescription || '').substring(0, 200), assignedTechEmail: current.AssignedTechnician || '', complaintByEmail: current.ComplaintBy || '' }); } catch(e) {}
-    try { whatsappSendJobStatusNotification(WHATSAPP.TEMPLATES.JC_STARTED, { jobCardNo: id, machine: current.Machine || '', startedBy: data.UpdatedBy || '', startTime: data.StartDateTime || '', priority: current.Priority || '', complaint: (current.ComplaintDescription || '').substring(0, 200), assignedTechEmail: current.AssignedTechnician || '', complaintByEmail: current.ComplaintBy || '' }); } catch(e) {}
+    try { whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_STARTED, jobCardWithUpdate(current, { CurrentStatus: 'RUNNING', StartDateTime: data.StartDateTime, StartedBy: data.StartedBy })); } catch(e) {}
   }
   if (status === 'CLOSED') {
     try { createNotification('Job Closed: ' + id, 'Job card ' + id + ' for ' + (current.Machine || '') + ' has been closed.', CONFIG.NOTIFICATION_MODULES.JOBCARD, current.Priority || CONFIG.PRIORITY.MEDIUM, data.UpdatedBy, current.AssignedTechnician || '', "navigateTo('jobcards')"); } catch(e) {}
     try { createAuditLog(CONFIG.AUDIT_MODULES.JOBCARD, CONFIG.AUDIT_ACTIONS.CLOSE, id, current.Machine || '', '', 'Status changed to Closed', 'Success', 'Job closed'); } catch(e) {}
     try { emailSendNotification(CONFIG.EMAIL_TEMPLATE_TYPES.JC_CLOSED, { jobCardNo: id, machine: current.Machine || '', closedBy: data.UpdatedBy || '', workingTime: durationToDisplay(data.WorkingTime || 0), totalDuration: durationToDisplay(data.Downtime || 0), rootCause: current.RootCause || '', correctiveAction: current.CorrectiveAction || '', remarks: current.Remarks || '', assignedTechEmail: current.AssignedTechnician || '', complaintByEmail: current.ComplaintBy || '', approverEmail: current.ApprovedBy || '' }); } catch(e) {}
-    try { whatsappSendJobStatusNotification(WHATSAPP.TEMPLATES.JC_CLOSED, { jobCardNo: id, machine: current.Machine || '', closedBy: data.UpdatedBy || '', workingTime: durationToDisplay(data.WorkingTime || 0), totalDuration: durationToDisplay(data.Downtime || 0), rootCause: current.RootCause || '', correctiveAction: current.CorrectiveAction || '', remarks: current.Remarks || '', assignedTechEmail: current.AssignedTechnician || '', complaintByEmail: current.ComplaintBy || '', approverEmail: current.ApprovedBy || '' }); } catch(e) {}
+    try { whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_CLOSED, jobCardWithUpdate(current, data)); } catch(e) {}
   }
   return result.map(function(jc) { return normalizeJobCard(jc); });
 }
