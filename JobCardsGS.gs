@@ -728,7 +728,7 @@ function restructureJobCardsSheet() {
 }
 
 function applyDropdownValidation(sheet) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var headers = CONFIG.JOBCARD_FIELDS;
 
   function getCol(field) { return headers.indexOf(field) + 1; }

@@ -1,7 +1,7 @@
 var DIVISION_COLS = ['DivisionID','DivisionCode','DivisionName','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
 
 function initDivisionSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheetName = 'Divisions';
   var sheet = ss.getSheetByName(sheetName);
   var isNew = false;
@@ -66,7 +66,7 @@ function initDivisionSheet() {
 
   if (isNew || existingRows === 0) {
     var sourceSheetName = 'Sections';
-    var ss2 = SpreadsheetApp.getActiveSpreadsheet();
+    var ss2 = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     if (!ss2.getSheetByName(sourceSheetName)) {
       sourceSheetName = 'Departments';
     }

@@ -5,7 +5,7 @@ function flushSpreadsheet() {
 
 function getDataVersion() {
   SpreadsheetApp.flush();
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheets = ss.getSheets();
   var parts = [];
   sheets.forEach(function(s) {

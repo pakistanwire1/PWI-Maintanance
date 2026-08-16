@@ -1,7 +1,7 @@
 var SECTION_COLS = ['SectionID','DivisionID','Section','Description','Status','CreatedBy','CreatedAt','SundayOff','HoursPerDay','SectionCode','DepartmentCount','UpdatedBy','UpdatedAt'];
 
 function initSectionSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheetName = 'Sections';
   var sheet = ss.getSheetByName(sheetName);
   if (!sheet) {

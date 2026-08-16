@@ -1,6 +1,6 @@
 function updateMachineDocument(machineId, fieldKey, url) {
   try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAMES.MACHINES);
+    var sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEET_NAMES.MACHINES);
     var data = sheet.getDataRange().getValues();
     if (!data || data.length < 2) return { error: 'No data' };
     var headers = data[0];

@@ -39,7 +39,7 @@ function requireUserPermission(permKey, data) {
 }
 
 function initializeUserMaster() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheetName = 'Users';
   var sheet = ss.getSheetByName(sheetName);
   if (!sheet) {

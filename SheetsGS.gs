@@ -2,7 +2,7 @@ var __sheetCache = {};
 var __sheetCacheDirty = {};
 
 function getSheet(name) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheet = ss.getSheetByName(name);
   if (!sheet) {
     Logger.log('getSheet(): sheet "' + name + '" NOT FOUND - creating new one');
@@ -296,7 +296,7 @@ function sanitizeValue(val) {
 function testPipeline(sheetName) {
   var steps = [];
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     var actualSheetNames = ss.getSheets().map(function(s) { return s.getName(); });
     steps.push({ step: 'Check sheet exists', detail: 'Looking for "' + sheetName + '" in [' + actualSheetNames.join(',') + ']' });
     var sheet = ss.getSheetByName(sheetName);
@@ -415,7 +415,7 @@ function copyColumnFormat(sheet, sourceColIndex, targetColIndex) {
 }
 
 function applySheetFormatting(targetSheet, sourceSheetName) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sourceSheet = ss.getSheetByName(sourceSheetName);
   if (!sourceSheet || !targetSheet) return;
   var sourceLastRow = sourceSheet.getLastRow();

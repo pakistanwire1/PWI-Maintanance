@@ -14,7 +14,7 @@ function ensureUserCols() {
 }
 
 function initUserSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheetName = CONFIG.SHEET_NAMES.USERS;
   var sheet = ss.getSheetByName(sheetName);
   if (!sheet) {

@@ -114,7 +114,7 @@ function reinitializeDatabase() {
 }
 
 function resetSystem() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var names = Object.values(CONFIG.SHEET_NAMES);
   names.forEach(function(name) {
     var sheet = ss.getSheetByName(name);

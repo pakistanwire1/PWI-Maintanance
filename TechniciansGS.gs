@@ -1,7 +1,7 @@
 var TECH_COLS = ['EmployeeID', 'TechnicianName', 'Skill', 'Shift', 'Status'];
 
 function initTechnicianSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheetName = 'Technicians';
   var sheet = ss.getSheetByName(sheetName);
   if (!sheet) {

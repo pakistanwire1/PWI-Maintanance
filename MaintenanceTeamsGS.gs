@@ -1,7 +1,7 @@
 function initMaintenanceTeamsSheet() {
   var sheet = getSheet(CONFIG.SHEET_NAMES.MAINTENANCE_TEAMS);
   if (!sheet) {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     sheet = ss.insertSheet(CONFIG.SHEET_NAMES.MAINTENANCE_TEAMS);
   }
   ensureHeaders(sheet, CONFIG.MAINTENANCE_TEAM_FIELDS);

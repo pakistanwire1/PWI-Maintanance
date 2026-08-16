@@ -1,7 +1,7 @@
 var ASSET_COLS = ['AssetID','AssetCode','AssetName','AssetType','Category','MachineID','MachineName','DeptID','Department','SectionID','Section','Location','Manufacturer','Model','SerialNo','Specification','PurchaseDate','InstallDate','WarrantyExpiry','Criticality','Supplier','Cost','Status','QRCode','Barcode','QRGeneratedDate','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
 
 function initAssetSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheetName = 'Assets';
   var sheet = ss.getSheetByName(sheetName);
   if (!sheet) {

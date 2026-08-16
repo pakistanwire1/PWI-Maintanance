@@ -278,7 +278,7 @@ function initializeAllSampleData() {
 }
 
 function ensureSheet(sheetName, fields) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheet = ss.getSheetByName(sheetName);
   var isNew = false;
   if (!sheet) {
@@ -316,7 +316,7 @@ function ensureSheet(sheetName, fields) {
     }
   }
   if (isNew) {
-    var ss2 = SpreadsheetApp.getActiveSpreadsheet();
+    var ss2 = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     var srcCandidates = ['Sections', 'Departments', 'Machines', 'Users'];
     for (var si = 0; si < srcCandidates.length; si++) {
       if (ss2.getSheetByName(srcCandidates[si])) {
@@ -413,7 +413,7 @@ function formatSheet(sheet, fields) {
 
 function notifyFrontendRefresh() {
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     var sheet = ss.getSheetByName(CONFIG.SHEET_NAMES.LOGS || 'Logs');
     if (!sheet) return;
     var ts = new Date().toISOString();

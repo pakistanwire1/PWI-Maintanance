@@ -101,7 +101,7 @@ function diagnoseBadgeCounts(email) {
   var result = {};
   try {
     result.email = email;
-    var sheets = SpreadsheetApp.getActiveSpreadsheet().getSheets().map(function(s) { return s.getName(); });
+    var sheets = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheets().map(function(s) { return s.getName(); });
     result.existingSheets = sheets;
 
     var sheetNames = [
@@ -149,7 +149,7 @@ function diagnoseBadgeCounts(email) {
 
 function getBadgeCounts() {
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     var email = Session.getActiveUser().getEmail();
     var today = new Date();
     var todayStr = Utilities.formatDate(today, Session.getScriptTimeZone(), 'yyyy-MM-dd');

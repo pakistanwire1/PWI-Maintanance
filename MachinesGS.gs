@@ -1,7 +1,7 @@
 var MACHINE_COLS = ['MachineID','MachineCode','MachineName','MachineNumber','DivisionID','DeptID','Department','SectionID','Section','Location','MachineType','Manufacturer','Model','SerialNo','Capacity','PowerRating','InstallDate','WarrantyExpiry','Criticality','Status','QRCode','Barcode','QRGeneratedDate','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt','OperatingHoursPerDay','OperatingDaysPerWeek','MachinePhoto','MachineManual','ElectricalDrawing','MechanicalDrawing','SOP','SafetyInstructions','WarrantyDocuments'];
 
 function initMachineSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheetName = 'Machines';
   var sheet = ss.getSheetByName(sheetName);
   if (!sheet) {

@@ -1,7 +1,7 @@
 function initBreakdownTypesSheet() {
   var sheet = getSheet(CONFIG.SHEET_NAMES.BREAKDOWN_TYPES);
   if (!sheet) {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     sheet = ss.insertSheet(CONFIG.SHEET_NAMES.BREAKDOWN_TYPES);
   }
   ensureHeaders(sheet, CONFIG.BREAKDOWN_TYPE_FIELDS);

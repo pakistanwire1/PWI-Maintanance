@@ -1,7 +1,7 @@
 var DEPT_COLS = ['DepartmentID','Department','DepartmentCode','DivisionID','SectionID','Section','Division','DepartmentHead','Description','SundayOff','HoursPerDay','Status','CreatedBy','CreatedAt','UpdatedBy','UpdatedAt'];
 
 function initDepartmentSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheetName = 'Departments';
   var sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
