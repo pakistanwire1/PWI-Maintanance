@@ -95,7 +95,7 @@ const check = (name, pass, detail) => {
   check('U12. CF collectSettings posts per-provider ultramsg object', waJs.indexOf('data.ultramsg =') !== -1 && waJs.indexOf('instanceId: active.instanceId') !== -1);
   check('U13. GAS page offers ultramsg option + Instance ID field + testWaConnection', waPage.indexOf('value="ultramsg"') !== -1 && waPage.indexOf('whatsappInstanceId') !== -1 && waPage.indexOf('function testWaConnection()') !== -1 && waPage.indexOf('whatsappConnectionTest({') !== -1);
   check('U14. GAS page mirrors ultramsg provider values + collect + configIssue branches', waPage.indexOf('gWaProviderValues = { meta: null, twilio: null, ultramsg: null }') !== -1 && waPage.indexOf('data.ultramsg =') !== -1 && waPage.indexOf("p === 'ultramsg'") !== -1 && waPage.indexOf('waConfigIssue()') !== -1);
-  check('U14b. Backend skips country-code normalization for @c.us chat IDs (internal transport capability)', waGs.indexOf("fullNumber.indexOf('@') === -1") !== -1 && waGs.indexOf("!fullNumber.startsWith('+') && !fullNumber.startsWith('00')") !== -1);
+  check('U14b. Backend skips country-code normalization for @c.us chat IDs (internal transport capability)', waGs.indexOf("fullNumber.indexOf('@') !== -1") !== -1 && waGs.indexOf("/* chat ID") !== -1);
 
   /* JCE: Job Card WhatsApp notification design system (centralized formatter) */
   const jceGs = read('WhatsAppGS.gs');
@@ -346,12 +346,12 @@ whatsappEnsureDefaults();
 var b17 = whatsappGetSettings();
 __ok('B17. Missing defaults seeded correctly', b17.enabled === false && b17.apiToken === '' && b17.testMessage === 'Test message from PWI CMMS' && b17.defaultCountryCode === '91', JSON.stringify(b17));
 
-/* B18 00-prefix phone not double-prefixed */
-whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: '106540352242922', businessAccountId: '123456789012345', _userEmail: 'admin@cmms.com' });
+/* B18 00-prefix phone correctly normalizes to E.164 */
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: '106540352242922', businessAccountId: '123456789012345', defaultCountryCode: '92', _userEmail: 'admin@cmms.com' });
 __providerCalls = [];
 var r18 = whatsappTestSend({ testPhone: '00923001234567', testMessage: 'x', _userEmail: 'wa@cmms.com' });
 var pc18 = __providerCalls[__providerCalls.length - 1];
-__ok('B18. 00-prefixed number preserved (no double +92)', r18.success === true && pc18 && pc18.phoneNumber === '00923001234567', pc18 ? pc18.phoneNumber : 'no call');
+__ok('B18. 00-prefixed number correctly normalizes to E.164 (no double +92)', r18.success === true && pc18 && pc18.phoneNumber === '+923001234567', pc18 ? pc18.phoneNumber : 'no call');
 
 /* B19 no raw token anywhere in activity/log trails */
 var leak19 = false;
@@ -796,6 +796,37 @@ __providerCalls = [];
 var rNum7 = whatsappSendMessage('+923001234567', 'Already +92 prefixed phone', 'System', 'JC-NUM7', 'TestMessage', 'Test', 'admin@cmms.com');
 var pcNum7 = __providerCalls[__providerCalls.length - 1];
 __ok('PN7. whatsappSendMessage preserves already +92 prefixed phone', rNum7.success === true && pcNum7 && pcNum7.phoneNumber === '+923001234567', JSON.stringify({ r: rNum7, pc: pcNum7 && pcNum7.phoneNumber }));
+
+/* ===================== PHONE NORMALIZATION: 92→9292 DOUBLE-COUNTRY-CODE BUG ===================== */
+__providerCalls = [];
+var rDC1 = whatsappSendMessage(9233333655467, 'Numeric 92-prefixed', 'System', 'JC-DC1', 'TestMessage', 'Test', 'admin@cmms.com');
+var pcDC1 = __providerCalls[__providerCalls.length - 1];
+__ok('PN8. Numeric 9233333655467 MUST NOT become +92923333655467', rDC1.success === true && pcDC1 && pcDC1.phoneNumber === '+9233333655467', JSON.stringify({ pc: pcDC1 && pcDC1.phoneNumber }));
+
+__providerCalls = [];
+var rDC2 = whatsappSendMessage('9233333655467', 'String 92-prefixed', 'System', 'JC-DC2', 'TestMessage', 'Test', 'admin@cmms.com');
+var pcDC2 = __providerCalls[__providerCalls.length - 1];
+__ok('PN9. String 9233333655467 MUST NOT become +92923333655467', rDC2.success === true && pcDC2 && pcDC2.phoneNumber === '+9233333655467', JSON.stringify({ pc: pcDC2 && pcDC2.phoneNumber }));
+
+__providerCalls = [];
+var rDC3 = whatsappSendMessage('923152340889', 'String 92-prefixed local', 'System', 'JC-DC3', 'TestMessage', 'Test', 'admin@cmms.com');
+var pcDC3 = __providerCalls[__providerCalls.length - 1];
+__ok('PN10. String 923152340889 normalizes to +923152340889 (not +92923152340889)', rDC3.success === true && pcDC3 && pcDC3.phoneNumber === '+923152340889', JSON.stringify({ pc: pcDC3 && pcDC3.phoneNumber }));
+
+__providerCalls = [];
+var rDC4 = whatsappSendMessage('00923152340889', '0092 prefixed', 'System', 'JC-DC4', 'TestMessage', 'Test', 'admin@cmms.com');
+var pcDC4 = __providerCalls[__providerCalls.length - 1];
+__ok('PN11. 00923152340889 normalizes to +923152340889 (not +92923152340889)', rDC4.success === true && pcDC4 && pcDC4.phoneNumber === '+923152340889', JSON.stringify({ pc: pcDC4 && pcDC4.phoneNumber }));
+
+__providerCalls = [];
+var rDC5 = whatsappSendMessage(923001234567, 'Numeric 92+local', 'System', 'JC-DC5', 'TestMessage', 'Test', 'admin@cmms.com');
+var pcDC5 = __providerCalls[__providerCalls.length - 1];
+__ok('PN12. Numeric 923001234567 normalizes to +923001234567', rDC5.success === true && pcDC5 && pcDC5.phoneNumber === '+923001234567', JSON.stringify({ pc: pcDC5 && pcDC5.phoneNumber }));
+
+__providerCalls = [];
+var rDC6 = whatsappSendMessage('00923001234567', '0092+local', 'System', 'JC-DC6', 'TestMessage', 'Test', 'admin@cmms.com');
+var pcDC6 = __providerCalls[__providerCalls.length - 1];
+__ok('PN13. 00923001234567 normalizes to +923001234567', rDC6.success === true && pcDC6 && pcDC6.phoneNumber === '+923001234567', JSON.stringify({ pc: pcDC6 && pcDC6.phoneNumber }));
 `;
 
   const sandbox = {};

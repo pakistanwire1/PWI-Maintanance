@@ -414,6 +414,18 @@ var WhatsApp = (function() {
       '#whatsappPage .wa-help-list li svg { color:var(--success); flex-shrink:0; margin-top:1px; }' +
       '#whatsappPage .wa-security-note { display:flex; align-items:center; gap:9px; margin-top:18px; padding:12px 14px; border:1px dashed var(--border-light); border-radius:var(--radius-sm); color:var(--text-muted); font-size:12px; background:var(--bg-secondary); }' +
       '#whatsappPage .wa-security-note svg { color:var(--success); flex-shrink:0; }' +
+      '#whatsappPage .template-item { border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; background:var(--bg-card); overflow:hidden; }' +
+      '#whatsappPage .template-header { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; cursor:pointer; user-select:none; transition:background 0.15s; }' +
+      '#whatsappPage .template-header:hover { background:var(--bg-card-hover); }' +
+      '#whatsappPage .template-header .tpl-chevron { transition:transform 0.2s; font-size:12px; color:var(--text-muted); margin-left:10px; }' +
+      '#whatsappPage .template-header.open .tpl-chevron { transform:rotate(90deg); }' +
+      '#whatsappPage .template-body { display:none; border-top:1px solid var(--border); padding:12px 14px; }' +
+      '#whatsappPage .template-body textarea { width:100%; min-height:180px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-input); color:var(--text); font-family:monospace; font-size:12px; line-height:1.6; resize:vertical; outline:none; box-sizing:border-box; }' +
+      '#whatsappPage .template-body textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-light); }' +
+      '#whatsappPage .template-footer { display:flex; align-items:center; gap:10px; margin-top:10px; }' +
+      '#whatsappPage .template-footer .btn { min-width:70px; }' +
+      '#whatsappPage .wa-saved-toast { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:var(--radius-sm); background:var(--success-bg); color:var(--success); font-size:11px; font-weight:600; opacity:0; transition:opacity 0.3s; }' +
+      '#whatsappPage .wa-saved-toast.show { opacity:1; }' +
       '@media(max-width:768px) { #whatsappPage .wa-grid-2 { grid-template-columns:1fr; } #whatsappPage .wa-test-country { flex:1 1 140px; } #whatsappPage .wa-action-bar { flex-direction:column; align-items:stretch; } #whatsappPage .wa-action-left, #whatsappPage .wa-action-right { justify-content:space-between; } #whatsappPage .wa-integration { flex-direction:column; align-items:flex-start; } #whatsappPage .wa-jce-grid { grid-template-columns:1fr; } }';
   }
 
@@ -868,16 +880,19 @@ var WhatsApp = (function() {
     var html = '';
     templates.forEach(function(t, idx) {
       var tid = 'tpl_' + idx;
+      var isOpen = idx === 0;
       html +=
-        '<div class="template-item">' +
-          '<div class="template-header" onclick="WhatsApp.toggleTemplate(\'' + tid + '\')">' +
+        '<div class="template-item" id="' + tid + '_item">' +
+          '<div class="template-header' + (isOpen ? ' open' : '') + '" onclick="WhatsApp.toggleTemplate(\'' + tid + '\')">' +
             '<span>' + esc(t.TemplateName || '') + ' <span style="font-size:11px;color:var(--text-muted)">(' + esc(t.EventType || '') + ')</span></span>' +
-            '<span style="font-size:10px;color:var(--text-muted)">Variables: ' + esc(t.Variables || '') + '</span>' +
+            '<span style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:var(--text-muted)">Variables: ' + esc(t.Variables || '') + '</span><span class="tpl-chevron">&#9654;</span></span>' +
           '</div>' +
-          '<div id="' + tid + '_body" class="template-body" style="display:' + (idx === 0 ? 'block' : 'none') + '">' +
+          '<div id="' + tid + '_body" class="template-body" style="display:' + (isOpen ? 'block' : 'none') + '">' +
             '<textarea id="' + tid + '_textarea" oninput="WhatsApp.markDirty(\'' + esc(t.TemplateID) + '\',\'' + tid + '\')">' + esc(t.TemplateBody || '') + '</textarea>' +
             '<div class="template-footer">' +
               '<button class="btn btn-xs btn-primary" id="' + tid + '_savebtn" onclick="WhatsApp.saveTemplate(\'' + esc(t.TemplateID || '') + '\',\'' + tid + '\')" disabled>Save</button>' +
+              '<button class="btn btn-xs" id="' + tid + '_resetbtn" onclick="WhatsApp.resetTemplate(\'' + esc(t.TemplateID || '') + '\',\'' + tid + '\')">Reset</button>' +
+              '<span class="wa-saved-toast" id="' + tid + '_toast">&#10003; Saved</span>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -1092,7 +1107,23 @@ var WhatsApp = (function() {
 
   function toggleTemplate(tid) {
     var b = getEl(tid + '_body');
-    if (b) b.style.display = b.style.display === 'none' ? 'block' : 'none';
+    var item = getEl(tid + '_item');
+    if (!b) return;
+    var isOpen = b.style.display !== 'none';
+    if (isOpen) {
+      b.style.display = 'none';
+      if (item) { var h = item.querySelector('.template-header'); if (h) h.classList.remove('open'); }
+    } else {
+      var wrap = getEl('whatsappTemplatesContainer');
+      if (wrap) {
+        var allBodies = wrap.querySelectorAll('.template-body');
+        var allHeaders = wrap.querySelectorAll('.template-header');
+        for (var i = 0; i < allBodies.length; i++) { allBodies[i].style.display = 'none'; }
+        for (var j = 0; j < allHeaders.length; j++) { allHeaders[j].classList.remove('open'); }
+      }
+      b.style.display = 'block';
+      if (item) { var h2 = item.querySelector('.template-header'); if (h2) h2.classList.add('open'); }
+    }
   }
 
   function markDirty(tplId, tid) {
@@ -1110,7 +1141,6 @@ var WhatsApp = (function() {
     btn.textContent = 'Saving...';
     API.post('whatsappSaveTemplate', { TemplateID: tplId, TemplateBody: textarea.value })
       .then(function(res) {
-        btn.textContent = 'Saved';
         delete waDirtyTemplates[tplId];
         if (res && res.templates) {
           var i, found = null;
@@ -1124,12 +1154,26 @@ var WhatsApp = (function() {
             }
           }
         }
-        setTimeout(function() { btn.textContent = 'Save'; btn.disabled = false; }, 2000);
+        var toast = getEl(tid + '_toast');
+        if (toast) { toast.classList.add('show'); setTimeout(function() { toast.classList.remove('show'); }, 2000); }
+        btn.textContent = 'Saved';
+        setTimeout(function() { btn.textContent = 'Save'; btn.disabled = false; }, 1500);
       })
       .catch(function() {
         btn.textContent = 'Error';
         btn.disabled = false;
       });
+  }
+
+  function resetTemplate(tplId, tid) {
+    var textarea = getEl(tid + '_textarea');
+    if (!textarea) return;
+    for (var i = 0; i < waTemplates.length; i++) {
+      if (waTemplates[i].TemplateID === tplId) { textarea.value = waTemplates[i].TemplateBody || ''; break; }
+    }
+    delete waDirtyTemplates[tplId];
+    var btn = getEl(tid + '_savebtn');
+    if (btn) btn.disabled = true;
   }
 
   function onProviderChange() {
@@ -1305,6 +1349,7 @@ var WhatsApp = (function() {
     toggleTemplate: toggleTemplate,
     markDirty: markDirty,
     saveTemplate: saveTemplate,
+    resetTemplate: resetTemplate,
     onProviderChange: onProviderChange,
     toggleTokenVisibility: toggleTokenVisibility,
     resetForm: resetForm,

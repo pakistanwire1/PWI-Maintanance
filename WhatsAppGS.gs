@@ -834,9 +834,17 @@ function whatsappSendMessage(phoneNumber, messageBody, module, refId, templateNa
     if (!settings.enabled) return { success: false, status: WHATSAPP.STATUS.PENDING, message: 'WhatsApp disabled' };
     if (!phoneNumber) return { success: false, status: WHATSAPP.STATUS.FAILED, message: 'No phone number' };
     var fullNumber = String(phoneNumber || '');
-    if (!fullNumber.startsWith('+') && !fullNumber.startsWith('00') && fullNumber.indexOf('@') === -1) {
+    if (fullNumber.indexOf('@') !== -1) {
+      /* chat ID — pass through unchanged */
+    } else if (fullNumber.startsWith('+')) {
+      /* already E.164 — pass through unchanged */
+    } else if (fullNumber.startsWith('00')) {
       var cc = settings.defaultCountryCode || WHATSAPP.DEFAULTS.DEFAULT_COUNTRY_CODE;
-      fullNumber = '+' + cc + fullNumber.replace(/^0+/, '');
+      var stripped00 = fullNumber.replace(/^0+/, '');
+      fullNumber = (cc && stripped00.indexOf(cc) === 0) ? '+' + stripped00 : '+' + cc + stripped00;
+    } else {
+      var cc = settings.defaultCountryCode || WHATSAPP.DEFAULTS.DEFAULT_COUNTRY_CODE;
+      fullNumber = (cc && fullNumber.indexOf(cc) === 0) ? '+' + fullNumber : '+' + cc + fullNumber.replace(/^0+/, '');
     }
     var result = whatsappProviderSend(settings, fullNumber, messageBody);
     var status = result.success ? WHATSAPP.STATUS.SENT : WHATSAPP.STATUS.FAILED;
