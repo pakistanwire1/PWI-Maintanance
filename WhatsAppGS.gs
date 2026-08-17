@@ -296,6 +296,7 @@ function whatsappInitLogsSheet() {
   var sheet = getSheet(WHATSAPP.SHEET);
   ensureHeaders(sheet, WHATSAPP.FIELDS);
   ensureSheetColumns(sheet, WHATSAPP.FIELDS);
+  invalidateCache(WHATSAPP.SHEET);
 }
 
 function whatsappInitTemplatesSheet() {
