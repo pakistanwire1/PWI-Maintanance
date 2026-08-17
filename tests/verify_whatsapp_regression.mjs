@@ -763,6 +763,39 @@ for (var p30i = 0; p30i < p30.events.length; p30i++) {
   }
 }
 __ok('JCE30. Preview renders the same master design stored in existing TMP rows', p30match && p30checked >= 3, JSON.stringify({ checked: p30checked, match: p30match }));
+
+/* ===================== PHONE NORMALIZATION: numeric from Google Sheets ===================== */
+__providerCalls = [];
+var rNum1 = whatsappSendMessage(3152340889, 'Numeric phone test', 'System', 'JC-NUM1', 'TestMessage', 'Test', 'admin@cmms.com');
+var pcNum1 = __providerCalls[__providerCalls.length - 1];
+__ok('PN1. whatsappSendMessage accepts numeric phone (no startsWith crash)', rNum1.success === true && pcNum1 && pcNum1.phoneNumber === '+923152340889', JSON.stringify({ r: rNum1, pc: pcNum1 && pcNum1.phoneNumber }));
+
+__providerCalls = [];
+var rNum2 = whatsappSendMessage(3001112222, 'Integer phone test', 'System', 'JC-NUM2', 'TestMessage', 'Test', 'admin@cmms.com');
+var pcNum2 = __providerCalls[__providerCalls.length - 1];
+__ok('PN2. whatsappSendMessage normalizes integer phone to +92 E.164', rNum2.success === true && pcNum2 && pcNum2.phoneNumber === '+923001112222', JSON.stringify({ r: rNum2, pc: pcNum2 && pcNum2.phoneNumber }));
+
+__providerCalls = [];
+var rNum3 = whatsappSendMessage('', 'Empty string phone', 'System', 'JC-NUM3', 'TestMessage', 'Test', 'admin@cmms.com');
+__ok('PN3. whatsappSendMessage handles empty string phone gracefully', rNum3.success === false && String(rNum3.message).indexOf('No phone') > -1, JSON.stringify(rNum3));
+
+__providerCalls = [];
+var rNum4 = whatsappSendMessage(null, 'Null phone', 'System', 'JC-NUM4', 'TestMessage', 'Test', 'admin@cmms.com');
+__ok('PN4. whatsappSendMessage handles null phone gracefully', rNum4.success === false && String(rNum4.message).indexOf('No phone') > -1, JSON.stringify(rNum4));
+
+__providerCalls = [];
+var rNum5 = whatsappSendMessage(undefined, 'Undefined phone', 'System', 'JC-NUM5', 'TestMessage', 'Test', 'admin@cmms.com');
+__ok('PN5. whatsappSendMessage handles undefined phone gracefully', rNum5.success === false && String(rNum5.message).indexOf('No phone') > -1, JSON.stringify(rNum5));
+
+__providerCalls = [];
+var rNum6 = whatsappSendMessage('3152340889', 'String phone still works', 'System', 'JC-NUM6', 'TestMessage', 'Test', 'admin@cmms.com');
+var pcNum6 = __providerCalls[__providerCalls.length - 1];
+__ok('PN6. whatsappSendMessage still normalizes string phone to +92 E.164', rNum6.success === true && pcNum6 && pcNum6.phoneNumber === '+923152340889', JSON.stringify({ r: rNum6, pc: pcNum6 && pcNum6.phoneNumber }));
+
+__providerCalls = [];
+var rNum7 = whatsappSendMessage('+923001234567', 'Already +92 prefixed phone', 'System', 'JC-NUM7', 'TestMessage', 'Test', 'admin@cmms.com');
+var pcNum7 = __providerCalls[__providerCalls.length - 1];
+__ok('PN7. whatsappSendMessage preserves already +92 prefixed phone', rNum7.success === true && pcNum7 && pcNum7.phoneNumber === '+923001234567', JSON.stringify({ r: rNum7, pc: pcNum7 && pcNum7.phoneNumber }));
 `;
 
   const sandbox = {};
