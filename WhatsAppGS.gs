@@ -1,7 +1,7 @@
 var WHATSAPP = {
   SHEET: 'WhatsAppLogs',
   TEMPLATES_SHEET: 'WhatsAppTemplates',
-  FIELDS: ['MessageID','DateTime','Recipient','PhoneNumber','Module','ReferenceID','Template','Status','Provider','ErrorMessage','SentBy'],
+  FIELDS: ['MessageID','DateTime','Recipient','PhoneNumber','Module','ReferenceID','Template','Status','Provider','ErrorMessage','SentBy','IdempotencyKey'],
   SETTINGS: {
     ENABLED: 'whatsapp_enabled',
     COMPANY_NAME: 'whatsapp_company_name',
@@ -295,6 +295,7 @@ var WHATSAPP_JCE = {
 function whatsappInitLogsSheet() {
   var sheet = getSheet(WHATSAPP.SHEET);
   ensureHeaders(sheet, WHATSAPP.FIELDS);
+  ensureSheetColumns(sheet, WHATSAPP.FIELDS);
 }
 
 function whatsappInitTemplatesSheet() {
@@ -603,7 +604,7 @@ function whatsappFormatMessage(templateBody, variables) {
   return msg;
 }
 
-function whatsappLog(messageId, recipient, phoneNumber, module, refId, template, status, provider, errorMsg, sentBy) {
+function whatsappLog(messageId, recipient, phoneNumber, module, refId, template, status, provider, errorMsg, sentBy, idempotencyKey) {
   try {
     whatsappInitLogsSheet();
     var maxNum = 0;
@@ -627,6 +628,7 @@ function whatsappLog(messageId, recipient, phoneNumber, module, refId, template,
       else if (f === 'Provider') row[f] = provider || '';
       else if (f === 'ErrorMessage') row[f] = errorMsg || '';
       else if (f === 'SentBy') row[f] = sentBy || '';
+      else if (f === 'IdempotencyKey') row[f] = idempotencyKey || '';
       else row[f] = '';
     });
     addRow(WHATSAPP.SHEET, row);
@@ -828,7 +830,7 @@ function whatsappUltraMsgConnectionTest(settings) {
   }
 }
 
-function whatsappSendMessage(phoneNumber, messageBody, module, refId, templateName, recipientName, sentBy) {
+function whatsappSendMessage(phoneNumber, messageBody, module, refId, templateName, recipientName, sentBy, idempotencyKey) {
   try {
     var settings = whatsappGetSettings();
     if (!settings.enabled) return { success: false, status: WHATSAPP.STATUS.PENDING, message: 'WhatsApp disabled' };
@@ -848,10 +850,10 @@ function whatsappSendMessage(phoneNumber, messageBody, module, refId, templateNa
     }
     var result = whatsappProviderSend(settings, fullNumber, messageBody);
     var status = result.success ? WHATSAPP.STATUS.SENT : WHATSAPP.STATUS.FAILED;
-    var waId = whatsappLog(result.messageId || '', recipientName || '', fullNumber, module || '', refId || '', templateName || '', status, settings.provider, result.success ? '' : result.message, sentBy || Session.getActiveUser().getEmail());
+    var waId = whatsappLog(result.messageId || '', recipientName || '', fullNumber, module || '', refId || '', templateName || '', status, settings.provider, result.success ? '' : result.message, sentBy || Session.getActiveUser().getEmail(), idempotencyKey || '');
     return { success: result.success, status: status, messageId: result.messageId, logId: waId, message: result.message };
   } catch (e) {
-    whatsappLog('', recipientName || '', phoneNumber || '', module || '', refId || '', templateName || '', WHATSAPP.STATUS.FAILED, '', e.message, sentBy || Session.getActiveUser().getEmail());
+    whatsappLog('', recipientName || '', phoneNumber || '', module || '', refId || '', templateName || '', WHATSAPP.STATUS.FAILED, '', e.message, sentBy || Session.getActiveUser().getEmail(), idempotencyKey || '');
     return { success: false, status: WHATSAPP.STATUS.FAILED, message: e.message };
   }
 }
@@ -891,9 +893,10 @@ function whatsappSendNotification(eventType, data) {
     }
     var refId = data.jobCardNo || data.pmNumber || data.partCode || data.grnNo || data.userId || data.id || '';
     var module = data.module || '';
+    var idemKey = data._idempotencyKey || '';
     var results = [];
     phones.forEach(function(phone) {
-      var result = whatsappSendMessage(phone, messageBody, module, refId, eventType, data.recipientName || data.name || '');
+      var result = whatsappSendMessage(phone, messageBody, module, refId, eventType, data.recipientName || data.name || '', '', idemKey);
       results.push(result);
     });
     return { success: results.length > 0, results: results };
@@ -1310,6 +1313,20 @@ function whatsappBuildJobCardBody(eventType, jc, company) {
   return b;
 }
 
+function whatsappFindSentLogByKey(key) {
+  if (!key) return null;
+  try {
+    invalidateCache(WHATSAPP.SHEET);
+    var logs = getAllData(WHATSAPP.SHEET) || [];
+    for (var i = logs.length - 1; i >= 0; i--) {
+      if (String(logs[i].IdempotencyKey || '') === key && String(logs[i].Status || '') === WHATSAPP.STATUS.SENT) {
+        return logs[i];
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 function whatsappSendJobCardEvent(eventType, jobCardData) {
   try {
     if (!jobCardData) return { success: false, status: WHATSAPP.STATUS.FAILED, message: 'Missing job card data' };
@@ -1320,6 +1337,19 @@ function whatsappSendJobCardEvent(eventType, jobCardData) {
     if (WHATSAPP_JCE_SENT[key]) {
       return { success: false, status: 'DUPLICATE', deduplicated: true, message: 'WhatsApp notification already sent for this job card event' };
     }
+    var lock = LockService.getScriptLock();
+    try { lock.waitLock(5000); } catch (lockErr) {
+      return { success: false, status: 'LOCKED', message: 'Could not acquire deduplication lock' };
+    }
+    try {
+      var existing = whatsappFindSentLogByKey(key);
+      if (existing) {
+        WHATSAPP_JCE_SENT[key] = true;
+        return { success: false, status: 'DUPLICATE', deduplicated: true, message: 'WhatsApp notification already sent (persistent dedup)', logId: existing.MessageID };
+      }
+    } finally {
+      lock.releaseLock();
+    }
     var company = WHATSAPP.DEFAULTS.COMPANY_NAME;
     try { company = whatsappGetSettings().companyName || company; } catch (e) {}
     var payload = {
@@ -1327,7 +1357,8 @@ function whatsappSendJobCardEvent(eventType, jobCardData) {
       module: jc.module || 'Jobs',
       phoneNumbers: whatsappJceCollectPhones(jc),
       recipientName: jc.recipientName || '',
-      __body: whatsappBuildJobCardBody(eventType, jc, company)
+      __body: whatsappBuildJobCardBody(eventType, jc, company),
+      _idempotencyKey: key
     };
     var result = whatsappSendNotification(eventType, payload);
     WHATSAPP_JCE_SENT[key] = true;

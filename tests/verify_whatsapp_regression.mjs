@@ -112,6 +112,47 @@ const check = (name, pass, detail) => {
     return seg.indexOf('apiToken') === -1 && seg.indexOf('api_token') === -1 && seg.indexOf('ULTRAMSG') === -1;
   })());
 
+  /* JCE-ID: Persistent idempotency dedup */
+  check('JCE-ID1. WHATSAPP.FIELDS includes IdempotencyKey as 12th field', /FIELDS:\s*\[.*'IdempotencyKey'\]/.test(waGs));
+  check('JCE-ID2. whatsappFindSentLogByKey function exists', waGs.indexOf('function whatsappFindSentLogByKey(') !== -1);
+  check('JCE-ID3. whatsappFindSentLogByKey scans logs backwards for SENT + matching key', (function() {
+    var idx = waGs.indexOf('function whatsappFindSentLogByKey(');
+    var seg = waGs.substring(idx, idx + 400);
+    return seg.indexOf('logs.length - 1') !== -1 && seg.indexOf('IdempotencyKey') !== -1 && seg.indexOf('STATUS.SENT') !== -1;
+  })());
+  check('JCE-ID4. whatsappSendJobCardEvent acquires LockService lock', (function() {
+    var idx = waGs.indexOf('function whatsappSendJobCardEvent(');
+    var end = waGs.indexOf('\nfunction ', idx + 10);
+    var seg = waGs.substring(idx, end !== -1 ? end : idx + 3000);
+    return seg.indexOf('LockService.getScriptLock()') !== -1 && seg.indexOf('waitLock') !== -1 && seg.indexOf('releaseLock') !== -1;
+  })());
+  check('JCE-ID5. whatsappSendJobCardEvent checks persistent dedup before sending', (function() {
+    var idx = waGs.indexOf('function whatsappSendJobCardEvent(');
+    var end = waGs.indexOf('\nfunction ', idx + 10);
+    var seg = waGs.substring(idx, end !== -1 ? end : idx + 3000);
+    return seg.indexOf('whatsappFindSentLogByKey(key)') !== -1;
+  })());
+  check('JCE-ID6. whatsappSendJobCardEvent sets _idempotencyKey in payload', waGs.indexOf("_idempotencyKey: key") !== -1);
+  check('JCE-ID7. whatsappSendMessage accepts idempotencyKey param', waGs.indexOf('function whatsappSendMessage(phoneNumber, messageBody, module, refId, templateName, recipientName, sentBy, idempotencyKey)') !== -1);
+  check('JCE-ID8. whatsappLog accepts idempotencyKey param and writes to row', (function() {
+    var idx = waGs.indexOf('function whatsappLog(');
+    var end = waGs.indexOf('\nfunction ', idx + 10);
+    var seg = waGs.substring(idx, end !== -1 ? end : idx + 3000);
+    return seg.indexOf('idempotencyKey') !== -1 && seg.indexOf("IdempotencyKey") !== -1;
+  })());
+  check('JCE-ID9. whatsappSendNotification passes _idempotencyKey to whatsappSendMessage', waGs.indexOf('_idempotencyKey') !== -1 && (function() {
+    var idx = waGs.indexOf('function whatsappSendNotification(');
+    var end = waGs.indexOf('\nfunction ', idx + 10);
+    var seg = waGs.substring(idx, end !== -1 ? end : idx + 3000);
+    return seg.indexOf('idempotencyKey') !== -1;
+  })());
+  check('JCE-ID10. In-memory WHATSAPP_JCE_SENT used as fast path before lock', (function() {
+    var idx = waGs.indexOf('function whatsappSendJobCardEvent(');
+    var end = waGs.indexOf('\nfunction ', idx + 10);
+    var seg = waGs.substring(idx, end !== -1 ? end : idx + 3000);
+    return seg.indexOf('WHATSAPP_JCE_SENT[key]') !== -1 && seg.indexOf('LockService.getScriptLock()') !== -1;
+  })());
+
 
   const afterSendTest = waJs.split('function sendTest()')[1] || '';
   const sendTestBody = afterSendTest.split('function toggleTemplate')[0] || afterSendTest;
@@ -159,6 +200,17 @@ var __activeUser = { Email: 'admin@cmms.com', Role: 'Administrator', IsAdmin: tr
 var __probeMode = 'ok';
 var __fetchCalls = [];
 var __ultraMode = 'ok';
+var __lockAcquired = 0;
+var __lockReleased = 0;
+
+var LockService = {
+  getScriptLock: function() {
+    return {
+      waitLock: function(ms) { __lockAcquired++; return true; },
+      releaseLock: function() { __lockReleased++; }
+    };
+  }
+};
 
 var UrlFetchApp = {
   fetch: function(url, opts) {
@@ -204,6 +256,7 @@ function updateRow(name, key, val, obj) {
 }
 function getSheet(name) { return { name: name }; }
 function ensureHeaders(sheet, fields) {}
+function ensureSheetColumns(sheet, fields) {}
 function getCurrentTimestamp() { return '2026-08-14 10:00:00'; }
 function formatDateTimeISO(d) { return d instanceof Date ? d.toISOString() : String(d); }
 function logActivity(msg, detail) { __activityLog.push({ msg: msg, detail: detail }); }
@@ -665,6 +718,7 @@ var __jceProviderBodies = {};
 ['meta', 'twilio', 'ultramsg'].forEach(function(prov) {
   whatsappSaveSettings({ enabled: true, provider: prov, apiToken: 't_' + prov, phoneNumberId: prov === 'twilio' ? '+14155238886' : '106540352242922', businessAccountId: prov === 'twilio' ? 'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' : '123456789012345', apiEndpoint: prov === 'meta' ? 'https://graph.facebook.com/v18.0' : prov === 'twilio' ? 'https://api.twilio.com/2010-04-01' : 'https://api.ultramsg.com', instanceId: 'instance1234', defaultCountryCode: '92', _userEmail: 'admin@cmms.com' });
   WHATSAPP_JCE_SENT = {};
+  __sheets[WHATSAPP.SHEET] = [];
   __providerCalls = [];
   whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_STARTED, __jceRec({ JobCardNo: 'JC-PROV', CurrentStatus: 'RUNNING', StartDateTime: '2026-08-16 11:00:00', StartedBy: 'wa@cmms.com' }));
   __jceProviderBodies[prov] = __providerCalls.length ? __providerCalls[__providerCalls.length - 1].messageBody : '';
@@ -888,6 +942,86 @@ __ok('T10. Test recipient is watester@cmms.com', tSeedRecipient === 'watester@cm
 
 var tSeedPhone = tSeed1.recipientPhone;
 __ok('T11. Test recipient phone is 3152340889', tSeedPhone === '3152340889', 'phone=' + tSeedPhone);
+
+/* ===================== PERSISTENT IDEMPOTENCY ===================== */
+/* Reset state for clean idempotency tests */
+WHATSAPP_JCE_SENT = {};
+__providerCalls = [];
+__logRows = [];
+__sheets[WHATSAPP.SHEET] = [];
+
+var idKey1 = WHATSAPP.TEMPLATES.JC_ASSIGNED + '|JC-IDEM-001';
+var idKey2 = WHATSAPP.TEMPLATES.JC_ASSIGNED + '|JC-IDEM-002';
+
+var idem1 = whatsappFindSentLogByKey(idKey1);
+__ok('PE1. whatsappFindSentLogByKey returns null when no SENT log exists', idem1 === null, '');
+
+whatsappSaveSettings({ enabled: true, provider: 'meta', apiToken: 'tok_abc', phoneNumberId: '106540352242922', businessAccountId: '123456789012345', defaultCountryCode: '92', _userEmail: 'admin@cmms.com' });
+
+__providerCalls = [];
+var idemR1 = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_ASSIGNED, __jceRec({ JobCardNo: 'JC-IDEM-001', CurrentStatus: 'OPEN' }));
+var idemPC1 = __providerCalls.length;
+var idemLog1 = __logRows[__logRows.length - 1];
+__ok('PE2. First call sends + logs with IdempotencyKey in row', idemR1.success === true && idemPC1 === 1 && idemLog1 && String(idemLog1.IdempotencyKey) === idKey1 && idemLog1.Status === 'Sent', JSON.stringify({ success: idemR1.success, calls: idemPC1, key: idemLog1 && idemLog1.IdempotencyKey, status: idemLog1 && idemLog1.Status }));
+
+var idem1b = whatsappFindSentLogByKey(idKey1);
+__ok('PE3. whatsappFindSentLogByKey finds the SENT log by key', idem1b !== null && String(idem1b.IdempotencyKey) === idKey1 && String(idem1b.Status) === 'Sent', JSON.stringify({ found: !!idem1b, sheetsLen: (__sheets[WHATSAPP.SHEET] || []).length, logRowsLen: __logRows.length }));
+
+__providerCalls = [];
+var idemR2 = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_ASSIGNED, __jceRec({ JobCardNo: 'JC-IDEM-001', CurrentStatus: 'OPEN' }));
+__ok('PE4. Second call in same execution deduplicated (in-memory fast path)', idemR2.deduplicated === true && idemR2.success === false && __providerCalls.length === 0, JSON.stringify(idemR2));
+
+WHATSAPP_JCE_SENT = {};
+__providerCalls = [];
+var idemR3 = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_ASSIGNED, __jceRec({ JobCardNo: 'JC-IDEM-001', CurrentStatus: 'OPEN' }));
+__ok('PE5. Cross-execution dedup: in-memory cache cleared but SENT log found -> deduplicated', idemR3.deduplicated === true && idemR3.success === false && __providerCalls.length === 0 && String(idemR3.message).indexOf('persistent dedup') > -1, JSON.stringify(idemR3));
+
+WHATSAPP_JCE_SENT = {};
+__providerCalls = [];
+var idemR4 = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_ASSIGNED, __jceRec({ JobCardNo: 'JC-IDEM-002', CurrentStatus: 'OPEN' }));
+var idemPC4 = __providerCalls.length;
+__ok('PE6. Different card with same event type sends (distinct key)', idemR4.success === true && idemPC4 === 1, JSON.stringify(idemR4));
+
+WHATSAPP_JCE_SENT = {};
+__providerCalls = [];
+var idemR5 = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_STARTED, __jceRec({ JobCardNo: 'JC-IDEM-002', CurrentStatus: 'RUNNING', StartDateTime: '2026-08-16 10:05:00', StartedBy: 'wa@cmms.com' }));
+var idemPC5 = __providerCalls.length;
+__ok('PE7. Different event for same card sends (distinct key)', idemR5.success === true && idemPC5 === 1, JSON.stringify(idemR5));
+
+WHATSAPP_JCE_SENT = {};
+__lockAcquired = 0;
+__lockReleased = 0;
+__providerCalls = [];
+var idemR6 = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_PENDING, __jceRec({ JobCardNo: 'JC-IDEM-LOCK', CurrentStatus: 'PENDING', PendingDateTime: '2026-08-16 12:00:00', PendingBy: 'wa@cmms.com', PendingRemarks: 'Test' }));
+__ok('PE8. Lock acquired and released for each fresh send', idemR6.success === true && __lockAcquired >= 1 && __lockReleased >= 1, JSON.stringify({ acquired: __lockAcquired, released: __lockReleased }));
+
+WHATSAPP_JCE_SENT = {};
+__providerCalls = [];
+var idemR7a = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_CLOSED, __jceRec({ JobCardNo: 'JC-IDEM-FAIL', CurrentStatus: 'CLOSED', CloseDateTime: '2026-08-16 12:30:00', ClosedBy: 'admin@cmms.com', RootCause: 'Bearing', CorrectiveAction: 'Replaced' }));
+var failLogA = __logRows[__logRows.length - 1];
+__providerMode = 'fail';
+WHATSAPP_JCE_SENT = {};
+var idemR7b = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_CLOSED, __jceRec({ JobCardNo: 'JC-IDEM-FAIL2', CurrentStatus: 'CLOSED', CloseDateTime: '2026-08-16 12:30:00', ClosedBy: 'admin@cmms.com', RootCause: 'Bearing', CorrectiveAction: 'Replaced' }));
+var failLogB = __logRows[__logRows.length - 1];
+__providerMode = 'ok';
+__ok('PE9. Provider failure: FAILED log written (no SENT), successful + failed = 2 provider calls', idemR7a.success === true && failLogA && failLogA.Status === 'Sent' && idemR7b.results && idemR7b.results[0] && idemR7b.results[0].success === false && idemR7b.results[0].status === 'Failed' && failLogB && failLogB.Status === 'Failed' && __providerCalls.length === 2, JSON.stringify({ aStatus: failLogA && failLogA.Status, bResultSuccess: idemR7b.results && idemR7b.results[0] && idemR7b.results[0].success, bStatus: failLogB && failLogB.Status, calls: __providerCalls.length }));
+
+WHATSAPP_JCE_SENT = {};
+__providerCalls = [];
+__logRows = [];
+__sheets[WHATSAPP.SHEET] = [];
+var idemSim1 = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_ASSIGNED, __jceRec({ JobCardNo: 'JC-IDEM-SIM', CurrentStatus: 'OPEN' }));
+var idemLogSim = __logRows[__logRows.length - 1];
+var idemKeySim = 'JC_ASSIGNED|JC-IDEM-SIM';
+WHATSAPP_JCE_SENT = {};
+var idemSim2 = whatsappSendJobCardEvent(WHATSAPP.TEMPLATES.JC_ASSIGNED, __jceRec({ JobCardNo: 'JC-IDEM-SIM', CurrentStatus: 'OPEN' }));
+__ok('PE10. Timeout+retry simulation: SENT in log -> second call deduplicates (exactly one WhatsApp message)', idemSim1.success === true && idemSim1.providerCalls !== 0 && idemSim2.deduplicated === true && idemSim2.success === false && __providerCalls.length === 1, JSON.stringify({ r1: idemSim1.success, r2: idemSim2.deduplicated, totalProviderCalls: __providerCalls.length }));
+
+WHATSAPP_JCE_SENT = {};
+var idemAllLogs = __sheets[WHATSAPP.SHEET] || [];
+var idemKeys = idemAllLogs.map(function(r) { return String(r.IdempotencyKey || ''); }).filter(function(k) { return k !== ''; });
+var idemUnique = idemKeys.filter(function(k, i) { return idemKeys.indexOf(k) === i; });
+__ok('PE11. All IdempotencyKeys written to logs are unique', idemKeys.length === idemUnique.length, JSON.stringify({ total: idemKeys.length, unique: idemUnique.length }));
 `;
 
   const sandbox = {};
