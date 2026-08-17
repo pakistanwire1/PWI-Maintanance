@@ -328,6 +328,7 @@ var API_ROUTES = {
 'whatsappTestSend':      { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappTestSend(d); } },
 'whatsappConnectionTest':{ auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappConnectionTest(d); } },
 'whatsappGetJcePreviews': { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappGetJcePreviews(d); } },
+'whatsappSeedTestJobCard': { auth: true, perm: 'CanManageWhatsApp', handler: function(d) { return whatsappSeedTestJobCard(d); } },
 
   /* ---- Backup ---- */
   'getBackupHistory':      { auth: true, perm: 'CanBackupRestore', handler: function(d) { return getBackupHistory(); } },

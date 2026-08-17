@@ -126,6 +126,19 @@ const check = (name, pass, detail) => {
   check('A13. renderPage contains disabled banner element', waJs.indexOf('whatsappDisabledBanner') !== -1);
   check('A14. sendTest renders logId on success', sendTestBody.indexOf('sendRes.logId') !== -1);
   check('A15. saveSettings refreshes banner on save', /Notify\.success\('WhatsApp settings saved'\);\s*setDisabledBanner\(\);/.test(waJs));
+
+  /* T: Test-only seed static checks */
+  check('T-A1. whatsappSeedTestJobCard function exists in WhatsAppGS.gs', waGs.indexOf('function whatsappSeedTestJobCard(') !== -1);
+  check('T-A2. Seed requires CanManageWhatsApp permission', (function() {
+    var idx = waGs.indexOf('function whatsappSeedTestJobCard(');
+    var seg = waGs.substring(idx, idx + 500);
+    return seg.indexOf("requireUserPermission('CanManageWhatsApp', data)") !== -1;
+  })());
+  check('T-A3. Seed checks admin role (Role/IsAdmin)', waGs.indexOf("user.Role !== 'Admin'") !== -1 && waGs.indexOf("user.IsAdmin !== 'TRUE'") !== -1);
+  check('T-A4. Seed rejects duplicate via getRecordById', waGs.indexOf("getRecordById(CONFIG.SHEET_NAMES.JOBCARDS, 'JobCardNo', TEST_CARD_NO)") !== -1);
+  check('T-A5. Seed uses addRow directly (bypasses addJobCard)', waGs.indexOf('addRow(CONFIG.SHEET_NAMES.JOBCARDS, row)') !== -1 && waGs.indexOf('addJobCard') === -1 );
+  check('T-A6. Seed returns safe metadata only (no tokens/credentials)', waGs.indexOf("'recipientPhone': '3152340889'") !== -1 || waGs.indexOf('recipientPhone') !== -1);
+  check('T-A7. API route registered with CanManageWhatsApp perm', /'whatsappSeedTestJobCard':\s*\{\s*auth:\s*true,\s*perm:\s*'CanManageWhatsApp'/.test(api));
 })();
 
 /* =====================================================================
@@ -192,11 +205,20 @@ function updateRow(name, key, val, obj) {
 function getSheet(name) { return { name: name }; }
 function ensureHeaders(sheet, fields) {}
 function getCurrentTimestamp() { return '2026-08-14 10:00:00'; }
+function formatDateTimeISO(d) { return d instanceof Date ? d.toISOString() : String(d); }
 function logActivity(msg, detail) { __activityLog.push({ msg: msg, detail: detail }); }
 function createAuditLog() { __auditLog.push(Array.prototype.slice.call(arguments)); }
+function getRecordById(sheetName, idField, idValue) {
+  var data = getAllData(sheetName) || [];
+  for (var i = 0; i < data.length; i++) {
+    if (String(data[i][idField]) === String(idValue)) return data[i];
+  }
+  return null;
+}
+function invalidateCache(sheetName) {}
 
 var CONFIG = {
-  SHEET_NAMES: { USERS: 'Users', TECHNICIANS: 'Technicians' },
+  SHEET_NAMES: { USERS: 'Users', TECHNICIANS: 'Technicians', JOBCARDS: 'JobCards' },
   AUDIT_MODULES: { SETTINGS: 'Settings' },
   AUDIT_ACTIONS: { UPDATE: 'Update' }
 };
@@ -827,6 +849,45 @@ __providerCalls = [];
 var rDC6 = whatsappSendMessage('00923001234567', '0092+local', 'System', 'JC-DC6', 'TestMessage', 'Test', 'admin@cmms.com');
 var pcDC6 = __providerCalls[__providerCalls.length - 1];
 __ok('PN13. 00923001234567 normalizes to +923001234567', rDC6.success === true && pcDC6 && pcDC6.phoneNumber === '+923001234567', JSON.stringify({ pc: pcDC6 && pcDC6.phoneNumber }));
+
+/* ===================== T: TEST-ONLY JOB CARD SEED ===================== */
+var __jcBeforeSeed = (__sheets.JobCards || []).length;
+__providerCalls = [];
+var tSeed1 = whatsappSeedTestJobCard({ _userEmail: 'admin@cmms.com' });
+__ok('T1. whatsappSeedTestJobCard function exists and succeeds for admin', tSeed1.success === true && tSeed1.created === true && tSeed1.jobCardNo === 'JC-TEST-WA-001', JSON.stringify(tSeed1));
+
+__ok('T2. Seed creates card with CurrentStatus OPEN', tSeed1.currentStatus === 'OPEN', JSON.stringify(tSeed1));
+
+__ok('T3. Seed sends zero WhatsApp messages (no provider calls)', __providerCalls.length === 0, 'providerCalls=' + __providerCalls.length);
+
+__ok('T4. Seed does NOT call addJobCard (no audit/logActivity for open)', (function() {
+  var found = false;
+  for (var i = 0; i < __activityLog.length; i++) {
+    if (__activityLog[i].msg === 'Add Job Card') found = true;
+  }
+  return !found;
+})(), 'activityLog length=' + __activityLog.length);
+
+var tSeedCard = getRecordById('JobCards', 'JobCardNo', 'JC-TEST-WA-001');
+__ok('T5. JC-TEST-WA-001 visible via getRecordById after seed', !!tSeedCard && tSeedCard.CurrentStatus === 'OPEN' && tSeedCard.ComplaintDescription === 'WHATSAPP LIFECYCLE TEST — DO NOT TREAT AS REAL WORK', JSON.stringify(tSeedCard && { status: tSeedCard.CurrentStatus, complaint: tSeedCard.ComplaintDescription }));
+
+var __jcAfterSeed = (__sheets.JobCards || []).length;
+__ok('T6. JobCards row count increased by exactly 1', __jcAfterSeed === __jcBeforeSeed + 1, 'before=' + __jcBeforeSeed + ' after=' + __jcAfterSeed);
+
+var tSeedDup = whatsappSeedTestJobCard({ _userEmail: 'admin@cmms.com' });
+__ok('T7. Repeated seed attempt is rejected as duplicate', tSeedDup.success === false && String(tSeedDup.message).indexOf('already exists') > -1, JSON.stringify(tSeedDup));
+
+var tSeedNonAdmin = whatsappSeedTestJobCard({ _userEmail: 'tech@cmms.com' });
+__ok('T8. Non-admin user is blocked from seeding', tSeedNonAdmin.success === false && String(tSeedNonAdmin.message).indexOf('permission') > -1, JSON.stringify(tSeedNonAdmin));
+
+var tSeedNoPerm = whatsappSeedTestJobCard({ _userEmail: 'tech@cmms.com' });
+__ok('T9. Zero WhatsApp sends during denied seed attempt', __providerCalls.length === 0, 'providerCalls=' + __providerCalls.length);
+
+var tSeedRecipient = tSeedCard ? tSeedCard.ComplaintByEmail : '';
+__ok('T10. Test recipient is watester@cmms.com', tSeedRecipient === 'watester@cmms.com', 'complaintByEmail=' + tSeedRecipient);
+
+var tSeedPhone = tSeed1.recipientPhone;
+__ok('T11. Test recipient phone is 3152340889', tSeedPhone === '3152340889', 'phone=' + tSeedPhone);
 `;
 
   const sandbox = {};

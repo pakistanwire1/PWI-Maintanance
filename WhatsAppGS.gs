@@ -1418,3 +1418,99 @@ function whatsappGetJcePreviews(data) {
     return { success: false, message: e.message, events: [] };
   }
 }
+
+/* =====================================================================
+   TEST-ONLY SEED: Create a single hardcoded test Job Card for
+   WhatsApp lifecycle testing. Bypasses the normal card creation path
+   to avoid triggering notification hooks.
+   Permission-gated: CanManageWhatsApp + Admin only.
+   ===================================================================== */
+function whatsappSeedTestJobCard(data) {
+  try {
+    requireUserPermission('CanManageWhatsApp', data);
+
+    var user = apiCallerUser(data);
+    if (!user || (user.Role !== 'Admin' && user.Role !== 'Administrator' && user.IsAdmin !== 'TRUE' && user.IsAdmin !== true)) {
+      return { success: false, message: 'Only Admin can seed test job cards.' };
+    }
+
+    var TEST_CARD_NO = 'JC-TEST-WA-001';
+    var existing = getRecordById(CONFIG.SHEET_NAMES.JOBCARDS, 'JobCardNo', TEST_CARD_NO);
+    if (existing) {
+      return {
+        success: false,
+        message: 'Test card ' + TEST_CARD_NO + ' already exists.',
+        jobCardNo: TEST_CARD_NO,
+        currentStatus: existing.CurrentStatus || existing.Status || 'UNKNOWN'
+      };
+    }
+
+    var now = formatDateTimeISO(new Date());
+    var row = {
+      JobCardNo: TEST_CARD_NO,
+      OpenDateTime: now,
+      Section: 'Maintenance',
+      Department: 'Facility Maintenance',
+      Machine: 'TEST-MACHINE-LIFECYCLE',
+      AssetID: '',
+      ComplaintCategory: 'Wear & Tear',
+      ComplaintBy: 'QA Tester',
+      ComplaintDescription: 'WHATSAPP LIFECYCLE TEST — DO NOT TREAT AS REAL WORK',
+      Priority: 'Low',
+      FaultImage: '',
+      CreatedBy: data._userEmail || '',
+      CreatedAt: getCurrentTimestamp(),
+      AssignedTechnician: '',
+      StartedBy: '',
+      StartDateTime: '',
+      WaitingTime: 0,
+      InitialRemarks: '',
+      MaintenanceTeam: '',
+      RootCause: '',
+      CorrectiveAction: '',
+      SpareParts: '',
+      RepairImage: '',
+      FinalRemarks: '',
+      ClosedBy: '',
+      CloseDateTime: '',
+      WorkingTime: 0,
+      Downtime: 0,
+      TotalDuration: 0,
+      BreakdownType: '',
+      PendingDateTime: '',
+      PendingBy: '',
+      PendingRemarks: '',
+      ApprovalStatus: '',
+      ApprovedBy: '',
+      ApprovedDateTime: '',
+      ApprovalRemarks: '',
+      ReturnedBy: '',
+      ReturnedDateTime: '',
+      ReturnReason: '',
+      UpdatedBy: data._userEmail || '',
+      UpdatedAt: getCurrentTimestamp(),
+      CurrentStatus: 'OPEN',
+      ComplaintByCode: '',
+      ComplaintByEmail: 'watester@cmms.com',
+      AssignedTechnicianIDs: '',
+      QRCode: '',
+      Barcode: '',
+      QRGeneratedDate: '',
+      MachineNumber: '',
+      MachineID: ''
+    };
+
+    addRow(CONFIG.SHEET_NAMES.JOBCARDS, row);
+
+    return {
+      success: true,
+      jobCardNo: TEST_CARD_NO,
+      currentStatus: 'OPEN',
+      recipientPhone: '3152340889',
+      created: true,
+      message: 'TEST-ONLY seed card created. This is not a real job card.'
+    };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}
