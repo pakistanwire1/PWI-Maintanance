@@ -26,12 +26,17 @@ var Reports = (function() {
       '.rpt-filter-group { flex: 1; min-width: 140px; }' +
       '.rpt-filter-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }' +
       '.rpt-filter-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }' +
-      '.rpt-kpi-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }' +
-      '.rpt-kpi-row .stat-card { flex: 1; min-width: 120px; margin: 0; }' +
-      '.rpt-kpi-row .stat-card .stat-inner { padding: 12px 14px; }' +
-      '.rpt-kpi-row .stat-card .stat-inner h3 { font-size: 18px; }' +
-      '.rpt-kpi-row .stat-card .stat-inner p { font-size: 10px; }' +
-      '.rpt-kpi-icon { width: 28px; height: 28px; }' +
+      '.rpt-kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 8px; }' +
+      '.rpt-kpi-row .stat-card { margin: 0; min-width: 0; overflow: visible; }' +
+      '.rpt-kpi-row .stat-card .stat-inner { padding: 14px; gap: 12px; align-items: center; }' +
+      '.rpt-kpi-row .stat-card .stat-icon { width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0; }' +
+      '.rpt-kpi-row .stat-card .stat-icon svg { width: 16px; height: 16px; }' +
+      '.rpt-kpi-row .stat-card .stat-info { min-width: 0; }' +
+      '.rpt-kpi-row .stat-card .stat-info h3 { font-size: 18px; font-weight: 700; line-height: 1.2; margin: 0; color: #fff; white-space: normal; overflow: visible; }' +
+      '.rpt-kpi-row .stat-card .stat-info p { font-size: 10px; font-weight: 600; color: var(--text-muted); margin: 2px 0 0; text-transform: uppercase; letter-spacing: 0.3px; white-space: normal; overflow: visible; line-height: 1.3; }' +
+      '.rpt-kpi-row .stat-card:hover { transform: translateY(-2px); }' +
+      '@media (max-width: 1100px) { .rpt-kpi-row { grid-template-columns: repeat(3, 1fr); } }' +
+      '@media (max-width: 700px) { .rpt-kpi-row { grid-template-columns: repeat(2, 1fr); } }' +
       '.rpt-table-wrapper { overflow-x: auto; padding: 0 4px 4px 4px; }' +
       '.rpt-table { width: 100%; border-collapse: collapse; font-size: 12px; }' +
       '.rpt-table thead th { background: var(--bg-secondary); color: var(--text-muted); padding: 10px 8px; text-align: left; font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; border-bottom: 2px solid var(--border); position: sticky; top: 0; white-space: nowrap; }' +
@@ -53,6 +58,7 @@ var Reports = (function() {
       '.card-actions { display: flex; align-items: center; gap: 8px; }' +
       '@media print {' +
         '.sidebar, .topbar, .rpt-filter-card, .rpt-filter-actions, .card-actions, .btn { display: none !important; }' +
+        '.rpt-kpi-row { grid-template-columns: repeat(5, 1fr); }' +
         '.rpt-kpi-row .stat-card { break-inside: avoid; }' +
         '.rpt-table-wrapper { overflow: visible; }' +
         '.rpt-table thead th { background: var(--bg-secondary) !important; color: var(--text) !important; }' +
@@ -368,8 +374,8 @@ var Reports = (function() {
       maintenanceType: document.getElementById('rptMaintType').value,
       priority: document.getElementById('rptPriority').value,
       status: document.getElementById('rptStatus').value,
-      fromDate: fromEl && fromEl.value ? fromEl.value + 'T00:00:00' : '',
-      toDate: toEl && toEl.value ? toEl.value + 'T23:59:59' : ''
+      fromDate: fromEl && fromEl.value ? fromEl.value : '',
+      toDate: toEl && toEl.value ? toEl.value : ''
     };
   }
 
@@ -393,7 +399,7 @@ var Reports = (function() {
         }
         renderRptKpi(data.kpi);
         renderRptTable(data.columns, data.rows);
-        document.getElementById('rptKpiCards').style.display = 'flex';
+        document.getElementById('rptKpiCards').style.display = 'grid';
         document.getElementById('rptTableCard').style.display = 'block';
         document.getElementById('rptChartsCard').style.display = 'block';
         setTimeout(function() { renderRptCharts(data.charts); }, 50);
@@ -413,21 +419,44 @@ var Reports = (function() {
     rptData = null;
   }
 
+  function formatHoursMinutes(hours) {
+    if (hours === null || hours === undefined || isNaN(hours)) return 'N/A';
+    if (hours <= 0) return '0h 0m';
+    var totalMin = Math.round(hours * 60);
+    var d = Math.floor(totalMin / 1440);
+    var h = Math.floor((totalMin % 1440) / 60);
+    var m = totalMin % 60;
+    var parts = [];
+    if (d > 0) parts.push(d + 'd');
+    if (h > 0 || d > 0) parts.push(h + 'h');
+    if (m > 0 || parts.length === 0) parts.push(m + 'm');
+    return parts.join(' ');
+  }
+
   function renderRptKpi(kpi) {
     if (!kpi) return;
     var cards = [
-      { label: 'Total Jobs', value: kpi.totalJobs || 0, cls: 'stat-primary', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rpt-kpi-icon"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>' },
-      { label: 'Breakdown Jobs', value: kpi.breakdownJobs || 0, cls: 'stat-danger', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rpt-kpi-icon"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' },
-      { label: 'Preventive Jobs', value: kpi.preventiveJobs || 0, cls: 'stat-success', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rpt-kpi-icon"><polyline points="20 6 9 17 4 12"/></svg>' },
-      { label: 'Total Downtime', value: Duration.format(kpi.totalDowntime || 0), cls: 'stat-warning', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rpt-kpi-icon"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' },
-      { label: 'Total Waiting', value: Duration.format(kpi.totalWaiting || 0), cls: 'stat-pending', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rpt-kpi-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
-      { label: 'Total Working', value: Duration.format(kpi.totalWorking || 0), cls: 'stat-info', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rpt-kpi-icon"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' },
-      { label: 'MTTR', value: kpi.mttr !== null && kpi.mttr !== undefined ? kpi.mttr + ' hrs' : 'N/A', cls: 'stat-approved', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rpt-kpi-icon"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' },
-      { label: 'MTBF', value: kpi.mtbf !== null && kpi.mtbf !== undefined ? kpi.mtbf + ' hrs' : 'N/A', cls: 'stat-primary', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rpt-kpi-icon"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' },
-      { label: 'Availability', value: kpi.availability !== null && kpi.availability !== undefined ? kpi.availability + '%' : 'N/A', cls: 'stat-success', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="rpt-kpi-icon"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' }
+      { label: 'TOTAL JOBS', value: String(kpi.totalJobs || 0), cls: 'stat-primary', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>' },
+      { label: 'BREAKDOWN JOBS', value: String(kpi.breakdownJobs || 0), cls: 'stat-danger', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' },
+      { label: 'PREVENTIVE JOBS', value: String(kpi.preventiveJobs || 0), cls: 'stat-success', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' },
+      { label: 'TOTAL DOWNTIME', value: Duration.format(kpi.totalDowntime || 0), cls: 'stat-warning', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' },
+      { label: 'TOTAL WAITING TIME', value: Duration.format(kpi.totalWaiting || 0), cls: 'stat-pending', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' },
+      { label: 'TOTAL WORKING TIME', value: Duration.format(kpi.totalWorking || 0), cls: 'stat-info', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' },
+      { label: 'TOTAL OPERATING TIME', value: Duration.format(kpi.totalOperating || 0), cls: 'stat-orange', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>' },
+      { label: 'MTTR', value: formatHoursMinutes(kpi.mttr), cls: 'stat-approved', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>' },
+      { label: 'MTBF', value: formatHoursMinutes(kpi.mtbf), cls: 'stat-purple', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' },
+      { label: 'AVAILABILITY', value: kpi.availability !== null && kpi.availability !== undefined ? kpi.availability + '%' : 'N/A', cls: 'stat-success', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' }
     ];
     document.getElementById('rptKpiCards').innerHTML = cards.map(function(c) {
-      return '<div class="stat-card ' + c.cls + '"><div class="stat-inner"><div class="stat-icon">' + c.icon + '</div><div class="stat-info"><h3>' + c.value + '</h3><p>' + c.label + '</p></div></div></div>';
+      return '<div class="stat-card ' + c.cls + '">' +
+        '<div class="stat-inner">' +
+          '<div class="stat-icon">' + c.icon + '</div>' +
+          '<div class="stat-info">' +
+            '<h3>' + c.value + '</h3>' +
+            '<p>' + c.label + '</p>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
     }).join('');
   }
 

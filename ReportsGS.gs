@@ -82,6 +82,9 @@ function getReportData(filters) {
 
   var fromDate = filters.fromDate ? new Date(filters.fromDate) : null;
   var toDate = filters.toDate ? new Date(filters.toDate) : null;
+  if (toDate && !isNaN(toDate.getTime())) {
+    toDate = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), 23, 59, 59, 999);
+  }
 
   var filtered = jcs.filter(function(jc) {
     var jd = jc.OpenDateTime || jc.DateCreated || jc.Date || '';
@@ -142,9 +145,10 @@ function getReportData(filters) {
   var rows = filtered.map(function(jc) {
     var m = machineMap[jc.Machine || ''] || {};
     var dept = deptMap[jc.Department || m.Department || ''] || {};
-    var dMins = normalizeDuration(jc.Downtime || 0) || 0;
-    var wMins = normalizeDuration(jc.WorkingTime || 0) || 0;
-    var wtMins = normalizeDuration(jc.WaitingTime || 0) || 0;
+    var wtMins = resolveMinutes(jc, 'WaitingTime');
+    var wMins = resolveMinutes(jc, 'WorkingTime');
+    var dMins = resolveDowntimeMinutes(jc);
+    var repairMins = resolveRepairMinutes(jc);
     var rd = jc.RootCause || '';
     var cc = jc.ComplaintCategory || '';
     var mType = jc.BreakdownType || jc.MaintenanceType || '';
@@ -171,15 +175,45 @@ function getReportData(filters) {
       RootCause: rd,
       CorrectiveAction: jc.CorrectiveAction || '',
       SpareParts: jc.SpareParts || '',
-      RepairTime: normalizeDuration(jc.TotalDuration || 0) || 0,
+      RepairTime: repairMins,
       BreakdownType: mType
     };
   });
 
+  var filteredMachines = machines;
+  if (filters.division) {
+    var divVal = String(filters.division);
+    var divIdFromName = null;
+    for (var di = 0; di < depts.length; di++) {
+      if (String(depts[di].Division || '') === divVal) { divIdFromName = depts[di].DivisionID || ''; break; }
+    }
+    filteredMachines = filteredMachines.filter(function(m) {
+      return m.DivisionID === divVal || (divIdFromName && m.DivisionID === divIdFromName);
+    });
+  }
+  if (filters.section) {
+    var secVal = String(filters.section);
+    filteredMachines = filteredMachines.filter(function(m) {
+      return m.SectionID === secVal || m.Section === secVal;
+    });
+  }
+  if (filters.department) {
+    var depVal = String(filters.department);
+    filteredMachines = filteredMachines.filter(function(m) {
+      return m.DeptID === depVal || m.Department === depVal;
+    });
+  }
+  if (filters.machineNumber) {
+    var mnVal = String(filters.machineNumber);
+    filteredMachines = filteredMachines.filter(function(m) {
+      return m.MachineNumber === mnVal || m.MachineCode === mnVal || m.MachineName === mnVal;
+    });
+  }
+
   var reportType = filters.reportType || 'machine_history';
   var columns = getReportColumns(reportType);
   var tableRows = getTableRows(rows, reportType);
-  var kpi = computeKPI(rows, filtered);
+  var kpi = computeKPI(filtered, filteredMachines, filters);
   var charts = computeChartData(rows, filtered, jcs);
 
   return { columns: columns, rows: tableRows, kpi: kpi, charts: charts };
@@ -298,50 +332,143 @@ function aggregateBy(rows, groupKey, metrics) {
   });
 }
 
-function computeKPI(rows, filtered) {
+function classifyReportMaintenance(record) {
+  var bt = String(record.BreakdownType || '').trim().toLowerCase();
+  var isBreakdown = bt.indexOf('breakdown') !== -1;
+  var isPreventive = bt === 'preventive maintenance';
+  return { isBreakdown: isBreakdown, isPreventive: isPreventive };
+}
+
+function computeKPI(filtered, machines, filters) {
   var totalJobs = filtered.length;
-  var breakdownJobs = 0;
-  var preventiveJobs = 0;
-  var totalDowntime = 0;
-  var totalWaiting = 0;
-  var totalWorking = 0;
-  var totalRepair = 0;
-  var closedBreakdown = 0;
-  var closedCount = 0;
+  var totalWaitingMinutes = 0;
+  var totalWorkingMinutes = 0;
+  var totalDowntimeMinutes = 0;
 
-  rows.forEach(function(r) {
-    totalDowntime += r.Downtime || 0;
-    totalWaiting += r.WaitingTime || 0;
-    totalWorking += r.WorkingTime || 0;
-    totalRepair += r.RepairTime || 0;
-    var mt = (r.BreakdownType || r.MaintenanceType || '');
-    if (isBreakdownMaint(mt)) {
-      breakdownJobs++;
-      var cs = String(r.CurrentStatus).toLowerCase();
-      if (cs === 'closed' || cs === 'completed') closedBreakdown++;
-    }
-    if (isPreventiveMaint(mt)) preventiveJobs++;
-    var cs = r.CurrentStatus.toLowerCase();
-    if (cs === 'closed' || cs === 'completed') closedCount++;
-  });
+  var breakdownMaintenanceCount = 0;
+  var preventiveMaintenanceCount = 0;
+  var approvedBreakdownJobCount = 0;
+  var breakdownClosedCount = 0;
+  var breakdownClosedRepairMinutes = 0;
 
-  var mttr = closedBreakdown > 0 ? Math.round((totalRepair / closedBreakdown / 60) * 100) / 100 : null;
-  var mtbfVal = null;
-  var availabilityVal = null;
-  if (totalWorking + totalDowntime > 0) {
-    availabilityVal = Math.round((totalWorking / (totalWorking + totalDowntime)) * 10000) / 100;
+  var fromDate = filters && filters.fromDate ? new Date(filters.fromDate) : null;
+  var toDate = filters && filters.toDate ? new Date(filters.toDate) : null;
+  if (toDate && !isNaN(toDate.getTime())) {
+    toDate = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), 23, 59, 59, 999);
   }
+
+  var machineSchedule = {};
+  if (machines && machines.length > 0) {
+    for (var mi = 0; mi < machines.length; mi++) {
+      var mn = machines[mi].MachineName || '';
+      if (mn) {
+        machineSchedule[mn] = {
+          mph: parseFloat(machines[mi].OperatingHoursPerDay) || 0,
+          mpw: parseFloat(machines[mi].OperatingDaysPerWeek) || 0
+        };
+      }
+    }
+  }
+
+  for (var i = 0; i < filtered.length; i++) {
+    var jc = filtered[i];
+    var waitingMins = resolveMinutes(jc, 'WaitingTime');
+    var workingMins = resolveMinutes(jc, 'WorkingTime');
+    var repairMins = resolveRepairMinutes(jc);
+    var downtimeMins = resolveDowntimeMinutes(jc);
+
+    var jobOpenStr = jc.OpenDateTime || jc.DateCreated || jc.Date || '';
+    var jobCloseStr = jc.CloseDateTime || '';
+    if (fromDate && toDate && jobOpenStr && jobCloseStr) {
+      var jOpen = new Date(jobOpenStr);
+      var jClose = new Date(jobCloseStr);
+      if (!isNaN(jOpen.getTime()) && !isNaN(jClose.getTime())) {
+        if (jClose < fromDate || jOpen > toDate) {
+          waitingMins = 0;
+          workingMins = 0;
+          downtimeMins = 0;
+          repairMins = 0;
+        } else {
+          var effOpen = jOpen < fromDate ? fromDate : jOpen;
+          var effClose = jClose > toDate ? toDate : jClose;
+          var effectiveDays = (effClose - effOpen) / 86400000;
+          var sched = machineSchedule[jc.Machine || ''];
+          if (sched && sched.mph > 0 && sched.mpw > 0) {
+            var operatingMinutes = Math.round(sched.mph * sched.mpw / 7 * effectiveDays * 60);
+            var rawSum = waitingMins + workingMins + downtimeMins;
+            if (rawSum > operatingMinutes && rawSum > 0) {
+              var factor = operatingMinutes / rawSum;
+              waitingMins = Math.round(waitingMins * factor);
+              workingMins = Math.round(workingMins * factor);
+              downtimeMins = Math.round(downtimeMins * factor);
+            }
+            repairMins = Math.min(repairMins, operatingMinutes);
+          }
+        }
+      }
+    }
+
+    totalWaitingMinutes += waitingMins;
+    totalWorkingMinutes += workingMins;
+    totalDowntimeMinutes += downtimeMins;
+
+    var classification = classifyReportMaintenance(jc);
+    if (classification.isBreakdown) {
+      breakdownMaintenanceCount++;
+      var approvalStatus = (jc.ApprovalStatus || '').toLowerCase();
+      var status = (jc.CurrentStatus || jc.Status || '').toLowerCase();
+      var isApproved = (approvalStatus === 'approved');
+      var isClosed = (status === 'closed' || status === 'approved');
+      if (isApproved) approvedBreakdownJobCount++;
+      if (isClosed) {
+        breakdownClosedCount++;
+        breakdownClosedRepairMinutes += repairMins;
+      }
+    }
+    else if (classification.isPreventive) preventiveMaintenanceCount++;
+  }
+
+  var reportDays;
+  if (fromDate && toDate) {
+    var startDay = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
+    var endDay = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate());
+    reportDays = Math.max(1, Math.round((endDay - startDay) / 86400000) + 1);
+  } else if (fromDate) {
+    reportDays = Math.max(1, Math.round((new Date() - fromDate) / 86400000));
+  } else {
+    reportDays = 365;
+  }
+
+  var totalMachineRuntimeHours = 0;
+  if (machines && machines.length > 0) {
+    for (var mi = 0; mi < machines.length; mi++) {
+      var mph = parseFloat(machines[mi].OperatingHoursPerDay) || 0;
+      var mpw = parseFloat(machines[mi].OperatingDaysPerWeek) || 0;
+      if (mph > 0 && mpw > 0) {
+        totalMachineRuntimeHours += mph * mpw / 7 * reportDays;
+      }
+    }
+  }
+
+  var mttr = breakdownClosedCount > 0 ? Math.round((breakdownClosedRepairMinutes / breakdownClosedCount / 60) * 100) / 100 : null;
+
+  var mtbf = approvedBreakdownJobCount > 0 ? Math.round((totalMachineRuntimeHours / approvedBreakdownJobCount) * 100) / 100 : null;
+
+  var availability = (totalWorkingMinutes + totalDowntimeMinutes) > 0 ? Math.round((totalWorkingMinutes / (totalWorkingMinutes + totalDowntimeMinutes)) * 10000) / 100 : 0;
+
+  var totalOperatingMinutes = Math.round(totalMachineRuntimeHours * 60);
 
   return {
     totalJobs: totalJobs,
-    breakdownJobs: breakdownJobs,
-    preventiveJobs: preventiveJobs,
-    totalDowntime: totalDowntime,
-    totalWaiting: totalWaiting,
-    totalWorking: totalWorking,
+    breakdownJobs: breakdownMaintenanceCount,
+    preventiveJobs: preventiveMaintenanceCount,
+    totalDowntime: totalDowntimeMinutes,
+    totalWaiting: totalWaitingMinutes,
+    totalWorking: totalWorkingMinutes,
+    totalOperating: totalOperatingMinutes,
     mttr: mttr,
-    mtbf: mtbfVal,
-    availability: availabilityVal
+    mtbf: mtbf,
+    availability: availability
   };
 }
 
